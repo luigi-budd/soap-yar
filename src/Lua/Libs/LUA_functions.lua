@@ -221,6 +221,10 @@ rawset(_G,"Soap_CreateAfterimage", function(p,me)
 	ghost.angle = p.drawangle
 	
 	local rainbow = AICOLOR_START + (leveltime % (AICOLOR_LENGTH))
+	if not SOAP_CV.rainbow_ai.value
+		rainbow = ColorOpposite(p.skincolor)
+	end
+	
 	ghost.colorized = true
 	if G_GametypeHasTeams()
 		rainbow = (p.ctfteam == 1) and skincolor_redteam or skincolor_blueteam

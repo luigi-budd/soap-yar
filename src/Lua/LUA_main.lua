@@ -22,6 +22,15 @@ rawset(_G,"SOAP_MAXDASH", 15*FU)
 rawset(_G,"SOAP_DASHTIME", TR/2)
 rawset(_G,"SOAP_TOPCOOLDOWN", 4*TR)
 
+rawset(_G, "SOAP_CV",{})
+local CV = SOAP_CV
+CV.rainbow_ai = CV_RegisterVar({
+	name = "soap_rainbowimages",
+	defaultvalue = "On",
+	flags = CV_SHOWMODIF,
+	PossibleValue = CV_OnOff
+})
+
 local soap_crouchanimtime = 13
 local max_mentums = (FU - ORIG_FRICTION) * 9/10
 local soap_lowfriction = tofixed("0.97")
