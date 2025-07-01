@@ -1,0 +1,29 @@
+name = soapthehedge
+RealName = Soap
+NameTag = CHRTAG
+HudName = SOAP
+
+flags = SF_HIRES|SF_FASTEDGE|SF_NOSHIELDABILITY|SF_SUPER
+
+ability = CA_NONE
+ability2 = CA2_NONE
+
+prefcolor = Galaxy
+Supercolor = Purple
+
+height = 52
+highresscale = 0.25
+shieldscale = 1.2
+jumpfactor = 1.15
+
+thokitem = MT_NULL
+spinitem = MT_NULL
+revitem = MT_NULL
+followitem = MT_SOAP_PEELOUT
+
+dsjump = dsajum
+dsaltow4 = dsslip
+dsaltdi4 = dshlds
+
+normalspeed = 30
+runspeed = 45

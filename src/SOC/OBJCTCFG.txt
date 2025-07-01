@@ -1,0 +1,9 @@
+Character
+SkinName = soapthehedge
+DisplayName = 
+TagTextColor = SKINCOLOR_BLUE
+TagOutlineColor = SKINCOLOR_ORANGE
+NameTag = CHRTAG
+OppositeColor = SKINCOLOR_RED
+PlayerText = Nerfed just for Saxa's MM!
+#
