@@ -2186,8 +2186,9 @@ rawset(_G, "Soap_SolThinker",function(p,me,soap)
 		end
 	end
 	
-	if not soap.isSolForm then return end
+	if not (soap.isSolForm or p.powers[pw_super]) then return end
 	p.powers[pw_underwater] = 0
+	--spacedrown is different from water
 end)
 
 local SOAP_GRAB_ACTIONSTATE = 9999

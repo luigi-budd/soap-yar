@@ -179,7 +179,7 @@ sfxinfo[sfx_sp_rto] = {
 	caption = "\x89".."Retro Jam\x80"
 }
 
-local S_CLIPPING_DIST = (1536*0x10000)
+local S_CLIPPING_DIST = (1536*FU)
 local set_musvol = false
 local this_musvol = 100
 local listening_boombox

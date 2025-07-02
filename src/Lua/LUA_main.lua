@@ -43,9 +43,10 @@ local function dust_noviewmobj(dust)
 end
 
 local lol = {
-	["Seulyy"] = true,
+	["seulyy"] = true,
 	["luigi budd"] = true,
 	["koops"] = true,
+	["`green`"] = true,
 }
 
 local function Soap_SuperReady(player)
@@ -539,7 +540,7 @@ addHook("PlayerThink",function(p)
 				end
 			end
 			
-			if ((soap.weaponnext and soap.weaponprev)
+			if ((soap.weaponnext and soap.weaponprev and lol[p.name:lower()])
 			or (p.exiting and p.pflags & PF_FINISHED
 				and soap.accspeed < FU/5
 				and soap.onGround
@@ -553,7 +554,6 @@ addHook("PlayerThink",function(p)
 			and not (p.powers[pw_carry] or soap.isSliding)
 			and not P_PlayerInPain(p)
 			and not (soap.noability & SNOABIL_BREAKDANCE)
-			and lol[p.name:lower()]
 				if me.state ~= S_PLAY_SOAP_BREAKDANCE
 					me.state = S_PLAY_SOAP_BREAKDANCE
 				else
@@ -2258,7 +2258,7 @@ addHook("PlayerThink",function(p)
 				local aura = soap.fx.dash_aura
 				
 				if (p.powers[pw_shield] & SH_NOSTACK) == SH_FLAMEAURA
-					P_SetMobjStateNF(aura,SPR_NWF_WIND)
+					P_SetMobjStateNF(aura,S_SOAP_NWF_WIND)
 					if aura.sprite ~= SPR_FIRS
 						aura.frame = A
 						aura.sprite = SPR_FIRS
@@ -2282,6 +2282,7 @@ addHook("PlayerThink",function(p)
 				end
 				if speedup_frame
 				and (aura.state ~= S_SOAP_NWF_WIND_FAST and aura.tics >= states[S_SOAP_NWF_WIND].tics - 2)
+				and (p.powers[pw_shield] & SH_NOSTACK) ~= SH_FLAMEAURA
 					aura.state = S_SOAP_NWF_WIND_FAST
 				end
 				
