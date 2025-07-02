@@ -26,7 +26,7 @@ rawset(_G, "SOAP_CV",{})
 local CV = SOAP_CV
 CV.rainbow_ai = CV_RegisterVar({
 	name = "soap_rainbowimages",
-	defaultvalue = "On",
+	defaultvalue = "Off",
 	flags = CV_SHOWMODIF,
 	PossibleValue = CV_OnOff
 })
