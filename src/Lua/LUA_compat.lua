@@ -220,7 +220,6 @@ local function SetCompat()
 				if (soap.rdashing and me.state == S_PLAY_DASH)
 				and (soap.accspeed >= 38*FU)
 					attack = 2
-					defense = 2
 				end
 				if soap.airdashed
 					if me.soap_airdashsweet

@@ -1158,8 +1158,8 @@ rawset(_G,"SoapST_Hitbox",function(p)
 					), 3*found.scale,
 					true, true
 				)
-				p2.tumble_nostunbreak = true
-				p2.airdodge_spin = 0
+				p.tumble_nostunbreak = true
+				p.airdodge_spin = 0
 				soap.toptics = 0
 			else
 				local owner = found.tracer
