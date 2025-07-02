@@ -107,6 +107,7 @@ states[S_SOAP_NWF_WIND_FAST] = {
 mobjinfo[MT_SOAP_FREEZEGFX] = {
 	doomednum = -1,
 	spawnstate = S_INVISIBLE,
+	spawnhealth = 1000,
 	radius = 16*FRACUNIT,
 	height = 48*FRACUNIT,
 	flags = MF_NOGRAVITY|MF_NOBLOCKMAP|MF_NOCLIP|MF_NOCLIPHEIGHT|MF_NOCLIPTHING

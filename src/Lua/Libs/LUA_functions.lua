@@ -201,7 +201,7 @@ rawset(_G,"Soap_CreateAfterimage", function(p,me)
 	
 	local soap = p.soaptable
 	local rflags = RF_FULLBRIGHT|RF_NOCOLORMAPS
-	local ghost = P_SpawnMobjFromMobj(me,-me.momx,-me.momy,-me.momz*soap.gravflip,MT_SOAP_AFTERIMAGE)
+	local ghost = P_SpawnMobjFromMobj(me,-me.momx,-me.momy,-soap.rmomz*soap.gravflip,MT_SOAP_AFTERIMAGE)
 	ghost.target = me
 	
 	ghost.skin = me.skin
@@ -261,7 +261,7 @@ rawset(_G,"Soap_CreateAfterimage", function(p,me)
 				local peel = m_peel.outs[i]
 				if not (peel and peel.valid) then continue end
 				
-				local ghost2 = P_SpawnMobjFromMobj(peel,-me.momx,-me.momy,-me.momz*soap.gravflip,MT_SOAP_AFTERIMAGE)
+				local ghost2 = P_SpawnMobjFromMobj(peel,-me.momx,-me.momy,-soap.rmomz*soap.gravflip,MT_SOAP_AFTERIMAGE)
 				ghost2.target = me
 				
 				ghost2.scale = me.scale
@@ -2396,7 +2396,7 @@ rawset(_G, "Soap_Grabbed",function(p,me,soap)
 	if mashed
 		S_StartSound(p.mo, sfx_s3kd7s)
 		me.punchfree = $ + FU/4
-		me.punchmash = TR/5
+		me.punchmash = TR/7
 		if me.punchfree >= FU then
 			Soap_GrabFree(me.punchsource, me)
 			return
@@ -2460,6 +2460,7 @@ rawset(_G, "Soap_Grabbing",function(p,me,soap)
 		me.z + 3 * me.scale
 	)
 	play.drawangle = angle + ANGLE_180
+	p.drawangle = me.punchangle
 	
 	if (soap.fire == 1)
 	and not me.punchtoss
