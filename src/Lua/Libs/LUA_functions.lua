@@ -2418,6 +2418,15 @@ rawset(_G, "Soap_Grabbing",function(p,me,soap)
 	if not (not me.health or P_PlayerInPain(p))
 		me.state = S_PLAY_SKID
 	end
+	
+	if me.punchsparks
+	and (leveltime & 1)
+		if (me.punchsparks % 2)
+			GrabSparks(me, me.punchsparks % 4 == 3)
+		end
+		me.punchsparks = $ - 1
+	end
+	
 	if (me.flags & MF_NOTHINK) then return end
 	
 	local mo = me.punchtarget
@@ -2549,13 +2558,5 @@ rawset(_G, "Soap_Grabbing",function(p,me,soap)
 		
 		marker.fuse = -1
 		marker.tics = 2
-	end
-	
-	if me.punchsparks
-	and (leveltime & 1)
-		if (me.punchsparks % 2)
-			GrabSparks(me, me.punchsparks % 4 == 3)
-		end
-		me.punchsparks = $ - 1
 	end
 end)
