@@ -2305,6 +2305,7 @@ rawset(_G, "Soap_GrabStart",function(me, victim)
 	victim.punchmash = 0
 	victim.player.intangible = true
 	victim.player.tumble = nil
+	victim.flags = $ &~MF_NOCLIPHEIGHT
 	
 	S_StartSound(me, sfx_sp_grb)
 	GrabSparks(me)
@@ -2335,6 +2336,7 @@ rawset(_G, "Soap_GrabFree",function(from, me, idontflinch, theydontflinch)
 	from.punchtarget = nil
 	me.punchsource = nil
 	me.player.intangible = false
+	me.flags = $ &~MF_NOCLIPHEIGHT
 	me.punchfree = nil
 	me.punchmash = nil
 	me.spritexoffset = 0
