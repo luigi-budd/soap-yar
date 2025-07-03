@@ -1958,7 +1958,7 @@ addHook("PlayerThink",function(p)
 				local momz = abs(FixedDiv(me.momz,me.scale))
 				if (momz >= 5*FU)
 					speedup_frame = P_RandomChance(
-						min(FixedDiv(5*FU, momz - 5*FU), FU)
+						min(FixedDiv(5*FU, (momz - 5*FU) or 1), FU)
 					)
 					if (momz >= 32*FU) then speedup_frame = true end
 				end
