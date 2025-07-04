@@ -1,3 +1,4 @@
+local CV = SOAP_CV
 local function dust_type(me)
 	return (me.eflags & (MFE_UNDERWATER|MFE_TOUCHWATER)) and P_RandomRange(MT_SMALLBUBBLE,MT_MEDIUMBUBBLE) or MT_SPINDUST
 end
@@ -377,7 +378,7 @@ rawset(_G, "Soap_CanHurtPlayer", function(p1,p2,nobs)
 	end
 	
 	local allowhurt = true
-	local ff = CV_FindVar("friendlyfire").value
+	local ff = CV.FindVar("friendlyfire").value
 	
 	if not (nobs)
 		--no griefing!
@@ -416,7 +417,7 @@ rawset(_G, "Soap_CanHurtPlayer", function(p1,p2,nobs)
 			return false
 		end
 		
-		if (leveltime <= CV_FindVar("hidetime").value*TR)
+		if (leveltime <= CV.FindVar("hidetime").value*TR)
 		and (gametyperules & GTR_STARTCOUNTDOWN)
 			return false
 		end
@@ -1249,7 +1250,7 @@ rawset(_G,"SoapST_Start",function(p)
 	S_StartSound(me, sfx_sp_tch)
 end)
 
-local cv_hidetime = CV_FindVar("hidetime")
+local cv_hidetime = CV.FindVar("hidetime")
 rawset(_G,"Soap_HandleNoAbils", function(p)
 	local soap = p.soaptable
 	local me = p.realmo

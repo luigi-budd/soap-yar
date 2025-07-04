@@ -22,14 +22,7 @@ rawset(_G,"SOAP_MAXDASH", 15*FU)
 rawset(_G,"SOAP_DASHTIME", TR/2)
 rawset(_G,"SOAP_TOPCOOLDOWN", 4*TR)
 
-rawset(_G, "SOAP_CV",{})
 local CV = SOAP_CV
-CV.rainbow_ai = CV_RegisterVar({
-	name = "soap_rainbowimages",
-	defaultvalue = "Off",
-	flags = CV_SHOWMODIF,
-	PossibleValue = CV_OnOff
-})
 
 local soap_crouchanimtime = 13
 local max_mentums = (FU - ORIG_FRICTION) * 9/10
@@ -828,7 +821,7 @@ addHook("PlayerThink",function(p)
 				--spininng top
 				if ((G_RingSlingerGametype()
 				and (p.rings == 0))
-				or (CV_FindVar("friendlyfire").value and gametype == GT_COOP))
+				or (CV.FindVar("friendlyfire").value and not Soap_IsCompGamemode()))
 				and (soap.c3 == 1)
 				and (soap.topcooldown == 0)
 					candotop = true
@@ -903,8 +896,8 @@ addHook("PlayerThink",function(p)
 			if (soap.use)
 				
 				--grabbing (lol)
-				if (CV_FindVar("friendlyfire").value)
-				and (gametype == GT_COOP)
+				if (CV.FindVar("friendlyfire").value)
+				and (not Soap_IsCompGamemode())
 				and (soap.use_R)
 				and (soap.use == 1)
 				and (soap.onGround)

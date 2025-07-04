@@ -1,5 +1,6 @@
 local filetree = {
 	"LUA_init.lua",
+	"LUA_console.lua",
 	--math is important so run it up here
 	"libs/LUA_math.lua",
 	
