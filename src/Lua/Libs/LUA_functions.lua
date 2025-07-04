@@ -331,31 +331,39 @@ end)
 --lul
 rawset(_G, "Soap_DirBreak", function(p, me, angle, nomom)
 	local soap = p.soaptable
-	
-	local newsubsec = R_PointInSubsectorOrNil(
-		me.x + ((not nomom) and (me.momx + P_ReturnThrustX(nil,angle,me.radius*2)) or 0),
-		me.y + ((not nomom) and (me.momy + P_ReturnThrustY(nil,angle,me.radius*2)) or 0)
-	)
-	if not (newsubsec and newsubsec.valid) then return end
-	local newsec = newsubsec.sector
-	if not (newsec and newsec.valid) then return end
-	
 	local val = false
 	
-	for rover in newsec.ffloors()
-		
-		if not (rover.flags & FF_EXISTS) then continue end
-		if not (rover.flags & FF_BUSTUP) then continue end
-		
-		--"equal to" checks because we want to be ABOVE the fof, not ON it
-		--prevents being able to break floor bustables by just clutching
-		if me.z + me.momz + me.height <= rover.bottomheight then continue end 
-		if me.z + me.momz >= rover.topheight then continue end
-		
-		EV_CrumbleChain(rover)
-		val = true
+	local momx = 0
+	local momy = 0
+	if not nomom
+		momx = me.momx + P_ReturnThrustX(nil,angle,me.radius)
+		momy = me.momy + P_ReturnThrustY(nil,angle,me.radius)
 	end
 	
+	local my_mx = momx/4
+	local my_my = momy/4
+	for i = 1, (nomom and 1 or 4)
+		local newsubsec = R_PointInSubsectorOrNil(
+			me.x + my_mx*i,
+			me.y + my_my*i
+		)
+		if not (newsubsec and newsubsec.valid) then continue end
+		local newsec = newsubsec.sector
+		if not (newsec and newsec.valid) then continue end
+		
+		for rover in newsec.ffloors()
+			if not (rover.flags & FF_EXISTS) then continue end
+			if not (rover.flags & FF_BUSTUP) then continue end
+			
+			--"equal to" checks because we want to be ABOVE the fof, not ON it
+			--prevents being able to break floor bustables by just clutching
+			if me.z + me.momz + me.height <= rover.bottomheight then continue end 
+			if me.z + me.momz >= rover.topheight then continue end
+			
+			EV_CrumbleChain(rover)
+			val = true
+		end
+	end
 	return val
 end)
 
