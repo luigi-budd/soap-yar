@@ -1,4 +1,4 @@
---T-HOOK as in Takis-Hook, not thok with 2 "o"'s
+--T-HOOK as in Takis-Hook
 
 --special boss cases
 Takis_Hook.addHook("CanFlingThing",function(mo, p)

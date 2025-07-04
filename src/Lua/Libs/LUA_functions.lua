@@ -197,6 +197,7 @@ end)
 local AICOLOR_START = SKINCOLOR_PINK
 local AICOLOR_END = FIRSTSUPERCOLOR
 local AICOLOR_LENGTH = AICOLOR_END - AICOLOR_START
+local AI_MINALPHA = FU/4
 rawset(_G,"Soap_CreateAfterimage", function(p,me)
 	if not (me and me.valid) then return end
 	
@@ -213,6 +214,9 @@ rawset(_G,"Soap_CreateAfterimage", function(p,me)
 	ghost.sprite2 = me.sprite2
 	ghost.frame = me.frame & FF_FRAMEMASK
 	ghost.takis_frame = me.frame & FF_FRAMEMASK
+	
+	local sine = abs(sin(FixedAngle(leveltime*FU*10)))
+	ghost.alpha = AI_MINALPHA + max(sine - AI_MINALPHA, 0)
 	
 	ghost.tics = -1
 	ghost.fuse = 4
@@ -269,6 +273,7 @@ rawset(_G,"Soap_CreateAfterimage", function(p,me)
 				
 				ghost2.sprite = peel.sprite
 				
+				ghost2.frame = peel.frame
 				ghost2.takis_frame = peel.frame
 				ghost2.tics = -1
 				ghost2.fuse = 4
@@ -276,6 +281,8 @@ rawset(_G,"Soap_CreateAfterimage", function(p,me)
 				ghost2.blendmode = AST_ADD
 				
 				ghost2.angle = peel.angle
+				local sine = abs(sin(FixedAngle(leveltime*FU*10)))
+				ghost2.alpha = AI_MINALPHA + max(sine - AI_MINALPHA, 0)
 				
 				--dont copy color
 				ghost2.color = rainbow

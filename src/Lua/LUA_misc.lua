@@ -1,7 +1,7 @@
 local AI_MINALPHA = FU/4
 addHook("MobjThinker",function(ai)
-	if ai.target and ai.target.valid
-	and ai.target.hitlag
+	if (ai.target and ai.target.valid
+	and ai.target.hitlag)
 	and ai.checkedit
 		/*
 		if (ai.savescale == nil)
