@@ -389,8 +389,8 @@ addHook("ThinkFrame",do
 		local jam_t = SOAP_BOOMBOXJAMS[listening_boombox.songid or 1]
 		
 		this_musvol = $ + (((jam_t.fadeto or 0) - $) / voleasing)
-		if Soap_IsLocalPlayer(displayplayer)
-			S_SetInternalMusicVolume(this_musvol)
+		if P_IsLocalPlayer(displayplayer)
+			S_SetInternalMusicVolume(this_musvol, displayplayer)
 		end
 		if this_musvol - jam_t.fadeto < voleasing
 			this_musvol = jam_t.fadeto
@@ -401,8 +401,8 @@ addHook("ThinkFrame",do
 		if this_musvol == 100 then set_musvol = false; end
 		
 		this_musvol = $ + ((100 - $) / voleasing)
-		if Soap_IsLocalPlayer(displayplayer)
-			S_SetInternalMusicVolume(this_musvol)
+		if P_IsLocalPlayer(displayplayer)
+			S_SetInternalMusicVolume(this_musvol, displayplayer)
 		end
 		
 		if 100 - abs(this_musvol) < voleasing
