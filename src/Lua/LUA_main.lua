@@ -35,13 +35,6 @@ local function dust_noviewmobj(dust)
 	dust.dontdrawforviewmobj = me
 end
 
-local lol = {
-	["seulyy"] = true,
-	["luigi budd"] = true,
-	["koops"] = true,
-	["`green`"] = true,
-}
-
 local function Soap_SuperReady(player)
 	if (not player.powers[pw_super]
 	and not player.powers[pw_invulnerability]
@@ -151,9 +144,6 @@ local function soap_poundonland(p,me,soap)
 				P_SetObjectMomZ(me, 9*FU)
 				S_StartSoundAtVolume(me,sfx_kc52,180)
 				p.pflags = $ &~PF_THOKKED
-				soap.canuppercut = true
-				soap.uppercutted = false
-				
 			elseif stupidbouncesectors(me,me.subsector.sector) 
 				me.state = S_PLAY_ROLL
 			end
@@ -231,8 +221,6 @@ local function soap_poundonland(p,me,soap)
 				p.pflags = $|PF_JUMPED &~PF_THOKKED
 				soap.nofreefall = true
 				soap.ranoff = false
-				soap.canuppercut = true
-				soap.uppercutted = false
 				
 				me.momz = $ * 2/3
 				local speed = max(soap.accspeed, 20*FU)
@@ -266,8 +254,10 @@ local function soap_poundonland(p,me,soap)
 			)
 			me.momx = P_ReturnThrustX(nil,ang, speed)
 			me.momy = P_ReturnThrustY(nil,ang, speed)
+		else
+			soap.canuppercut = true
+			soap.uppercutted = false
 		end
-		
 	end
 end
 
@@ -534,7 +524,7 @@ addHook("PlayerThink",function(p)
 				end
 			end
 			
-			if ((soap.weaponnext and soap.weaponprev and lol[p.name:lower()])
+			if ((soap.weaponnext and soap.weaponprev)
 			or (p.exiting and p.pflags & PF_FINISHED
 				and soap.accspeed < FU/5
 				and soap.onGround
@@ -1813,6 +1803,7 @@ addHook("PlayerThink",function(p)
 				do_poundaura = true
 				squishme = false
 				
+				p.pflags = $|PF_JUMPED|PF_JUMPSTASIS
 				me.pitch = FixedMul($, FU*3/4)
 				me.roll = FixedMul($, FU*3/4)
 				

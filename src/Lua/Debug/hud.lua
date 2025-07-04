@@ -121,7 +121,7 @@ addHook("HUD",function(v,p)
 		v.drawString(x,y-30,soap.stasistic,flags,"thin")
 		
 		v.drawString(x+60,y-38,"stasis",flags,"thin")
-		drawflag(v,x+60,y-30,"FS",flags,V_GREENMAP,V_REDMAP,"thin",(p.pflags & PF_FULLSTASIS))
+		drawflag(v,x+60,y-30,"FS",flags,V_GREENMAP,V_REDMAP,"thin",(p.pflags & PF_FULLSTASIS == PF_FULLSTASIS))
 		drawflag(v,x+78,y-30,"JS",flags,V_GREENMAP,V_REDMAP,"thin",(p.pflags & PF_JUMPSTASIS))
 		drawflag(v,x+96,y-30,"SS",flags,V_GREENMAP,V_REDMAP,"thin",(p.pflags & PF_STASIS))
 	elseif oldflags & DEBUG_POWERS
