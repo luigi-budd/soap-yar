@@ -1606,6 +1606,7 @@ rawset(_G,"Soap_DeathThinker",function(p,me,soap)
 					momz = -30*me.scale*soap.gravflip
 				end
 				me.momz = momz
+				me.state = S_PLAY_DEAD
 			end
 			me.momx,me.momy = 0,0
 			me.soap_landondeath = false
