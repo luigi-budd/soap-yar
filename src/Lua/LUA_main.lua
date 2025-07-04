@@ -2333,7 +2333,7 @@ addHook("PlayerThink",function(p)
 			--since we can be sure we arent modifying runspeed
 			--at this point, we can reverse the multiplication
 			--the game does for animations
-			if p.powers[pw_super]
+			if (p.powers[pw_super] or soap.isSolForm)
 			and (p.runspeed ~= skins[p.skin].runspeed)
 				--plus 0.10 for a litle leeway
 				p.runspeed = FixedDiv($, (5*FU/3) + FU/10)
