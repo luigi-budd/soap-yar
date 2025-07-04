@@ -1426,6 +1426,7 @@ addHook("PlayerThink",function(p)
 			end
 			
 			if soap.uppercutted
+			and me.health
 			and not (soap.noability & SNOABIL_UPPERCUT)
 				if (me.momz*soap.gravflip >= 0)
 					
