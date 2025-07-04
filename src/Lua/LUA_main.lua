@@ -2132,7 +2132,7 @@ addHook("PlayerThink",function(p)
 				
 				--recovery jump
 				if soap.paintime >= TR/2
-				and soap.jump
+				and (soap.jump == 1)
 				and (p.powers[pw_carry] == CR_NONE)
 				--not in match!
 				and not Soap_IsCompGamemode()
