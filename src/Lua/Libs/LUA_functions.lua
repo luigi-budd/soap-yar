@@ -2381,7 +2381,7 @@ rawset(_G, "Soap_Grabbed",function(p,me,soap)
 	me.flags2 = $ &~MF2_DONTDRAW
 	
 	p.guard = 0
-	p.action2text = string.format("Release: %.1f%%", me.punchmash*100)
+	p.action2text = string.format("Release: %.1f%%", me.punchfree*100)
 	p.canstunbreak = -5
 	p.canguard = false
 	
@@ -2406,8 +2406,8 @@ rawset(_G, "Soap_Grabbed",function(p,me,soap)
 	
 	if mashed
 		S_StartSound(p.mo, sfx_s3kd7s)
-		me.punchfree = $ + FU/4
-		me.punchmash = TR/7
+		me.punchmash = TR/4
+		me.punchfree = $ + FU/6
 		if me.punchfree >= FU then
 			Soap_GrabFree(me.punchsource, me)
 			return
