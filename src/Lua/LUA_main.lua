@@ -2095,6 +2095,13 @@ addHook("PlayerThink",function(p)
 			if not (p.pflags & PF_JUMPED)
 				soap.doublejumped = false
 			end
+			if soap.linebump
+				if soap.onGround
+					me.movefactor = tofixed("0.445")
+					me.friction = tofixed("0.983")
+				end
+				soap.linebump = $ - 1
+			end
 			
 			if soap.chargedtime
 				if (soap.chargedtime/2) & 1
@@ -2928,36 +2935,34 @@ end,peelout_mobj)
 addHook("MobjMoveBlocked", function(me, thing, line)
 	local p = me.player
 	local soap = p.soaptable
-	local allowbump = false
 	
-	local hook_event = Takis_Hook.events["Soap_GlobalMoveBlocked"]
-	for i,v in ipairs(hook_event)
-		if Takis_Hook.tryRunHook("Soap_GlobalMoveBlocked", v, me,thing,line)
-			return
-		end
-	end
-	
-	if me.skin ~= "soapthehedge" then return end
-	
-	if not (me.state == S_PLAY_DASH or me.state == S_PLAY_FLOAT_RUN) then return end
-	
+	local goingup = false
 	if (me.standingslope and me.standingslope.valid)
-		local goingup = false
 		local posfunc = P_GetZAt --P_MobjFlip(me) == 1 and P_FloorzAtPos or P_CeilingzAtPos
 		
 		if posfunc(me.standingslope, me.x, me.y, me.z) > me.z
 		or posfunc(me.standingslope, me.x + me.momx, me.y + me.momy, me.z + me.momz) > me.z
 			goingup = true
 		end
-		
-		if goingup
+	end
+	
+	local hook_event = Takis_Hook.events["Soap_GlobalMoveBlocked"]
+	for i,v in ipairs(hook_event)
+		if Takis_Hook.tryRunHook("Soap_GlobalMoveBlocked", v, me,thing,line, goingup)
 			return
 		end
 	end
 	
+	if me.skin ~= "soapthehedge" then return end
+	
+	--if not (me.state == S_PLAY_DASH or me.state == S_PLAY_FLOAT_RUN) then return end
+	if goingup
+		return
+	end
+	
 	if ( (soap.rdashing
 	and (p.normalspeed >= skins[p.skin].normalspeed + soap._maxdash))
-	or (soap.airdashed) )
+	or (soap.airdashed) or true )
 	and ((thing and thing.valid) or (line and line.valid and P_LineIsBlocking(me,line)))
 		soap.rdashing = false
 		if soap.airdashed
@@ -2976,10 +2981,30 @@ addHook("MobjMoveBlocked", function(me, thing, line)
 		S_StartSound(me, sfx_s3k49)
 		Soap_SpawnBumpSparks(me, thing, line)
 		
-		P_BounceMove(me)
-		
+		if (line and line.valid)
+			local line_ang = R_PointToAngle2(
+				line.v1.x, line.v1.y, line.v2.x, line.v2.y
+			)
+			local speed = FixedDiv(30*me.scale, me.friction) + FixedHypot(p.cmomx,p.cmomy)
+			speed = $ + R_PointToDist2(0,0,me.momx,me.momy)/20
+			
+			P_Thrust(me,
+				line_ang - ANGLE_90*(P_PointOnLineSide(me.x,me.y, line) and 1 or -1),
+				-speed
+			)
+			soap.linebump = TR/3
+		else
+			local ang = R_PointToAngle2(me.x,me.y, thing.x,thing.y)
+			local speed = R_PointToDist2(0,0,thing.momx,thing.momy) + FixedMul(
+				20*FU, FixedSqrt(FixedMul(thing.scale,me.scale))
+			)
+			if soap.onGround then speed = FixedDiv($, me.friction) end
+			P_InstaThrust(me, ang, -speed)
+			p.powers[pw_nocontrol] = 10
+			p.powers[pw_noautobrake] = p.powers[pw_nocontrol]
+			return true
+		end
 	end
-	
 end,MT_PLAYER)
 
 local function handleBump(p,me,thing)

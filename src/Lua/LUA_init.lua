@@ -666,6 +666,7 @@ rawset(_G, "Soap_InitTable", function(p)
 		firepain = 0,
 		elecpain = 0,
 		allowdeathanims = true,
+		linebump = 0,
 		
 		--if true, no crouching until c3 is let go
 		crouch_cooldown = false,
