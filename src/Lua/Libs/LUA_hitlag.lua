@@ -49,12 +49,11 @@ hl.iterateHitlagged = function()
 			
 			if (mo.player and mo.player.valid)
 				local p = mo.player
-				p.pflags = $|PF_FULLSTASIS|PF_JUMPSTASIS
+				p.pflags = $|v[4]|PF_FULLSTASIS|PF_JUMPSTASIS
 				p.powers[pw_nocontrol] = 1
 				if mo.damageinhitlag ~= true
 					p.powers[pw_flashing] = max($,flashingtics)
 				end
-				p.pflags = v[4]
 				
 				--freeze in place
 				if Soap_IsLocalPlayer(p)
@@ -251,6 +250,7 @@ hl.iterateHitlaggedPostThink = function()
 			
 			if (mo.player and mo.player.valid)
 				local p = mo.player
+				p.pflags = $|v[4]|PF_FULLSTASIS|PF_JUMPSTASIS
 				if (p.followmobj and p.followmobj.valid)
 					p.followmobj.spritexoffset = mo.spritexoffset
 					p.followmobj.translation = mo.translation
@@ -258,6 +258,14 @@ hl.iterateHitlaggedPostThink = function()
 				
 				p.drawangle = v[3]
 			end
+			
+			P_SetMobjStateNF(mo, v[5])
+			mo.frame = A
+			mo.sprite = v[6]
+			if (mo.skin and mo.sprite == SPR_PLAY)
+				mo.sprite2 = v[8]
+			end
+			mo.frame = v[7]
 			
 			mo.flags2 = $ &~MF2_DONTDRAW
 		end
@@ -320,6 +328,7 @@ hl.addHitlag = function(
 		mo.flags,
 		(mo.player and mo.player.valid) and mo.player.drawangle,
 		(mo.player and mo.player.valid) and mo.player.pflags,
+		mo.state, mo.sprite, mo.frame, mo.sprite2
 	})
 end
 
