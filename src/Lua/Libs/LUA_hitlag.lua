@@ -182,7 +182,7 @@ hl.iterateHitlagged = function()
 					$,hl.cv_hitlagtics.value
 				)
 			end
-			mo.soap_stunned = $ - 1
+			mo.soap_stunned = max($ - 1, 0)
 			
 			if not (mo.soap_stunned)
 				S_StopSoundByID(mo, sfx_kc38)
