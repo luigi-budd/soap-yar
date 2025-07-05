@@ -2955,7 +2955,7 @@ addHook("MobjMoveBlocked", function(me, thing, line)
 	
 	if me.skin ~= "soapthehedge" then return end
 	
-	--if not (me.state == S_PLAY_DASH or me.state == S_PLAY_FLOAT_RUN) then return end
+	if not (me.state == S_PLAY_DASH or me.state == S_PLAY_FLOAT_RUN) then return end
 	if goingup
 		return
 	end
