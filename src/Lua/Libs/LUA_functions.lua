@@ -205,6 +205,7 @@ rawset(_G,"Soap_CreateAfterimage", function(p,me)
 	local rflags = RF_FULLBRIGHT|RF_NOCOLORMAPS
 	local ghost = P_SpawnMobjFromMobj(me,-me.momx,-me.momy,-soap.rmomz*soap.gravflip,MT_SOAP_AFTERIMAGE)
 	ghost.target = me
+	ghost.flags2 = $|MF2_DONTDRAW
 	
 	ghost.skin = me.skin
 	ghost.scale = me.scale
@@ -268,6 +269,7 @@ rawset(_G,"Soap_CreateAfterimage", function(p,me)
 				
 				local ghost2 = P_SpawnMobjFromMobj(peel,-me.momx,-me.momy,-soap.rmomz*soap.gravflip,MT_SOAP_AFTERIMAGE)
 				ghost2.target = me
+				ghost2.flags2 = $|MF2_DONTDRAW
 				
 				ghost2.scale = me.scale
 				

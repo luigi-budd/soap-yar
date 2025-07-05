@@ -1405,6 +1405,7 @@ addHook("PlayerThink",function(p)
 					if soap.accspeed >= FU
 						p.drawangle = R_PointToAngle2(0,0, me.momx,me.momy)
 					end
+					soap.afterimage = true
 				end
 				
 				--replenish
@@ -1412,7 +1413,6 @@ addHook("PlayerThink",function(p)
 					soap.airdashed = false
 				end
 				
-				soap.afterimage = true
 				soap.nofreefall = true
 			end
 			
@@ -1624,28 +1624,31 @@ addHook("PlayerThink",function(p)
 					S_StopSoundByID(me,sfx_sp_mc2)
 					
 				else
-					local speed_frac = ease.incubic(FU/2,
-						FixedDiv(
-							p.normalspeed - dashspeed,
-							21*FU
-						), FU
-					)
-					
-					local color = SKINCOLOR_SAPPHIRE + (FixedMul(
-						(SKINCOLOR_GALAXY - SKINCOLOR_SAPPHIRE)*FU,
-						speed_frac)
-					)/FU
-					color = max(0, min($, #skincolors - 1))
-					Soap_WindLines(me,nil,color)
-					
-					soap.afterimage = true
-					
-					if Soap_DirBreak(p,me, R_PointToAngle2(0,0,me.momx,me.momy))
-						Soap_Hitlag.addHitlag(me, 7, false)
+					--None of this in free fall
+					if not (soap.uppercutted and me.state == S_PLAY_FALL)
+						soap.afterimage = true
+						
+						local speed_frac = ease.incubic(FU/2,
+							FixedDiv(
+								p.normalspeed - dashspeed,
+								21*FU
+							), FU
+						)
+						
+						local color = SKINCOLOR_SAPPHIRE + (FixedMul(
+							(SKINCOLOR_GALAXY - SKINCOLOR_SAPPHIRE)*FU,
+							speed_frac)
+						)/FU
+						color = max(0, min($, #skincolors - 1))
+						Soap_WindLines(me,nil,color)
+						
+						if Soap_DirBreak(p,me, R_PointToAngle2(0,0,me.momx,me.momy))
+							Soap_Hitlag.addHitlag(me, 7, false)
+						end
+						
+						p.powers[pw_strong] = $|STR_SPIKE|STR_ANIM|STR_HEAVY
+						p.runspeed = 4*FU
 					end
-					
-					p.powers[pw_strong] = $|STR_SPIKE|STR_ANIM|STR_HEAVY
-					p.runspeed = 4*FU
 					
 					if not Soap_IsCompGamemode()
 						--test shallowness, so we dont get "stuck" on water
