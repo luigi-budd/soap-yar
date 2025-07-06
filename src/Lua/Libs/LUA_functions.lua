@@ -238,7 +238,7 @@ rawset(_G,"Soap_CreateAfterimage", function(p,me)
 	end
 	ghost.color = rainbow
 	
-	ghost.spritexscale,ghost.spriteyscale = soap.spritexscale, soap.spriteyscale
+	ghost.spritexscale,ghost.spriteyscale = me.spritexscale, me.spriteyscale
 	ghost.spritexoffset,ghost.spriteyoffset = me.spritexoffset, me.spriteyoffset
 	ghost.rollangle = me.rollangle
 	ghost.pitch = me.pitch or 0
