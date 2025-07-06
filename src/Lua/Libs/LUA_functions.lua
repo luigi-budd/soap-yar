@@ -1212,27 +1212,32 @@ rawset(_G,"SoapST_Hitbox",function(p)
 					--Clash!
 					elseif dpri == 2
 						P_Thrust(me,
-							R_PointToAngle2(me.x,me.y, found.x,found.y),
-							20*found.scale + R_PointToDist2(0,0,found.x,found.y)
+							R_PointToAngle2(found.x,found.y, me.x,me.y),
+							20*found.scale + R_PointToDist2(0,0,found.momx,found.momy)
 						)
 						P_Thrust(found,
-							R_PointToAngle2(found.x,found.y, me.x,me.y),
-							20*me.scale + R_PointToDist2(0,0,me.x,me.y)
+							R_PointToAngle2(me.x,me.y, found.x,found.y),
+							20*me.scale + R_PointToDist2(0,0,me.momx,me.momy)
 						)
+						soap.linebump = max($,12)
+						if (skins[found.player.skin].name == "soapthehedge")
+							found.player.soaptable.linebump = max($, 12)
+						end
+						
+						Soap_Hitlag.addHitlag(me, 12, false)
+						Soap_Hitlag.addHitlag(found, 12, false)
+						Soap_SpawnBumpSparks(me, found)
+						
 						S_StartSound(me,sfx_cdpcm9)
 						S_StartSound(me,sfx_s259)
-						Soap_Hitlag.addHitlag(me, 6, false)
-						Soap_Hitlag.addHitlag(found, 6, false)
-						if soap.inBattle
-							for i = 0,1
-								local me = (i and found or me)
-								local sb = P_SpawnMobjFromMobj(me,0,0,0,MT_STUNBREAK)
-								sb.scale = me.scale * 4/3
-								sb.destscale = me.scale * 3
-								sb.momz = me.momz * 3/4
-								local sh = P_SpawnMobjFromMobj(me,0,0,0,MT_BATTLESHIELD)
-								sh.target = me
-							end
+						for i = 0,1
+							local me = (i and found or me)
+							local sb = P_SpawnMobjFromMobj(me,0,0,0,MT_STUNBREAK)
+							sb.scale = me.scale * 4/3
+							sb.destscale = me.scale * 3
+							sb.momz = me.momz * 3/4
+							local sh = P_SpawnMobjFromMobj(me,0,0,0,MT_BATTLESHIELD)
+							sh.target = me
 						end
 						return
 					end
