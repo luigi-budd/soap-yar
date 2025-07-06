@@ -2097,10 +2097,11 @@ addHook("PlayerThink",function(p)
 			end
 			if soap.linebump
 				if soap.onGround
-					me.movefactor = tofixed("0.445")
+					me.movefactor = tofixed("0.345")
 					me.friction = tofixed("0.983")
 				end
 				soap.linebump = $ - 1
+				p.powers[pw_noautobrake] = max($, 1)
 			end
 			
 			if soap.chargedtime
@@ -2938,10 +2939,13 @@ addHook("MobjMoveBlocked", function(me, thing, line)
 	
 	local goingup = false
 	if (me.standingslope and me.standingslope.valid)
+		local slope = me.standingslope
+		local slopeang = (FixedAngle(slope.zangle) >= 180*FU and InvAngle(slope.zangle) or slope.zangle)
 		local posfunc = P_GetZAt --P_MobjFlip(me) == 1 and P_FloorzAtPos or P_CeilingzAtPos
 		
-		if posfunc(me.standingslope, me.x, me.y, me.z) > me.z
-		or posfunc(me.standingslope, me.x + me.momx, me.y + me.momy, me.z + me.momz) > me.z
+		if posfunc(slope, me.x, me.y, me.z) > me.z
+		or posfunc(slope, me.x + me.momx, me.y + me.momy, me.z + me.momz) > me.z
+		and (AngleFixed(slopeang) >= 45*FU)
 			goingup = true
 		end
 	end
@@ -2985,14 +2989,18 @@ addHook("MobjMoveBlocked", function(me, thing, line)
 			local line_ang = R_PointToAngle2(
 				line.v1.x, line.v1.y, line.v2.x, line.v2.y
 			)
-			local speed = FixedDiv(30*me.scale, me.friction) + FixedHypot(p.cmomx,p.cmomy)
-			speed = $ + R_PointToDist2(0,0,me.momx,me.momy)/20
+			local speed = FixedDiv(20*me.scale, me.friction) + FixedHypot(p.cmomx,p.cmomy)
+			speed = $ + abs(FixedMul(
+				R_PointToDist2(0,0,me.momx,me.momy) * 3/4,
+				sin(line_ang - R_PointToAngle2(0,0,me.momx,me.momy))
+			))
 			
 			P_Thrust(me,
 				line_ang - ANGLE_90*(P_PointOnLineSide(me.x,me.y, line) and 1 or -1),
 				-speed
 			)
-			soap.linebump = TR/3
+			soap.linebump = max($, 12)
+			return true
 		else
 			local ang = R_PointToAngle2(me.x,me.y, thing.x,thing.y)
 			local speed = R_PointToDist2(0,0,thing.momx,thing.momy) + FixedMul(
@@ -3000,8 +3008,7 @@ addHook("MobjMoveBlocked", function(me, thing, line)
 			)
 			if soap.onGround then speed = FixedDiv($, me.friction) end
 			P_InstaThrust(me, ang, -speed)
-			p.powers[pw_nocontrol] = 10
-			p.powers[pw_noautobrake] = p.powers[pw_nocontrol]
+			soap.linebump = max($, 12)
 			return true
 		end
 	end
