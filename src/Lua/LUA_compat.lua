@@ -49,6 +49,7 @@ local function SetCompat()
 			basenormalspeed = 43,
 			stats = {9,7},
 			nolookback = true,
+			legacyframes = true
 		}
 		compat.takiskart = true
 		printf("Added TakisKart stuff.")

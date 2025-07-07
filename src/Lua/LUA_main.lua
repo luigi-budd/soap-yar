@@ -149,7 +149,7 @@ local function soap_poundonland(p,me,soap)
 			end
 		else
 			if not (me.state == S_PLAY_DEAD
-			or me.state == S_PLAY_DROWN
+			or me.state == S_PLAY_DRWN
 			or me.state == S_PLAY_PAIN)
 				me.state = S_PLAY_PAIN
 			end
