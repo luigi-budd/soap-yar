@@ -2196,6 +2196,7 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 		soap.airdashed = false
 		soap.uppercutted = false
 		soap.canuppercut = true
+		soap.pounding = false
 	end
 	
 	if spawn_aura and me.health
