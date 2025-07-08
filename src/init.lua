@@ -5,12 +5,15 @@ local filetree = {
 	"libs/LUA_math.lua",
 	
 	"libs/LUA_takishooklib.lua",
-	"libs/LUA_functions.lua",
 	"libs/LUA_hitlag.lua",
+	
+	"character/LUA_soapfunc.lua",
+	"character/LUA_takisfunc.lua",
 	
 	"LUA_main.lua",
 	
 	"character/LUA_soap.lua",
+	"character/LUA_takis.lua",
 	
 	"LUA_thook.lua",
 	"LUA_misc.lua",

@@ -62,6 +62,9 @@ events["Soap_StunnedThink"] = {typefor = typefor_mobj}
 events["Soap_OnMove"] = {}
 events["Soap_VFX"] = {handler = handler_snapany}
 
+events["Takis_Thinker"] = {}
+events["Takis_VFX"] = {handler = handler_snapany}
+
 --check for new events...
 for event_name, event_t in pairs(events)
 	if (Takis_Hook.events[event_name] == nil)

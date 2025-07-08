@@ -29,7 +29,7 @@ height = 52
 spinheight = 30
 jumpfactor = 1.2
 
-dsjump = dsantjum
-dsskid = dstakskd
+dsjump = dstk_jmp
+dsskid = dstk_skd
 
 shieldscale = 1.4

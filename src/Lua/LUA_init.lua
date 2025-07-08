@@ -43,6 +43,17 @@ rawset(_G, "SNOABIL_BOTHTAUNTS",
 	SNOABIL_TAUNTS|SNOABIL_BREAKDANCE
 )
 
+--takis gets his noabil enums back lol
+enumflags("NOABIL_", {
+	"CLUTCH",
+	"HAMMER",
+	"DIVE",
+	"SLIDE",
+	"SHIELD",
+	"THOK",
+	"AFTERIMAGE",	--i wouldnt really call afterimages an ability
+})
+
 local ORIG_FRICTION		=	(232 << (FRACBITS-8)) --this should really be exposed...
 rawset(_G, "ORIG_FRICTION", ORIG_FRICTION)
 
@@ -550,6 +561,9 @@ sfxinfo[sfx_sp_kco] = {
 	caption = "Knockout!!"
 }
 
+SafeFreeslot("sfx_tk_djm")
+sfxinfo[sfx_tk_djm].caption = "Double jump"
+
 SafeFreeslot("S_PLAY_SOAP_FLEX")
 states[S_PLAY_SOAP_FLEX] = {
     sprite = SPR_PLAY,
@@ -780,6 +794,10 @@ rawset(_G, "Soap_InitTable", function(p)
 		fakeskidtime = 0,
 		
 		ranoff = false,
+		
+		--takis specific
+		waittics = 0,
+		waitframe = A,
 	}
 	
 	CONS_Printf(p,"\x82Soap_InitTable(): Success!")

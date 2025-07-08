@@ -920,13 +920,15 @@ rawset(_G,"Soap_FXDestruct",function(p)
 	local soap = p.soaptable
 
 	--remove fx
-	if (soap.fx.waterrun_L and soap.fx.waterrun_L.valid)
-		P_RemoveMobj(soap.fx.waterrun_L)
-		soap.fx.waterrun_L = nil
-	end
-	if (soap.fx.waterrun_R and soap.fx.waterrun_R.valid)
-		P_RemoveMobj(soap.fx.waterrun_R)
-		soap.fx.waterrun_R = nil
+	if me.skin ~= "takisthefox"
+		if (soap.fx.waterrun_L and soap.fx.waterrun_L.valid)
+			P_RemoveMobj(soap.fx.waterrun_L)
+			soap.fx.waterrun_L = nil
+		end
+		if (soap.fx.waterrun_R and soap.fx.waterrun_R.valid)
+			P_RemoveMobj(soap.fx.waterrun_R)
+			soap.fx.waterrun_R = nil
+		end
 	end
 	
 	if (soap.fx.uppercut_aura and soap.fx.uppercut_aura.valid)
@@ -2196,6 +2198,12 @@ local function VFX_Squish(p,me,soap, props)
 		soap.spriteyscale = $1+mom,$2-(mom*9/10)
 	end
 end
+rawset(_G, "Soap_VFXFuncs",{
+	waterrun = VFX_Waterrun,
+	jumpdust = VFX_JumpDust,
+	landdust = VFX_LandDust,
+	squish = VFX_Squish,
+})
 
 --preferrably we could handle the auras here but ehh whatever
 rawset(_G,"Soap_VFX",function(p,me,soap, props)

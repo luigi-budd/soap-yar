@@ -64,8 +64,18 @@ addHook("PlayerThink",function(p)
 			end
 		else
 			Soap_FXDestruct(p)
-		--past this end is global thinker
 		end
+
+		if me.skin == "takisthefox"
+			local hook_event = Takis_Hook.events["Takis_Thinker"]
+			for i,v in ipairs(hook_event)
+				Takis_Hook.tryRunHook("Takis_Thinker", v, p)
+			end
+		else
+			--Soap_FXDestruct(p)
+		end
+		
+		--global thinker
 		soap.nodamageforme = max($-1, 0)
 		
 		soap.last.onground = soap.onGround
@@ -109,8 +119,8 @@ addHook("PostThinkFrame",function()
 		
 		me.oldhitlag = me.hitlag
 		
-		if not (me.skin == "soapthehedge")
-		or (me.skin == "takisthefox")
+		if not (me.skin == "soapthehedge"
+		or me.skin == "takisthefox")
 			if soap.last.squash_head
 			or (soap.spritexscale ~= FU
 			or soap.spriteyscale ~= FU)
