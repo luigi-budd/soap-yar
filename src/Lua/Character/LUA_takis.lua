@@ -134,8 +134,22 @@ addHook("AbilitySpecial", function(p)
 		S_StartSound(me,sfx_splash)
 	end
 	
-	p.jp = 1
-	p.jt = 5
+	local ease_time = 8
+	local ease_func = "outsine"
+	Soap_AddSquash(p, {
+		ease_func = ease_func,
+		start_v = -FU*7/10,
+		end_v = 0,
+		time = ease_time
+	}, {
+		ease_func = ease_func,
+		start_v = FU/2,
+		end_v = 0,
+		time = ease_time
+	})
+	Soap_RemoveSquash(p, "landeffect")
+	me.soap_jumpdust = 4
+	
 	p.pflags = $|(PF_JUMPED|PF_JUMPDOWN|PF_THOKKED|PF_STARTJUMP) & ~(PF_SPINNING|PF_STARTDASH)
 	return true
 end)

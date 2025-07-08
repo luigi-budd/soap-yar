@@ -265,15 +265,6 @@ local function SetCompat()
 			
 			if me.soap_airdashsweet then me.soap_airdashsweet = $ - 1; end
 			
-			if soap.bm.damaging
-				local prop = soap.bm.dmg_props
-				B.SetPriority(p, prop.att, prop.def,
-					"knuckles_glide",
-					prop.s_att or 0, prop.s_def or 0,
-					prop.name
-				)
-			end
-			
 			if not setexhaust
 				if me.soap_exhaust
 					me.soap_exhaust = nil
