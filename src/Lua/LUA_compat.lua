@@ -203,8 +203,9 @@ local function SetCompat()
 				me.soap_cutted = nil
 			end
 			
-			if soap.toptics
-			and not soap.topwindup
+			if (soap.toptics
+			and not soap.topwindup)
+			and soap.topspin ~= false
 				B.SetPriority(p, 2, 2, "can_damage",
 					--no sour spot
 					2, 2,

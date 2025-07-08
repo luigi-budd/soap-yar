@@ -1962,11 +1962,6 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 			p.acceleration = skins[p.skin].acceleration * 2
 			
 			soap.bm.damaging = true
-			soap.bm.dmg_props = {
-				att = 2,
-				def = 1,
-				name = "Spinning Top"
-			}
 			
 			SoapST_Hitbox(p)
 			if soap.onGround
