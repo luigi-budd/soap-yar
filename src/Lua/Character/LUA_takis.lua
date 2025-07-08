@@ -100,7 +100,7 @@ addHook("AbilitySpecial", function(p)
 	local soap = p.soaptable
 	
 	if p.charability ~= CA_DOUBLEJUMP then return end
-	
+	if (p.pflags & PF_THOKKED) then return end
 	if (p.pflags & PF_JUMPSTASIS)
 		return true
 	end
@@ -117,20 +117,16 @@ addHook("AbilitySpecial", function(p)
 	Soap_ZLaunch(p.mo,FixedMul(15*FU,jfactor))
 	
 	me.state = S_PLAY_ROLL
-	local maxi = P_RandomRange(8,16)
-	for i = 0, maxi
-		local fa = FixedAngle(i*FixedDiv(360*FU,maxi*FU))
-		Soap_DustRing(me,
-			dust_type(me), 8,
-			{me.x,me.y,me.z},
-			me.radius / 2,
-			16*me.scale,
-			me.scale * 3/2,
-			me.scale / 2,
-			false,
-			dust_noviewmobj
-		)
-	end
+	Soap_DustRing(me,
+		dust_type(me), P_RandomRange(8,14),
+		{me.x,me.y,me.z},
+		me.radius / 2,
+		16*me.scale,
+		me.scale * 3/2,
+		me.scale / 2,
+		false,
+		dust_noviewmobj
+	)
 
 	--wind ring
 	S_StartSoundAtVolume(me,sfx_tk_djm,4*255/5)

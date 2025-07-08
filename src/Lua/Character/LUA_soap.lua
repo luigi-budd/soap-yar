@@ -337,6 +337,13 @@ Takis_Hook.addHook("PreThinkFrame",function(p)
 	end
 	
 	soap.bm.damaging = false
+	soap.bm.dmg_props = {
+		att = 0,
+		def = 0,
+		s_att = 0,
+		s_def = 0,
+		name = ""
+	}
 	--Okay
 	if soap.bm.lockmove
 		p.cmd.forwardmove = $/5
@@ -1962,6 +1969,11 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 			p.acceleration = skins[p.skin].acceleration * 2
 			
 			soap.bm.damaging = true
+			soap.bm.dmg_props = {
+				att = 2,
+				def = 2,
+				name = "Spinning Top"
+			}
 			
 			SoapST_Hitbox(p)
 			if soap.onGround
