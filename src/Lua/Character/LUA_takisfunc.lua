@@ -14,7 +14,6 @@ rawset(_G,"Takis_VFX",function(p,me,soap, props)
 			["jumpdust"] = boolean
 			["landdust"] = boolean
 			["squish"] = boolean
-			["deathanims"] = boolean
 	*/
 	local hook_event = Takis_Hook.events["Takis_VFX"]
 	for i,v in ipairs(hook_event)

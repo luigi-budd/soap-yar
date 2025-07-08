@@ -758,6 +758,12 @@ local function SetCompat()
             desc2 = "And also survive!",
 			desc3 = "Hefty and reliable!",
 		})
+		ZE2:AddCharacterConfig("takisthefox", {
+			speed = "normal",
+			health = 80,
+			desc1 = "Ready to blast zombies.",
+			desc2 = "Average speed, nothin' special."
+		})
 		
 		compat.ze2config = true
 		printf("Added ZE2 stuff.")
@@ -779,15 +785,20 @@ local function SetCompat()
 	if MM and MM.showdownSprites
 	and not compat.mmportraits
 		MM.showdownSprites["soapthehedge"] = "MMSD_SOAPTH"
+		MM.showdownSprites["takisthefox"] = "MMSD_TAKISTF"
 		
-		Takis_Hook.addHook("Soap_VFX", function(p, props)
+		local function novfx()
 			if not (MM and MM:isMM()) then return end
 			
 			return {
 				jumpdust = true,
 				landdust = true,
 			}
-		end)
+		end
+		
+		Takis_Hook.addHook("Soap_VFX", novfx)
+		Takis_Hook.addHook("Takis_VFX", novfx)
+		
 		compat.mmportraits = true
 		printf("Added EPIC!MM stuff.")
 	end
