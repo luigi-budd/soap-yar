@@ -563,6 +563,21 @@ local function SetCompat()
 			*/
 		}
 		
+		local S = B.SkinVars
+		local Act = B.Action
+		local G = B.GuardFunc
+		
+		S["takisthefox"] = {
+			flags = SKINVARS_GUARD|SKINVARS_NOSPINSHIELD|SKINVARS_GUNSLINGER,
+			weight = 100,
+			special = Act.CombatRoll,
+			guard_frame = 1,
+			func_priority_ext = Act.CombatRoll_Priority,
+			func_precollide = B.Fang_PreCollide,
+			func_collide = B.Fang_Collide,
+			func_postcollide = B.Fang_PostCollide,
+		}
+		
 		--use priority
 		Takis_Hook.addHook("CanPlayerHurtPlayer",function(p1,p2, nobs)
 			if (B and B.BattleGametype())

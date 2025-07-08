@@ -35,7 +35,10 @@ Takis_Hook.addHook("Takis_Thinker",function(p)
 	else
 		soap.waittics = 0
 	end
-
+	
+	p.charability2 = soap.inBattle and CA2_GUNSLINGER or CA2_NONE
+	p.revitem = soap.inBattle and MT_CORK or MT_NULL
+	
 	Takis_VFX(p,me,soap, {
 		squishme = squishme,
 	})
