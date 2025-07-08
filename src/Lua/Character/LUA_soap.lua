@@ -2013,7 +2013,7 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 				p.pflags = $ &~PF_STARTJUMP
 				
 				if soap.topairborne
-					P_SetObjectMomZ(me, 5*FU)
+					P_SetObjectMomZ(me, 8*FU)
 				end
 				
 				do
