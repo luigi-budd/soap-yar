@@ -504,7 +504,7 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 			--frame 60 = animation end
 			
 			--init
-			if skins[p.skin].sprites[SPR2_BRDA].numframes == 60
+			if skins[p.skin].sprites[SPR2_BRDA].numframes == 61
 				if soap.breakdance < F
 					me.frame = ($ &~FF_FRAMEMASK)|(soap.breakdance)
 				--loop
