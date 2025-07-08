@@ -601,6 +601,7 @@ states[S_PLAY_SOAP_SLIP] = {
 	nextstate = S_PLAY_SOAP_SLIP,
 }
 
+-- Both Takis and Soap will use the same table (Surely it wont get cluttered up soon!)
 rawset(_G, "Soap_InitTable", function(p)
 	p.soaptable = {
 		--buttons

@@ -9,6 +9,9 @@ local filetree = {
 	"libs/LUA_hitlag.lua",
 	
 	"LUA_main.lua",
+	
+	"character/LUA_soap.lua",
+	
 	"LUA_thook.lua",
 	"LUA_misc.lua",
 	"LUA_compat.lua",

@@ -994,6 +994,71 @@ rawset(_G,"Soap_RemoveSquash",function(p, name)
 	return false
 end)
 
+rawset(_G, "Soap_TickSquashes",function(p,me,soap, donttick)
+	local squash_count = #soap.squash
+	local xscale = soap.spritexscale
+	local yscale = soap.spriteyscale
+	
+	if squash_count
+		
+		for k,squash in ipairs(soap.squash)
+			local has_any_tics = false
+			if (squash.x and squash.x.tics < squash.x.timetake)
+			or (squash.y and squash.y.tics < squash.y.timetake)
+				has_any_tics = true
+			end
+			
+			if not has_any_tics
+			and not donttick
+				table.remove(soap.squash,k); continue
+			end
+			
+			if squash.x --and squash.x.tics ~= squash.x.timetake
+				local func = ease[squash.x.ease_func]
+				xscale = $ + func(
+					(FU / squash.x.timetake) * squash.x.tics,
+					squash.x.start_v,
+					squash.x.end_v,
+					squash.x.back
+				)
+				if not donttick
+					squash.x.tics = min($ + 1, squash.x.timetake)
+				end
+			end
+			
+			if squash.y
+				local func = ease[squash.y.ease_func]
+				yscale = $ + func(
+					(FU / squash.y.timetake) * squash.y.tics,
+					squash.y.start_v,
+					squash.y.end_v,
+					squash.y.back
+				)
+				if not donttick
+					squash.y.tics = min($ + 1, squash.y.timetake)
+				end
+			end
+		end
+		
+		soap.last.squash_head = squash_count
+	elseif soap.last.squash_head
+		soap.last.squash_head = 0
+	end
+	
+	me.spritexscale = max(xscale, 5)
+	me.spriteyscale = max(yscale, 5)
+	
+	if not donttick
+		if soap.afterimage
+		and (me.skin == "soapthehedge" or me.skin == "takisthefox")
+			Soap_CreateAfterimage(p, me)
+		end
+	end
+	
+	soap.spritexscale = FU
+	soap.spriteyscale = FU
+end)
+
 --"Why not just use P_IsLocalPlayer?"
 --that checks for MACHINE local player, not for
 --the guy thats on your screen

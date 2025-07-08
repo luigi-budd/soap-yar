@@ -50,13 +50,17 @@ end
 local events = {}
 events["CanPlayerHurtPlayer"] = {handler = handler_snapany}
 events["CanFlingThing"] = {handler = handler_snapany, typefor = typefor_mobj}
+events["PreThinkFrame"] = {}
+events["PostThinkFrame"] = {}
+events["MoveBlocked"] = {handler = handler_snapany} --runs for every skin
+
+events["Soap_Thinker"] = {}
 events["Soap_NoAbility"] = {handler = handler_snapany}
 events["Soap_DashSpeeds"] = {handler = handler_snapany}
 events["Soap_OnStunEnemy"] = {typefor = typefor_mobj}
 events["Soap_StunnedThink"] = {typefor = typefor_mobj}
 events["Soap_OnMove"] = {}
 events["Soap_VFX"] = {handler = handler_snapany}
-events["Soap_GlobalMoveBlocked"] = {handler = handler_snapany} --runs for every skin
 
 --check for new events...
 for event_name, event_t in pairs(events)
