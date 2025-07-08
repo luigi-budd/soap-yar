@@ -1186,8 +1186,8 @@ rawset(_G,"SoapST_Hitbox",function(p)
 	local angle = me.angle - FixedAngle(soap.topspin) + ANGLE_90
 	local height = FixedDiv(me.height,me.scale)/FU
 	for i = -1, 1, 2
-		local offsetx = P_ReturnThrustX(nil,angle, range * i)
-		local offsety = P_ReturnThrustY(nil,angle, range * i)
+		local offsetx = P_ReturnThrustX(nil,angle, FixedDiv(range,me.scale)* i)
+		local offsety = P_ReturnThrustY(nil,angle, FixedDiv(range,me.scale) * i)
 		local offsetz = P_RandomFixedRange(height/4,height)
 		local wind = P_SpawnMobjFromMobj(me,
 			offsetx,
@@ -1204,7 +1204,7 @@ rawset(_G,"SoapST_Hitbox",function(p)
 		wind.blendmode = AST_ADD
 		wind.topwind = true
 		wind.dontdrawforviewmobj = me
-		wind.offsetz = offsetz
+		wind.offsetz = FixedMul(offsetz,me.scale)
 		wind.offset = range * i
 		wind.movedir = angle
 		
@@ -1265,15 +1265,9 @@ rawset(_G,"SoapST_Hitbox",function(p)
 			if Soap_CanHurtPlayer(p,found.player,true)
 				--2,2 priority
 				if soap.inBattle
+				and not (found.player.guard > 0)
 					local apri = p.battle_atk
 					local dpri = p.battle_def
-					if p.battle_sfunc
-					and CBW_Battle.PriorityFunction[p.battle_sfunc] ~= nil
-						if CBW_Battle.PriorityFunction[p.battle_sfunc](found, me)
-							apri = p.battle_satk
-							dpri = p.battle_sdef
-						end
-					end
 					if dpri > 2
 						return
 					--Clash!

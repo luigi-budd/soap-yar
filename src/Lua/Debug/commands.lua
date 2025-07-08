@@ -175,3 +175,17 @@ CMDConstructor("die", {prefix = SOAP_DEVPREFIX, func = function(p,...)
 	P_KillMobj(p.realmo,nil,nil,type)
 	p.soaptable.deathtype = type
 end})
+
+CMDConstructor("scale", {prefix = SOAP_DEVPREFIX, func = function(p,...)
+	local args = {...}
+	local scalemul = args[1]
+	
+	scalemul = tofixed($)
+	if scalemul == 0
+	or scalemul == nil
+		prn(p, "Scale not valid.")
+		return
+	end
+	
+	p.realmo.destscale = scalemul
+end})

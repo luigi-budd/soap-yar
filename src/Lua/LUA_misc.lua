@@ -107,7 +107,7 @@ addHook("MobjThinker",function(wind)
 			me.y + P_ReturnThrustY(nil, ang, wind.offset),
 			me.z + wind.offsetz
 		)
-		wind.offsetz = $ + (wind.scale / 5 * P_MobjFlip(me))
+		wind.offsetz = $ + (wind.source.scale / 5 * P_MobjFlip(me))
 		wind.angle = ang + ANGLE_90
 		wind.movedir = $ - FixedAngle(35*FU)
 	end
