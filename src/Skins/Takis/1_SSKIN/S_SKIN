@@ -1,0 +1,35 @@
+name = takisthefox
+hudname = Takis
+realname = Takis
+supername = Flamin'_Hot_Takis
+flags = SF_NOSHIELDABILITY|SF_NONIGHTSSUPER|SF_NOSUPERSPRITES|SF_NOJUMPSPIN|SF_STOMPDAMAGE|SF_NOSHIELDABILITY
+
+startcolor = 96
+prefcolor = Forest
+supercolor = Purple
+
+ability = CA_DOUBLEJUMP
+ability2 = CA2_NONE
+
+actionspd = 45
+normalspeed = 28
+runspeed = 48
+thrustfactor = 5
+accelstart = 96
+acceleration = 40
+
+thokitem = MT_NULL
+spinitem = MT_NULL
+revitem = MT_NULL
+
+contspeed = 7
+contangle = 0
+
+height = 52
+spinheight = 30
+jumpfactor = 1.2
+
+dsjump = dsantjum
+dsskid = dstakskd
+
+shieldscale = 1.4
