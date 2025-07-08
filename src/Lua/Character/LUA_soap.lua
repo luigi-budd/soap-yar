@@ -431,11 +431,15 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 	--for reset state
 	local setstate = false
 	
-	if p.rings >= 25
-	or ((maptol & TOL_NIGHTS)
-	or G_IsSpecialStage(gamemap))
-		p.charflags = $|SF_SUPER
-	elseif not p.powers[pw_super]
+	if skins[p.skin].flags & SF_SUPER
+		if p.rings >= 25
+		or ((maptol & TOL_NIGHTS)
+		or G_IsSpecialStage(gamemap))
+			p.charflags = $|SF_SUPER
+		elseif not p.powers[pw_super]
+			p.charflags = $ &~SF_SUPER
+		end
+	else
 		p.charflags = $ &~SF_SUPER
 	end
 	
@@ -500,12 +504,17 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 			--frame 60 = animation end
 			
 			--init
-			if soap.breakdance < F
-				me.frame = ($ &~FF_FRAMEMASK)|(soap.breakdance)
-			--loop
+			if skins[p.skin].sprites[SPR2_BRDA].numframes == 60
+				if soap.breakdance < F
+					me.frame = ($ &~FF_FRAMEMASK)|(soap.breakdance)
+				--loop
+				else
+					local timer = (soap.breakdance - F) % (60 - F)
+					me.frame = ($ &~FF_FRAMEMASK)|(timer + G)
+				end
 			else
-				local timer = (soap.breakdance - F) % (60 - F)
-				me.frame = ($ &~FF_FRAMEMASK)|(timer + G)
+				local timer = soap.breakdance % skins[p.skin].sprites[SPR2_ROLL].numframes
+				me.frame = ($ &~FF_FRAMEMASK)|(timer)
 			end
 			
 			local incre_frame = (leveltime & 1)
