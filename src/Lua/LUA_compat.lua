@@ -51,6 +51,19 @@ local function SetCompat()
 			nolookback = true,
 			legacyframes = true
 		}
+		if not TakisKart_Karters["takisthefox"]
+			TakisKart_Karters["takisthefox"] = true
+			TakisKart_KarterData["takisthefox"] = {
+				basenormalspeed = 43,
+				
+				--speed,weight
+				stats = {9,4},
+				
+				nolookback = true,
+				takiskart = true,
+				legacyframes = true,
+			}
+		end
 		compat.takiskart = true
 		printf("Added TakisKart stuff.")
 	end
