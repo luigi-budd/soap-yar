@@ -799,11 +799,11 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 		local candotop = false
 		
 		--spininng top
-		if ((G_RingSlingerGametype()
+		if ((soap.c3 == 1)
+		or (soap.topcooldown == 0))
+		and ((G_RingSlingerGametype()
 		and (p.rings == 0))
 		or (CV.FindVar("friendlyfire").value and not Soap_IsCompGamemode()))
-		and (soap.c3 == 1)
-		and (soap.topcooldown == 0)
 			candotop = true
 			
 			if gametyperules & GTR_TAG
