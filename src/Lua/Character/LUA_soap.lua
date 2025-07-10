@@ -22,6 +22,30 @@ rawset(_G,"SOAP_MAXDASH", 15*FU)
 rawset(_G,"SOAP_DASHTIME", TR/2)
 rawset(_G,"SOAP_TOPCOOLDOWN", 4*TR)
 
+--Soap-NOABILity, since takis uses NOABIL_
+Soap_EnumFlags("SNOABIL_", {
+	"RDASH",
+	"AIRDASH",
+	"UPPERCUT",
+	"POUND",
+	--maybe?
+	"TOP",
+	"TAUNTS",
+	"CROUCH",
+	"BREAKDANCE",
+})
+--yeah just set all the bits lol
+--noability macros/shortcuts (there is no preprocessor anymore)
+rawset(_G, "SNOABIL_ALL",
+	INT32_MAX
+)
+rawset(_G, "SNOABIL_TAUNTSONLY",
+	SNOABIL_ALL &~(SNOABIL_TAUNTS|SNOABIL_BREAKDANCE)
+)
+rawset(_G, "SNOABIL_BOTHTAUNTS",
+	SNOABIL_TAUNTS|SNOABIL_BREAKDANCE
+)
+
 local CV = SOAP_CV
 
 local soap_crouchanimtime = 13
@@ -481,6 +505,7 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 		if soap.taunttime == 0
 			me.state = S_PLAY_STND
 		end
+		soap.noability = $|SNOABIL_TOP
 	end
 	
 	if ((soap.weaponnext and soap.weaponprev)
@@ -516,7 +541,7 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 				local timer = soap.breakdance % skins[p.skin].sprites[SPR2_ROLL].numframes
 				me.frame = ($ &~FF_FRAMEMASK)|(timer)
 			end
-			
+			p.drawangle = (p.cmd.angleturn << 16) + ANGLE_180
 			local incre_frame = (leveltime & 1)
 			if incre_frame
 				soap.breakdance = $ + 1

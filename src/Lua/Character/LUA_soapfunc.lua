@@ -1326,6 +1326,7 @@ rawset(_G,"SoapST_Start",function(p)
 	
 	if soap.toptics then return end
 	if not (me.health) then return end
+	if (soap.noability & SNOABIL_TOP) then return end
 	
 	soap.topwindup = 13
 	soap.toptics = TR
@@ -1382,7 +1383,7 @@ rawset(_G,"Soap_HandleNoAbils", function(p)
 	end
 	
 	if soap.taunttime
-		na = $|SNOABIL_CROUCH
+		na = $|SNOABIL_CROUCH|SNOABIL_TOP
 	end
 	
 	if (soap.slipping)
@@ -1440,6 +1441,10 @@ rawset(_G,"Soap_HandleNoAbils", function(p)
 	or (me.punchtarget and me.punchtarget.valid)
 	or (me.punchsource and me.punchsource.valid)
 		na = $|SNOABIL_ALL
+	end
+	
+	if (PSO)
+		na = $|SNOABIL_ALL &~SNOABIL_BOTHTAUNTS
 	end
 	
 	--return value: new noabilities field (absolute)

@@ -9,7 +9,7 @@ if (dofile("Vars/debugflag.lua"))
 	dofile("LUA_debug.lua")
 end
 
-local function enumflags(prefix, enums)
+rawset(_G,"Soap_EnumFlags",function(prefix,enums)
 	for k,enum in ipairs(enums)
 		local val = 1<<(k-1)
 		assert(val ~= -1,"\x85Ran out of bits for "..prefix.."! (k="..k..")\x80")
@@ -17,34 +17,10 @@ local function enumflags(prefix, enums)
 		rawset(_G,prefix..enum,val)
 		print("Enummed "..prefix..""..enum.." ("..val..")")
 	end
-end
-
---Soap-NOABILity, since takis uses NOABIL_
-enumflags("SNOABIL_", {
-	"RDASH",
-	"AIRDASH",
-	"UPPERCUT",
-	"POUND",
-	--maybe?
-	"TOP",
-	"TAUNTS",
-	"CROUCH",
-	"BREAKDANCE",
-})
---yeah just set all the bits lol
---noability macros/shortcuts (there is no preprocessor anymore)
-rawset(_G, "SNOABIL_ALL",
-	INT32_MAX
-)
-rawset(_G, "SNOABIL_TAUNTSONLY",
-	SNOABIL_ALL &~(SNOABIL_TAUNTS|SNOABIL_BREAKDANCE)
-)
-rawset(_G, "SNOABIL_BOTHTAUNTS",
-	SNOABIL_TAUNTS|SNOABIL_BREAKDANCE
-)
+end)
 
 --takis gets his noabil enums back lol
-enumflags("NOABIL_", {
+Soap_EnumFlags("NOABIL_", {
 	"CLUTCH",
 	"HAMMER",
 	"DIVE",
