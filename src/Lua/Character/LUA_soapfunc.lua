@@ -1266,8 +1266,8 @@ rawset(_G,"SoapST_Hitbox",function(p)
 				--2,2 priority
 				if soap.inBattle
 				and not (found.player.guard > 0)
-					local apri = p.battle_atk
-					local dpri = p.battle_def
+					local apri = found.player.battle_atk
+					local dpri = found.player.battle_def
 					if dpri > 2
 						return
 					--Clash!
@@ -1289,7 +1289,7 @@ rawset(_G,"SoapST_Hitbox",function(p)
 						Soap_Hitlag.addHitlag(found, 12, false)
 						Soap_SpawnBumpSparks(me, found)
 						
-						S_StartSound(me,sfx_cdpcm9)
+						S_StartSound(me,sfx_sp_pry)
 						S_StartSound(me,sfx_s259)
 						for i = 0,1
 							local me = (i and found or me)

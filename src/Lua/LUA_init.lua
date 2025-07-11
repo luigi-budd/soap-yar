@@ -2,6 +2,11 @@
 	Special Thanks/Credits:
 	- GLideKS : let me use all the effects in the 'NWF_Winds/' folder lol
 */
+/*
+	TODO:
+	-character specific states, sounds, mobjs should all be freeslotted
+	 in their character files
+*/
 
 rawset(_G, "TR", TICRATE)
 
@@ -497,6 +502,8 @@ sfxinfo[sfx_sp_oww] = {
 }
 SafeFreeslot("sfx_sp_grb")
 sfxinfo[sfx_sp_grb].caption = "Grab"
+SafeFreeslot("sfx_sp_pry")
+sfxinfo[sfx_sp_pry].caption = "Parry"
 
 for i = 0, 3
 	SafeFreeslot("sfx_sp_dm"..i)

@@ -39,9 +39,12 @@ Takis_Hook.addHook("Takis_Thinker",function(p)
 	p.charability2 = soap.inBattle and CA2_GUNSLINGER or CA2_NONE
 	p.revitem = soap.inBattle and MT_CORK or MT_NULL
 	
-	local hook_event = Takis_Hook.events["Soap_Thinker"]
-	for i,v in ipairs(hook_event)
-		Takis_Hook.tryRunHook("Soap_Thinker", v, p)
+	--Nope
+	if not soap.inBattle
+		local hook_event = Takis_Hook.events["Soap_Thinker"]
+		for i,v in ipairs(hook_event)
+			Takis_Hook.tryRunHook("Soap_Thinker", v, p)
+		end
 	end
 	p.charflags = $ &~SF_SUPER
 	/*
