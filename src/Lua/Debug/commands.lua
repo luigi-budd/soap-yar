@@ -189,3 +189,9 @@ CMDConstructor("scale", {prefix = SOAP_DEVPREFIX, func = function(p,...)
 	
 	p.realmo.destscale = scalemul
 end})
+
+CMDConstructor("leave", {prefix = SOAP_DEVPREFIX, func = function(p,...)
+	P_DoPlayerExit(p)
+	p.exiting = 4
+	p.pflags = $|PF_FINISHED
+end})

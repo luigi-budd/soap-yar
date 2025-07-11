@@ -17,19 +17,20 @@ addHook("PreThinkFrame",function()
 			end
 		end
 		
-		--Cool.
-		--see also: https://git.do.srb2.org/STJr/SRB2/-/merge_requests/2656
-		soap.isSliding = p.pflags & PF_SLIDING == PF_SLIDING
-		Soap_ButtonStuff(p)
-		
 		soap.noability = 0
-		Soap_HandleNoAbils(p)
-		
 		local hook_event = Takis_Hook.events["PreThinkFrame"]
 		for i,v in ipairs(hook_event)
 			Takis_Hook.tryRunHook("PreThinkFrame", v, p)
 		end
 		
+		--Cool.
+		--see also: https://git.do.srb2.org/STJr/SRB2/-/merge_requests/2656
+		soap.isSliding = p.pflags & PF_SLIDING == PF_SLIDING
+		Soap_ButtonStuff(p)
+		
+		Soap_HandleNoAbils(p)
+		
+		--PostPreThinkFrame takishook ooma
 	end
 end)
 

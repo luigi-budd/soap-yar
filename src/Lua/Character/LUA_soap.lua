@@ -352,6 +352,7 @@ local discoranges = {
 Takis_Hook.addHook("PreThinkFrame",function(p)
 	local me = p.mo
 	if (me.skin ~= "soapthehedge") then return end
+	local soap = p.soaptable
 	
 	if soap.fakeskidtime
 		if P_GetPlayerControlDirection(p) == 1
@@ -389,7 +390,6 @@ Takis_Hook.addHook("PreThinkFrame",function(p)
 	and not wassuper
 		p.charflags = $ &~SF_SUPER
 	end
-	
 end)
 
 Takis_Hook.addHook("Soap_DashSpeeds", function(p, dash, time, noadjust)
@@ -1865,6 +1865,7 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 		if not (p.pflags & PF_JUMPED)
 		or (me.eflags & MFE_SPRUNG)
 		or not me.health
+		or soap.inPain
 			soap.pounding = false
 			do_poundaura = false
 			if (me.health)
@@ -2210,14 +2211,10 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 				goop.tics = max($ - 2, 3)
 			end
 		end
+	end
+	
 	--refresh moves (lol)
-	elseif (p.powers[pw_carry] == CR_MACESPIN)
-	or (p.powers[pw_carry] == CR_MINECART)
-	or (p.powers[pw_carry] == CR_PLAYER)
-	or (p.powers[pw_carry] == CR_PTERABYTE)
-	or (p.powers[pw_carry] == CR_ROLLOUT)
-	or (p.powers[pw_carry] == CR_ROPEHANG)
-	or (p.powers[pw_carry] == CR_ZOOMTUBE)
+	if (p.powers[pw_carry] ~= CR_NONE)
 		soap.rdashing = false
 		soap.airdashed = false
 		soap.uppercutted = false

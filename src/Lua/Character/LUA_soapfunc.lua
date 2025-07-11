@@ -1457,7 +1457,7 @@ rawset(_G,"Soap_HandleNoAbils", function(p)
 		end
 	end
 	
-	soap.noability = na
+	soap.noability = $|na
 end)
 
 local soap_airfric = tofixed("0.96")
