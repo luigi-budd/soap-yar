@@ -643,6 +643,7 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 	and me.health
 		if (me.ceilingz - me.floorz < P_GetPlayerHeight(p))
 		and not (p.pflags & PF_SPINNING)
+		and not (soap.noability & SNOABIL_CROUCH)
 			forced_crouch = true
 			p.pflags = $ &~PF_SPINNING
 		end
