@@ -233,7 +233,7 @@ local function FreezeInHitlag(mo)
 	if (mo.state == S_SOAP_NWF_WIND)
 	or (mo.state == S_SOAP_NWF_WIND_FAST)
 		if mo.boostaura
-			if (mo.frame & FF_FRAMEMASK) == D
+			if (mo.frame & FF_FRAMEMASK) >= D
 				mo.frame = A|($ &~FF_FRAMEMASK)
 			end
 		end
