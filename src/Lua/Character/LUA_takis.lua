@@ -6,7 +6,7 @@ local function dust_noviewmobj(dust)
 end
 
 Takis_Hook.addHook("Takis_Thinker",function(p)
-	local me = p.mo
+	local me = p.realmo
 	local soap = p.soaptable
 	
 	local squishme = true

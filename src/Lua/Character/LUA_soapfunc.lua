@@ -1150,7 +1150,7 @@ local function top_hitenemy(me,thing)
 		if (thing.player)
 			P_MovePlayer(thing.player)
 		end
-		if not P_IsObjectOnGround(thing)
+		if P_IsObjectOnGround(thing)
 			P_SetObjectMomZ(me,4*FU,true)
 		end
 		P_DamageMobj(thing, me,me)
@@ -1266,6 +1266,9 @@ rawset(_G,"SoapST_Hitbox",function(p)
 				--2,2 priority
 				if soap.inBattle
 				and not (found.player.guard > 0)
+					local B = CBW_Battle
+					B.DoPriority(found.player)
+					B.DoSPriority(found.player, me)
 					local apri = found.player.battle_atk
 					local dpri = found.player.battle_def
 					if dpri > 2
@@ -1306,6 +1309,10 @@ rawset(_G,"SoapST_Hitbox",function(p)
 				
 				if top_hitenemy(me,found)
 					found.state = S_PLAY_PAIN
+					if soap.inBattle
+						found.pushed = me
+						found.pushed_creditplr = p
+					end
 				end
 				hit = true
 			end

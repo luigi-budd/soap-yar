@@ -350,7 +350,7 @@ local discoranges = {
 }
 
 Takis_Hook.addHook("PreThinkFrame",function(p)
-	local me = p.mo
+	local me = p.realmo
 	if (me.skin ~= "soapthehedge") then return end
 	local soap = p.soaptable
 	
