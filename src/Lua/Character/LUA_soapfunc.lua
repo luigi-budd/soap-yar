@@ -1150,11 +1150,9 @@ local function top_hitenemy(me,thing)
 		if (thing.player)
 			P_MovePlayer(thing.player)
 		end
-		if P_IsObjectOnGround(thing)
-			P_SetObjectMomZ(me,4*FU,true)
-		end
-		P_DamageMobj(thing, me,me)
+		Soap_ZLaunch(thing,6*FU,true)
 		
+		P_DamageMobj(thing, me,me)
 		Soap_Hitlag.addHitlag(me, 3, false)
 	elseif (thing.player and thing.player.valid)
 	and (thing.player.guard ~= nil)
@@ -1172,6 +1170,58 @@ local function top_hitenemy(me,thing)
 		thing.z = $ + me.momz
 	end
 	return not nullify
+end
+
+local function TryTopClash(p,me,found)
+	local B = CBW_Battle
+	if B
+		B.DoPriority(found.player)
+		B.DoSPriority(found.player, me)
+	end
+	local apri = found.player.battle_atk
+	local dpri = found.player.battle_def
+	local theyreintop = (found.player.soaptable.toptics and not found.player.soaptable.topwindup)
+	
+	--Clash!
+	if (dpri ~= nil)
+	and dpri >= 2
+	or theyreintop
+		P_Thrust(me,
+			R_PointToAngle2(found.x,found.y, me.x,me.y),
+			20*found.scale + R_PointToDist2(0,0,found.momx,found.momy)
+		)
+		soap.linebump = max($,12)
+		Soap_Hitlag.addHitlag(me, 12, false)
+		Soap_SpawnBumpSparks(me, found)
+		
+		--Higher defenses ignore the top
+		if (dpri == 2)
+		or theyreintop
+			Soap_Hitlag.addHitlag(found, 12, false)
+			P_Thrust(found,
+				R_PointToAngle2(me.x,me.y, found.x,found.y),
+				20*me.scale + R_PointToDist2(0,0,me.momx,me.momy)
+			)
+			if (skins[found.player.skin].name == "soapthehedge")
+				found.player.soaptable.linebump = max($, 12)
+			end
+		end
+		
+		S_StartSound(me,sfx_sp_pry)
+		S_StartSound(me,sfx_s259)
+		if B
+			for i = 0,(dpri == 2) and 1 or 0
+				local me = (i and found or me)
+				local sb = P_SpawnMobjFromMobj(me,0,0,0,MT_STUNBREAK)
+				sb.scale = me.scale * 4/3
+				sb.destscale = me.scale * 3
+				sb.momz = me.momz * 3/4
+				local sh = P_SpawnMobjFromMobj(me,0,0,0,MT_BATTLESHIELD)
+				sh.target = me
+			end
+		end
+		return
+	end
 end
 
 --SpinningTop
@@ -1226,9 +1276,8 @@ rawset(_G,"SoapST_Hitbox",function(p)
 		if (found.player and found.player.airdodge ~= nil and found.player.airdodge > 0) then return end
 		if (found.player and found.player.intangible) then return end
 		
-		local this_range = (found.flags & MF_MISSILE) and (range + 16*found.scale) or range
-		if abs(me.x - found.x) > this_range + found.radius
-		or abs(me.y - found.y) > this_range + found.radius
+		if abs(me.x - found.x) > range + found.radius
+		or abs(me.y - found.y) > range + found.radius
 			return
 		end
 		if not Soap_ZCollide(me,found) then return end
@@ -1266,45 +1315,8 @@ rawset(_G,"SoapST_Hitbox",function(p)
 				--2,2 priority
 				if soap.inBattle
 				and not (found.player.guard > 0)
-					local B = CBW_Battle
-					B.DoPriority(found.player)
-					B.DoSPriority(found.player, me)
-					local apri = found.player.battle_atk
-					local dpri = found.player.battle_def
-					if dpri > 2
-						return
-					--Clash!
-					elseif dpri == 2
-						P_Thrust(me,
-							R_PointToAngle2(found.x,found.y, me.x,me.y),
-							20*found.scale + R_PointToDist2(0,0,found.momx,found.momy)
-						)
-						P_Thrust(found,
-							R_PointToAngle2(me.x,me.y, found.x,found.y),
-							20*me.scale + R_PointToDist2(0,0,me.momx,me.momy)
-						)
-						soap.linebump = max($,12)
-						if (skins[found.player.skin].name == "soapthehedge")
-							found.player.soaptable.linebump = max($, 12)
-						end
-						
-						Soap_Hitlag.addHitlag(me, 12, false)
-						Soap_Hitlag.addHitlag(found, 12, false)
-						Soap_SpawnBumpSparks(me, found)
-						
-						S_StartSound(me,sfx_sp_pry)
-						S_StartSound(me,sfx_s259)
-						for i = 0,1
-							local me = (i and found or me)
-							local sb = P_SpawnMobjFromMobj(me,0,0,0,MT_STUNBREAK)
-							sb.scale = me.scale * 4/3
-							sb.destscale = me.scale * 3
-							sb.momz = me.momz * 3/4
-							local sh = P_SpawnMobjFromMobj(me,0,0,0,MT_BATTLESHIELD)
-							sh.target = me
-						end
-						return
-					end
+				or (found.player.soaptable.toptics and not found.player.soaptable.topwindup)
+					TryTopClash(p,me,found)
 				end
 				
 				if top_hitenemy(me,found)
