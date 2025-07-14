@@ -2017,9 +2017,45 @@ local function VFX_Waterrun(p,me,soap)
 		local radius = (me.radius) + 8*me.scale
 		local forward_push_x = P_ReturnThrustX(nil, angle, radius)
 		local forward_push_y = P_ReturnThrustY(nil, angle, radius)
-		local rollangle = InvAngle(
-			R_PointToAngle2(0, 0, R_PointToDist2(0,0,me.momx,me.momy), soap.rmomz)
-		)
+		local rollangle = 0
+		if me.standingslope
+		and soap.onWater
+			local slope = me.standingslope
+			
+			local pitchroll = 0
+			local pitch,roll
+			-- get what we need to rotate by
+			do
+				local slope = me.standingslope
+				local nz = slope.normal.z
+				local ny = slope.normal.y
+				local nx = slope.normal.x
+				
+				pitch = R_PointToAngle2(0,0, FixedSqrt(
+					FixedMul(ny,ny) + FixedMul(nz,nz)), nx
+				)
+				roll = R_PointToAngle2(0,0, nz, ny)
+			end
+			do
+				local twod = (twodlevel or 
+					(displayplayer and displayplayer.valid
+						and displayplayer.realmo
+						and displayplayer.realmo.flags2 & MF2_TWOD
+					)
+				)
+				local r_angle = R_PointToAngle(me.x,me.y)
+				if (displayplayer and displayplayer.valid)
+					local adjust = r_angle - displayplayer.drawangle
+					r_angle = $ + adjust
+				end
+				r_angle = $ + ANGLE_90
+				
+				pitchroll = FixedMul(pitch,-sin(r_angle)) + FixedMul(roll,cos(r_angle))
+				if twod then pitchroll = InvAngle($) end
+			end
+			
+			rollangle = InvAngle(pitchroll)
+		end
 		
 		local speedup_frame = false
 		if (soap.accspeed > 50*FU)
@@ -2676,4 +2712,62 @@ rawset(_G, "Soap_Grabbing",function(p,me,soap)
 		marker.fuse = -1
 		marker.tics = 2
 	end
+end)
+
+rawset(_G,"Soap_SlopeInfluence",function(mobj,player, options, p_slope)
+	if (mobj.flags & (MF_NOCLIPHEIGHT|MF_NOGRAVITY)) then return end
+	
+	if options == nil then options = {} end
+	
+	local thrust
+	local slope = (p_slope and p_slope.valid) and p_slope or mobj.standingslope
+	local p = (player and player.valid) and player or mobj.player
+	
+	if not (slope and slope.valid) then return end
+	if (slope.flags & SL_NOPHYSICS) then return end
+	
+	if (p and p.valid)
+	or (options.allowstand)
+		if abs(slope.zdelta) < FU/4
+			if not(p and p.valid)
+			or not (p.pflags & PF_SPINNING)
+				return
+			end
+		end
+		
+		if abs(slope.zdelta) < FU/2
+			if not (p and p.valid)
+				if not (mobj.momx or mobj.momy)
+					return
+				end
+			else
+				if not (p.rmomz or p.rmomy)
+					return
+				end
+			end
+		end
+	end
+	thrust = sin(slope.zangle)*3/2 * (-P_MobjFlip(mobj))
+	
+	if (p and p.pflags & PF_SPINNING)
+	or (options.allowmult)
+		local mul = 0
+		if (mobj.momx or mobj.momy)
+			local angle = R_PointToAngle2(0,0,mobj.momx,mobj.momy) - slope.xydirection
+			
+			if P_MobjFlip(mobj) * slope.zdelta < 0
+				angle = $^ANGLE_180
+			end
+			mul = cos(angle)
+		end
+		thrust = FixedMul($, FU*2/3 + mul/8)
+	end
+	
+	if (mobj.momx or mobj.momy)
+		thrust = FixedMul($, FU + R_PointToDist2(0,0,mobj.momx,mobj.momy)/16)
+	end
+	thrust = FixedMul($, abs(P_GetMobjGravity(mobj)))
+	
+	thrust = FixedMul($, FixedDiv(mobj.friction,ORIG_FRICTION))
+	return slope.xydirection,thrust
 end)

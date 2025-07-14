@@ -264,4 +264,3 @@ local function FreezeInHitlag(mo)
 end
 
 addHook("MobjThinker",FreezeInHitlag,MT_SOAP_FREEZEGFX)
-addHook("MobjThinker",FreezeInHitlag,MT_SOAP_WATERTRAIL)

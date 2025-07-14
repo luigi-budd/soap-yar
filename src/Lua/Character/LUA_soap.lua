@@ -946,6 +946,16 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 					--and never remove speed (butteredslope should handle that)
 					if -zangle > 0
 						p.normalspeed = $ - zangle * (FU/25)
+					--...BUT!!!	if we're going uphill while waterrunning,
+					--we should be getting speed back, since water should
+					--give almost no resistance
+					elseif soap.onWater
+						local angle,thrust = Soap_SlopeInfluence(me,p, {
+							allowstand = true, allowmult = true
+						})
+						if angle ~= nil
+							P_Thrust(me,angle, -thrust)
+						end
 					end
 				end
 				
