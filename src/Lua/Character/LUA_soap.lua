@@ -2635,21 +2635,7 @@ addHook("FollowMobj",function(p, m_peel)
 					and displayplayer.realmo.flags2 & MF2_TWOD
 				)
 			)
-			local r_angle = R_PointToAngle(me.x,me.y)
-			if (displayplayer and displayplayer.valid)
-				local adjust = r_angle - displayplayer.drawangle
-				
-				/*
-				print(string.format("%f\t%f\t%f\t%f",
-					AngleFixed(r_angle),
-					AngleFixed(adjust),
-					AngleFixed(r_angle + adjust),
-					AngleFixed(displayplayer.drawangle)
-				))
-				*/
-				r_angle = $ + adjust
-			end
-			r_angle = $ + ANGLE_90
+			local r_angle = p.drawangle + ANGLE_90
 			
 			pitchroll = FixedMul(pitch,-sin(r_angle)) + FixedMul(roll,cos(r_angle))
 			if twod then pitchroll = InvAngle($) end
