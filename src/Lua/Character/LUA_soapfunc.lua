@@ -1221,7 +1221,7 @@ local function TryTopClash(p,me,found)
 				sh.target = me
 			end
 		end
-		return
+		return true
 	end
 end
 
@@ -1317,7 +1317,9 @@ rawset(_G,"SoapST_Hitbox",function(p)
 				if soap.inBattle
 				and not (found.player.guard > 0)
 				or (found.player.soaptable.toptics and not found.player.soaptable.topwindup)
-					TryTopClash(p,me,found)
+					if TryTopClash(p,me,found)
+						return
+					end
 				end
 				
 				if top_hitenemy(me,found)
