@@ -223,10 +223,6 @@ local function FreezeInHitlag(mo)
 		P_RemoveMobj(mo)
 		return
 	end
-	if me.hitlag
-		return true
-	end
-	
 	local p = me.player
 	local soap = p.soaptable
 	
@@ -260,6 +256,9 @@ local function FreezeInHitlag(mo)
 			end
 		end
 		
+	end
+	if me.hitlag
+		return true
 	end
 end
 
