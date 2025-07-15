@@ -7,6 +7,7 @@ local filetree = {
 	"libs/LUA_takishooklib.lua",
 	"libs/LUA_hitlag.lua",
 	
+	"character/LUA_soapinit.lua",
 	"character/LUA_soapfunc.lua",
 	"character/LUA_takisfunc.lua",
 	
