@@ -45,7 +45,7 @@ local function Soap_SuperReady(player)
 	and not (maptol & TOL_NIGHTS)
 	and All7Emeralds(emeralds)
 	and (player.rings >= 50))
-	and (p.powers[pw_carry] == CR_NONE)
+	and (player.powers[pw_carry] == CR_NONE)
 		return true
 	end
 	
