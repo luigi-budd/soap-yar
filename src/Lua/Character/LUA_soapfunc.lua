@@ -1173,6 +1173,7 @@ local function top_hitenemy(me,thing)
 end
 
 local function TryTopClash(p,me,found)
+	local soap = p.soaptable
 	local B = CBW_Battle
 	if B
 		B.DoPriority(found.player)
