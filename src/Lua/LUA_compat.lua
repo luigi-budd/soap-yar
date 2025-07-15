@@ -820,6 +820,18 @@ local function SetCompat()
 		Takis_Hook.addHook("Soap_VFX", novfx)
 		Takis_Hook.addHook("Takis_VFX", novfx)
 		
+		MM.addHook("CorpseThink",function(corpse)
+			if MM_N.gameover then return end
+			local p = players[corpse.playerid]
+			if not (p and p.valid) then return end
+			local me = p.realmo
+			if not (me and me.valid) then return end
+			if p.spectator then return end
+			if not (me.skin == "soapthehedge" or me.skin == "takisthefox") then return end
+			
+			me.soap_landondeath = false
+		end)
+		
 		compat.mmportraits = true
 		printf("Added EPIC!MM stuff.")
 	end
