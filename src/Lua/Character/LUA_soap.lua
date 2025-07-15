@@ -2732,6 +2732,9 @@ Takis_Hook.addHook("MoveBlocked",function(me,thing,line, goingup)
 				-speed
 			)
 			soap.linebump = max($, 12)
+			if soap.in2D
+				me.momy = 0
+			end
 			return true
 		else
 			local ang = R_PointToAngle2(me.x,me.y, thing.x,thing.y)
@@ -2740,6 +2743,9 @@ Takis_Hook.addHook("MoveBlocked",function(me,thing,line, goingup)
 			)
 			if soap.onGround then speed = FixedDiv($, me.friction) end
 			P_InstaThrust(me, ang, -speed)
+			if soap.in2D
+				me.momy = 0
+			end
 			soap.linebump = max($, 12)
 			return true
 		end
