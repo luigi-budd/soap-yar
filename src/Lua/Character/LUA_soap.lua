@@ -410,6 +410,11 @@ Takis_Hook.addHook("Soap_DashSpeeds", function(p, dash, time, noadjust)
 			if p.cmd.sidemove ~= 0
 				noadjust = true
 			end
+			--Cool...
+			if soap.accspeed >= 15*FU
+			and soap.in2D
+				dash = 0
+			end
 		end
 		time = $ * 3/5
 	end

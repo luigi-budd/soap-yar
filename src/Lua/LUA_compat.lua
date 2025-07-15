@@ -341,8 +341,9 @@ local function SetCompat()
 		end)
 		Takis_Hook.addHook("Soap_NoAbility", function(p, nb)
 			local soap = p.soaptable
-			local me = p.mo
+			local me = p.realmo
 			
+			if not (me and me.valid) then return end
 			if not soap.inBattle then return end
 			
 			local na = nb
