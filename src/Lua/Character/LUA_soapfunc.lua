@@ -2062,7 +2062,7 @@ local function VFX_Waterrun(p,me,soap)
 			)
 			if (soap.accspeed >= 55*FU) then speedup_frame = true end
 		end
-		local scale = FixedDiv(soap.accspeed, 60*FU)
+		local scale = FixedMul(me.scale, FixedDiv(soap.accspeed, 20*FU))
 		
 		--left
 		do
