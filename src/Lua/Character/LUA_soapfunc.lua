@@ -2046,7 +2046,7 @@ local function VFX_Waterrun(p,me,soap)
 						and displayplayer.realmo.flags2 & MF2_TWOD
 					)
 				)
-				local r_angle = p.drawangle+ ANGLE_90
+				local r_angle = p.drawangle + ANGLE_90
 				
 				pitchroll = FixedMul(pitch,-sin(r_angle)) + FixedMul(roll,cos(r_angle))
 				if twod then pitchroll = InvAngle($) end
@@ -2062,7 +2062,7 @@ local function VFX_Waterrun(p,me,soap)
 			)
 			if (soap.accspeed >= 55*FU) then speedup_frame = true end
 		end
-		local scale = FixedMul(me.scale, FixedDiv(soap.accspeed, 20*FU))
+		local scale = FixedMul(me.scale, FixedDiv(soap.accspeed, 55*FU))
 		
 		--left
 		do
