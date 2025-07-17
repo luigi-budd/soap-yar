@@ -1211,15 +1211,20 @@ local function TryTopClash(p,me,found)
 		S_StartSound(me,sfx_sp_pry)
 		S_StartSound(me,sfx_s259)
 		if B
-			for i = 0,(dpri == 2) and 1 or 0
-				local me = (i and found or me)
-				local sb = P_SpawnMobjFromMobj(me,0,0,0,MT_STUNBREAK)
-				sb.scale = me.scale * 4/3
-				sb.destscale = me.scale * 3
-				sb.momz = me.momz * 3/4
-				local sh = P_SpawnMobjFromMobj(me,0,0,0,MT_BATTLESHIELD)
-				sh.target = me
-			end
+			local dx = ((me.x + found.x) / 2)
+			local dy = ((me.y + found.y) / 2)
+			local sb = P_SpawnMobjFromMobj(me,0,0,0,MT_STUNBREAK)
+			P_SetOrigin(sb,dx,dy,sb.z)
+			sb.scale = me.scale * 4/3
+			sb.destscale = me.scale * 3
+			sb.momz = me.momz * 3/4
+			sb.renderflags = $|RF_PAPERSPRITE|RF_FULLBRIGHT
+			sb.angle = R_PointToAngle2(me.x,me.y,found.x,found.y) + ANGLE_90
+			
+			local sh = P_SpawnMobjFromMobj(me,0,0,0,MT_BATTLESHIELD)
+			P_SetOrigin(sh,dx,dy,sh.z)
+			sh.renderflags = $|RF_PAPERSPRITE|RF_FULLBRIGHT
+			sh.angle = sb.angle
 		end
 		return true
 	end
