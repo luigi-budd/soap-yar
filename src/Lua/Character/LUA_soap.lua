@@ -625,6 +625,7 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 		if (me.ceilingz - me.floorz < P_GetPlayerHeight(p))
 		and not (p.pflags & PF_SPINNING)
 		and not (soap.noability & SNOABIL_CROUCH)
+		and (p.powers[pw_carry] == CR_NONE)
 			forced_crouch = true
 			p.pflags = $ &~PF_SPINNING
 		end
@@ -724,6 +725,7 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 		if (p.pflags & (PF_JUMPED|PF_THOKKED) == PF_JUMPED)
 		and (soap.c2 == 1)
 		and Soap_SuperReady(p)
+		and not soap.isSolForm
 			P_DoSuperTransformation(p)
 		end
 		
