@@ -376,16 +376,11 @@ local voleasing = 15
 addHook("ThinkFrame",do
 	if not (displayplayer and displayplayer.valid) then return end
 	
+	local dest_fade = 100
 	if listening_boombox and listening_boombox.valid
 		local jam_t = SOAP_BOOMBOXJAMS[listening_boombox.songid or 1]
 		
-		this_musvol = $ + (((jam_t.fadeto or 0) - $) / voleasing)
-		if P_IsLocalPlayer(displayplayer)
-			S_SetInternalMusicVolume(this_musvol, displayplayer)
-		end
-		if this_musvol - jam_t.fadeto < voleasing
-			this_musvol = jam_t.fadeto
-		end
+		dest_fade = min($, (jam_t.fadeto or 0))
 		
 		set_musvol = true
 	elseif set_musvol
@@ -398,6 +393,16 @@ addHook("ThinkFrame",do
 		
 		if 100 - abs(this_musvol) < voleasing
 			this_musvol = 100
+		end
+	end
+	--this is done after so we can get the lowest volume to ease to
+	if listening_boombox and listening_boombox.valid
+		this_musvol = $ + ((dest_fade - $) / voleasing)
+		if P_IsLocalPlayer(displayplayer)
+			S_SetInternalMusicVolume(this_musvol, displayplayer)
+		end
+		if this_musvol - jam_t.fadeto < voleasing
+			this_musvol = jam_t.fadeto
 		end
 	end
 	listening_boombox = nil
