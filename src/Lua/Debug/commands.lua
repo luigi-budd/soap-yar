@@ -195,3 +195,77 @@ CMDConstructor("leave", {prefix = SOAP_DEVPREFIX, func = function(p,...)
 	p.exiting = 4
 	p.pflags = $|PF_FINISHED
 end})
+
+local valid_flagprefixes = {
+	["MF"] = true,		--object flags
+	["MF2"] = true,		--object flags2
+	["MFE"] = true,		--object eflags
+	["PF"] = true,		--player flags
+	["SF"] = true,		--player charflags
+	["RF"] = true,		--object renderflags
+	["AST"] = true,		--object blendmode
+}
+local valid_flagprefixesTOudata = {
+	["MF"] = "flags",		--object flags
+	["MF2"] = "flags2",		--object flags2
+	["MFE"] = "eflags",		--object eflags
+	["PF"] = "pflags",		--player flags
+	["SF"] = "charflags",		--player charflags
+	["RF"] = "renderflags",		--object renderflags
+	["AST"] = "blendmode",		--object blendmode
+}
+CMDConstructor("toggleflags", {prefix = SOAP_DEVPREFIX, func = function(p,...)
+	local args = {...}
+	if not #args
+		prn(p, "\x82"..SOAP_DEVPREFIX.."_toggleflags <prefix> <name>\x80: Adds/removes flags from your mobj. Available prefixes:")
+		for prefix,_ in pairs(valid_flagprefixes)
+			prn(p, "\t\x83"..prefix)
+		end
+		return
+	end
+	
+	local prefix
+	local source = p.realmo
+	local userdata
+	for num, enum in ipairs(args)
+		local work = string.upper(enum)
+		if num == 1
+			if valid_flagprefixes[work] ~= true
+				prn(p, "\x85Unknown prefix '"..work.."'")
+				return
+			end
+			if work == "PF" or work == "SF"
+				source = p
+			end
+			prefix = work
+			userdata = valid_flagprefixesTOudata[work]
+			continue
+		else
+			--if the first couple of characters are equal to the prefix (ex. "MF2_"),
+			--remove those letters so we can easily paste in flags from like
+			--the wiki or whatever lol
+			if (work:sub(1, prefix:len() + 1) == prefix.."_")
+				work = $:sub(prefix:len() + 2)
+			end
+		end
+		
+		local flag = _G[prefix.."_"..work]
+		if flag == nil
+			prn(p,"Unknown flag '"..work.."'")
+			continue
+		end
+		
+		--blend modes are special
+		if prefix == "AST"
+			source[userdata] = flag
+			prn(p,"Set '"..prefix.."_"..work.."' on yourself")
+		else
+			source[userdata] = $ ^^ flag
+			if source[userdata] & flag
+				prn(p,"Added flag '"..prefix.."_"..work.."' to yourself")
+			else
+				prn(p,"Removed flag '"..prefix.."_"..work.."' from yourself")
+			end
+		end
+	end
+end})
