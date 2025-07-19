@@ -69,6 +69,7 @@ addHook("JumpSpecial", function(p)
 	if p.inkart then return end
 	if (p.pflags & PF_JUMPSTASIS) then return end
 	if (p.pflags & (PF_JUMPED|PF_STARTJUMP) == PF_JUMPED) then return end
+	if (p.jumpfactor <= 0) then return end
 	
 	if soap.onGround
 	or me.soap_jumpeffect
