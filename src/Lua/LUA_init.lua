@@ -253,7 +253,7 @@ states[S_SOAP_BOOMBOX] = {
 		
 		if not (me and me.valid and me.skin == "soapthehedge" and me.health)
 		or killCond
-			local speed = 5*me.scale
+			local speed = 5*mo.scale
 			for i = 0,P_RandomRange(20,29)
 				local poof = P_SpawnMobjFromMobj(mo,
 					P_RandomFixedRange(-15,15),
@@ -401,8 +401,8 @@ addHook("ThinkFrame",do
 		if P_IsLocalPlayer(displayplayer)
 			S_SetInternalMusicVolume(this_musvol, displayplayer)
 		end
-		if this_musvol - jam_t.fadeto < voleasing
-			this_musvol = jam_t.fadeto
+		if this_musvol - dest_fade < voleasing
+			this_musvol = dest_fade
 		end
 	end
 	listening_boombox = nil

@@ -269,3 +269,105 @@ CMDConstructor("toggleflags", {prefix = SOAP_DEVPREFIX, func = function(p,...)
 		end
 	end
 end})
+
+local function GetPlayerHelper(pname)
+	-- Find a player using their node or part of their name.
+	local N = tonumber(pname)
+	if N ~= nil and N >= 0 and N < 32 then
+		for player in players.iterate do
+			if #player == N then
+	return player
+			end
+		end
+	end
+	for player in players.iterate do
+		if string.find(string.lower(player.name), string.lower(pname)) then
+			return player
+		end
+	end
+	return nil
+end
+local function GetPlayer(player, pname)
+	local player2 = GetPlayerHelper(pname)
+	if not player2 then
+		CONS_Printf(player, "No one here has that name.")
+	end
+	return player2
+end
+
+local function TPEffects(p,me, angle)
+	p.cmomx,p.cmomy,p.speed = 0,0,0
+	me.momx = 0
+	me.momy = 0
+	me.momz = 0
+	
+	P_ResetPlayer(p)
+	me.reactiontime = TR/2
+	me.state = S_PLAY_STND
+	
+	me.angle = angle
+	p.drawangle = me.angle
+
+	if P_IsLocalPlayer(p)
+		P_ResetCamera(p, p == secondarydisplayplayer and camera2 or camera)
+	end
+	P_FlashPal(p, PAL_MIXUP, 10)
+	S_StartSound(me,sfx_mixup,p)
+end
+
+CMDConstructor("goto", {prefix = SOAP_DEVPREFIX, func = function(p,...)
+	local args = {...}
+	local node = args[1]
+	if node == nil
+		prn(p, "goto <name/node>: Teleports you to a player.")
+		return
+	end
+	
+	local me = p.realmo
+	
+	local p2 = GetPlayer(p,node)
+	if p2
+		local mo = p2.realmo
+		if not (mo and mo.valid)
+			prn(p,"This person's object isn't valid.")
+			return
+		end
+		
+		P_SetOrigin(me,mo.x,mo.y,mo.z)
+		TPEffects(p,me, mo.angle)
+	end	
+end})
+CMDConstructor("bring", {prefix = SOAP_DEVPREFIX, func = function(p,...)
+	local args = {...}
+	local node = args[1]
+	if node == nil
+		prn(p, "bring <name/node>: Brings a player to you. \x82Special node commands:")
+		prn(p, "\t\x82@all:\x80 Brings everyone in the server")
+		return
+	end
+	
+	local me = p.realmo
+	
+	if node == "@all"
+		for p2 in players.iterate
+			if p2 == p then continue end
+			if not (p2.realmo and p2.realmo.valid) then continue end
+			
+			P_SetOrigin(p2.realmo, me.x,me.y,me.z)
+			TPEffects(p2,p2.realmo, me.angle)
+		end
+		return
+	end
+	
+	local p2 = GetPlayer(p,node)
+	if p2
+		local mo = p2.realmo
+		if not (mo and mo.valid)
+			prn(p,"This person's object isn't valid.")
+			return
+		end
+		
+		P_SetOrigin(mo, me.x,me.y,me.z)
+		TPEffects(p2,mo, me.angle)
+	end	
+end})
