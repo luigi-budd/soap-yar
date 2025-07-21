@@ -727,7 +727,7 @@ rawset(_G, "Soap_InitTable", function(p)
 		fx = {
 			waterrun_L = nil,
 			waterrun_R = nil,
-			waterrun_A = p.realmo.angle,
+			waterrun_A = p.drawangle,
 			
 			--move auras
 			pound_aura = nil,
@@ -772,11 +772,11 @@ rawset(_G, "Soap_InitTable", function(p)
 				angle = p.drawangle,
 			},
 			
-			x = p.realmo.x,
-			y = p.realmo.y,
-			z = p.realmo.z,
+			x = (p.realmo and p.realmo.valid) and p.realmo.x or 0,
+			y = (p.realmo and p.realmo.valid) and p.realmo.y or 0,
+			z = (p.realmo and p.realmo.valid) and p.realmo.z or 0,
 			
-			skin = p.realmo.skin
+			skin = skins[p.skin].name
 		},
 		fakeskidtime = 0,
 		
