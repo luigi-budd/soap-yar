@@ -40,8 +40,8 @@ addHook("PlayerThink",function(p)
 		Soap_InitTable(p)
 	end
 	
-	if (p.mo and p.mo.valid)
-		local me = p.mo
+	if (p.realmo and p.realmo.valid)
+		local me = p.realmo
 		local soap = p.soaptable
 		
 		if (me.flags & MF_NOTHINK) then return end
