@@ -47,7 +47,7 @@ jobs:
         name: SoapYARPaked
         path: build/Soap_YAR-${{ env.BUILD_DATE }}.pk3
         
-    - name: Upload build to Discord
+    - name: Upload build to Discords
       uses: sinshutu/upload-to-discord@master
       env:
         DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
