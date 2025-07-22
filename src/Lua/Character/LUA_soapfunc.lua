@@ -178,6 +178,7 @@ rawset(_G,"Soap_Booleans", function(p)
 	else
 		soap.isSolForm = false
 	end
+	soap.doSuperBuffs = (p.powers[pw_super] or soap.isSolForm)
 	
 	soap.onWater = false
 	if (p.charflags & SF_RUNONWATER)
@@ -1264,7 +1265,7 @@ rawset(_G,"SoapST_Hitbox",function(p)
 		wind.offset = range * i
 		wind.movedir = angle
 		
-		if (p.powers[pw_super] or soap.isSolForm)
+		if soap.doSuperBuffs
 			local b = spawnbubble(p,me,soap)
 			P_SetOrigin(b,
 				me.x + offsetx,
@@ -2340,6 +2341,8 @@ rawset(_G, "Soap_SolThinker",function(p,me,soap)
 		end
 	end
 	
+	--dont check for soap.doSuperBuffs in this func because we need to
+	--make sure we're actually super and not just like "fake buffed"
 	if not (soap.isSolForm or p.powers[pw_super]) then return end
 	p.powers[pw_underwater] = 0
 	--spacedrown is different from water

@@ -222,7 +222,7 @@ local function soap_poundonland(p,me,soap)
 				soap.nofreefall = true
 				soap.ranoff = false
 				
-				me.momz = $ * 2/3
+				P_SetObjectMomZ(me, 12*FU)
 				local speed = max(soap.accspeed, 20*FU)
 				if (speed < 65*FU)
 					speed = $ + 12*FU
@@ -400,8 +400,7 @@ Takis_Hook.addHook("Soap_DashSpeeds", function(p, dash, time, noadjust)
 		dash = $ / 2
 		time = $ / 5
 	end
-	if (p.powers[pw_super])
-	or soap.isSolForm
+	if soap.doSuperBuffs
 		dash = FixedMul($, tofixed("0.45"))
 		time = $ / 5
 	end
@@ -1186,9 +1185,8 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 				)
 				soap.uppercut_spin = $ * 2
 			end
-			if p.powers[pw_super]
-			or soap.isSolForm
-				thrust = $ + 3*FU
+			if soap.doSuperBuffs
+				thrust = $ + 5*FU
 			end
 			
 			Soap_ZLaunch(me, thrust)
@@ -2216,7 +2214,7 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 	end
 	
 	if spawn_aura and me.health
-		local super = (p.powers[pw_super] > 0 or soap.isSolForm or (p.powers[pw_sneakers] > 0)) --sneakers too lol
+		local super = (soap.doSuperBuffs or (p.powers[pw_sneakers] > 0)) --sneakers too lol
 		if not (soap.fx.dash_aura and soap.fx.dash_aura.valid)
 			local follow = P_SpawnMobjFromMobj(me,0,0,0,MT_SOAP_FREEZEGFX)
 			follow.tics = -1
@@ -2277,7 +2275,7 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 		aura.alpha = FixedCeil(ease.linear(FU/5, $, FU) * 100)/100		
 	else
 		if (soap.fx.dash_aura and soap.fx.dash_aura.valid)
-			local super = (p.powers[pw_super] > 0 or soap.isSolForm or (p.powers[pw_sneakers] > 0)) --sneakers too lol
+			local super = (soap.doSuperBuffs or (p.powers[pw_sneakers] > 0)) --sneakers too lol
 			local aura = soap.fx.dash_aura
 			
 			local dist = 20*me.scale
@@ -2317,7 +2315,7 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 	--since we can be sure we arent modifying runspeed
 	--at this point, we can reverse the multiplication
 	--the game does for animations
-	if (p.powers[pw_super] or soap.isSolForm)
+	if soap.doSuperBuffs
 	and (p.runspeed ~= skins[p.skin].runspeed)
 		--plus 0.10 for a litle leeway
 		p.runspeed = FixedDiv($, (5*FU/3) + FU/10)
@@ -2756,7 +2754,7 @@ end)
 
 local function handleBump(p,me,thing)
 	local soap = p.soaptable
-	if (p.powers[pw_super] or soap.isSolForm or p.powers[pw_invulnerability]) then return end
+	if (soap.doSuperBuffs or p.powers[pw_invulnerability]) then return end
 	if soap.nodamageforme > 2 then return end
 	
 	local max_speed = (skins[p.skin].normalspeed + soap._maxdash)
@@ -2827,7 +2825,7 @@ local function try_pvp_collide(me,thing)
 	if not soap then return end
 	if me.skin ~= "soapthehedge" then return end
 	
-	local DealDamage = (p.powers[pw_super] or soap.isSolForm or p.powers[pw_invulnerability]) and P_KillMobj or P_DamageMobj
+	local DealDamage = (soap.doSuperBuffs or p.powers[pw_invulnerability]) and P_KillMobj or P_DamageMobj
 	
 	--if the thing we're killing ISNT a player, then theyre probably an enemy
 	if thing.type ~= MT_PLAYER

@@ -647,6 +647,7 @@ rawset(_G, "Soap_InitTable", function(p)
 		--handled in prethink
 		isSliding = false,
 		isSolForm = false,
+		doSuperBuffs = false,
 		
 		accspeed = 0,
 		gravflip = 1,
