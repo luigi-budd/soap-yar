@@ -1,0 +1,54 @@
+name: Pakker
+
+on: [push]
+
+jobs:
+  build:
+    
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Update version num
+      run: |
+        rm src/Lua/Vars/compver.lua
+        printf "local commit_sha = \"${{ github.sha }}\"\n\nreturn commit_sha:sub(1,12)" > src/Lua/Vars/compver.lua
+        
+    - name: Make date
+      run: echo "THEDATE=$(git rev-parse --abbrev-ref HEAD)-$(date +%Y-%m-%d)" >> $GITHUB_ENV
+      
+    - name: Update build date
+      run: |
+        rm src/Lua/Vars/compdate.lua
+        printf "local commit_date = \"${{ env.THEDATE }}\"\n\nreturn commit_date" > src/Lua/Vars/compdate.lua
+        
+    - name: Make dummy package lock
+      run: echo '{"name":"dummy","version":"1.0.0","lockfileVersion":3,"requires":true,"packages":{}}}' > package-lock.json
+    - name: Use Node.js 18.x
+      uses: actions/setup-node@v3
+      with:
+        node-version: '18.x'
+        cache: 'npm'
+    - name: Download PaK3
+      run: git clone https://github.com/UnmatchedBracket/PaK3
+    - name: Download PaK3`s dependencies
+      run: bash -c "cd PaK3; npm i"
+
+    - name: Run PaK3
+      run: node PaK3/main.js src/ Soap_I_Swear-${{ env.THEDATE }}.pk3
+    # -$(date '+%d-%m-%Y')
+    
+    - name: Upload Soap - Artifact
+      uses: actions/upload-artifact@v3.1.0
+      with:
+        name: 'soap.zip'
+        path: "Soap_I_Swear-${{ env.THEDATE }}.pk3"
+        if-no-files-found: error
+    
+    - name: Upload Soap - Discord
+      uses: sinshutu/upload-to-discord@master
+      env:
+        DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
+      with:
+        args: Soap_I_Swear-${{ env.THEDATE }}.pk3

@@ -40,9 +40,13 @@ for k,filename in ipairs(badfiles)
 	print('\x82"'..filename..'\x82"\x85 FAILED')
 end
 
+local compver,compdate = (loadfile("Vars/compver.lua"))(), (loadfile("Vars/compdate.lua"))()
+print("\x82".."Compile info:")
+print(string.format("compver: %s\x80\t".."compdate: %s",compver,compdate))
+print("\x89Made with love - EpixGamer21")
 /*
 	CREDITS:
 	
-	- CoolThok (@tetract_) : Giving me their funny death sound lul
+	- CoolThok (@tetract_) : Giving me their funny death sound lul ("sfx_sp_kco")
 	- Paper Peelout : Peelout sprites
 */
