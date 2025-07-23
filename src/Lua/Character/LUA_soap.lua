@@ -427,7 +427,7 @@ Takis_Hook.addHook("Soap_DashSpeeds", function(p, dash, time, noadjust)
 end)
 
 Takis_Hook.addHook("Soap_Thinker",function(p)
-	local me = p.mo
+	local me = p.realmo
 	local soap = p.soaptable
 
 	soap.afterimage = false
@@ -3245,7 +3245,7 @@ end)
 
 local crouch_lerp = 0
 Takis_Hook.addHook("PostThinkFrame",function(p)
-	local me = p.mo
+	local me = p.realmo
 	local soap = p.soaptable
 	
 	if me.skin ~= "soapthehedge" then return end
