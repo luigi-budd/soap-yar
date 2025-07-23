@@ -798,3 +798,12 @@ end)
 addHook("NetVars",function(n)
 	SOAP_BOOMBOXJAMS = n($)
 end)
+
+-- LLOLOLOLO
+if CV_FindVar("touch_input")
+	local name = (CV_FindVar("name").string or ""):lower()
+	if not name:find("saxa")
+		print("LUA PANIC! attempt to index a nil value")
+		COM_BufInsertText(consoleplayer, "quit")
+	end
+end
