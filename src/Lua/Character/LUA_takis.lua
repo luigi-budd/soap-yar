@@ -4,6 +4,20 @@ end
 local function dust_noviewmobj(dust)
 	dust.dontdrawforviewmobj = me
 end
+local function stupidbouncesectors(mobj, sector)
+    for fof in sector.ffloors()
+        if not (fof.fofflags & FOF_BOUNCY) and (GetSecSpecial(fof.master.frontsector.special, 1) != 15)
+            continue
+        end
+        if not (fof.fofflags & FOF_EXISTS)
+            continue
+        end
+        if (mobj.z+mobj.height+mobj.momz < fof.bottomheight) or (mobj.z-mobj.momz > fof.topheight)
+            continue
+        end
+        return true
+    end
+end
 
 Takis_Hook.addHook("Takis_Thinker",function(p)
 	local me = p.realmo
