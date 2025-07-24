@@ -56,4 +56,5 @@ jobs:
       env:
         DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
       with:
+        message: "Test"
         args: build/Soap_YAR-${{ env.BUILD_DATE }}-${{ env.BUILD_SHASH }}.pk3
