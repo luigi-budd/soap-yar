@@ -25,5 +25,5 @@ dsjump = dsajum
 dsaltow4 = dsslip
 dsaltdi4 = dshlds
 
-normalspeed = 30
+normalspeed = 26
 runspeed = 45

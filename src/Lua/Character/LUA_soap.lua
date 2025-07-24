@@ -17,9 +17,10 @@
 */
 
 --max speed increase
-rawset(_G,"SOAP_MAXDASH", 15*FU)
+rawset(_G,"SOAP_MAXDASH", 19*FU)
 --speed increase ramp-up time
 rawset(_G,"SOAP_DASHTIME", TR/2)
+--spinning top
 rawset(_G,"SOAP_TOPCOOLDOWN", 4*TR)
 
 local CV = SOAP_CV
@@ -1049,7 +1050,7 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 		and not (soap.noability & SNOABIL_AIRDASH)
 			local thrust = 12*FU
 			local min_speed = 25*FU
-			local max_speed = 39*FU
+			local max_speed = clamp(39*FU, soap.accspeed, 39*FU + soap._maxdash)
 			if soap.nerfed
 				thrust = $/4
 				min_speed = $/2
@@ -1064,7 +1065,6 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 				min_speed = $*4/3
 				S_StartSound(me,sfx_s3k43)
 			end
-			--TODO: execute this earlier so this hook can modify speeds
 			local hook_event = Takis_Hook.events["Soap_OnMove"]
 			for i,v in ipairs(hook_event)
 				local new_t, new_min, new_max = Takis_Hook.tryRunHook("Soap_OnMove", v, p, "airdash", thrust,min_speed,max_speed)
