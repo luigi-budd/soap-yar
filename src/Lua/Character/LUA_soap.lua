@@ -26,7 +26,7 @@ rawset(_G,"SOAP_TOPCOOLDOWN", 4*TR)
 local CV = SOAP_CV
 
 local soap_crouchanimtime = 13
-local max_mentums = (FU - ORIG_FRICTION) * 9/10
+local max_mentums = (FU - ORIG_FRICTION) * 95 / 100
 local soap_lowfriction = tofixed("0.97")
 
 local function dust_type(me)
