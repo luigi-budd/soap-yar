@@ -777,6 +777,7 @@ rawset(_G, "Soap_InitTable", function(p)
 			y = (p.realmo and p.realmo.valid) and p.realmo.y or 0,
 			z = (p.realmo and p.realmo.valid) and p.realmo.z or 0,
 			
+			carry = CR_NONE,
 			skin = skins[p.skin].name
 		},
 		fakeskidtime = 0,

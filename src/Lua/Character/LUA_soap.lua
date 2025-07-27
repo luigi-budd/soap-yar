@@ -2211,6 +2211,9 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 		soap.uppercutted = false
 		soap.canuppercut = true
 		soap.pounding = false
+	--kinda annoying how you cant pound when exiting a dust devil
+	elseif soap.last.carry == CR_DUSTDEVIL
+		soap.sprung = true
 	end
 	
 	if spawn_aura and me.health

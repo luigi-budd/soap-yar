@@ -93,6 +93,7 @@ addHook("PlayerThink",function(p)
 		soap.last.z = me.z
 		
 		soap.last.skin = me.skin
+		soap.last.carry = p.powers[pw_carry]
 	end
 end)
 
