@@ -41,9 +41,26 @@ for k,filename in ipairs(badfiles)
 end
 
 local compver,compdate = (loadfile("Vars/compver.lua"))(), (loadfile("Vars/compdate.lua"))()
-print("\x82".."Compile info:")
-print(string.format("compver: %s\x80\t".."compdate: %s",compver,compdate))
+rawset(_G,"Soap_PrintCompInfo",function(p)
+	local str = {
+		"\x82".."Compile info:",
+		string.format("compver: %s\x80\t".."compdate: %s",compver,compdate),
+	}
+	for k, string in ipairs(str)
+		if (p and p.valid)
+			CONS_Printf(p, string)
+		else
+			print(string)
+		end
+	end
+end)
+Soap_PrintCompInfo()
 print("\x89Made with love - EpixGamer21")
+
+COM_AddCommand("soap_compdata",function(p)
+	Soap_PrintCompInfo(p)
+end)
+
 /*
 	CREDITS:
 	

@@ -602,7 +602,6 @@ states[S_PLAY_SOAP_SLIP] = {
 	nextstate = S_PLAY_SOAP_SLIP,
 }
 
-local compver,compdate = (loadfile("Vars/compver.lua"))(), (loadfile("Vars/compdate.lua"))()
 -- Both Takis and Soap will use the same table (Surely it wont get cluttered up soon!)
 rawset(_G, "Soap_InitTable", function(p)
 	p.soaptable = {
@@ -789,8 +788,8 @@ rawset(_G, "Soap_InitTable", function(p)
 		waitframe = A,
 	}
 	
-	CONS_Printf(p,"\x82Soap_InitTable(): Success! \n\x82".."Compile info:")
-	CONS_Printf(p,string.format("compver: %s\x80\t".."compdate: %s",compver,compdate))
+	CONS_Printf(p,"\x82Soap_InitTable(): Success!")
+	Soap_PrintCompInfo(p)
 	CONS_Printf(p,"\x83Soap The Hedge is created by EpixGamer21 (contact @epixgamer3333333) (NOT JISK LMAOOO)")
 	CONS_Printf(p,"\x83non reusable btw lmao")
 end)
