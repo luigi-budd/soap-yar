@@ -5,7 +5,7 @@ local compat = {
 	heist = false,
 	mrce = false,
 	ze2config = false,
-	solform = false,
+	--solform = false,
 	mmportrait = false,
 }
 local compat_names = {
@@ -15,7 +15,7 @@ local compat_names = {
 	["heist"]		= "Fang's Heist set",
 	["mrce"]		= "MRCE Compat.	",
 	["ze2config"]	= "ZE2 Config.		",
-	["solform"]		= "Sol Form		",
+	--["solform"]		= "Sol Form		",
 	["ze2config"]	= "ZE2 Config.		",
 	["mmportrait"]	= "EPIC!MM support	",
 }
@@ -789,7 +789,7 @@ local function SetCompat()
 		compat.ze2config = true
 		printf("Added ZE2 stuff.")
 	end
-	
+	/*
 	if solchars
 	and not compat.solform
 		local color = SKINCOLOR_SUPERSKY1
@@ -802,7 +802,7 @@ local function SetCompat()
 		compat.solform = true
 		printf("Added Sol forms.")
 	end
-	
+	*/
 	if MM and MM.showdownSprites
 	and not compat.mmportraits
 		MM.showdownSprites["soapthehedge"] = "MMSD_SOAPTH"
