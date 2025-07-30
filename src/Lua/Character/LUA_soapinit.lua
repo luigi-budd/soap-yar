@@ -28,3 +28,13 @@ fakeenum("SNOABIL_TAUNTSONLY",
 fakeenum("SNOABIL_BOTHTAUNTS",
 	SNOABIL_TAUNTS|SNOABIL_BREAKDANCE
 )
+
+local includes = {
+	"mobjs.lua",
+	"sounds.lua",
+	"player.lua",
+	"boombox.lua"
+}
+for k,file in ipairs(includes)
+	dofile("Character/SoapInclude/"..file)
+end
