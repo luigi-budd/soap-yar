@@ -797,6 +797,7 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 		end
 		
 		if candotop
+		and not soap.topcooldown
 			SoapST_Start(p)
 			soap.topcooldown = SOAP_TOPCOOLDOWN
 			setstate = true
@@ -1398,7 +1399,7 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 	end
 	
 	if soap.uppercutted
-	and me.health
+	and me.health and not soap.inPain
 	and not (soap.noability & SNOABIL_UPPERCUT)
 		if (me.momz*soap.gravflip >= 0)
 			
@@ -1468,8 +1469,9 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 			destroy_uppercut_aura(p,me,soap)
 		end
 		
-		if me.sprite2 == SPR2_MLEE
-		and not soap.onGround
+		if (me.sprite2 == SPR2_MLEE
+		and not soap.onGround)
+		and not (soap.inPain or P_PlayerInPain(p))
 			me.state = (me.momz * soap.gravflip > 0) and S_PLAY_SPRING or S_PLAY_FALL
 		end
 		soap.uppercut_tc = false
