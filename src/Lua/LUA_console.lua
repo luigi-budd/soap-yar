@@ -1,11 +1,18 @@
 rawset(_G, "SOAP_CV",{})
 local CV = SOAP_CV
 
-CV.rainbow_ai = CV_RegisterVar({
-	name = "soap_rainbowimages",
-	defaultvalue = "Off",
+CV.ai_style = CV_RegisterVar({
+	name = "soap_afterimagestyle",
+	defaultvalue = "Opposite",
 	flags = CV_SHOWMODIF,
-	PossibleValue = CV_OnOff
+	PossibleValue = {Rainbow = 0, Opposite = 1, Classic = 2},
+})
+
+CV.quake_mul = CV_RegisterVar({
+	name = "soap_quakes",
+	defaultvalue = "Normal",
+	flags = CV_SHOWMODIF,
+	PossibleValue = {Off = 0, Half = 1, Normal = 2, Double = 3},
 })
 
 local CV_Lookup = {}

@@ -20,6 +20,7 @@ local filetree = {
 	"LUA_thook.lua",
 	"LUA_misc.lua",
 	"LUA_compat.lua",
+	"LUA_clientsave.lua",
 }
 local badfiles = {}
 
@@ -28,7 +29,7 @@ for k,file in ipairs(filetree)
 	local status,result = pcall(do (loadfile(file))() end)
 	if not status
 		filesrangood = false
-		table.insert(badfiles, file)
+		table.insert(badfiles, {filename = file, reason = result})
 	end
 end
 
@@ -36,8 +37,11 @@ if not filesrangood
 	S_StartSound(nil,sfx_skid)
 	print("\x85One or more files were not loaded properly")
 end
-for k,filename in ipairs(badfiles)
+for k,info in ipairs(badfiles)
+	local filename = info.filename
+	local reason = info.reason
 	print('\x82"'..filename..'\x82"\x85 FAILED')
+	print('   \x82->\x80'..tostring(reason))
 end
 
 local compver,compdate = (loadfile("Vars/compver.lua"))(), (loadfile("Vars/compdate.lua"))()

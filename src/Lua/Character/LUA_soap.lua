@@ -130,7 +130,7 @@ local function soap_poundonland(p,me,soap)
 		end
 		*/
 		local quake_tics = 16 + (FixedDiv(br,me.scale)/FU / 25)
-		P_StartQuake(20*FU + br/40, quake_tics,
+		Soap_StartQuake(20*FU + br/40, quake_tics,
 			{me.x,me.y,me.z},
 			512*me.scale
 		)
@@ -2716,7 +2716,7 @@ Takis_Hook.addHook("MoveBlocked",function(me,thing,line, goingup)
 		soap.canuppercut = true
 		soap.uppercutted = false
 		
-		P_StartQuake(5*FU, 8, {me.x,me.y,me.z}, 512*me.scale)
+		Soap_StartQuake(5*FU, 8, {me.x,me.y,me.z}, 512*me.scale)
 		S_StartSound(me, sfx_s3k49)
 		Soap_SpawnBumpSparks(me, thing, line)
 		
@@ -2855,7 +2855,7 @@ local function try_pvp_collide(me,thing)
 				end
 				
 				local hitlag_tics = 10 + ((power/FU) / 5)
-				P_StartQuake(power*2, hitlag_tics,
+				Soap_StartQuake(power*2, hitlag_tics,
 					{me.x, me.y, me.z},
 					512*me.scale + power
 				)
@@ -2888,7 +2888,7 @@ local function try_pvp_collide(me,thing)
 				Soap_DamageSfx(thing, power, 35*FU)
 				
 				local hitlag_tics = 10 + (power/FU / 5)
-				P_StartQuake(power*2, hitlag_tics,
+				Soap_StartQuake(power*2, hitlag_tics,
 					{me.x, me.y, me.z},
 					512*me.scale + power
 				)
@@ -2926,7 +2926,7 @@ local function try_pvp_collide(me,thing)
 				Soap_DamageSfx(thing, power, 60*FU)
 				
 				local hitlag_tics = 4 + (power/FU / 10)
-				P_StartQuake(power/2, hitlag_tics,
+				Soap_StartQuake(power/2, hitlag_tics,
 					{me.x, me.y, me.z},
 					512*me.scale + power
 				)
@@ -2977,7 +2977,7 @@ local function try_pvp_collide(me,thing)
 		end
 		
 		local hitlag_tics = 10 + (power/FU / 5)
-		P_StartQuake(power*2, hitlag_tics,
+		Soap_StartQuake(power*2, hitlag_tics,
 			{me.x, me.y, me.z},
 			512*me.scale + power
 		)
@@ -3011,7 +3011,7 @@ local function try_pvp_collide(me,thing)
 		Soap_DamageSfx(thing, power, 35*FU)
 		
 		local hitlag_tics = 15 + (power/FU / 3)
-		P_StartQuake(power*2, hitlag_tics,
+		Soap_StartQuake(power*2, hitlag_tics,
 			{me.x, me.y, me.z},
 			512*me.scale + power
 		)
@@ -3048,7 +3048,7 @@ local function try_pvp_collide(me,thing)
 		P_DamageMobj(thing, me,me, 30 + (power/2)/FU)
 		
 		local hitlag_tics = 15 + (power/FU / 7)
-		P_StartQuake(power/2, hitlag_tics,
+		Soap_StartQuake(power/2, hitlag_tics,
 			{me.x, me.y, me.z},
 			512*me.scale + power
 		)
@@ -3129,7 +3129,7 @@ addHook("MobjDamage", function(me,inf,sor,dmg,dmgt)
 		
 		Soap_ImpactVFX(me, inf)
 		if Soap_IsLocalPlayer(p)
-			P_StartQuake((20 + p.timeshit*3/2)*FU, 16 + 16*(p.losstime / (10*TR)),
+			Soap_StartQuake((20 + p.timeshit*3/2)*FU, 16 + 16*(p.losstime / (10*TR)),
 				nil,
 				512*me.scale
 			)

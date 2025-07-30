@@ -199,6 +199,9 @@ local AICOLOR_START = SKINCOLOR_PINK
 local AICOLOR_END = FIRSTSUPERCOLOR
 local AICOLOR_LENGTH = AICOLOR_END - AICOLOR_START
 local AI_MINALPHA = FU/4
+--from the good ol days
+local AICOLOR_RANDOM = {SKINCOLOR_FLAME, SKINCOLOR_SUNSET, SKINCOLOR_AQUA, SKINCOLOR_VAPOR, SKINCOLOR_PURPLE}
+
 rawset(_G,"Soap_CreateAfterimage", function(p,me)
 	if not (me and me.valid) then return end
 	
@@ -223,19 +226,22 @@ rawset(_G,"Soap_CreateAfterimage", function(p,me)
 	ghost.tics = -1
 	ghost.fuse = 4
 	ghost.renderflags = $|rflags
-	ghost.blendmode = AST_ADD
 	
 	ghost.angle = p.drawangle
 	
+	local blendmode = AST_ADD
 	local rainbow = AICOLOR_START + (leveltime % (AICOLOR_LENGTH))
-	if not SOAP_CV.rainbow_ai.value
+	if SOAP_CV.ai_style.value == 1
 		rainbow = ColorOpposite(p.skincolor)
+	elseif SOAP_CV.ai_style.value == 2
+		rainbow = AICOLOR_RANDOM[P_RandomRange(1, #AICOLOR_RANDOM)]
 	end
 	
 	ghost.colorized = true
 	if G_GametypeHasTeams()
 		rainbow = (p.ctfteam == 1) and skincolor_redteam or skincolor_blueteam
 		rainbow = ($ + P_RandomRange(0,3)) % AICOLOR_END
+		blendmode = AST_ADD
 	end
 	ghost.color = rainbow
 	
@@ -244,6 +250,7 @@ rawset(_G,"Soap_CreateAfterimage", function(p,me)
 	ghost.rollangle = me.rollangle
 	ghost.pitch = me.pitch or 0
 	ghost.roll = me.roll or 0
+	ghost.blendmode = blendmode
 	
 	--Dont draw right ontop of our takis
 	ghost.dontdrawforviewmobj = me
@@ -281,7 +288,7 @@ rawset(_G,"Soap_CreateAfterimage", function(p,me)
 				ghost2.tics = -1
 				ghost2.fuse = 4
 				ghost2.renderflags = $|rflags|RF_PAPERSPRITE
-				ghost2.blendmode = AST_ADD
+				ghost2.blendmode = blendmode
 				
 				ghost2.angle = peel.angle
 				local sine = abs(sin(FixedAngle(leveltime*FU*10)))
@@ -1139,7 +1146,7 @@ local function top_hitenemy(me,thing)
 	
 	local hitlag_tics = 12
 	if not nullify
-		P_StartQuake(15*FU, hitlag_tics,
+		Soap_StartQuake(15*FU, hitlag_tics,
 			{me.x, me.y, me.z},
 			512*me.scale
 		)
@@ -1867,7 +1874,7 @@ rawset(_G,"Soap_DeathThinker",function(p,me,soap)
 				S_StartSound(me,sfx_sp_smk)
 				S_StartSound(me,sfx_s3k5d)
 				
-				P_StartQuake(15*FU, 10, {me.x,me.y,me.z}, 512*FU)
+				Soap_StartQuake(15*FU, 10, {me.x,me.y,me.z}, 512*FU)
 				Soap_DustRing(me,
 					dust_type(me),
 					P_RandomRange(8,14),
@@ -2776,4 +2783,14 @@ rawset(_G,"Soap_SlopeInfluence",function(mobj,player, options, p_slope)
 	
 	thrust = FixedMul($, FixedDiv(mobj.friction,ORIG_FRICTION))
 	return slope.xydirection,thrust
+end)
+
+rawset(_G, "Soap_StartQuake", function(intensity, time, epicenter, radius)
+	if (SOAP_CV.quake_mul.value == 0) then return end
+	if SOAP_CV.quake_mul.value == 1 --half
+		intensity = $ / 2
+	elseif SOAP_CV.quake_mul.value == 3 --double
+		intensity = $ * 2
+	end
+	P_StartQuake(intensity,time,epicenter,radius)
 end)
