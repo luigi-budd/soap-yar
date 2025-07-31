@@ -798,6 +798,9 @@ rawset(_G,"Soap_JostleThings",function(me, found, range)
 	return tumbled
 end)
 
+local WIND_PUSHMIN = (20)
+local WIND_PUSHMAX = (31)
+local WIND_PUSHANG = (ANG20 + ANG15)
 rawset(_G, "Soap_WindLines", function(me,rmomz,color,forceang)
 	if not (me and me.valid) then return end --?
 	if not me.health then return end
@@ -818,6 +821,7 @@ rawset(_G, "Soap_WindLines", function(me,rmomz,color,forceang)
 		end
     end
 	
+	/*
 	local offx,offy = 0,0
 	if R_PointToDist2(0,0,me.momx,me.momy) > me.radius*2
 		local timesx = FixedDiv(me.momx,me.radius*2)
@@ -830,14 +834,15 @@ rawset(_G, "Soap_WindLines", function(me,rmomz,color,forceang)
 			offy = FixedDiv(me.momy,timesy) * P_RandomRange(0,timesy/me.scale)
 		end
 	end
-	
+	*/
+	local zangle = R_PointToAngle2(0, 0, R_PointToDist2(0,0,me.momx,me.momy), momz)
 	local wind = P_SpawnMobj(
-		me.x + P_RandomRange(-36,36)*me.scale + offx,
-		me.y + P_RandomRange(-36,36)*me.scale + offy,
+		me.x, --+ P_RandomRange(-36,36)*me.scale + offx,
+		me.y, --+ P_RandomRange(-36,36)*me.scale + offy,
 		me.z + (me.height/2) + P_RandomRange(-20,20)*me.scale + momz,
 		MT_SOAP_SPEEDLINE
 	)
-	--wind.state = S_TAKIS_WINDLINE
+	
 	wind.scale = me.scale
 	if forceang == nil
 		local angle = (me.player and me.player.drawangle or me.angle)
@@ -848,11 +853,32 @@ rawset(_G, "Soap_WindLines", function(me,rmomz,color,forceang)
 	else
 		wind.angle = forceang
 	end
-	/*
-	wind.momx = me.momx*3/4
-	wind.momy = me.momy*3/4
-	wind.momz = momz*3/4
-	*/
+	
+	local pushangle = wind.angle + ANGLE_90
+	local pushsign = P_RandomSign()
+	local pushdist = P_RandomFixedRange(WIND_PUSHMIN,WIND_PUSHMAX) * pushsign
+	local sidex,sidey
+	--forward + backward shift for downwards movement
+	do
+		local distance = P_RandomFixedRange(-WIND_PUSHMAX,WIND_PUSHMAX)
+		distance = FixedMul($, abs(sin(zangle)))
+		sidex = P_ReturnThrustX(nil,wind.angle, distance)
+		sidey = P_ReturnThrustY(nil,wind.angle, distance)
+	end
+	P_SetOrigin(wind,
+		me.x + P_ReturnThrustX(nil,pushangle,pushdist) + sidex,
+		me.y + P_ReturnThrustY(nil,pushangle,pushdist) + sidey,
+		wind.z
+	)
+	P_Thrust(wind,
+		wind.angle + (WIND_PUSHANG)*pushsign,
+		FixedMul(P_RandomFixedRange(2,7), cos(zangle))
+	)
+	P_Thrust(wind,
+		wind.angle + ANGLE_90*pushsign,
+		abs(FixedMul(P_RandomFixedRange(2,7), sin(zangle)))
+	)
+	wind.angle = $ - (WIND_PUSHANG/3)*pushsign
 	
 	local mocolor = color
 	if mocolor == nil
@@ -860,10 +886,9 @@ rawset(_G, "Soap_WindLines", function(me,rmomz,color,forceang)
 		mocolor = SKINCOLOR_SAPPHIRE
 	end
 	wind.color = mocolor
-	wind.rollangle = R_PointToAngle2(0, 0, R_PointToDist2(0,0,me.momx,me.momy), momz)
+	wind.rollangle = zangle
     
 	wind.source = me
-	
 	return wind
 end)
 

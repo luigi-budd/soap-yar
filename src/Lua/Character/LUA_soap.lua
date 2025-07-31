@@ -319,6 +319,60 @@ local function destroy_uppercut_aura(p,me,soap)
 	end
 end
 
+local function spawn_sweat_mobjs(p,me,soap)
+	local sweat = P_SpawnMobjFromMobj(me,
+		P_RandomRange(-16,16)*FU + me.momx,
+		P_RandomRange(-16,16)*FU + me.momy,
+		P_RandomRange(5, FixedDiv(me.height,me.scale)/FU)*FU,
+		MT_SOAP_WALLBUMP
+	)
+	P_Thrust(sweat, 
+		R_PointToAngle2(0,0,me.momx,me.momy) + FixedAngle(P_RandomFixedRange(-45,45)),
+		-P_RandomFixedRange(2,5)
+	)
+	sweat.momx = $ + me.momx/2
+	sweat.momy = $ + me.momy/2
+	P_SetObjectMomZ(sweat, P_RandomFixedRange(5,8))
+	sweat.fuse = TR*3/4
+	sweat.dontdrawforviewmobj = me
+	sweat.frame = B|FF_TRANS30
+	sweat.colorized = false
+	return sweat
+end
+
+local function accelerative_speedlines(p,me,soap, speed, threshold)
+	local rmomz = soap.rmomz
+	if speed > (threshold*2)
+		for i = 1,10
+			if speed > (threshold*2)*i
+				Soap_WindLines(me,rmomz)
+				for j = 1,i
+					Soap_WindLines(me,rmomz)
+				end
+			else
+				break
+			end
+		end
+	end
+	
+	
+	if speed >= 8*threshold/5
+		Soap_WindLines(me,rmomz)
+	elseif speed >= 7*threshold/5
+		if not (leveltime % 2)
+			Soap_WindLines(me,rmomz)
+		end
+	elseif speed >= 6*threshold/5
+		if not (leveltime % 5)
+			Soap_WindLines(me,rmomz)
+		end
+	elseif speed >= threshold
+		if not (leveltime % 7)
+			Soap_WindLines(me,rmomz)
+		end
+	end
+end
+
 local discoranges = {
 	["DISCO1"] = true,
 	["DISCO2"] = true,
@@ -1584,18 +1638,7 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 			end
 			
 			if P_RandomChance(eased)
-				local sweat = P_SpawnMobjFromMobj(me,
-					P_RandomRange(-16,16)*FU,
-					P_RandomRange(-16,16)*FU,
-					P_RandomRange(0, FixedDiv(me.height,me.scale)/FU)*FU,
-					MT_SPINDUST
-				)
-				sweat.destscale = 1
-				sweat.scalespeed = FixedDiv($, sweat.scale)
-				sweat.dontdrawforviewmobj = me
-				sweat.alpha = FU*3/4
-				sweat.flags = $ &~MF_NOGRAVITY
-				
+				spawn_sweat_mobjs(p,me,soap)
 				if soap.onGround
 				and (me.state ~= S_PLAY_SKID)
 					S_StartSound(me,
@@ -1605,7 +1648,6 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 			end
 			S_StopSoundByID(me,sfx_sp_mac)
 			S_StopSoundByID(me,sfx_sp_mc2)
-			
 		else
 			--None of this in free fall
 			if not (soap.uppercutted and me.state == S_PLAY_FALL)
@@ -1672,7 +1714,7 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 				and not soap.onWater
 					local sidemove = me.radius
 					local sideangle = ANGLE_45
-					
+					spawn_sweat_mobjs(p,me,soap)
 					for i = -1,1,2
 						local kickup = P_SpawnMobjFromMobj(me,
 							P_RandomFixedRange(-4,4) + P_ReturnThrustX(nil, p.drawangle + sideangle * i, sidemove),
@@ -1822,23 +1864,7 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 		end
 		
 		--wind lines
-		local spd = 13*FU
-		local fallspeed = -FixedDiv(me.momz,me.scale) * soap.gravflip
-		if fallspeed >= 8*spd/5
-			Soap_WindLines(me,soap.rmomz)
-		elseif fallspeed >= 7*spd/5
-			if not (leveltime % 2)
-				Soap_WindLines(me,soap.rmomz)
-			end
-		elseif fallspeed >= 6*spd/5
-			if not (leveltime % 5)
-				Soap_WindLines(me,soap.rmomz)
-			end
-		elseif fallspeed >= spd
-			if not (leveltime % 7)
-				Soap_WindLines(me,soap.rmomz)
-			end
-		end
+		accelerative_speedlines(p,me,soap, -FixedDiv(me.momz,me.scale) * soap.gravflip, 13*FU)
 		
 		--landed
 		if P_IsObjectOnGround(me) --(soap.onGround)
@@ -2146,38 +2172,8 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 	--stuff to do while carried
 	if (p.powers[pw_carry] == CR_NIGHTSMODE)
 		squishme = false
-		local accspeed = abs(FixedHypot(FixedHypot(me.momx,me.momy),me.momz))
-		local spd = 23*FU
-		
 		--wind effect
-		if accspeed > (spd*2)
-			for i = 1,10
-				if accspeed > (spd*2)*i
-					Soap_WindLines(me,soap.rmomz)
-					for j = 1,i
-						Soap_WindLines(me,soap.rmomz)
-					end
-				else
-					break
-				end
-			end
-		end
-		
-		if accspeed >= 8*spd/5
-			Soap_WindLines(me,soap.rmomz)
-		elseif accspeed >= 7*spd/5
-			if not (leveltime % 2)
-				Soap_WindLines(me,soap.rmomz)
-			end
-		elseif accspeed >= 6*spd/5
-			if not (leveltime % 5)
-				Soap_WindLines(me,soap.rmomz)
-			end
-		elseif accspeed >= spd
-			if not (leveltime % 7)
-				Soap_WindLines(me,soap.rmomz)
-			end
-		end
+		accelerative_speedlines(p,me,soap, accspeed, 23*FU)
 		
 		local drilling = (p.drilltimer
 							and p.drillmeter
@@ -2195,7 +2191,7 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 		
 		if (goop and goop.valid)
 		and goop.state == S_BLACKEGG_GOOP3
-			--Mash!!
+			--Mash!! (TODO: finish this)
 			if (soap.jump == 1)
 				me.state = S_PLAY_SKID
 				me.tics = max($, 5)
@@ -2204,6 +2200,11 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 				goop.tics = max($ - 2, 3)
 			end
 		end
+	elseif p.powers[pw_carry] == CR_NONE
+		accelerative_speedlines(p,me,soap, soap.accspeed, 40*FU)
+	--kinda annoying how you cant pound when exiting a dust devil
+	elseif soap.last.carry == CR_DUSTDEVIL
+		soap.sprung = true
 	end
 	
 	--refresh moves (lol)
@@ -2213,9 +2214,6 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 		soap.uppercutted = false
 		soap.canuppercut = true
 		soap.pounding = false
-	--kinda annoying how you cant pound when exiting a dust devil
-	elseif soap.last.carry == CR_DUSTDEVIL
-		soap.sprung = true
 	end
 	
 	if spawn_aura and me.health

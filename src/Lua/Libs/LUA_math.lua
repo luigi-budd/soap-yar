@@ -28,6 +28,9 @@ end)
 rawset(_G,"P_RandomFixedRange",function(a,b)
 	return P_RandomRange(a,b)*FU + P_RandomFixedSigned()
 end)
+rawset(_G,"P_RandomSign",do
+	return sign(P_SignedRandom()) or -1 -- -1 if sign is 0
+end)
 
 --returns lateral and vertical angles
 rawset(_G,"R_PointTo3DAngles",function(x1,y1,z1, x2,y2,z2)
