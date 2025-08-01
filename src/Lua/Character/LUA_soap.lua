@@ -844,7 +844,7 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 		or (soap.topcooldown == 0))
 		and ((G_RingSlingerGametype()
 		and (p.rings == 0))
-		or incoop
+		or incoop)
 			candotop = true
 			
 			if gametyperules & GTR_TAG
