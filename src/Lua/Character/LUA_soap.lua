@@ -29,6 +29,18 @@ local soap_crouchanimtime = 13
 local max_mentums = (FU - ORIG_FRICTION) * 95 / 100
 local soap_lowfriction = tofixed("0.97")
 
+local sfx_armacharge = sfx_s3k84
+local sfx_armacharge2 = sfx_s3ka3
+local function armasound(me, stop)
+	local soundfunc = (stop) and S_StopSoundByID or S_StartSoundAtVolume
+	soundfunc(me, sfx_armacharge, 255/2)
+	soundfunc(me, sfx_armacharge2, 255)
+	me.player.soaptable.poundarma = not stop
+end
+local armacolors = {
+	SKINCOLOR_KETCHUP, SKINCOLOR_PEPPER, SKINCOLOR_CRIMSON, SKINCOLOR_GARNET, SKINCOLOR_VOLCANIC
+}
+
 local function dust_type(me)
 	return (me.eflags & (MFE_UNDERWATER|MFE_TOUCHWATER)) and P_RandomRange(MT_SMALLBUBBLE,MT_MEDIUMBUBBLE) or MT_SPINDUST
 end
@@ -70,7 +82,10 @@ local function stupidbouncesectors(mobj, sector)
 end
 
 local function soap_poundonland(p,me,soap)
+	local poundtime = soap.poundtime
 	soap.pounding = false
+	soap.poundtime = 0
+	armasound(me,true)
 	
 	--diou9rs8749843
 	if P_CheckDeathPitCollide(me) then return end
@@ -235,7 +250,7 @@ local function soap_poundonland(p,me,soap)
 				p.drawangle = me.angle
 			elseif shield == SH_ARMAGEDDON
 			and not soap.inBattle
-			and (soap.poundtime >= 10)
+			and (poundtime >= 10)
 				P_BlackOw(p)
 			end
 		end
@@ -344,14 +359,14 @@ local function spawn_sweat_mobjs(p,me,soap)
 	return sweat
 end
 
-local function accelerative_speedlines(p,me,soap, speed, threshold)
+local function accelerative_speedlines(p,me,soap, speed, threshold, color)
 	local rmomz = soap.rmomz
 	if speed > (threshold*2)
 		for i = 1,10
 			if speed > (threshold*2)*i
-				Soap_WindLines(me,rmomz)
+				Soap_WindLines(me,rmomz,color)
 				for j = 1,i
-					Soap_WindLines(me,rmomz)
+					Soap_WindLines(me,rmomz,color)
 				end
 			else
 				break
@@ -360,18 +375,18 @@ local function accelerative_speedlines(p,me,soap, speed, threshold)
 	end
 	
 	if speed >= 8*threshold/5
-		Soap_WindLines(me,rmomz)
+		Soap_WindLines(me,rmomz,color)
 	elseif speed >= 7*threshold/5
 		if not (leveltime % 2)
-			Soap_WindLines(me,rmomz)
+			Soap_WindLines(me,rmomz,color)
 		end
 	elseif speed >= 6*threshold/5
 		if not (leveltime % 5)
-			Soap_WindLines(me,rmomz)
+			Soap_WindLines(me,rmomz,color)
 		end
 	elseif speed >= threshold
 		if not (leveltime % 7)
-			Soap_WindLines(me,rmomz)
+			Soap_WindLines(me,rmomz,color)
 		end
 	end
 end
@@ -1868,7 +1883,11 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 		end
 		
 		--wind lines
-		accelerative_speedlines(p,me,soap, -FixedDiv(me.momz,me.scale) * soap.gravflip, 20*FU)
+		local color
+		if (soap.poundarma)
+			color = armacolors[P_RandomRange(1,#armacolors)]
+		end
+		accelerative_speedlines(p,me,soap, -FixedDiv(me.momz,me.scale) * soap.gravflip, 20*FU, color)
 		
 		--landed
 		if P_IsObjectOnGround(me) --(soap.onGround)
@@ -1901,6 +1920,60 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 			end
 		end
 		
+		if (soap.jump and (p.powers[pw_shield] & SH_NOSTACK == SH_ARMAGEDDON)
+		and not soap.inBattle
+		and soap.poundtime >= 10)
+			if not soap.poundarma
+				armasound(me)
+			end
+			soap.poundarma = true
+			local range = 22
+			do
+				local color = armacolors[P_RandomRange(1,#armacolors)]
+				local spark = P_SpawnMobjFromMobj(me,
+					P_RandomFixedRange(-range,range),
+					P_RandomFixedRange(-range,range),
+					P_RandomFixedRange(0,range),
+					MT_WATERZAP
+				)
+				spark.spritexscale = FU*7
+				spark.spriteyscale = FU*4
+				local ha,va = R_PointTo3DAngles(spark.x,spark.y,spark.z, me.x,me.y,me.z)
+				P_3DThrust(spark, ha,va, -P_RandomRange(10,15)*me.scale)
+				spark.blendmode = AST_ADD
+				spark.renderflags = $|RF_FULLBRIGHT|RF_PAPERSPRITE
+				spark.colorized = true
+				spark.color = color
+				spark.angle = ha
+				spark.momx = $ + me.momx
+				spark.momy = $ + me.momy
+				spark.momz = $ + soap.rmomz
+				
+				--top sparks
+				local angle = FixedAngle(P_RandomFixedRange(0,360))
+				local rad = FixedDiv(me.radius,me.scale)
+				local hei = FixedDiv(me.height,me.scale)
+				spark = P_SpawnMobjFromMobj(me,
+					P_ReturnThrustX(nil,angle,rad),
+					P_ReturnThrustY(nil,angle,rad),
+					(hei/2) + P_RandomFixedRange(-17,17), MT_SOAP_SPARK
+				)
+				spark.color = color
+				spark.adjust_angle = angle
+				spark.angle = spark.adjust_angle
+				spark.target = me
+				
+				spark.spritexscale = FU/3 + P_RandomRange(0, FU/2)
+				spark.spriteyscale = FU/2
+				spark.renderflags = $|(spark.z <= me.z+(hei/2) and RF_VERTICALFLIP or 0)
+				spark.momx = $ + me.momx
+				spark.momy = $ + me.momy
+				spark.momz = $ + soap.rmomz
+			end
+		else
+			armasound(me,true)
+		end
+		
 		if (soap.pounding)
 			local hook_event = Takis_Hook.events["Soap_OnMove"]
 			for i,v in ipairs(hook_event)
@@ -1926,6 +1999,7 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 				me.state = (soap.accspeed) and S_PLAY_WALK or S_PLAY_STND
 			end
 		end
+		armasound(me,true)
 	end
 	
 	if do_poundaura
@@ -2208,6 +2282,7 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 			end
 		end
 	elseif p.powers[pw_carry] == CR_NONE
+	and not soap.pounding
 		accelerative_speedlines(p,me,soap, FixedDiv(R_PointTo3DDist(0,0,0,me.momx,me.momy,me.momz),me.scale), 40*FU)
 	--kinda annoying how you cant pound when exiting a dust devil
 	elseif soap.last.carry == CR_DUSTDEVIL

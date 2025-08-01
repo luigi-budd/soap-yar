@@ -126,6 +126,7 @@ rawset(_G, "Soap_InitTable", function(p)
 		pounding = false,
 		pound_cooldown = 0,
 		poundtime = 0,
+		poundarma = false,
 		
 		uppercut_spin = 0,
 		just_uppercut = 0,
