@@ -143,9 +143,23 @@ addHook("MobjThinker",function(bump)
 	
 	bump.momz = $ + P_GetMobjGravity(bump)
 	bump.rollangle = $ + (bump.random or 0)
+	bump.lifetime = (bump.lifetime ~= nil and $+1 or 0)
 	
 	if bump.shoemode
 		bump.angle = $ + ANG15
+	end
+	if bump.sweat
+		local squish = 0
+		if bump.lifetime & 1 then --nothing
+		else
+			if (bump.lifetime/2) & 1
+				squish = FU/4
+			else
+				squish = -FU/4
+			end
+		end
+		bump.spritexscale = FU + squish
+		bump.spriteyscale = FU - squish
 	end
 end,MT_SOAP_WALLBUMP)
 

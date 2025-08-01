@@ -320,10 +320,11 @@ local function destroy_uppercut_aura(p,me,soap)
 end
 
 local function spawn_sweat_mobjs(p,me,soap)
+	local height = FixedDiv(me.height,me.scale)/FU
 	local sweat = P_SpawnMobjFromMobj(me,
 		P_RandomRange(-16,16)*FU + me.momx,
 		P_RandomRange(-16,16)*FU + me.momy,
-		P_RandomRange(5, FixedDiv(me.height,me.scale)/FU)*FU,
+		P_RandomRange(height/2,height)*FU,
 		MT_SOAP_WALLBUMP
 	)
 	P_Thrust(sweat, 
@@ -332,11 +333,13 @@ local function spawn_sweat_mobjs(p,me,soap)
 	)
 	sweat.momx = $ + me.momx/2
 	sweat.momy = $ + me.momy/2
+	sweat.momz = $ + soap.rmomz/2
 	P_SetObjectMomZ(sweat, P_RandomFixedRange(5,8))
 	sweat.fuse = TR*3/4
 	sweat.dontdrawforviewmobj = me
 	sweat.frame = B|FF_TRANS30
 	sweat.colorized = false
+	sweat.sweat = true
 	return sweat
 end
 
@@ -2173,6 +2176,7 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 	if (p.powers[pw_carry] == CR_NIGHTSMODE)
 		squishme = false
 		--wind effect
+		local accspeed = abs(FixedHypot(FixedHypot(me.momx,me.momy),me.momz))
 		accelerative_speedlines(p,me,soap, accspeed, 23*FU)
 		
 		local drilling = (p.drilltimer
@@ -2201,7 +2205,7 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 			end
 		end
 	elseif p.powers[pw_carry] == CR_NONE
-		accelerative_speedlines(p,me,soap, soap.accspeed, 40*FU)
+		accelerative_speedlines(p,me,soap, FixedDiv(R_PointTo3DDist(0,0,0,me.momx,me.momy,me.momz),me.scale), 40*FU)
 	--kinda annoying how you cant pound when exiting a dust devil
 	elseif soap.last.carry == CR_DUSTDEVIL
 		soap.sprung = true

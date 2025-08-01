@@ -856,7 +856,7 @@ rawset(_G, "Soap_WindLines", function(me,rmomz,color,forceang)
 	
 	local pushangle = wind.angle + ANGLE_90
 	local pushsign = P_RandomSign()
-	local pushdist = P_RandomFixedRange(WIND_PUSHMIN,WIND_PUSHMAX) * pushsign
+	local pushdist = FixedMul(P_RandomFixedRange(WIND_PUSHMIN,WIND_PUSHMAX), me.scale) * pushsign
 	local sidex,sidey
 	--forward + backward shift for downwards movement
 	do
@@ -870,13 +870,14 @@ rawset(_G, "Soap_WindLines", function(me,rmomz,color,forceang)
 		me.y + P_ReturnThrustY(nil,pushangle,pushdist) + sidey,
 		wind.z
 	)
+	--Painful
 	P_Thrust(wind,
 		wind.angle + (WIND_PUSHANG)*pushsign,
-		FixedMul(P_RandomFixedRange(2,7), cos(zangle))
+		FixedMul(FixedMul(P_RandomFixedRange(2,7), cos(zangle)), me.scale)
 	)
 	P_Thrust(wind,
 		wind.angle + ANGLE_90*pushsign,
-		abs(FixedMul(P_RandomFixedRange(2,7), sin(zangle)))
+		FixedMul(abs(FixedMul(P_RandomFixedRange(2,7), sin(zangle))), me.scale)
 	)
 	wind.angle = $ - (WIND_PUSHANG/3)*pushsign
 	
