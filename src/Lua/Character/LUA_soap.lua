@@ -235,6 +235,7 @@ local function soap_poundonland(p,me,soap)
 				p.drawangle = me.angle
 			elseif shield == SH_ARMAGEDDON
 			and not soap.inBattle
+			and (soap.poundtime >= 10)
 				P_BlackOw(p)
 			end
 		end
@@ -1867,7 +1868,7 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 		end
 		
 		--wind lines
-		accelerative_speedlines(p,me,soap, -FixedDiv(me.momz,me.scale) * soap.gravflip, 13*FU)
+		accelerative_speedlines(p,me,soap, -FixedDiv(me.momz,me.scale) * soap.gravflip, 20*FU)
 		
 		--landed
 		if P_IsObjectOnGround(me) --(soap.onGround)
@@ -1906,6 +1907,7 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 				Takis_Hook.tryRunHook("Soap_OnMove", v, p, "poundthinker")
 			end
 		end
+		soap.poundtime = $ + 1
 	end
 	
 	if was_pounding
@@ -1913,6 +1915,7 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 		p.powers[pw_strong] = $ &~(STR_SPRING|STR_HEAVY|STR_SPIKE)
 		me.spritexscale = FU
 		me.spriteyscale = FU
+		soap.poundtime = 0
 		if me.state == S_PLAY_MELEE
 		and (me.sprite2 ~= SPR2_MLEE)
 			me.state = S_PLAY_ROLL

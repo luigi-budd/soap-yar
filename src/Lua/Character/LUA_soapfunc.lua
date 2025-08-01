@@ -229,12 +229,13 @@ rawset(_G,"Soap_CreateAfterimage", function(p,me)
 	
 	ghost.angle = p.drawangle
 	
+	local classic = AICOLOR_RANDOM[P_RandomRange(1, #AICOLOR_RANDOM)]
 	local blendmode = AST_ADD
 	local rainbow = AICOLOR_START + (leveltime % (AICOLOR_LENGTH))
 	if SOAP_CV.ai_style.value == 1
 		rainbow = ColorOpposite(p.skincolor)
 	elseif SOAP_CV.ai_style.value == 2
-		rainbow = AICOLOR_RANDOM[P_RandomRange(1, #AICOLOR_RANDOM)]
+		rainbow = classic
 	end
 	
 	ghost.colorized = true

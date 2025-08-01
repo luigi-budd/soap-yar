@@ -1,4 +1,6 @@
 --Saves (and loads) client-side cvars
+--TODO: cvar onchange funcs that send commands
+--		to change soaptable as IO
 local CV = SOAP_CV
 local filepath = "client/soapyar/clientcvars.dat"
 local cv_save = {
