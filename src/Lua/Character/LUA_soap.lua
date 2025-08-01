@@ -837,7 +837,7 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 	if (soap.c3)
 		
 		local candotop = false
-		local incoop = (CV.FindVar("friendlyfire").value and not Soap_IsCompGamemode()))
+		local incoop = (CV.FindVar("friendlyfire").value and not Soap_IsCompGamemode())
 		
 		--spininng top
 		if ((soap.c3 == 1)
