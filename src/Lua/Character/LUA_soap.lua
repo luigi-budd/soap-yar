@@ -358,7 +358,6 @@ local function accelerative_speedlines(p,me,soap, speed, threshold)
 		end
 	end
 	
-	
 	if speed >= 8*threshold/5
 		Soap_WindLines(me,rmomz)
 	elseif speed >= 7*threshold/5
@@ -838,13 +837,14 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 	if (soap.c3)
 		
 		local candotop = false
+		local incoop = (CV.FindVar("friendlyfire").value and not Soap_IsCompGamemode()))
 		
 		--spininng top
 		if ((soap.c3 == 1)
 		or (soap.topcooldown == 0))
 		and ((G_RingSlingerGametype()
 		and (p.rings == 0))
-		or (CV.FindVar("friendlyfire").value and not Soap_IsCompGamemode()))
+		or incoop
 			candotop = true
 			
 			if gametyperules & GTR_TAG
@@ -856,7 +856,7 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 		if candotop
 		and not soap.topcooldown
 			SoapST_Start(p)
-			soap.topcooldown = SOAP_TOPCOOLDOWN
+			soap.topcooldown = SOAP_TOPCOOLDOWN * (incoop and 2 or 1)
 			setstate = true
 		end
 	end
@@ -924,7 +924,7 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 		and (soap.use == 1)
 		and (soap.onGround)
 		and not (p.pflags & PF_SPINNING)
-			me.soap_grabcooldown = 0
+		and not (me.soap_grabcooldown)
 			if not Soap_GrabHitbox(p)
 				if (me.health)
 					p.skidtime = TR/2
@@ -935,7 +935,7 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 					soap.fakeskidtime = p.skidtime
 					p.pflags = $ &~PF_SPINNING
 				end
-				me.soap_grabcooldown = TR*3/2
+				me.soap_grabcooldown = TR*3
 			end
 			soap.use_R = 0
 		end
