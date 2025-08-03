@@ -694,13 +694,16 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 	if not ((me.flags & MF_NOCLIPHEIGHT)
 	or (p.pflags & PF_GODMODE))
 	and me.health
-		if (me.ceilingz - me.floorz < P_GetPlayerHeight(p))
+		if (me.ceilingz - me.floorz < P_GetPlayerHeight(p) or (soap.crouch_toggle and soap.onGround))
 		and not (p.pflags & PF_SPINNING)
 		and not (soap.noability & SNOABIL_CROUCH)
 		and (p.powers[pw_carry] == CR_NONE)
 			forced_crouch = true
 			p.pflags = $ &~PF_SPINNING
 		end
+	end
+	if not soap.io.crouch_toggle
+		soap.crouch_toggle = false
 	end
 	
 	--c2 specials
@@ -718,6 +721,10 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 			local can_crouch = (
 				soap.accspeed <= 10*FU or was_crouching or soap.slipping or forced_crouch
 			)
+			if soap.c2 == 1
+				soap.crouch_toggle = not $
+			end
+			--can_crouch = $ or soap.crouchtoggle
 			
 			--uncurl
 			if (p.pflags & PF_SPINNING)
@@ -728,6 +735,7 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 				P_MovePlayer(p)
 				
 				soap.crouch_cooldown = true
+				soap.crouch_toggle = false
 				
 			--spin launch
 			elseif not can_crouch --soap.rdashing
@@ -737,11 +745,13 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 				p.pflags = $|PF_SPINNING
 				me.state = S_PLAY_ROLL
 				S_StartSound(me,sfx_zoom)
+				soap.crouch_toggle = false
 				
 			--actually crouch
 			elseif not (p.pflags & PF_SPINNING)
 			and can_crouch
 				soap.crouching = true
+				soap.crouchtoggle = false
 				soap.noability = $|SNOABIL_RDASH|SNOABIL_UPPERCUT|SNOABIL_TAUNTS
 				
 				p.normalspeed = skins[p.skin].normalspeed / 2
@@ -825,11 +835,25 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 		soap.crouch_cooldown = false
 	end
 	
+	if not soap.onGround
+	and was_crouching
+		soap.crouching = false
+		soap.crouch_toggle = false
+		if not (p.pflags & PF_JUMPED)
+			me.state = S_PLAY_ROLL
+			p.pflags = $|PF_JUMPED &~PF_SPINNING
+		end
+	end
+	if soap.use
+		soap.crouch_toggle = false
+	end
+	
 	if not soap.crouching
 	and was_crouching
 		p.normalspeed = skins[p.skin].normalspeed
 		p.accelstart = skins[p.skin].accelstart
 		
+		soap.crouchtoggle = false
 		soap.crouch_time = 0
 		Soap_RemoveSquash(p, "crouchdown_anim")
 		local ease_time = soap_crouchanimtime

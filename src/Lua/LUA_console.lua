@@ -1,5 +1,36 @@
 rawset(_G, "SOAP_CV",{})
 local CV = SOAP_CV
+local iAmLua = "iAmLua"..P_RandomFixed()
+
+local function CVSynched_CanChange(cv, value)
+	if gamestate ~= GS_LEVEL
+	or not (consoleplayer and consoleplayer.valid and consoleplayer.soaptable)
+		print("You must be in a level to use this.")
+		return false
+	end
+	return true
+end
+
+local CMD_BOOLEAN = 1
+local function CMD_Constructor(name, tablename, type)
+	--only us (the consoleplayer) will get this command
+	COM_AddCommand("_soap_"..name, function(p, ...)
+		if gamestate ~= GS_LEVEL then return end
+		local args = {...}
+		local sig = args[1]
+		if sig ~= iAmLua then return end
+		local node = players[tonumber(args[2])]
+		local value = args[3]
+		
+		local soap = node.soaptable
+		
+		if type == CMD_BOOLEAN
+			soap.io[tablename] = (tonumber(value) == 1)
+		end
+	end, COM_LOCAL)
+end
+
+CMD_Constructor("crouchtoggle", "crouch_toggle", CMD_BOOLEAN)
 
 CV.ai_style = CV_RegisterVar({
 	name = "soap_afterimagestyle",
@@ -14,6 +45,19 @@ CV.quake_mul = CV_RegisterVar({
 	flags = CV_SHOWMODIF,
 	PossibleValue = {Off = 0, Half = 1, Normal = 2, Double = 3},
 })
+
+--these will need to be synched
+CV.crouch_toggle = CV_RegisterVar({
+	name = "soap_crouchtoggle",
+	defaultvalue = "No", --MUST have matching init values in soaptable
+	flags = CV_CALL,
+	PossibleValue = CV_YesNo,
+	can_change = CVSynched_CanChange,
+	func = function(cv)
+		COM_BufInsertText(server, "_soap_crouchtoggle "..iAmLua.." "..(#consoleplayer).." "..cv.value)
+	end,
+})
+
 
 local CV_Lookup = {}
 setmetatable(CV_Lookup, {

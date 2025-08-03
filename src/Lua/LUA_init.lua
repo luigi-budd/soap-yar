@@ -81,6 +81,10 @@ rawset(_G, "Soap_InitTable", function(p)
 		
 		noability = 0,
 		
+		io = {
+			crouch_toggle = false,
+		},
+		
 		onGround = false,
 		inPain = false,
 		inFangsHeist = false,
@@ -120,6 +124,7 @@ rawset(_G, "Soap_InitTable", function(p)
 		crouch_cooldown = false,
 		crouch_time = 0,
 		crouch_removed = false, --was_crouching
+		crouch_toggle = false,
 		slipping = false,
 		sliptime = 0,
 		
