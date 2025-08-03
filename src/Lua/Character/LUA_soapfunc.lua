@@ -199,7 +199,7 @@ local AICOLOR_START = SKINCOLOR_PINK
 local AICOLOR_END = FIRSTSUPERCOLOR
 local AICOLOR_LENGTH = AICOLOR_END - AICOLOR_START
 local AI_MINALPHA = FU/4
---from the good ol days
+--came like 150% circle since this is old takis afterimages, used in an older Soap_CreateAfterimage, being used in this new Soap_CreateAfterimage
 local AICOLOR_RANDOM = {SKINCOLOR_FLAME, SKINCOLOR_SUNSET, SKINCOLOR_AQUA, SKINCOLOR_VAPOR, SKINCOLOR_PURPLE}
 
 rawset(_G,"Soap_CreateAfterimage", function(p,me)
@@ -951,7 +951,7 @@ end)
 
 --destroys all vfx when they dont apply
 rawset(_G,"Soap_FXDestruct",function(p)
-	local me = p.mo
+	local me = p.realmo
 	local soap = p.soaptable
 
 	--remove fx
@@ -1410,7 +1410,7 @@ rawset(_G,"Soap_HandleNoAbils", function(p)
 	end
 	
 	local hiding = false
-	if (gametyperules & GTR_STARTCOUNTDOWN)
+	if (gametyperules & (GTR_STARTCOUNTDOWN|GTR_FRIENDLY) == GTR_STARTCOUNTDOWN)
 		if leveltime <= cv_hidetime.value*TR
 			hiding = true
 			if (gametyperules & (GTR_BLINDFOLDED|GTR_TAG))

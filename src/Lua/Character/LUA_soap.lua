@@ -1472,7 +1472,7 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 	end
 	
 	if soap.uppercutted
-	and me.health and not soap.inPain
+	and me.health and not (soap.inPain or me.state == S_PLAY_GASP)
 	and not (soap.noability & SNOABIL_UPPERCUT)
 		if (me.momz*soap.gravflip >= 0)
 			
@@ -1493,7 +1493,6 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 			and not soap.pounding
 				--soap.bm.intangible = max($, 2)
 				
-				local func = P_MoveOrigin
 				if not (soap.fx.uppercut_aura and soap.fx.uppercut_aura.valid)
 					local follow = P_SpawnMobjFromMobj(me,0,0,0,MT_SOAP_FREEZEGFX)
 					follow.tics = -1
@@ -1509,7 +1508,6 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 					follow.dist = 0
 					follow.zcorrect = true
 					soap.fx.uppercut_aura = follow
-					func = P_SetOrigin
 				end
 				local aura = soap.fx.uppercut_aura
 				
@@ -1729,39 +1727,40 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 				end
 				
 				if (leveltime & 1)
-				and soap.onGround
-				and not soap.onWater
-					local sidemove = me.radius
-					local sideangle = ANGLE_45
 					spawn_sweat_mobjs(p,me,soap)
-					for i = -1,1,2
-						local kickup = P_SpawnMobjFromMobj(me,
-							P_RandomFixedRange(-4,4) + P_ReturnThrustX(nil, p.drawangle + sideangle * i, sidemove),
-							P_RandomFixedRange(-4,4) + P_ReturnThrustY(nil, p.drawangle + sideangle * i, sidemove),
-							0,
-							MT_SPINDUST
-						)
-						if me.eflags & (MFE_TOUCHWATER|MFE_UNDERWATER)
-							kickup.state = mobjinfo[MT_SMALLBUBBLE].spawnstate
-							kickup.tics = -1
-							kickup.fuse = 10
-							if (me.eflags & MFE_TOUCHLAVA)
-								kickup.colorized = true
-								kickup.color = SKINCOLOR_KETCHUP
+					if soap.onGround
+					and not soap.onWater
+						local sidemove = me.radius
+						local sideangle = ANGLE_45
+						for i = -1,1,2
+							local kickup = P_SpawnMobjFromMobj(me,
+								P_RandomFixedRange(-4,4) + P_ReturnThrustX(nil, p.drawangle + sideangle * i, sidemove),
+								P_RandomFixedRange(-4,4) + P_ReturnThrustY(nil, p.drawangle + sideangle * i, sidemove),
+								0,
+								MT_SPINDUST
+							)
+							if me.eflags & (MFE_TOUCHWATER|MFE_UNDERWATER)
+								kickup.state = mobjinfo[MT_SMALLBUBBLE].spawnstate
+								kickup.tics = -1
+								kickup.fuse = 10
+								if (me.eflags & MFE_TOUCHLAVA)
+									kickup.colorized = true
+									kickup.color = SKINCOLOR_KETCHUP
+								end
+							elseif (p.powers[pw_shield] == SH_ELEMENTAL)
+								kickup.state = S_SPINDUST_FIRE1
 							end
-						elseif (p.powers[pw_shield] == SH_ELEMENTAL)
-							kickup.state = S_SPINDUST_FIRE1
+							kickup.destscale = 1
+							kickup.scalespeed = FixedDiv($, kickup.scale)
+							P_SetObjectMomZ(kickup, P_RandomFixedRange(4,6))
+							kickup.spritexscale = FU + P_RandomFixedRange(0,1) / 5
+							kickup.spriteyscale = kickup.spritexscale
+							
+							P_InstaThrust(kickup,
+								R_PointToAngle2(kickup.x,kickup.y, me.x,me.y),
+								-5*me.scale
+							)
 						end
-						kickup.destscale = 1
-						kickup.scalespeed = FixedDiv($, kickup.scale)
-						P_SetObjectMomZ(kickup, P_RandomFixedRange(4,6))
-						kickup.spritexscale = FU + P_RandomFixedRange(0,1) / 5
-						kickup.spriteyscale = kickup.spritexscale
-						
-						P_InstaThrust(kickup,
-							R_PointToAngle2(kickup.x,kickup.y, me.x,me.y),
-							-5*me.scale
-						)
 					end
 				end
 				
@@ -2012,7 +2011,6 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 			FixedMul(skins[p.skin].height, me.scale),
 			me.spriteyscale
 		)
-		local func = P_MoveOrigin
 		if not (soap.fx.pound_aura and soap.fx.pound_aura.valid)
 			local follow = P_SpawnMobjFromMobj(me,0,0,0,MT_SOAP_FREEZEGFX)
 			follow.tics = -1
@@ -2029,7 +2027,6 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 			follow.dist = 0
 			follow.zcorrect = true
 			soap.fx.pound_aura = follow
-			func = P_SetOrigin
 		end
 		local aura = soap.fx.pound_aura
 		

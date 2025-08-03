@@ -12,6 +12,7 @@ end)
 Takis_Hook.addHook("Soap_OnStunEnemy",function(mo)
 	if (mo.tracer and mo.tracer.valid)
 		P_KillMobj(mo.tracer)
+		if not (mo and mo.valid) then return end
 		mo.flags = $|MF_SPECIAL|MF_SHOOTABLE
 	end
 end,MT_EGGGUARD)
