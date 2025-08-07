@@ -1372,7 +1372,7 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 		P_ButteredSlope(me)
 		if soap.onGround
 			local destang = R_PointToAngle2(0,0,me.momx,me.momy) + ANGLE_180
-			p.drawangle = $ + FixedMul(destang - $, FU/3)
+			p.drawangle = destang --$ + FixedMul(destang - $, FU/3)
 			
 			-- yeah
 			if /*not*/ (me.standingslope) /*
@@ -1623,7 +1623,13 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 			end
 		end
 		
-		local slow_speed = soap.inWater and (p.normalspeed - 7*FU)/3 or (p.normalspeed - 7*FU)
+		local slow_speed = (p.normalspeed - 7*FU)
+		if soap.inWater
+			slow_speed = $/3
+		end
+		if soap.in2D
+			slow_speed = $/2
+		end
 		
 		if (soap.accspeed < slow_speed
 		and p.normalspeed > skin_t.normalspeed + soap._maxdash/3)
@@ -2722,16 +2728,9 @@ addHook("FollowMobj",function(p, m_peel)
 			end
 		end
 		do
-			local twod = (twodlevel or 
-				(displayplayer and displayplayer.valid
-					and displayplayer.realmo
-					and displayplayer.realmo.flags2 & MF2_TWOD
-				)
-			)
 			local r_angle = p.drawangle + ANGLE_90
 			
 			pitchroll = FixedMul(pitch,-sin(r_angle)) + FixedMul(roll,cos(r_angle))
-			if twod then pitchroll = InvAngle($) end
 		end
 		
 		peel.rollangle = me.rollangle + pitchroll
