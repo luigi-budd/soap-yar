@@ -17,9 +17,11 @@
 */
 
 --max speed increase
-rawset(_G,"SOAP_MAXDASH", 19*FU)
+rawset(_G,"SOAP_MAXDASH", 21*FU)
 --speed increase ramp-up time
 rawset(_G,"SOAP_DASHTIME", TR/2)
+--max extra speed charge
+rawset(_G,"SOAP_EXTRADASH", 21*FU)
 --spinning top
 rawset(_G,"SOAP_TOPCOOLDOWN", 4*TR)
 
@@ -28,6 +30,10 @@ local CV = SOAP_CV
 local soap_crouchanimtime = 13
 local max_mentums = (FU - ORIG_FRICTION) * 95 / 100
 local soap_lowfriction = tofixed("0.97")
+
+local soap_rdashwind_base = SKINCOLOR_SAPPHIRE
+local soap_rdashwind_dest = SKINCOLOR_YELLOW
+local soap_rdashwind_inc = (soap_rdashwind_dest - soap_rdashwind_base)
 
 local sfx_armacharge = sfx_s3k84
 local sfx_armacharge2 = sfx_s3ka3
@@ -455,10 +461,8 @@ Takis_Hook.addHook("Soap_DashSpeeds", function(p, dash, time, noadjust)
 			dash = $ * 3/5
 		--be about the same speed as heavy
 		else
-			--math is handled in the thinker
-			if p.cmd.sidemove ~= 0
-				noadjust = true
-			end
+			noadjust = true
+			dash = 19*FU
 			--Cool...
 			if soap.accspeed >= 15*FU
 			and soap.in2D
@@ -980,7 +984,7 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 			
 			if soap.onGround
 				local old_speed = p.normalspeed
-				local max_extra = 21*FU
+				local extracharge = 0
 				
 				--speed boost when landing from an airdash,
 				--pizza-tower style
@@ -1000,9 +1004,17 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 					if zangle >= 180 then zangle = $ - 360 end
 					
 					--only add speed going DOWN slopes,
-					--and never remove speed (butteredslope should handle that)
+					--and never remove speed... (butteredslope should handle that)
 					if -zangle > 0
-						p.normalspeed = $ - zangle * (FU/25)
+						--GFZ2 slope-compliant
+						p.normalspeed = $ - zangle * (FU/38)
+						soap.chargingtime = min($ - zangle/5, 3*TR)
+						if p.normalspeed > maximumspeed
+						and (-zangle * (FU/38) >= FU*6/10)
+							soap.chargingtime = 3*TR
+							extracharge = (p.normalspeed - maximumspeed)/5
+						end
+						soap.speedlenient = max($, 3)
 					--...BUT!!!	if we're going uphill while waterrunning,
 					--we should be getting speed back, since water should
 					--give almost no resistance
@@ -1023,6 +1035,7 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 				)
 				--TODO: account for angle diffs too
 				if soap.inBattle
+					/*
 					local basespeed = skin_t.normalspeed
 					local sidefactor = abs(FixedDiv(p.cmd.sidemove*FU, 50*FU))
 					sidefactor = ease.inquart($,0,FU)
@@ -1030,6 +1043,10 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 					if sidefactor ~= 0
 						local diff = p.normalspeed - basespeed
 						p.normalspeed = basespeed + FixedMul(diff, FU - sidefactor)
+					end
+					*/
+					if p.normalspeed >= maximumspeed
+						me.movefactor = $ / 3
 					end
 				end
 				
@@ -1047,7 +1064,7 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 				and old_speed < maximumspeed
 					S_StartSound(me,sfx_sp_dss)
 					soap.chargedtime = 10
-					soap.speedlenient = 4
+					soap.speedlenient = max($,4)
 					
 					local ease_time = soap.chargedtime * 3/4
 					local ease_func = "insine"
@@ -1078,13 +1095,13 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 						soap.dashcharge = 0
 						soap.chargingtime = $ + 1
 						
-					elseif soap.dashcharge < max_extra
-						soap.dashcharge = $ + FU/chargetime
+					elseif soap.dashcharge < SOAP_EXTRADASH
+						soap.dashcharge = $ + (FU/chargetime) + extracharge
 						
-						if soap.dashcharge >= max_extra
+						if soap.dashcharge >= SOAP_EXTRADASH
 							S_StartSound(me,sfx_sp_max)
-							soap.dashcharge = max_extra
-							soap.speedlenient = 4
+							soap.dashcharge = SOAP_EXTRADASH
+							soap.speedlenient = max($,4)
 						end
 					end
 					
@@ -1097,6 +1114,7 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 				local speed_diff = maximumspeed - p.normalspeed
 				if speed_diff < 0
 				and speed_diff >= -FU
+				and (soap.dashcharge == 0)
 					p.normalspeed = maximumspeed
 				end
 			end
@@ -1592,13 +1610,17 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 			)
 		)
 		momentums = min($, ORIG_FRICTION + max_mentums)
-		
 		if me.friction < momentums
 			me.friction = momentums
 		end
 		
 		if not Soap_IsCompGamemode()
-			P_ButteredSlope(me)
+			local angle,thrust = Soap_SlopeInfluence(me,p, {
+				allowstand = true, allowmult = true
+			})
+			if angle ~= nil
+				P_Thrust(me,angle, thrust/3)
+			end
 		end
 		
 		local slow_speed = soap.inWater and (p.normalspeed - 7*FU)/3 or (p.normalspeed - 7*FU)
@@ -1606,8 +1628,8 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 		if (soap.accspeed < slow_speed
 		and p.normalspeed > skin_t.normalspeed + soap._maxdash/3)
 		and soap.onGround
-		and not (me.eflags & MFE_SPRUNG)
-		and not soap.speedlenient
+		and not ((me.eflags & MFE_SPRUNG)
+		or soap.speedlenient)
 			p.normalspeed = max(soap.accspeed, skin_t.normalspeed)
 			soap.dashcharge = 0
 			soap.chargingtime = 0
@@ -1670,19 +1692,23 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 			if not (soap.uppercutted and me.state == S_PLAY_FALL)
 				soap.afterimage = true
 				
-				local speed_frac = ease.incubic(FU/2,
-					FixedDiv(
-						p.normalspeed - dashspeed,
-						21*FU
-					), FU
-				)
-				
-				local color = SKINCOLOR_SAPPHIRE + (FixedMul(
-					(SKINCOLOR_GALAXY - SKINCOLOR_SAPPHIRE)*FU,
-					speed_frac)
-				)/FU
+				local color = soap_rdashwind_base
+				if (soap.dashcharge)
+					local speed_frac = ease.incubic(FU/2,
+						FixedDiv(
+							p.normalspeed - dashspeed,
+							SOAP_EXTRADASH
+						), FU
+					)
+					
+					color = $ + (FixedMul(
+						soap_rdashwind_inc*FU,
+						speed_frac)
+					)/FU
+				end
 				color = max(0, min($, #skincolors - 1))
 				Soap_WindLines(me,nil,color)
+				accelerative_speedlines(p,me,soap, FixedDiv(R_PointTo3DDist(0,0,0,me.momx,me.momy,me.momz),me.scale), 65*FU, color)
 				
 				if Soap_DirBreak(p,me, R_PointToAngle2(0,0,me.momx,me.momy))
 					Soap_Hitlag.addHitlag(me, 7, false)
@@ -2279,7 +2305,7 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 			end
 		end
 	elseif p.powers[pw_carry] == CR_NONE
-	and not soap.pounding
+	and not (soap.pounding or soap.rdashing)
 		accelerative_speedlines(p,me,soap, FixedDiv(R_PointTo3DDist(0,0,0,me.momx,me.momy,me.momz),me.scale), 40*FU)
 	--kinda annoying how you cant pound when exiting a dust devil
 	elseif soap.last.carry == CR_DUSTDEVIL
@@ -2297,6 +2323,10 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 	
 	if spawn_aura and me.health
 		local super = (soap.doSuperBuffs or (p.powers[pw_sneakers] > 0)) --sneakers too lol
+		--Show when the extra attack point will be applied
+		if (soap.inBattle and soap.accspeed >= 50*FU)
+			super = true
+		end
 		if not (soap.fx.dash_aura and soap.fx.dash_aura.valid)
 			local follow = P_SpawnMobjFromMobj(me,0,0,0,MT_SOAP_FREEZEGFX)
 			follow.tics = -1

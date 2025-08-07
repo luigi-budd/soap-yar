@@ -20,6 +20,7 @@ end
 
 enumflags("DEBUG_",{
 	"POWERS",
+	"RDASH",
 }, function(k,enum,val)
 	DEBUGTOENUM[val] = enum
 end)
@@ -40,10 +41,12 @@ local function CMDConstructor(name, props)
 		if not props.outoflevels
 		and NotInLevel()
 			prn(p, "You must be in a level to use this.")
+			return
 		end
 		if props.checksoap
 		and not p.soaptable
 			prn(p, "You can't use this right now.")
+			return
 		end
 		
 		props.func(p, ...)
@@ -135,7 +138,7 @@ CMDConstructor("shield", {prefix = SOAP_DEVPREFIX, func = function(p,...)
 	end
 end})
 
-CMDConstructor("debug", {prefix = SOAP_DEVPREFIX, func = function(p,...)
+CMDConstructor("debug", {prefix = SOAP_DEVPREFIX, outoflevels = true, func = function(p,...)
 	local args = {...}
 	if not #args
 		prn(p, "Current flags enabled:")

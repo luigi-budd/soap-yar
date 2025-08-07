@@ -62,7 +62,7 @@ addHook("HUD",function(v,p)
 			hud.disable("lives")
 		end
 		
-		local x, y = 15, hudinfo[HUD_LIVES].y
+		local x, y = 15, 176
 		local flags = V_HUDTRANS|V_PERPLAYER|V_SNAPTOBOTTOM|V_SNAPTOLEFT
 		local color = (p.skincolor and skincolors[p.skincolor].ramp[4] or 0)
 		local color2 = (ColorOpposite(p.skincolor) and skincolors[ColorOpposite(p.skincolor)].ramp[4] or 0)
@@ -129,6 +129,33 @@ addHook("HUD",function(v,p)
 			hud.enable("lives")
 		end
 		oldlives = false
+	end
+	if (SOAP_DEBUG & DEBUG_RDASH) and (v.drawFixedFill ~= nil)
+		local w, h = 90*FU, 10*FU
+		local x, y = 160*FU - w/2, (200 - 20)*FU
+		local f = V_SNAPTOBOTTOM
+		local skin = skins[p.skin]
+		
+		v.interpolate(true)
+		v.drawFixedFill(x-FU,y-FU, w+2*FU,h+2*FU, 27|f)
+		if soap.rdashing
+			local progress = min(
+				FixedDiv(
+					p.normalspeed - skin.normalspeed - soap.dashcharge, soap._maxdash + SOAP_EXTRADASH
+				), FU
+			)
+			local eprogress = min(FixedDiv(p.normalspeed - skin.normalspeed, soap._maxdash + SOAP_EXTRADASH), FU)
+			v.drawFixedFill(x,y, FixedMul(w,eprogress),h, 162|f)
+			v.drawFixedFill(x,y, FixedMul(w,progress),h, 134|f)
+		end
+		v.drawString(x,y+(h - 4*FU), string.format("R-Dash: %.1f%% (%.1f, %.1f/%.0f%%) (max %.1f)",
+			FixedDiv(p.normalspeed, skin.normalspeed+soap._maxdash)*100,
+			p.normalspeed, soap.dashcharge,
+			FixedDiv(soap.chargingtime*FU,3*TR*FU)*100,
+			soap._maxdash),
+			f|V_ALLOWLOWERCASE, "small-thin-fixed"
+		)
+		v.interpolate(false)
 	end
 	
 	oldflags = SOAP_DEBUG

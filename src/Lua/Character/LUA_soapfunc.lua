@@ -801,7 +801,8 @@ end)
 
 local WIND_PUSHMIN = (20)
 local WIND_PUSHMAX = (31)
-local WIND_PUSHANG = (ANG20 + ANG15)
+local WIND_PUSHANG_MIN = 29
+local WIND_PUSHANG_MAX = 35
 rawset(_G, "Soap_WindLines", function(me,rmomz,color,forceang)
 	if not (me and me.valid) then return end --?
 	if not me.health then return end
@@ -856,6 +857,7 @@ rawset(_G, "Soap_WindLines", function(me,rmomz,color,forceang)
 	end
 	
 	local pushangle = wind.angle + ANGLE_90
+	local pushpush = FixedAngle(P_RandomFixedRange(WIND_PUSHANG_MIN,WIND_PUSHANG_MAX))
 	local pushsign = P_RandomSign()
 	local pushdist = FixedMul(P_RandomFixedRange(WIND_PUSHMIN,WIND_PUSHMAX), me.scale) * pushsign
 	local sidex,sidey
@@ -873,14 +875,14 @@ rawset(_G, "Soap_WindLines", function(me,rmomz,color,forceang)
 	)
 	--Painful
 	P_Thrust(wind,
-		wind.angle + (WIND_PUSHANG)*pushsign,
+		wind.angle + (pushpush)*pushsign,
 		FixedMul(FixedMul(P_RandomFixedRange(2,7), cos(zangle)), me.scale)
 	)
 	P_Thrust(wind,
 		wind.angle + ANGLE_90*pushsign,
 		FixedMul(abs(FixedMul(P_RandomFixedRange(2,7), sin(zangle))), me.scale)
 	)
-	wind.angle = $ - (WIND_PUSHANG/3)*pushsign
+	wind.angle = $ - (pushpush/3)*pushsign
 	
 	local mocolor = color
 	if mocolor == nil

@@ -233,7 +233,7 @@ local function SetCompat()
 				local stale = (me.soap_adashcount > 2)
 				
 				if (soap.rdashing and me.state == S_PLAY_DASH)
-				and (soap.accspeed >= 38*FU)
+				and (soap.accspeed >= 50*FU)
 					attack = 2
 				end
 				if soap.airdashed
