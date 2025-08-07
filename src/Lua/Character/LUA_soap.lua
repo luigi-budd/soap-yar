@@ -1360,7 +1360,9 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 	--or not (p.pflags & PF_SPINNING)
 	or soap.inPain
 	or (soap.isSliding or p.powers[pw_carry] ~= CR_NONE)
-	or (not soap.onGround and soap.accspeed < 10*FU)
+	or ((not soap.onGround and soap.accspeed < 10*FU)
+		or (soap.accspeed < 5*FU and me.standingslope == nil)
+	)
 		soap.slipping = false
 	end
 	if soap.slipping
@@ -1374,12 +1376,14 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 			local destang = R_PointToAngle2(0,0,me.momx,me.momy) + ANGLE_180
 			p.drawangle = destang --$ + FixedMul(destang - $, FU/3)
 			
-			-- yeah
-			if /*not*/ (me.standingslope) /*
-				me.momx = FixedMul($, me.friction)
-				me.momy = FixedMul($, me.friction)
-			else */
-				me.friction = max($, ORIG_FRICTION + FU/20)
+			local friction = ORIG_FRICTION + FU/13
+			if (me.standingslope)
+				me.friction = max($, friction)
+			else
+				--modifying friction doesnt do anything when the player
+				--is spinning so we have to do it ourselves
+				me.momx = FixedMul($, friction)
+				me.momy = FixedMul($, friction)
 			end
 		end
 		
