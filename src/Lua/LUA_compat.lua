@@ -299,6 +299,55 @@ local function SetCompat()
 				p.actionstate = 0
 			end
 			
+			if me.soap_spikevfx
+				local range = 22
+				do
+					local color = G_GametypeHasTeams() and ((p.ctfteam == 1 and skincolor_redteam or skincolor_bluering)) or p.skincolor
+					local spark = P_SpawnMobjFromMobj(me,
+						P_RandomFixedRange(-range,range),
+						P_RandomFixedRange(-range,range),
+						P_RandomFixedRange(0,range),
+						MT_WATERZAP
+					)
+					spark.spritexscale = FU*7
+					spark.spriteyscale = FU*4
+					local ha,va = R_PointTo3DAngles(spark.x,spark.y,spark.z, me.x,me.y,me.z)
+					P_3DThrust(spark, ha,va, -P_RandomRange(10,15)*me.scale)
+					spark.blendmode = AST_ADD
+					spark.renderflags = $|RF_FULLBRIGHT|RF_PAPERSPRITE
+					spark.colorized = true
+					spark.color = color
+					spark.angle = ha
+					spark.momx = $ + me.momx
+					spark.momy = $ + me.momy
+					spark.momz = $ + soap.rmomz
+					
+					--top sparks
+					local angle = FixedAngle(P_RandomFixedRange(0,360))
+					local rad = FixedDiv(me.radius,me.scale)
+					local hei = FixedDiv(me.height,me.scale)
+					spark = P_SpawnMobjFromMobj(me,
+						P_ReturnThrustX(nil,angle,rad),
+						P_ReturnThrustY(nil,angle,rad),
+						(hei/2) + P_RandomFixedRange(-17,17), MT_SOAP_SPARK
+					)
+					spark.color = color
+					spark.adjust_angle = angle
+					spark.angle = spark.adjust_angle
+					spark.target = me
+					local ha,va = R_PointTo3DAngles(spark.x,spark.y,spark.z, me.x,me.y,me.z)
+					spark.rollangle = va
+					
+					spark.spritexscale = FU/3 + P_RandomRange(0, FU/2)
+					spark.spriteyscale = FU/2
+					spark.renderflags = $|(spark.z <= me.z+(hei/2) and RF_VERTICALFLIP or 0)
+					spark.momx = $ + me.momx
+					spark.momy = $ + me.momy
+					spark.momz = $ + soap.rmomz
+				end
+				me.soap_spikevfx = $ - 1
+			end
+			
 			if (soap.fire == 1)
 			and (p.guard ~= 0)
 			and not me.soap_grabcooldown
@@ -492,6 +541,7 @@ local function SetCompat()
 						end
 					end
 					me.momz = $ / 2
+					me.soap_spikevfx = TR/3
 					
 					last.power = 5*FU + FixedDiv(abs(last.momz),me.scale*3)
 					last.basepower = 35*FU

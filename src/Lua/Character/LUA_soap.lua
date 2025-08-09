@@ -1994,6 +1994,8 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 				spark.adjust_angle = angle
 				spark.angle = spark.adjust_angle
 				spark.target = me
+				local ha,va = R_PointTo3DAngles(spark.x,spark.y,spark.z, me.x,me.y,me.z)
+				spark.rollangle = va
 				
 				spark.spritexscale = FU/3 + P_RandomRange(0, FU/2)
 				spark.spriteyscale = FU/2

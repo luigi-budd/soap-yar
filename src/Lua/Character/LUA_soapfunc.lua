@@ -1213,7 +1213,7 @@ local function TryTopClash(p,me,found)
 	local soap = p.soaptable
 	local B = CBW_Battle
 	if B
-		B.DoPriority(found.player)
+		B.DoPriority(found.player, me) --seems like Tweaks requires we pass our mobj
 		B.DoSPriority(found.player, me)
 	end
 	local apri = found.player.battle_atk
