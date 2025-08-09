@@ -1801,6 +1801,7 @@ rawset(_G,"Soap_DeathThinker",function(p,me,soap)
 			me.soap_landondeath = false
 		end
 		
+		--TODO: finish this animation
 		if dmg == DMG_FIRE
 			if (me.soap_deadtimer <= 3)
 				me.momz = 0
@@ -1851,6 +1852,7 @@ rawset(_G,"Soap_DeathThinker",function(p,me,soap)
 			end
 		end
 		
+		--TODO: This could use a little more flair?
 		if dmg == DMG_DROWNED
 			me.flags = $|MF_NOGRAVITY
 			me.momx,me.momy,me.momz = 0,0,0
@@ -2301,6 +2303,7 @@ rawset(_G, "Soap_VFXFuncs",{
 
 --preferrably we could handle the auras here but ehh whatever
 rawset(_G,"Soap_VFX",function(p,me,soap, props)
+	if p.spectator then return end
 	local allowed = {
 		waterrun = true,
 		jumpdust = true,

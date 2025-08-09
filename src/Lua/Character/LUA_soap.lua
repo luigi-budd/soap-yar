@@ -1033,18 +1033,7 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 					--dont go over
 					maximumspeed
 				)
-				--TODO: account for angle diffs too
 				if soap.inBattle
-					/*
-					local basespeed = skin_t.normalspeed
-					local sidefactor = abs(FixedDiv(p.cmd.sidemove*FU, 50*FU))
-					sidefactor = ease.inquart($,0,FU)
-					
-					if sidefactor ~= 0
-						local diff = p.normalspeed - basespeed
-						p.normalspeed = basespeed + FixedMul(diff, FU - sidefactor)
-					end
-					*/
 					if p.normalspeed >= maximumspeed
 						me.movefactor = $ / 3
 					end
@@ -1813,6 +1802,14 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 				p.panim = PA_DASH
 			end
 			p.runspeed = soap.accspeed - 10*FU
+			local angle = R_PointToAngle2(0,0, me.momx,me.momy)
+			local mang = R_PointToAngle2(0,0, FixedHypot(me.momx, me.momy), me.momz)
+			mang = InvAngle($)
+			
+			local destpitch = FixedMul(mang, cos(angle))
+			local destroll = FixedMul(mang, sin(angle))
+			me.pitch = P_AngleLerp(FU/6, $, destpitch)
+			me.roll  = P_AngleLerp(FU/6, $, destroll)
 		end
 		
 		--print("case1: "..(getTimeMicros() - micros))
@@ -2315,7 +2312,7 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 			end
 		end
 	elseif p.powers[pw_carry] == CR_NONE
-	and not (soap.pounding or soap.rdashing)
+	and not (soap.pounding or (soap.rdashing and not soap.airdashed))
 		accelerative_speedlines(p,me,soap, FixedDiv(R_PointTo3DDist(0,0,0,me.momx,me.momy,me.momz),me.scale), 40*FU)
 	--kinda annoying how you cant pound when exiting a dust devil
 	elseif soap.last.carry == CR_DUSTDEVIL
