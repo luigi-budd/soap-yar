@@ -24,6 +24,7 @@ rawset(_G,"SOAP_DASHTIME", TR/2)
 rawset(_G,"SOAP_EXTRADASH", 21*FU)
 --spinning top
 rawset(_G,"SOAP_TOPCOOLDOWN", 4*TR)
+rawset(_G,"SOAP_MAXDAMAGETICS", 10)
 
 local CV = SOAP_CV
 
@@ -73,18 +74,20 @@ end
 
 --thanks katsy for this function
 local function stupidbouncesectors(mobj, sector)
-    for fof in sector.ffloors()
-        if not (fof.fofflags & FOF_BOUNCY) and (GetSecSpecial(fof.master.frontsector.special, 1) != 15)
-            continue
-        end
-        if not (fof.fofflags & FOF_EXISTS)
-            continue
-        end
-        if (mobj.z+mobj.height+mobj.momz < fof.bottomheight) or (mobj.z-mobj.momz > fof.topheight)
-            continue
-        end
-        return true
-    end
+	if not (mobj.subsector and mobj.subsector.valid) then return false; end
+	if not (sector and sector.valid) then return false; end
+	for fof in sector.ffloors()
+		if not (fof.fofflags & FOF_BOUNCY) and (GetSecSpecial(fof.master.frontsector.special, 1) != 15)
+			continue
+		end
+		if not (fof.fofflags & FOF_EXISTS)
+			continue
+		end
+		if (mobj.z+mobj.height+mobj.momz < fof.bottomheight) or (mobj.z-mobj.momz > fof.topheight)
+			continue
+		end
+		return true
+	end
 end
 
 local function soap_poundonland(p,me,soap)
@@ -2938,6 +2941,8 @@ local function try_pvp_collide(me,thing)
 	
 	if not soap then return end
 	if me.skin ~= "soapthehedge" then return end
+	if (soap.damagedealtthistic > SOAP_MAXDAMAGETICS) then return end
+	soap.damagedealtthistic = $ + 1
 	
 	local DealDamage = (soap.doSuperBuffs or p.powers[pw_invulnerability]) and P_KillMobj or P_DamageMobj
 	
@@ -3068,7 +3073,9 @@ local function try_pvp_collide(me,thing)
 	local soap2 = p2.soaptable
 	local battlepass = false --(soap.inBattle)
 	
+	if soap2.iwashitthistic then return end
 	if not Soap_CanHurtPlayer(p, p2, battlepass) then return end
+	soap2.iwashitthistic = true
 	
 	--hit by pound
 	if (soap.pounding)
@@ -3362,6 +3369,8 @@ Takis_Hook.addHook("PostThinkFrame",function(p)
 	local me = p.realmo
 	local soap = p.soaptable
 	
+	soap.damagedealtthistic = 0
+	soap.iwashitthistic = false
 	if me.skin ~= "soapthehedge" then return end
 	
 	if me.hitlag

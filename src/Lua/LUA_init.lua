@@ -116,6 +116,10 @@ rawset(_G, "Soap_InitTable", function(p)
 		allowdeathanims = true,
 		linebump = 0,
 		
+		--if this gets too big in 1 tic, dont process any pvp
+		damagedealtthistic = 0,
+		iwashitthistic = false,
+		
 		--if true, no crouching until c3 is let go
 		crouch_cooldown = false,
 		crouch_time = 0,

@@ -7,17 +7,19 @@ local compat = {
 	ze2config = false,
 	--solform = false,
 	mmportrait = false,
+	orbitcompat = false,
 }
 local compat_names = {
-	["takiskart"]	= "TakisKart		",
-	["battlemod"]	= "BattleMoveset	",
-	["ptsrhook"]	= "PTSR Hooks		",
-	["heist"]		= "Fang's Heist set",
-	["mrce"]		= "MRCE Compat.	",
-	["ze2config"]	= "ZE2 Config.		",
-	--["solform"]		= "Sol Form		",
-	["ze2config"]	= "ZE2 Config.		",
-	["mmportrait"]	= "EPIC!MM support	",
+	["takiskart"]	= "TakisKart        ",
+	["battlemod"]	= "BattleMoveset    ",
+	["ptsrhook"]	= "PTSR Hooks       ",
+	["heist"]		= "Fang's Heist set ",
+	["mrce"]		= "MRCE Compat.     ",
+	["ze2config"]	= "ZE2 Config.      ",
+	--["solform"]		= "Sol Form     ",
+	["ze2config"]	= "ZE2 Config.      ",
+	["mmportrait"]	= "EPIC!MM support  ",
+	["orbitcompat"] = "Orbit Compat.    ",
 }
 
 local function dust_type(me)
@@ -884,6 +886,22 @@ local function SetCompat()
 		
 		compat.mmportraits = true
 		printf("Added EPIC!MM stuff.")
+	end
+	if (skins["orbit"] ~= nil)
+	and not compat.orbitcompat
+		Takis_Hook.addHook("CanPlayerHurtPlayer",function(p1,p2, nobs)
+			if not (p2.mo and p2.mo.valid) then return end
+			if skins[p2.skin].name ~= "orbit" then return end
+			local o = p2.orbittable
+			
+			if (o.frozen)
+				--p1.soaptable.damagedealtthistic = SOAP_MAXDAMAGETICS
+				return false
+			end
+		end)
+		
+		compat.orbitcompat = true
+		printf("Added Orbit stuff.")
 	end
 end
 
