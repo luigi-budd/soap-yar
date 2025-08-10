@@ -26,6 +26,8 @@ rawset(_G,"SOAP_EXTRADASH", 21*FU)
 rawset(_G,"SOAP_TOPCOOLDOWN", 4*TR)
 rawset(_G,"SOAP_MAXDAMAGETICS", 10)
 
+local soap_baseuppercutturn = (360 + 180)*FU
+
 local CV = SOAP_CV
 
 local soap_crouchanimtime = 13
@@ -1245,7 +1247,7 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 		and not soap.uppercut_cooldown
 		and (p.powers[pw_carry] == CR_NONE)
 		and not (soap.noability & SNOABIL_UPPERCUT)
-			soap.uppercut_spin = 360*FU
+			soap.uppercut_spin = soap_baseuppercutturn
 			
 			local thrust = soap.nerfed and 10*FU or 13*FU
 			local shield = p.powers[pw_shield] & SH_NOSTACK
@@ -1267,7 +1269,7 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 						P_SetObjectMomZ(dust, thrust/2)
 					end
 				)
-				soap.uppercut_spin = $ * 2
+				soap.uppercut_spin = $ + 360*FU
 			end
 			if soap.doSuperBuffs
 				thrust = $ + 5*FU
@@ -1298,6 +1300,8 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 						sound = false
 						
 						spawn_thundercoin_sparks(p,me)
+						soap.noairdashforme = true
+						soap.uppercut_spin = $ + 360*FU
 					end
 				end
 			end
@@ -1453,6 +1457,7 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 		soap.doublejumped = false
 		soap.canuppercut = true
 		soap.uppercutted = false
+		soap.uppercut_tc = false
 		
 		soap.noairdashforme = false
 	end
@@ -1559,7 +1564,6 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 		and not (soap.inPain or P_PlayerInPain(p))
 			me.state = (me.momz * soap.gravflip > 0) and S_PLAY_SPRING or S_PLAY_FALL
 		end
-		soap.uppercut_tc = false
 	end
 	soap.just_uppercut = max($-1,0)
 	
@@ -1805,7 +1809,7 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 				p.panim = PA_DASH
 			end
 			p.runspeed = soap.accspeed - 10*FU
-			if me.state = S_PLAY_FLOAT_RUN
+			if me.state == S_PLAY_FLOAT_RUN
 				local angle = R_PointToAngle2(0,0, me.momx,me.momy)
 				local mang = R_PointToAngle2(0,0, FixedHypot(me.momx, me.momy), me.momz)
 				mang = InvAngle($)
@@ -2999,7 +3003,7 @@ local function try_pvp_collide(me,thing)
 			and (me.momz*soap.gravflip > 0)
 			and (me.sprite2 == SPR2_MLEE)
 				Soap_ImpactVFX(thing,me)
-				soap.uppercut_spin = 360*FU
+				soap.uppercut_spin = soap_baseuppercutturn
 				soap.canuppercut = true
 				
 				local power = 5*FU + FixedDiv(me.momz,me.scale)
@@ -3123,7 +3127,7 @@ local function try_pvp_collide(me,thing)
 	and (me.momz*soap.gravflip) > (thing.momz * P_MobjFlip(thing))
 	and (me.sprite2 == SPR2_MLEE)
 		P_DamageMobj(thing, me,me, 40)
-		soap.uppercut_spin = 360*FU
+		soap.uppercut_spin = soap_baseuppercutturn
 		soap.canuppercut = true
 		
 		local power = 5*FU + FixedDiv(me.momz,me.scale)
@@ -3494,9 +3498,9 @@ Takis_Hook.addHook("PostThinkFrame",function(p)
 		if not (me.flags & MF_NOTHINK)
 			p.drawangle = me.angle - FixedAngle(soap.uppercut_spin)
 			
-			soap.uppercut_spin = $ + (0 - $) / (soap.inWater and 10 or 7)
+			soap.uppercut_spin = P_AngleLerp(FU / (soap.inWater and 10 or 7), $, 0)
 			
-			if FixedFloor(soap.uppercut_spin) < 6*FU
+			if FixedFloor(soap.uppercut_spin) < 10*FU
 				soap.uppercut_spin = 0
 			end
 		end
