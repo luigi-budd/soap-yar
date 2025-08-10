@@ -1805,14 +1805,16 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 				p.panim = PA_DASH
 			end
 			p.runspeed = soap.accspeed - 10*FU
-			local angle = R_PointToAngle2(0,0, me.momx,me.momy)
-			local mang = R_PointToAngle2(0,0, FixedHypot(me.momx, me.momy), me.momz)
-			mang = InvAngle($)
-			
-			local destpitch = FixedMul(mang, cos(angle))
-			local destroll = FixedMul(mang, sin(angle))
-			me.pitch = P_AngleLerp(FU/6, $, destpitch)
-			me.roll  = P_AngleLerp(FU/6, $, destroll)
+			if me.state = S_PLAY_FLOAT_RUN
+				local angle = R_PointToAngle2(0,0, me.momx,me.momy)
+				local mang = R_PointToAngle2(0,0, FixedHypot(me.momx, me.momy), me.momz)
+				mang = InvAngle($)
+				
+				local destpitch = FixedMul(mang, cos(angle))
+				local destroll = FixedMul(mang, sin(angle))
+				me.pitch = P_AngleLerp(FU/6, $, destpitch)
+				me.roll  = P_AngleLerp(FU/6, $, destroll)
+			end
 		end
 		
 		--print("case1: "..(getTimeMicros() - micros))
