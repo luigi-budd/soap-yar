@@ -746,6 +746,7 @@ end)
 --returns whether the things was jostled or not. Soap.
 rawset(_G,"Soap_JostleThings",function(me, found, range)
 	if not (found and found.valid) then return end
+	if (found.soap_nojostle) then return end
 	if (found == me) then return end
 	if not (found.health) then return end
 	if not P_IsObjectOnGround(found) then return end

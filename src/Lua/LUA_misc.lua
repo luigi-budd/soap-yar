@@ -200,6 +200,17 @@ for k,type in ipairs(foolhardy_list)
 	addHook("MobjSpawn", make_foolhardy, type)
 end
 
+local nobounce_list = {
+	MT_STEAM,
+}
+local function make_unbouncy(mo)
+	mo.soap_nojostle = true
+end
+for k,type in ipairs(nobounce_list)
+	addHook("MobjSpawn", make_unbouncy, type)
+end
+
+
 addHook("MobjThinker",function(mo)
 	if not (mo.target and mo.target.valid)
 	or not (mo.target.health)

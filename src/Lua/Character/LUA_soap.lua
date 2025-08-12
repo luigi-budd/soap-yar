@@ -3339,7 +3339,6 @@ addHook("JumpSpecial", function(p)
 	
 	if soap.onGround
 	or me.soap_jumpeffect
-		
 		Soap_DustRing(me,
 			dust_type(me), 8,
 			{me.x,me.y,me.z},
