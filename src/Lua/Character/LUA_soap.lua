@@ -1370,6 +1370,7 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 	or ((not soap.onGround and soap.accspeed < 10*FU)
 		or (soap.accspeed < 5*FU and me.standingslope == nil)
 	)
+	or not (me.health)
 		soap.slipping = false
 	end
 	if soap.slipping
