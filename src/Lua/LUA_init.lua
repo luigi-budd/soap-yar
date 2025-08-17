@@ -76,8 +76,12 @@ rawset(_G, "Soap_InitTable", function(p)
 		weaponnext_R = 0,
 		weaponprev_R = 0,
 		
+		--forwardmove/sidemove dupes for when stasis is active
+		forwardmove = 0,
+		sidemove = 0,
+		
 		stasistic = 0,
-		allowjump = false,
+		allowjump = false, -- &~PF_JUMPSTASIS
 		
 		noability = 0,
 		
@@ -159,6 +163,7 @@ rawset(_G, "Soap_InitTable", function(p)
 		
 		rdashing = false,
 		lastrdash = false,
+		dashangle = p.drawangle,
 		dashcharge = 0,
 		chargedtime = 0,
 		chargingtime = 0,

@@ -57,6 +57,17 @@ local function dust_noviewmobj(dust)
 	dust.dontdrawforviewmobj = me
 end
 
+local function P_PitchRoll(me, frac)
+	local angle = R_PointToAngle2(0,0, me.momx,me.momy)
+	local mang = R_PointToAngle2(0,0, FixedHypot(me.momx, me.momy), me.momz)
+	mang = InvAngle($)
+	
+	local destpitch = FixedMul(mang, cos(angle))
+	local destroll = FixedMul(mang, sin(angle))
+	me.pitch = P_AngleLerp(frac, $, destpitch)
+	me.roll  = P_AngleLerp(frac, $, destroll)
+end
+
 local function Soap_SuperReady(player)
 	if (not player.powers[pw_super]
 	and not player.powers[pw_invulnerability]
@@ -1369,8 +1380,31 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 		
 		P_ButteredSlope(me)
 		if soap.onGround
-			local destang = R_PointToAngle2(0,0,me.momx,me.momy) + ANGLE_180
-			p.drawangle = destang --$ + FixedMul(destang - $, FU/3)
+			local destang = R_PointToAngle2(0,0,me.momx,me.momy)
+			
+			if soap.sidemove ~= 0
+				local adjust = (abs(soap.sidemove) * 3) * FU/525
+				if (soap.accspeed < 12*FU)
+					adjust = FixedMul($, ease.outquad(FixedDiv(soap.accspeed,12*FU),FU,0))
+				end
+				
+				local angle = destang
+				local turn = soap.sidemove
+				--if we're facing OPPOSITE destang, make right inputs turn right,
+				--otherwise, make right inputs turn left and vice versa
+				if not (abs(destang - me.angle) > ANGLE_90)
+					turn = -$
+				end
+				if turn < 0
+					angle = $ - ANGLE_90
+				else
+					angle = $ + ANGLE_90
+				end
+				
+				P_Thrust(me, angle, FixedMul(adjust, me.scale))
+			end
+			
+			p.drawangle = destang + ANGLE_180
 			
 			local friction = ORIG_FRICTION + FU/13
 			if (me.standingslope)
@@ -1381,6 +1415,8 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 				me.momx = FixedMul($, friction)
 				me.momy = FixedMul($, friction)
 			end
+		else
+			P_PitchRoll(me, FU/4)
 		end
 		
 		if soap.sliptime > 4
@@ -1586,6 +1622,7 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 		--local micros = getTimeMicros()
 		local skin_t = skins[p.skin]
 		local dashspeed = skin_t.normalspeed + soap._maxdash
+		local setangle = false
 		
 		--5 tics to let you get back on your feet
 		if (me.eflags & MFE_SPRUNG)
@@ -1693,6 +1730,7 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 			end
 			S_StopSoundByID(me,sfx_sp_mac)
 			S_StopSoundByID(me,sfx_sp_mc2)
+			soap.dashangle = p.drawangle
 		else
 			--None of this in free fall
 			if not (soap.uppercutted and me.state == S_PLAY_FALL)
@@ -1757,7 +1795,12 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 						S_StartSound(me,sfx_sp_mc2)
 					end
 				end
-				
+				if soap.accspeed >= 3*FU
+					soap.dashangle = P_AngleLerp(FU/4, $, R_PointToAngle2(0,0,me.momx,me.momy))
+					p.drawangle = soap.dashangle
+					--TODO: drifting vfx
+					setangle = true
+				end
 				if (leveltime & 1)
 					spawn_sweat_mobjs(p,me,soap)
 					if soap.onGround
@@ -1801,6 +1844,9 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 				S_StopSoundByID(me,sfx_sp_mac)
 				S_StopSoundByID(me,sfx_sp_mc2)
 			end
+			if not setangle
+				soap.dashangle = p.drawangle
+			end
 		end
 		
 		if soap.airdashed
@@ -1810,14 +1856,7 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 			end
 			p.runspeed = soap.accspeed - 10*FU
 			if me.state == S_PLAY_FLOAT_RUN
-				local angle = R_PointToAngle2(0,0, me.momx,me.momy)
-				local mang = R_PointToAngle2(0,0, FixedHypot(me.momx, me.momy), me.momz)
-				mang = InvAngle($)
-				
-				local destpitch = FixedMul(mang, cos(angle))
-				local destroll = FixedMul(mang, sin(angle))
-				me.pitch = P_AngleLerp(FU/6, $, destpitch)
-				me.roll  = P_AngleLerp(FU/6, $, destroll)
+				P_PitchRoll(me, FU/6)
 			end
 		end
 		
@@ -1868,6 +1907,7 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 			me.state = S_PLAY_WALK
 			P_MovePlayer(p)
 		end
+		soap.dashangle = p.drawangle
 		
 		--print("case3: "..(getTimeMicros() - micros))
 	end
@@ -2294,8 +2334,9 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 	if (p.powers[pw_carry] == CR_NIGHTSMODE)
 		squishme = false
 		--wind effect
+		local spd = 23*FU
 		local accspeed = abs(FixedHypot(FixedHypot(me.momx,me.momy),me.momz))
-		accelerative_speedlines(p,me,soap, accspeed, 23*FU)
+		accelerative_speedlines(p,me,soap, accspeed, spd)
 		
 		local drilling = (p.drilltimer
 							and p.drillmeter
@@ -2628,7 +2669,7 @@ addHook("FollowMobj",function(p, m_peel)
 		return
 	end
 	
-	local angle = p.drawangle - FixedAngle(soap.uppercut_spin)
+	local angle = soap.dashangle - FixedAngle(soap.uppercut_spin)
 	local off = ANG20
 	
 	local radius = -FixedMul(me.radius*3/2, me.spritexscale)
@@ -3424,6 +3465,10 @@ Takis_Hook.addHook("PostThinkFrame",function(p)
 	end
 	
 	if (me.flags & MF_NOTHINK and not me.hitlag) then return end
+	
+	if me.state == S_PLAY_DASH
+		p.drawangle = R_PointToAngle2(0,0,me.momx,me.momy) --soap.dashangle
+	end
 	
 	--crouching viewheight
 	--code shamelessly taken from ze2 lmao

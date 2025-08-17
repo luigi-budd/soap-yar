@@ -7,6 +7,9 @@ addHook("PreThinkFrame",function()
 		local me = p.realmo
 		local soap = p.soaptable
 		
+		soap.forwardmove = p.cmd.forwardmove
+		soap.sidemove = p.cmd.sidemove
+		
 		if soap.stasistic
 			p.pflags = $|PF_FULLSTASIS
 			if soap.allowjump then p.pflags = $ &~PF_JUMPSTASIS end
