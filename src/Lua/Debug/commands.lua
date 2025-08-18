@@ -183,7 +183,7 @@ CMDConstructor("scale", {prefix = SOAP_DEVPREFIX, func = function(p,...)
 	local args = {...}
 	local scalemul = args[1]
 	
-	scalemul = tofixed($)
+	scalemul = tofixed($ or "")
 	if scalemul == 0
 	or scalemul == nil
 		prn(p, "Scale not valid.")
