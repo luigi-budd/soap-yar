@@ -207,7 +207,14 @@ rawset(_G,"Soap_CreateAfterimage", function(p,me)
 	
 	local soap = p.soaptable
 	local rflags = RF_FULLBRIGHT|RF_NOCOLORMAPS
-	local ghost = P_SpawnMobjFromMobj(me,-me.momx,-me.momy,-soap.rmomz*soap.gravflip,MT_SOAP_AFTERIMAGE)
+	
+	local of = {
+		FixedDiv(-me.momx,me.scale),
+		FixedDiv(-me.momy,me.scale),
+		FixedDiv(-soap.rmomz*soap.gravflip,me.scale)
+	}
+	
+	local ghost = P_SpawnMobjFromMobj(me, of[1],of[2],of[3], MT_SOAP_AFTERIMAGE)
 	ghost.target = me
 	ghost.flags2 = $|MF2_DONTDRAW
 	
@@ -276,7 +283,7 @@ rawset(_G,"Soap_CreateAfterimage", function(p,me)
 				local peel = m_peel.outs[i]
 				if not (peel and peel.valid) then continue end
 				
-				local ghost2 = P_SpawnMobjFromMobj(peel,-me.momx,-me.momy,-soap.rmomz*soap.gravflip,MT_SOAP_AFTERIMAGE)
+				local ghost2 = P_SpawnMobjFromMobj(peel, of[1],of[2],of[3], MT_SOAP_AFTERIMAGE)
 				ghost2.target = me
 				ghost2.flags2 = $|MF2_DONTDRAW
 				
@@ -721,8 +728,8 @@ rawset(_G,"Soap_DustRing",function(src,
 		if not (dust and dust.valid) then continue end
 		
 		dust.angle = fa + ANGLE_90
-		P_SetScale(dust, FixedMul(initscale, scale), true)
-		dust.destscale = FixedMul(4*FU + P_RandomFixed(), scale)
+		P_SetScale(dust, initscale, true)
+		dust.destscale = scale + P_RandomFixed()
 		dust.scalespeed = scale / 24
 		P_Thrust(dust, fa, speed + FixedMul(P_RandomFixed(), scale))
 		dust.momz = P_SignedRandom() * scale / 64

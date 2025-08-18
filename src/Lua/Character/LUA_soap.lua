@@ -1806,7 +1806,7 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 					spawn_sweat_mobjs(p,me,soap)
 					if soap.onGround
 					and not soap.onWater
-						local sidemove = me.radius
+						local sidemove = FixedDiv(me.radius,me.scale)
 						local sideangle = ANGLE_45
 						for i = -1,1,2
 							local kickup = P_SpawnMobjFromMobj(me,

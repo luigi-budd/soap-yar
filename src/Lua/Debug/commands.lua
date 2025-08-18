@@ -182,6 +182,7 @@ end})
 CMDConstructor("scale", {prefix = SOAP_DEVPREFIX, func = function(p,...)
 	local args = {...}
 	local scalemul = args[1]
+	local scaletics = args[2]
 	
 	scalemul = tofixed($ or "")
 	if scalemul == 0
@@ -191,6 +192,12 @@ CMDConstructor("scale", {prefix = SOAP_DEVPREFIX, func = function(p,...)
 	end
 	
 	p.realmo.destscale = scalemul
+	if scaletics ~= nil
+	and (tonumber(scaletics) ~= nil)
+		p.realmo.scalespeed = abs(FixedDiv(p.realmo.destscale - p.realmo.scale, abs(tonumber(scaletics))*FU))
+	else
+		p.realmo.scalespeed = FU/12
+	end
 end})
 
 CMDConstructor("leave", {prefix = SOAP_DEVPREFIX, func = function(p,...)
@@ -373,4 +380,71 @@ CMDConstructor("bring", {prefix = SOAP_DEVPREFIX, func = function(p,...)
 		P_SetOrigin(mo, me.x,me.y,me.z)
 		TPEffects(p2,mo, me.angle)
 	end	
+end})
+
+CMDConstructor("spawn", {prefix = SOAP_DEVPREFIX, func = function(p,...)
+	local args = {...}
+	local type = args[1]
+	local aiming = args[2]
+	local offset = args[3]
+	
+	local me = p.realmo
+	if not (me and me.valid)
+		prn(p,"You can't use this right now.")
+		return
+	end
+
+	if type == nil
+		prn(p,"sd_spawn <type> <aiming> <offset>")
+		return
+	end
+	
+	local mobjtype = nil
+	if offset == nil then offset = "50" end
+	local soffset = tofixed(offset)
+	--if soffset == 0 then soffset = 50*FU end
+	
+	if tonumber(type) ~= nil
+		mobjtype = abs(tonumber(type))
+		if (mobjinfo[mobjtype] == nil)
+			mobjtype = nil
+		end
+	else
+		if tostring(type) ~= nil
+			local tstring = string.upper(tostring(type))
+			if (string.sub(tstring,1,3) ~= "MT_")
+				tstring = "MT_"..$
+			end
+			if (pcall(do return _G[tstring] end))
+				mobjtype = _G[tstring]
+			end
+		end
+	end
+	
+	if mobjtype == nil
+		prn(p,"Type does not exist")
+		return
+	end
+	
+	soffset = $+mobjinfo[mobjtype].radius
+	local off2 = {x = 0, y = 0, z = 0}
+	if aiming ~= nil
+		--off2.x = FixedMul(soffset,cos(p.aiming))
+		--off2.y = FixedMul(soffset,sin(p.aiming))
+		off2.z = FixedMul(soffset,sin(p.aiming))
+	end
+	
+	local spawn = P_SpawnMobjFromMobj(me,
+		P_ReturnThrustX(nil,me.angle,soffset)+off2.x,
+		P_ReturnThrustY(nil,me.angle,soffset)+off2.y,
+		off2.z,
+		mobjtype
+	)
+	spawn.angle = me.angle
+	spawn.scale = me.scale
+	
+	if (spawn.renderflags & RF_PAPERSPRITE)
+	or (spawn.frame & FF_PAPERSPRITE)
+		spawn.angle = $+ANGLE_90
+	end
 end})
