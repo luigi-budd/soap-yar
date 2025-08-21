@@ -3327,8 +3327,9 @@ end,MT_PLAYER)
 addHook("MobjDeath", function(me,inf,sor,dmgt)
 	if not (me and me.valid) then return end
 	if me.skin ~= "soapthehedge" then return end
+	if not (me.player and me.player.valid) then return end
 	
-	local p = me.player 
+	local p = me.player
 	local soap = p.soaptable
 	
 	me.soap_inf = inf
