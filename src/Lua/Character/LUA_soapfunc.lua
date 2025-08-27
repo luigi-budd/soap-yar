@@ -1393,6 +1393,7 @@ rawset(_G,"SoapST_Hitbox",function(p)
 end)
 
 rawset(_G,"SoapST_Start",function(p)
+	if (p.spectator) then return end --Fuck!
 	local me = p.mo
 	local soap = p.soaptable
 	
@@ -1413,6 +1414,10 @@ rawset(_G,"Soap_HandleNoAbils", function(p)
 	local na = 0
 	
 	if not (me and me.valid) then return end
+	if p.spectator
+		soap.noability = SNOABIL_ALL
+		return
+	end
 	
 	if (p.gotflag)
 	or (p.gotcrystal)

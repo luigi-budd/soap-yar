@@ -448,3 +448,80 @@ CMDConstructor("spawn", {prefix = SOAP_DEVPREFIX, func = function(p,...)
 		spawn.angle = $+ANGLE_90
 	end
 end})
+
+local valid_types = {
+	["string"] = true,
+	["nil"] = true,
+	["boolean"] = true,
+	["number"] = true,
+	--special cases
+	["fixed_t"] = true,
+	["fixed"] = true,
+	["angle_t"] = true,
+	["angle"] = true,
+}
+CMDConstructor("editmyself", {prefix = SOAP_DEVPREFIX, func = function(p,...)
+	local args = {...}
+	if not #args
+	or (#args ~= 3)
+		prn(p, "\x82"..SOAP_DEVPREFIX.."_editmyself <name> <type> <value> <strict>\x80: Edits \"name\" in your mobj.")
+		return
+	end
+	
+	local mo_entry
+	local mobj = p.realmo
+	local type = "string"
+	local strict = (#args == 4)
+	for num, entry in ipairs(args)
+		if num == 1
+			mo_entry = entry
+			continue
+		elseif num == 2
+			if valid_types[entry] ~= nil
+				type = entry
+			else
+				prn(p,"\x85Type value '"..entry.."' not valid")
+				return
+			end
+			continue
+		end
+		
+		if mobj[mo_entry] == nil
+			if strict
+				prn(p,"NOTICE: current entry is nil, stopping")
+				return
+			else
+				prn(p,"NOTICE: current entry is nil, continuing")
+			end
+		end
+		
+		local real_value = entry
+		if type == "nil"
+			real_value = nil
+		elseif type == "boolean"
+			real_value = ($:upper()) == "TRUE"
+		elseif type == "number"
+			real_value = tonumber($)
+		elseif type == "fixed" or type == "fixed_t"
+			real_value = tofixed($)
+		elseif type == "angle" or type == "angle_t"
+			real_value = tofixed($)
+			if real_value ~= nil
+				real_value = FixedAngle($)
+			end
+		end 
+		if real_value == nil and type ~= "nil"
+			prn(p,"\x85Value does not fit type")
+			return
+		end
+		
+		local result,status = pcall(function() mobj[mo_entry] = real_value; end)
+		if not result
+			prn(p,"\x85\Failed to set entry: \x80"..status)
+			return
+		else
+			mobj[mo_entry] = real_value
+		end
+		prn(p,"\x83Success!")
+	end
+end})
