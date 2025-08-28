@@ -149,7 +149,7 @@ addHook("HUD",function(v,p)
 			v.drawFixedFill(x,y, FixedMul(w,progress),h, 134|f)
 		end
 		v.drawString(x,y+(h - 4*FU), string.format("R-Dash: %.1f%% (%.1f, %.1f/%.0f%%) (max %.1f)",
-			FixedDiv(p.normalspeed, skin.normalspeed+soap._maxdash)*100,
+			FixedDiv(p.normalspeed - skin.normalspeed, soap._maxdash)*100,
 			p.normalspeed, soap.dashcharge,
 			FixedDiv(soap.chargingtime*FU,3*TR*FU)*100,
 			soap._maxdash),

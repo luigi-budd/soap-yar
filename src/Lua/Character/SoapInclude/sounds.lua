@@ -73,6 +73,11 @@ sfxinfo[sfx_sp_kco] = {
 	caption = "Knockout!!"
 }
 
+SafeFreeslot("sfx_sp_em0")
+sfxinfo[sfx_sp_em0].caption = "Nice words"
+SafeFreeslot("sfx_sp_em1")
+sfxinfo[sfx_sp_em1].caption = "\x8F\"Fuck!\"\x80"
+
 --takis sound
 SafeFreeslot("sfx_tk_djm")
 sfxinfo[sfx_tk_djm].caption = "Double jump"
