@@ -609,6 +609,9 @@ rawset(_G,"Soap_ImpactVFX",function(src,inf, distmul)
 			adjust + off.z,
 			MT_THOK
 		)
+		if (inf and inf.valid)
+			P_SetScale(bam, inf.scale, true)
+		end
 		P_SetMobjStateNF(bam, tntstate)
 		bam.spritexscale = FixedMul($, spr_scale)
 		bam.spriteyscale = bam.spritexscale
@@ -633,6 +636,7 @@ rawset(_G,"Soap_ImpactVFX",function(src,inf, distmul)
 	end
 end)
 
+-- p might not be valid
 rawset(_G,"Soap_CanDamageEnemy",function(p, mobj,flags,exclude)
 	if (CanFlingThing ~= nil)
 		return CanFlingThing(p, mobj,flags,false,exclude)
@@ -849,7 +853,7 @@ rawset(_G, "Soap_WindLines", function(me,rmomz,color,forceang)
 	local wind = P_SpawnMobj(
 		me.x, --+ P_RandomRange(-36,36)*me.scale + offx,
 		me.y, --+ P_RandomRange(-36,36)*me.scale + offy,
-		me.z + (me.height/2) + P_RandomRange(-20,20)*me.scale + momz,
+		me.z + (me.height/2) + P_RandomRange(-20,20)*me.scale,
 		MT_SOAP_SPEEDLINE
 	)
 	

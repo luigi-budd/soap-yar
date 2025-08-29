@@ -92,6 +92,7 @@ hl.iterateHitlagged = function()
 					p.powers[pw_flashing] = 0
 				end
 			end
+			S_StopSoundByID(mo, sfx_kc38)
 			table.remove(hl.hitlagged,k)
 			continue
 		end
@@ -106,7 +107,7 @@ hl.iterateHitlagged = function()
 		end
 		
 		if mo.soap_stunned
-		and mo.health
+		and (mo.health > 0)
 		and not mo.hitlag
 			mo.flags = $|MF_NOTHINK|MF_SLIDEME &~(MF_SPECIAL|MF_ENEMY|MF_FLOAT|MF_NOGRAVITY)
 			mo.hldata_st_lastflags = lastflags
