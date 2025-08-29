@@ -97,6 +97,7 @@ rawset(_G, "Soap_InitTable", function(p)
 		isSliding = false,
 		isSolForm = false,
 		doSuperBuffs = false,
+		isElevated = false,
 		
 		accspeed = 0,
 		gravflip = 1,

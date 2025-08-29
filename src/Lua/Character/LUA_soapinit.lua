@@ -31,9 +31,10 @@ fakeenum("SNOABIL_BOTHTAUNTS",
 
 local includes = {
 	"mobjs.lua",
+	"funny.lua",
 	"sounds.lua",
 	"player.lua",
-	"boombox.lua"
+	"boombox.lua",
 }
 for k,file in ipairs(includes)
 	dofile("Character/SoapInclude/"..file)

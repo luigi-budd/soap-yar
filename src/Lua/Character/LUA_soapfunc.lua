@@ -172,6 +172,7 @@ rawset(_G,"Soap_Booleans", function(p)
 	soap.inWater = (me.eflags & (MFE_UNDERWATER|MFE_TOUCHLAVA) == MFE_UNDERWATER)
 	soap.in2D = (me.flags2 & MF2_TWOD or twodlevel)
 	soap.inBattle = (CBW_Battle and CBW_Battle.BattleGametype())
+	soap.isElevated = (p == server) or (IsPlayerAdmin(p))
 	
 	if (p.solchar)
 		soap.isSolForm = (p.solchar.istransformed) and true or false
@@ -850,10 +851,11 @@ rawset(_G, "Soap_WindLines", function(me,rmomz,color,forceang)
 	end
 	*/
 	local zangle = R_PointToAngle2(0, 0, R_PointToDist2(0,0,me.momx,me.momy), momz)
+	local height = FixedDiv(me.height,me.scale)/2
 	local wind = P_SpawnMobj(
 		me.x, --+ P_RandomRange(-36,36)*me.scale + offx,
 		me.y, --+ P_RandomRange(-36,36)*me.scale + offy,
-		me.z + (me.height/2) + P_RandomRange(-20,20)*me.scale,
+		me.z + (height) + P_RandomFixedRange(-height/FU,height/FU),
 		MT_SOAP_SPEEDLINE
 	)
 	
@@ -871,7 +873,7 @@ rawset(_G, "Soap_WindLines", function(me,rmomz,color,forceang)
 	local pushangle = wind.angle + ANGLE_90
 	local pushpush = FixedAngle(P_RandomFixedRange(WIND_PUSHANG_MIN,WIND_PUSHANG_MAX))
 	local pushsign = P_RandomSign()
-	local pushdist = FixedMul(P_RandomFixedRange(WIND_PUSHMIN,WIND_PUSHMAX), me.scale) * pushsign
+	local pushdist = (FixedMul(P_RandomFixedRange(WIND_PUSHMIN,WIND_PUSHMAX), me.scale) + (me.radius - FixedMul(mobjinfo[MT_PLAYER].radius,me.scale))) * pushsign
 	local sidex,sidey
 	--forward + backward shift for downwards movement
 	do

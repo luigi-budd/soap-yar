@@ -74,7 +74,10 @@ sfxinfo[sfx_sp_kco] = {
 }
 
 SafeFreeslot("sfx_sp_em0")
-sfxinfo[sfx_sp_em0].caption = "Nice words"
+sfxinfo[sfx_sp_em0] = {
+	flags = SF_X2AWAYSOUND,
+	caption = "Nice words"
+}
 SafeFreeslot("sfx_sp_em1")
 sfxinfo[sfx_sp_em1].caption = "\x8F\"Fuck!\"\x80"
 
