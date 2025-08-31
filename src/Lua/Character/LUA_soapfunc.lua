@@ -806,7 +806,7 @@ rawset(_G,"Soap_JostleThings",function(me, found, range)
 	if (found.flags & MF_NOGRAVITY) then return end
 	if not nobounce
 		--dont crush us
-		if (found.flags & MF_MONITOR) then range = $ / 2 end
+		if ((found.flags & MF_MONITOR) or (found.type == MT_SPIKE)) then range = $ / 2 end
 		Soap_ZLaunch(found, abs(range / 16) * P_MobjFlip(me))
 	end
 	return tumbled
