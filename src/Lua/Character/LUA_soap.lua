@@ -1790,6 +1790,7 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 					if not S_SoundPlaying(me,sfx_sp_mac)
 						S_StartSound(me,sfx_sp_mac)
 					end
+					P_PitchRoll(me, FU/2)
 				else
 					S_StopSoundByID(me, sfx_sp_mac)
 					if not S_SoundPlaying(me,sfx_sp_mc2)
