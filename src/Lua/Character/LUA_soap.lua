@@ -27,7 +27,8 @@ rawset(_G,"SOAP_TOPCOOLDOWN", 4*TR)
 rawset(_G,"SOAP_MAXDAMAGETICS", 10)
 
 local soap_baseuppercutturn = (360 + 180)*FU
-
+--TODO: spinning slows down dynamically with sector grav (0.5 fracs / (FU/7) = 3.521 fracs)
+local soap_uppercutfactor = tofixed("3.521")
 local CV = SOAP_CV
 
 local soap_crouchanimtime = 13

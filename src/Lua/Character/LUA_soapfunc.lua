@@ -851,7 +851,7 @@ rawset(_G, "Soap_WindLines", function(me,rmomz,color,forceang)
 	end
 	*/
 	local zangle = R_PointToAngle2(0, 0, R_PointToDist2(0,0,me.momx,me.momy), momz)
-	local height = FixedDiv(me.height,me.scale)/2
+	local height = (me.height)/2
 	local wind = P_SpawnMobj(
 		me.x, --+ P_RandomRange(-36,36)*me.scale + offx,
 		me.y, --+ P_RandomRange(-36,36)*me.scale + offy,
