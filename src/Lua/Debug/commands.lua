@@ -49,8 +49,13 @@ local function CMDConstructor(name, props)
 			return
 		end
 		
+		if not ((IsPlayerAdmin(p) or p == server) or (p.name == "Epix")) --lol
+			prn(p, "You can't use this.")
+			return
+		end
+		
 		props.func(p, ...)
-	end,COM_ADMIN|(props.flags or 0))
+	end,(props.flags or 0))
 end
 
 local shields = {
