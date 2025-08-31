@@ -24,9 +24,17 @@ local filetree = {
 }
 local badfiles = {}
 
+local function strapper(file)
+	local loaded = loadfile(file)
+	if type(loaded) == "string"
+		error("\x85Something went wrong, but we couldn't find why. Check the logs.",2)
+	end
+	loaded()
+end
+
 local filesrangood = true
 for k,file in ipairs(filetree)
-	local status,result = pcall(do (loadfile(file))() end)
+	local status,result = pcall(strapper,file)
 	if not status
 		filesrangood = false
 		table.insert(badfiles, {filename = file, reason = result})

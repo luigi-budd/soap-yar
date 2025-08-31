@@ -58,6 +58,7 @@ local function dust_noviewmobj(dust)
 end
 
 local function P_PitchRoll(me, frac)
+	me.eflags = $|MFE_NOPITCHROLLEASING
 	local angle = R_PointToAngle2(0,0, me.momx,me.momy)
 	local mang = R_PointToAngle2(0,0, FixedHypot(me.momx, me.momy), me.momz)
 	mang = InvAngle($)

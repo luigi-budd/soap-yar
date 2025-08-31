@@ -24,7 +24,7 @@ rawset(_G,"Soap_EnumFlags",function(prefix,enums)
 	end
 end)
 
---takis gets his noabil enums back lol
+--takis gets his noabil enums back lol (TODO: move this to takisinit when it exists)
 Soap_EnumFlags("NOABIL_", {
 	"CLUTCH",
 	"HAMMER",
@@ -35,8 +35,8 @@ Soap_EnumFlags("NOABIL_", {
 	"AFTERIMAGE",	--i wouldnt really call afterimages an ability
 })
 
-local ORIG_FRICTION		=	(232 << (FRACBITS-8)) --this should really be exposed...
-rawset(_G, "ORIG_FRICTION", ORIG_FRICTION)
+rawset(_G, "ORIG_FRICTION", (232 << (FRACBITS-8))) --this should really be exposed...
+rawset(_G, "MFE_NOPITCHROLLEASING", MFE_NOPITCHROLLEASING or (1<<14))
 
 --from chrispy chars!!! by Lach!!!!
 rawset(_G,"SafeFreeslot",function(...)
