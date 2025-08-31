@@ -2,7 +2,7 @@ SafeFreeslot("MT_FUCK","S_FUCK")
 states[S_FUCK] = {
 	sprite = SPR_SOAP_GFX,
 	frame = C|FF_SEMIBRIGHT,
-	tics = 5*TR
+	tics = 10*TR
 }
 
 mobjinfo[MT_FUCK] = {
@@ -26,6 +26,8 @@ local function FuckIt(me)
 	fuck.angle = ang
 	fuck.tracer = me
 	fuck.playernum = #me.player
+	fuck.spritexscale = FU*2
+	fuck.spriteyscale = fuck.spritexscale
 	me.fuckimmunity = 15
 end
 
@@ -61,7 +63,7 @@ end,MT_FUCK)
 
 addHook("MobjMoveCollide",function(f, mo)
 	if not (mo and mo.valid) then return end
-	if not (mo.health) then return end
+	--if not (mo.health) then return end
 	if not (f and f.valid) then return end
 	if (mo == f.tracer and mo.fuckimmunity) then return end
 	--if (mo.hitlag or mo.orbitbonk) then return end
@@ -109,10 +111,20 @@ addHook("MobjMoveCollide",function(f, mo)
 end,MT_FUCK)
 
 -- the fuck STILL gets stuck
+/*
 local function TheFuckGotStuck(f, line)
 	return false
 end
 addHook("MobjLineCollide",TheFuckGotStuck,MT_FUCK)
+*/
+local function TheFuckGetsStuck(f, thing,line)
+	/*
+	P_BounceMove(f)
+	f.angle = R_PointToAngle2(0,0,f.momx,f.momy)
+	*/
+	-- just do nothing
+end
+addHook("MobjMoveBlocked",TheFuckGetsStuck,MT_FUCK)
 
 Takis_Hook.addHook("MoveBlocked", function(me, thing,line)
 	local p = me.player
@@ -138,7 +150,7 @@ Takis_Hook.addHook("MoveBlocked", function(me, thing,line)
 				me.momy = 0
 			end
 			return true
-		else
+		elseif (thing and thing.valid)
 			local ang = R_PointToAngle2(me.x,me.y, thing.x,thing.y)
 			local speed = R_PointToDist2(0,0,thing.momx,thing.momy) + FixedMul(
 				20*FU, FixedSqrt(FixedMul(thing.scale,me.scale))
