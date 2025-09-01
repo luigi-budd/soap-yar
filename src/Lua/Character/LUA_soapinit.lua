@@ -32,6 +32,7 @@ fakeenum("SNOABIL_BOTHTAUNTS",
 local includes = {
 	"mobjs.lua",
 	"funny.lua",
+	"comedy.lua",
 	"sounds.lua",
 	"player.lua",
 	"boombox.lua",

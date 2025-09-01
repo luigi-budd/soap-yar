@@ -237,10 +237,12 @@ hl.iterateHitlaggedPostThink = function()
 			
 			if mo.hitlagfromdmg
 				local offset = (mo.hitlag)*2*FU*((leveltime & 1) and 1 or -1)
+				/*
 				if mo.skin and mo.sprite == SPR_PLAY
 				and skins[mo.skin].flags & SF_HIRES
 					offset = FixedDiv($, skins[mo.skin].highresscale)
 				end
+				*/
 				if (mo.spritexscale ~= FU)
 					offset = FixedDiv($, mo.spritexscale)
 				end
