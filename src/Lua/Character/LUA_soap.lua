@@ -1381,7 +1381,16 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 		soap.allowjump = true
 		soap.stasistic = max($, 3)
 		
-		P_ButteredSlope(me)
+		if (slope)
+			local angdiff = R_PointToAngle2(0, 0, me.momx, me.momy) - slope.xydirection
+			local speed = FixedHypot(me.momx, me.momy)
+			
+			--going down it
+			if (P_ReturnThrustY(me, slope.zangle, P_ReturnThrustX(me, angdiff, speed))*soap.gravflip < 0)
+				P_ButteredSlope(me)
+			end
+		end
+		
 		if soap.onGround
 			local destang = R_PointToAngle2(0,0,me.momx,me.momy)
 			
