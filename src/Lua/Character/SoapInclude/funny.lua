@@ -8,7 +8,7 @@ states[S_FUCK] = {
 mobjinfo[MT_FUCK] = {
 	doomednum = -1,
 	spawnstate = S_FUCK,
-	flags = MF_NOGRAVITY|MF_NOCLIPHEIGHT,
+	flags = MF_NOGRAVITY,
 	radius = 64*FU,
 	height = 140*FU,
 	speed = 15*FU,
@@ -62,12 +62,12 @@ addHook("MobjThinker",function(f)
 end,MT_FUCK)
 
 addHook("MobjMoveCollide",function(f, mo)
-	if not (mo and mo.valid) then return end
+	if not (mo and mo.valid) then return false; end
 	--if not (mo.health) then return end
-	if not (f and f.valid) then return end
-	if (mo == f.tracer and mo.fuckimmunity) then return end
+	if not (f and f.valid) then return false; end
+	if (mo == f.tracer and mo.fuckimmunity) then return false; end
 	--if (mo.hitlag or mo.orbitbonk) then return end
-	if not Soap_ZCollide(f,mo, true) then return end
+	if not Soap_ZCollide(f,mo, true) then return false; end
 	
 	local play = mo.player
 	if (play and play.valid)
