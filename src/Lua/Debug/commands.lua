@@ -464,12 +464,17 @@ local valid_types = {
 	["fixed"] = true,
 	["angle_t"] = true,
 	["angle"] = true,
+	["global"] = true,
 }
 CMDConstructor("editmyself", {prefix = SOAP_DEVPREFIX, func = function(p,...)
 	local args = {...}
 	if not #args
 	or (#args ~= 3)
 		prn(p, "\x82"..SOAP_DEVPREFIX.."_editmyself <name> <type> <value> <strict>\x80: Edits \"name\" in your mobj.")
+		prn(p, "\x82\Availiable types:")
+		for prefix,_ in pairs(valid_types)
+			prn(p, "\t\x83"..prefix)
+		end
 		return
 	end
 	
@@ -514,7 +519,14 @@ CMDConstructor("editmyself", {prefix = SOAP_DEVPREFIX, func = function(p,...)
 			if real_value ~= nil
 				real_value = FixedAngle($)
 			end
-		end 
+		elseif type == "global"
+			local result,status = pcall(function() return _G[real_value]; end)
+			if (result)
+				real_value = _G[$]
+			else
+				real_value = nil
+			end
+		end
 		if real_value == nil and type ~= "nil"
 			prn(p,"\x85Value does not fit type")
 			return
