@@ -53,7 +53,9 @@ COM_AddCommand("fu", function(p)
 end)
 
 addHook("MobjThinker",function(f)
-	P_InstaThrust(f, f.angle, FixedMul(f.info.speed,f.scale))
+	if not (f.phys_held)
+		P_InstaThrust(f, f.angle, FixedMul(f.info.speed,f.scale))
+	end
 	if not f.extravalue1
 		S_StartSound(f, sfx_sp_em0)
 		f.extravalue1 = 1

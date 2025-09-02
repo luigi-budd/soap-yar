@@ -147,7 +147,7 @@ function Phys:throwMobj(p,mo)
 	end
 	S_StartSound(me, P_RandomRange(sfx_gtro1a,sfx_gtro3a))
 end
-
+/*
 rawset(_G,"SphereToCartesian",function(alpha, beta)
     local t = {}
     t.x = FixedMul(cos(alpha), cos(beta))
@@ -178,6 +178,7 @@ rawset(_G,"P_3DThrust",function(mo, h_ang, v_ang, speed)
 	mo.momy = $ + FixedMul(speed, t.y)
 	mo.momz = $ + FixedMul(speed, t.z)
 end)
+*/
 
 local function ZCollide(mo1,mo2)
 	if mo1.z > mo2.height+mo2.z then return false end
@@ -219,7 +220,7 @@ mobjinfo[MT_PHYSGUN] = {
 	spawnstate = S_PHYSGUN,
 	radius = 8*FU,
 	height = 8*FU,
-	flags = MF_NOGRAVITY|MF_NOCLIP|MF_NOCLIPTHING
+	flags = MF_NOGRAVITY|MF_NOCLIP|MF_NOCLIPTHING|MF_NOBLOCKMAP
 }
 
 freeslot("S_PHYSGUN_RAY","MT_PHYSGUN_RAY")
@@ -301,12 +302,32 @@ local function RayVFX(ray, iter)
 		ResetInterp(g)
 	end
 end
+local function colSearcher(ray, mo)
+	if not (ray and ray.valid) then return end
+	if not (mo and mo.valid) then return end
+	if (mo == ray.target) then return end
+	if (mo.type == ray.type) then return end
+	if abs(ray.x - mo.x) > mo.radius + ray.radius
+	or abs(ray.y - mo.y) > mo.radius + ray.radius
+		return
+	end
+	if not ZCollide(ray,mo) then return end
+	
+	local me = ray.target
+	local p = me.player
+	local ph = p.physgun
+	ph.distance = FixedDiv(R_PointTo3DDist(me.x,me.y,me.z, mo.x,mo.y,mo.z),me.scale)
+	Phys:holdMobj(p,mo, ray.silent)
+	P_RemoveMobj(ray)
+	return true
+end
 addHook("MobjThinker",function(ray)
 	if not (ray and ray.valid) then return end
 	local org = ray.origin
 	local dist = 0
 	local iter = 0
 	repeat
+		if not (ray and ray.valid) then return; end
 		if P_RailThinker(ray) then return; end
 		if not (ray and ray.valid) then return; end
 		if (ray.z <= ray.floorz or ray.z + ray.height >= ray.ceilingz)
@@ -320,6 +341,14 @@ addHook("MobjThinker",function(ray)
 		
 		iter = $ + 1
 		dist = R_PointTo3DDist(org.x,org.y,org.z, ray.x,ray.y,ray.z)
+		
+		if not (ray.visual)
+			local br = ray.radius --+ 16*ray.scale
+			local px = ray.x
+			local py = ray.y
+			searchBlockmap("objects",colSearcher, ray, px-br, px+br, py-br, py+br)
+			if not (ray and ray.valid) then return; end
+		end
 	until (dist >= ray.range)
 end,MT_PHYSGUN_RAY)
 addHook("MobjMoveBlocked",function(ray, mo, line)
@@ -329,7 +358,8 @@ addHook("MobjMoveBlocked",function(ray, mo, line)
 		P_RemoveMobj(ray)
 	end
 end,MT_PHYSGUN_RAY)
-addHook("MobjMoveCollide",function(ray, mo)
+local function colFunc(ray, mo)
+	--print("collide",mo.type, mo.info.doomednum, mo.info.typename)
 	if not (ray and ray.valid) then return end
 	if (ray.visual) then return end
 	if not (ray.target and ray.target.valid) then return end
@@ -344,7 +374,8 @@ addHook("MobjMoveCollide",function(ray, mo)
 	ph.distance = FixedDiv(R_PointTo3DDist(me.x,me.y,me.z, mo.x,mo.y,mo.z),me.scale)
 	Phys:holdMobj(p,mo, ray.silent)
 	P_RemoveMobj(ray)
-end,MT_PHYSGUN_RAY)
+end
+addHook("MobjMoveCollide",colFunc,MT_PHYSGUN_RAY)
 
 function Phys:aimRay(p, ray, ang, aim)
 	local speed = R_PointToDist2(0,0, ray.momx,ray.momy)
@@ -464,7 +495,7 @@ addHook("PlayerThink",function(p)
 	--ph.range = ph.distance*14/10
 	
 	if (hold and hold.valid)
-	and (R_PointTo3DDist(me.x,me.y,me.z, hold.x,hold.y,hold.z) <= ph.distance*3/2)
+	and (R_PointTo3DDist(me.x,me.y,me.z, hold.x,hold.y,hold.z) <= ph.distance+32*me.scale + (hold.radius*4) + (me.radius))
 		ph.holdtime = $ + 1
 		local ang = me.angle
 		local aim = p.aiming
