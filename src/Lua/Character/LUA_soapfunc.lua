@@ -1910,13 +1910,13 @@ rawset(_G,"Soap_DeathThinker",function(p,me,soap)
 	
 	if me.soap_landondeath
 		me.flags = $ &~MF_NOCLIPHEIGHT
+		me.fuse = -1
 		
 		if soap.onGround
 		and (me.soap_deadtimer > 3)
 			if me.state ~= S_PLAY_SOAP_KNOCKOUT
 			and (me.sprite2 ~= SPR2_CNT1) --whatever
 				me.state = S_PLAY_SOAP_KNOCKOUT
-				me.fuse = -1
 				me.rollangle = 0
 				me.spriteyoffset = 0
 				
@@ -1937,6 +1937,8 @@ rawset(_G,"Soap_DeathThinker",function(p,me,soap)
 				)
 				me.soap_landondeath = false
 			end
+		elseif (me.state == S_PLAY_SOAP_KNOCKOUT)
+			me.state = S_PLAY_DEAD
 		end
 	end
 	
