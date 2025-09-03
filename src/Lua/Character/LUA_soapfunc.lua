@@ -1937,9 +1937,11 @@ rawset(_G,"Soap_DeathThinker",function(p,me,soap)
 				)
 				me.soap_landondeath = false
 			end
-		elseif (me.state == S_PLAY_SOAP_KNOCKOUT)
-			me.state = S_PLAY_DEAD
 		end
+	elseif (me.state == S_PLAY_SOAP_KNOCKOUT)
+	and not (soap.onGround)
+		me.soap_landondeath = true
+		me.state = S_PLAY_DEAD
 	end
 	
 	soap.accspeed = 0
