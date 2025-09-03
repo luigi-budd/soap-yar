@@ -4,9 +4,9 @@ COM_AddCommand("phys_toggle",function(p)
 	if not (p.physgun) then return end
 	p.physgun.active = not $
 	if (p.physgun.active)
-		S_StartSound(me, sfx_gnpick)
+		S_StartSound(p.realmo, sfx_gnpick)
 	else
-		S_StartSound(me, sfx_gndrop)
+		S_StartSound(p.realmo, sfx_gndrop)
 	end
 end)
 
@@ -141,6 +141,9 @@ function Phys:throwMobj(p,mo)
 	local me = p.realmo
 	local force = FixedMul(ph.throwforce, me.scale)
 	P_3DThrust(mo, me.angle,p.aiming, force)
+	if (mo.player)
+		P_MovePlayer(mo.player)
+	end
 	
 	if (mo == ph.target)
 		Phys:releaseMobj(p,mo, true)
@@ -495,7 +498,7 @@ addHook("PlayerThink",function(p)
 	--ph.range = ph.distance*14/10
 	
 	if (hold and hold.valid)
-	and (R_PointTo3DDist(me.x,me.y,me.z, hold.x,hold.y,hold.z) <= ph.distance+32*me.scale + (hold.radius*4) + (me.radius))
+	and (R_PointTo3DDist(me.x,me.y,me.z, hold.x,hold.y,hold.z) <= FixedMul(ph.distance+32*FU,me.scale) + (hold.radius*4) + (me.radius))
 		ph.holdtime = $ + 1
 		local ang = me.angle
 		local aim = p.aiming
