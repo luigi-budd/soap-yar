@@ -420,7 +420,7 @@ CMDConstructor("spawn", {prefix = SOAP_DEVPREFIX, func = function(p,...)
 			if (string.sub(tstring,1,3) ~= "MT_")
 				tstring = "MT_"..$
 			end
-			if (pcall(do return _G[tstring] end))
+			if constants[tstring] ~= nil
 				mobjtype = _G[tstring]
 			end
 		end
