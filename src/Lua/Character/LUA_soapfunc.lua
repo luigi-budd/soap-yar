@@ -1918,6 +1918,7 @@ rawset(_G,"Soap_DeathThinker",function(p,me,soap)
 	if me.soap_landondeath
 		me.flags = $ &~MF_NOCLIPHEIGHT
 		me.fuse = -1
+		p.deadtimer = min($, 3)
 		
 		if soap.onGround
 		and (me.soap_deadtimer > 3)
@@ -1946,9 +1947,15 @@ rawset(_G,"Soap_DeathThinker",function(p,me,soap)
 			end
 		end
 	elseif (me.state == S_PLAY_SOAP_KNOCKOUT)
-	and not (soap.onGround)
-		me.soap_landondeath = true
-		me.state = S_PLAY_DEAD
+		if not (soap.onGround)
+			me.soap_landondeath = true
+			me.state = S_PLAY_DEAD
+		else
+			if R_PointToDist2(0,0,me.momx,me.momy) >= 3*me.scale
+				P_SpawnSkidDust(p,me.radius,true)
+			end
+			P_ButteredSlope(me)
+		end
 	end
 	
 	soap.accspeed = 0

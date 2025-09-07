@@ -177,8 +177,29 @@ CMDConstructor("die", {prefix = SOAP_DEVPREFIX, func = function(p,...)
 	local args = {...}
 	local type = args[1]
 	if type == nil then return end
+	if not (p.realmo and p.realmo.valid) then return end
 	
 	type = string.upper($)
+	if (type == "KNOCKOUT")
+		local me = p.realmo
+		local soap = p.soaptable
+		
+		P_KillMobj(me)
+		me.z = $ + soap.gravflip
+		local power = -40*me.scale
+		P_InstaThrust(me, me.angle, power)
+		P_SetObjectMomZ(me, 5*FU)
+		
+		me.soap_knockout = true
+		me.soap_knockout_speed = {
+			me.momx,me.momy,me.momz
+		}
+		
+		p.drawangle = me.angle
+		soap.deathtype = 0
+		return
+	end
+	
 	type = _G["DMG_"..type] or DMG_INSTAKILL
 	P_KillMobj(p.realmo,nil,nil,type)
 	p.soaptable.deathtype = type

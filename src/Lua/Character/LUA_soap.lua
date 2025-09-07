@@ -27,8 +27,7 @@ rawset(_G,"SOAP_TOPCOOLDOWN", 4*TR)
 rawset(_G,"SOAP_MAXDAMAGETICS", 10)
 
 local soap_baseuppercutturn = (360 + 180)*FU
---TODO: spinning slows down dynamically with sector grav (0.5 fracs / (FU/7) = 3.521 fracs)
-local soap_uppercutfactor = tofixed("3.521")
+local soap_pound_factor = tofixed("0.75")
 local CV = SOAP_CV
 
 local soap_crouchanimtime = 13
@@ -304,22 +303,40 @@ end
 
 local function do_poundsquash(p,me,soap)
 	if not soap.pounding then return end
+	local momz = me.momz*soap.gravflip
+	
+	if me.health
+		if me.state ~= S_PLAY_MELEE
+		and momz <= 14*me.scale
+			me.state = S_PLAY_MELEE
+			me.frame = $ &~FF_FRAMEMASK -- A
+			me.sprite2 = SPR2_MSC0
+			/*
+			me.tics = -1
+			me.frame = A
+			*/
+		elseif me.state ~= S_PLAY_ROLL
+		and momz > 14*me.scale
+			me.state = S_PLAY_ROLL
+		end
+	end
 	
 	local squash = me.scale * 3
 	local max_squash = FU*4/5
 	
-	if (me.momz*soap.gravflip > 0)
-	or (me.momz*soap.gravflip <= squash)
+	if (momz > 0)
+	or (momz <= squash)
 		local mom = FixedDiv(-me.momz,me.scale) * soap.gravflip -- FixedDiv(squash, me.scale)
 		mom = $/50
 		mom = -min($, max_squash)
-		if me.momz*soap.gravflip < 0
+		if momz < 0
 			mom = ease.outsine(
 				FixedDiv(mom, -max_squash),
 				$, -max_squash
 			)
 		else
 			mom = $ * 2
+			mom = min($, max_squash)
 		end
 		
 		soap.spritexscale = $ + mom
@@ -1291,6 +1308,7 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 			Soap_ZLaunch(me, thrust)
 			p.pflags = $|PF_JUMPED &~(PF_STARTJUMP|PF_SPINNING)
 			me.state = S_PLAY_MELEE
+			me.tics = -1
 			p.drawangle = me.angle
 			soap.canuppercut = false
 			
@@ -1951,16 +1969,6 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 		if me.health
 			p.powers[pw_strong] = $|STR_SPRING|STR_HEAVY|STR_SPIKE
 			p.charflags = $ &~SF_RUNONWATER
-			
-			if me.state ~= S_PLAY_MELEE
-				me.state = S_PLAY_MELEE
-				me.frame = $ &~FF_FRAMEMASK -- A
-				me.sprite2 = SPR2_MSC0
-				/*
-				me.tics = -1
-				me.frame = A
-				*/
-			end
 		end
 		
 		me.momz = $ + P_GetMobjGravity(me)
@@ -2871,14 +2879,75 @@ addHook("PlayerThink",function(p)
 end)
 ----
 
+local function Soap_Bump(me,thing,line)
+	local p = me.player
+	local soap = p.soaptable
+
+	Soap_StartQuake(5*FU, 8, {me.x,me.y,me.z}, 512*me.scale)
+	S_StartSound(me, sfx_s3k49)
+	Soap_SpawnBumpSparks(me, thing, line)
+	
+	if (line and line.valid)
+		local line_ang = R_PointToAngle2(
+			line.v1.x, line.v1.y, line.v2.x, line.v2.y
+		)
+		local speed = FixedDiv(20*me.scale, me.friction) + FixedHypot(p.cmomx,p.cmomy)
+		speed = $ + abs(FixedMul(
+			R_PointToDist2(0,0,me.momx,me.momy) * 3/4,
+			sin(line_ang - R_PointToAngle2(0,0,me.momx,me.momy))
+		))
+		
+		--its ambiguous syntax to have the `func` definition on the same line
+		--as the call, so :shrug:
+		local func = (soap.onGround and P_Thrust or P_InstaThrust)
+		func(me,
+			line_ang - ANGLE_90*(P_PointOnLineSide(me.x,me.y, line) and 1 or -1),
+			-speed
+		)
+		p.rmomx = me.momx - p.cmomx
+		p.rmomy = me.momy - p.cmomy
+		
+		if me.health
+			soap.linebump = max($, 12)
+		end
+		if soap.in2D
+			me.momy = 0
+		end
+		return true
+	else
+		local ang = R_PointToAngle2(me.x,me.y, thing.x,thing.y)
+		local speed = R_PointToDist2(0,0,thing.momx,thing.momy) + (R_PointToDist2(0,0,me.momx,me.momy) * 3/4) + FixedMul(
+			20*FU, FixedSqrt(FixedMul(thing.scale,me.scale))
+		)
+		if soap.onGround then speed = FixedDiv($, me.friction) end
+		
+		P_InstaThrust(me, ang, -speed)
+		p.rmomx = me.momx - p.cmomx
+		p.rmomy = me.momy - p.cmomy
+		
+		if soap.in2D
+			me.momy = 0
+		end
+		if me.health
+			soap.linebump = max($, 12)
+		end
+		return true
+	end
+end
+
 Takis_Hook.addHook("MoveBlocked",function(me,thing,line, goingup)
 	local p = me.player
 	local soap = p.soaptable
 	
 	if me.skin ~= "soapthehedge" then return end
+	if goingup then return end
+	
+	if not (me.health)
+		Soap_Bump(me,thing,line)
+		return
+	end
 	
 	if not (me.state == S_PLAY_DASH or me.state == S_PLAY_FLOAT_RUN) then return end
-	if goingup then return end
 	
 	if ( (soap.rdashing
 	and (p.normalspeed >= skins[p.skin].normalspeed + soap._maxdash))
@@ -2897,42 +2966,7 @@ Takis_Hook.addHook("MoveBlocked",function(me,thing,line, goingup)
 		soap.canuppercut = true
 		soap.uppercutted = false
 		
-		Soap_StartQuake(5*FU, 8, {me.x,me.y,me.z}, 512*me.scale)
-		S_StartSound(me, sfx_s3k49)
-		Soap_SpawnBumpSparks(me, thing, line)
-		
-		if (line and line.valid)
-			local line_ang = R_PointToAngle2(
-				line.v1.x, line.v1.y, line.v2.x, line.v2.y
-			)
-			local speed = FixedDiv(20*me.scale, me.friction) + FixedHypot(p.cmomx,p.cmomy)
-			speed = $ + abs(FixedMul(
-				R_PointToDist2(0,0,me.momx,me.momy) * 3/4,
-				sin(line_ang - R_PointToAngle2(0,0,me.momx,me.momy))
-			))
-			
-			P_Thrust(me,
-				line_ang - ANGLE_90*(P_PointOnLineSide(me.x,me.y, line) and 1 or -1),
-				-speed
-			)
-			soap.linebump = max($, 12)
-			if soap.in2D
-				me.momy = 0
-			end
-			return true
-		else
-			local ang = R_PointToAngle2(me.x,me.y, thing.x,thing.y)
-			local speed = R_PointToDist2(0,0,thing.momx,thing.momy) + FixedMul(
-				20*FU, FixedSqrt(FixedMul(thing.scale,me.scale))
-			)
-			if soap.onGround then speed = FixedDiv($, me.friction) end
-			P_InstaThrust(me, ang, -speed)
-			if soap.in2D
-				me.momy = 0
-			end
-			soap.linebump = max($, 12)
-			return true
-		end
+		Soap_Bump(me,thing,line)
 	end
 end)
 
@@ -2989,6 +3023,18 @@ local function handleBump(p,me,thing)
 	if P_IsLocalPlayer(p)
 		S_StartSound(me, sfx_skid)
 	end
+end
+
+local function try_pound_bounce(me,thing)
+	local p = me.player
+	local soap = p.soaptable
+	
+	local sh = p.powers[pw_shield] & SH_NOSTACK
+	if sh ~= SH_ELEMENTAL then return end
+	if not soap.jump then return end
+	
+	P_SetObjectMomZ(me, -FixedMul(me.momz, soap_pound_factor))
+	P_ElementalFire(p, true)
 end
 
 local function try_pvp_collide(me,thing)
@@ -3056,6 +3102,7 @@ local function try_pvp_collide(me,thing)
 				end
 				
 				Soap_ZLaunch(me, 3*FU, true)
+				try_pound_bounce(me,thing)
 				return
 			end
 			
@@ -3179,6 +3226,7 @@ local function try_pvp_collide(me,thing)
 		end
 		
 		Soap_ZLaunch(me, 3*FU, true)
+		try_pound_bounce(me,thing)
 		return
 	end
 	
@@ -3300,14 +3348,12 @@ addHook("MobjDamage", function(me,inf,sor,dmg,dmgt)
 				nosfx = true
 			})
 			
-			if (inf_speed - 10 * inf.scale) > 0
-				P_Thrust(me, 
-					R_PointToAngle2(inf.x,inf.y,
-						me.x,me.y
-					),
-					inf_speed - 10*inf.scale
-				)
-			end
+			P_Thrust(me, 
+				R_PointToAngle2(inf.x,inf.y,
+					me.x,me.y
+				),
+				inf_speed
+			)
 		else
 			S_StartSound(me,sfx_sp_db0)
 		end
@@ -3367,10 +3413,10 @@ addHook("MobjDeath", function(me,inf,sor,dmgt)
 		local killer = sor
 		if (inf and inf.valid) then killer = inf; end
 		
-		me.z = $ + soap.gravflip
+		me.z = $ + FU*soap.gravflip
 		local power = FixedHypot(FixedHypot(killer.momx,killer.momy),killer.momz)
 		P_InstaThrust(me, R_PointToAngle2(killer.x,killer.y,me.x,me.y), power)
-		P_SetObjectMomZ(me, 5*FU)
+		P_SetObjectMomZ(me, 12*FU)
 		
 		me.soap_knockout = true
 		me.soap_knockout_speed = {
@@ -3563,7 +3609,10 @@ Takis_Hook.addHook("PostThinkFrame",function(p)
 		if not (me.flags & MF_NOTHINK)
 			p.drawangle = me.angle - FixedAngle(soap.uppercut_spin)
 			
-			soap.uppercut_spin = P_AngleLerp(FU / (soap.inWater and 10 or 7), $, 0)
+			soap.uppercut_spin = P_AngleLerp(
+				abs(FixedMul(FU/7, FixedDiv(P_GetMobjGravity(me),me.scale/2))),
+				$, 0
+			)
 			
 			if FixedFloor(soap.uppercut_spin) < 10*FU
 				soap.uppercut_spin = 0

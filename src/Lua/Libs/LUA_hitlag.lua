@@ -336,7 +336,7 @@ hl.addHitlag = function(
 end
 
 hl.stunEnemy = function(mo,tics)
-	if mo == nil then return end
+	if not (mo and mo.valid) then return end
 	if mo.nohitlagforme or mo.foolhardy then return end
 	if mo.soap_stunned == nil then mo.soap_stunned = 0 end
 	--save us the trouble
@@ -362,6 +362,7 @@ hl.stunEnemy = function(mo,tics)
 	local hook_event = Takis_Hook.events["Soap_OnStunEnemy"]
 	for i,v in ipairs(hook_event)
 		local result = Takis_Hook.tryRunHook("Soap_OnStunEnemy", v, mo,tics)
+		if not (mo and mo.valid) then return end
 	end
 	
 	for k,v in ipairs(hl.stunned)
