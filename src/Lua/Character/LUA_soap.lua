@@ -379,8 +379,8 @@ end
 local function spawn_sweat_mobjs(p,me,soap)
 	local height = FixedDiv(me.height,me.scale)/FU
 	local sweat = P_SpawnMobjFromMobj(me,
-		P_RandomRange(-16,16)*FU + me.momx,
-		P_RandomRange(-16,16)*FU + me.momy,
+		P_RandomRange(-16,16)*FU, --+ FixedDiv(me.momx,me.scale),
+		P_RandomRange(-16,16)*FU, --+ FixedDiv(me.momy,me.scale),
 		P_RandomRange(height/2,height)*FU,
 		MT_SOAP_WALLBUMP
 	)
@@ -390,7 +390,7 @@ local function spawn_sweat_mobjs(p,me,soap)
 	)
 	sweat.momx = $ + me.momx/2
 	sweat.momy = $ + me.momy/2
-	sweat.momz = $ + soap.rmomz/2
+	sweat.momz = $ + soap.rmomz
 	P_SetObjectMomZ(sweat, P_RandomFixedRange(5,8))
 	sweat.fuse = TR*3/4
 	sweat.dontdrawforviewmobj = me
@@ -892,7 +892,7 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 	if (soap.c3)
 		
 		local candotop = false
-		local incoop = (CV.FindVar("friendlyfire").value and not Soap_IsCompGamemode())
+		local incoop = (CV.FindVar("friendlyfire").value and not Soap_IsCompGamemode()) and (multiplayer or netgame)
 		
 		--spininng top
 		if ((soap.c3 == 1)
@@ -911,7 +911,7 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 		if candotop
 		and not soap.topcooldown
 			SoapST_Start(p)
-			soap.topcooldown = SOAP_TOPCOOLDOWN * (incoop and 2 or 1)
+			soap.topcooldown = SOAP_TOPCOOLDOWN
 			setstate = true
 		end
 	end
@@ -1114,18 +1114,28 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 				if p.normalspeed >= maximumspeed
 				and not Soap_IsCompGamemode()
 					local chargetime = soap.inWater and TR*3 or TR
+					local frac = (FU/chargetime)
+					if (p.powers[pw_sneakers])
+						frac = $ * 3/2
+					end
 					
 					if soap.chargingtime < 3*TR
 						soap.dashcharge = 0
-						soap.chargingtime = $ + 1
+						soap.chargingtime = $ + (p.powers[pw_sneakers] and 2 or 1)
 						
 					elseif soap.dashcharge < SOAP_EXTRADASH
-						soap.dashcharge = $ + (FU/chargetime) + extracharge
+						soap.dashcharge = $ + frac + extracharge
 						
 						if soap.dashcharge >= SOAP_EXTRADASH
 							S_StartSound(me,sfx_sp_max)
 							soap.dashcharge = SOAP_EXTRADASH
 							soap.speedlenient = max($,4)
+						end
+					--overcharge
+					else
+						soap.dashcharge = $ + frac + extracharge/2
+						if soap.dashcharge >= 100*FU
+							soap.dashcharge = ease.linear(FU/3, $, 100*FU)
 						end
 					end
 					
@@ -1297,6 +1307,8 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 					function(dust)
 						dust_noviewmobj(dust)
 						P_SetObjectMomZ(dust, thrust/2)
+						dust.momx = $ + me.momx * 3/4
+						dust.momy = $ + me.momy * 3/4
 					end
 				)
 				soap.uppercut_spin = $ + 360*FU
@@ -1768,12 +1780,12 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 				
 				local color = soap_rdashwind_base
 				if (soap.dashcharge)
-					local speed_frac = ease.incubic(FU/2,
+					local speed_frac = clamp(0,ease.incubic(FU/2,
 						FixedDiv(
 							p.normalspeed - dashspeed,
 							SOAP_EXTRADASH
 						), FU
-					)
+					), FU)
 					
 					color = $ + (FixedMul(
 						soap_rdashwind_inc*FU,
@@ -1864,7 +1876,7 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 							
 							P_InstaThrust(kickup,
 								R_PointToAngle2(kickup.x,kickup.y, me.x,me.y),
-								-5*me.scale
+								-10*me.scale
 							)
 						end
 					end
@@ -2411,9 +2423,13 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 	if spawn_aura and me.health
 		local super = (soap.doSuperBuffs or (p.powers[pw_sneakers] > 0)) --sneakers too lol
 		--Show when the extra attack point will be applied
-		if (soap.inBattle and soap.accspeed >= 50*FU)
+		if (soap.inBattle and soap.accspeed >= 45*FU)
 			super = true
 		end
+		if (soap.dashcharge >= SOAP_MAXDASH)
+			super = true
+		end
+		
 		if not (soap.fx.dash_aura and soap.fx.dash_aura.valid)
 			local follow = P_SpawnMobjFromMobj(me,0,0,0,MT_SOAP_FREEZEGFX)
 			follow.tics = -1
@@ -3609,13 +3625,35 @@ Takis_Hook.addHook("PostThinkFrame",function(p)
 		if not (me.flags & MF_NOTHINK)
 			p.drawangle = me.angle - FixedAngle(soap.uppercut_spin)
 			
+			local grav_mul = abs(FixedDiv(P_GetMobjGravity(me),me.scale/2))
 			soap.uppercut_spin = P_AngleLerp(
-				abs(FixedMul(FU/7, FixedDiv(P_GetMobjGravity(me),me.scale/2))),
+				FixedMul(FU/7, grav_mul),
 				$, 0
 			)
 			
-			if FixedFloor(soap.uppercut_spin) < 10*FU
+			if FixedFloor(soap.uppercut_spin) < FixedDiv(10*FU,grav_mul)
 				soap.uppercut_spin = 0
+			end
+			
+			if (leveltime & 1)
+			and (p.powers[pw_shield] & SH_NOSTACK == SH_WHIRLWIND)
+				local rad = FixedDiv(me.radius,me.scale) + 16*FU
+				local hei = FixedDiv(me.height,me.scale)
+				for i = -1,1,2
+					local ang = p.drawangle + ANGLE_90*i
+					local dust = P_SpawnMobjFromMobj(me,
+						P_ReturnThrustX(nil,ang,rad),
+						P_ReturnThrustY(nil,ang,rad),
+						hei/2,
+						MT_SPINDUST
+					)
+					P_Thrust(dust, R_PointToAngle2(dust.x,dust.y,me.x,me.y), -5*me.scale)
+					dust.momx = $ + me.momx
+					dust.momy = $ + me.momy
+					dust.momz = me.momz * 3/4
+					dust.destscale = dust.scale * 3/2
+					dust.scalespeed = FixedDiv(dust.destscale - dust.scale, dust.tics*FU)
+				end
 			end
 		end
 	end

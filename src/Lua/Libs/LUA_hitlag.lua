@@ -195,6 +195,7 @@ hl.iterateHitlagged = function()
 					resetstate = mo.info.endstunstate
 				end
 				mo.state = resetstate
+				S_StopSoundByID(mo,sfx_s3k49)
 			end
 		else
 			if mo.health
