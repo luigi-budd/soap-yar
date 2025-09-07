@@ -633,6 +633,11 @@ rawset(_G,"Soap_ImpactVFX",function(src,inf, distmul, scalemul)
 			P_SetOrigin(bam, bam.x,bam.y,
 				src.z + FixedMul(34*src.scale, spr_scale) + off.z
 			)
+			local renderer = CV.FindVar("renderer")
+			if renderer
+			and renderer.string:lower() == "software"
+				bam.flags2 = $|MF2_DONTDRAW
+			end
 		end
 		
 	end
