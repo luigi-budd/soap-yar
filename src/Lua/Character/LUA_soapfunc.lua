@@ -1463,6 +1463,8 @@ rawset(_G,"Soap_HandleNoAbils", function(p)
 	end
 	if p.powers[pw_carry] == CR_ROPEHANG
 		na = $|SNOABIL_AIRDASH|SNOABIL_UPPERCUT	
+	elseif p.powers[pw_carry] == CR_MACESPIN
+		na = $|SNOABIL_AIRDASH|SNOABIL_CROUCH|SNOABIL_POUND|SNOABIL_UPPERCUT
 	end
 	
 	if soap.taunttime

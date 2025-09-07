@@ -2376,6 +2376,10 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 				goop.tics = max($ - 2, 3)
 			end
 		end
+	elseif p.powers[pw_carry] == CR_MACESPIN
+		if me.state ~= S_PLAY_ROLL
+			me.state = S_PLAY_ROLL
+		end
 	elseif p.powers[pw_carry] == CR_NONE
 	and not (soap.pounding or (soap.rdashing and not soap.airdashed))
 		accelerative_speedlines(p,me,soap, FixedDiv(R_PointTo3DDist(0,0,0,me.momx,me.momy,me.momz),me.scale), 40*FU)
