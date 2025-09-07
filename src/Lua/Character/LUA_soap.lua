@@ -2183,6 +2183,7 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 				me.translation = nil
 				soap.topairborne = (not soap.onGround) and (soap.jump)
 			end
+		-- the actual top spin
 		else
 			if soap.topspin == false
 				soap.topspin = 0
@@ -2195,6 +2196,7 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 			if me.state ~= S_PLAY_SOAP_SPTOP
 				me.state = S_PLAY_SOAP_SPTOP
 			end
+			p.powers[pw_strong] = $|STR_SPIKE|STR_ANIM
 			p.acceleration = skins[p.skin].acceleration * 2
 			
 			soap.bm.damaging = true
@@ -2269,6 +2271,7 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 		
 		p.acceleration = skins[p.skin].acceleration
 		if me.state == S_PLAY_SOAP_SPTOP
+			p.powers[pw_strong] = $ &~STR_SPIKE
 			me.state = soap.onGround and S_PLAY_WALK or S_PLAY_FALL
 			if not soap.onGround
 				p.pflags = $|PF_THOKKED &~PF_JUMPED

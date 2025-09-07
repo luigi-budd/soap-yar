@@ -569,7 +569,7 @@ rawset(_G,"Soap_DamageSfx", function(src, power, maxpow, props)
 end)
 
 --@src is the source of the vfx, not of the damage (thats @inf)
-rawset(_G,"Soap_ImpactVFX",function(src,inf, distmul)
+rawset(_G,"Soap_ImpactVFX",function(src,inf, distmul, scalemul)
 	/*
 	if (SpawnBam ~= nil)
 		SpawnBam(src,true)
@@ -577,6 +577,7 @@ rawset(_G,"Soap_ImpactVFX",function(src,inf, distmul)
 	end
 	*/
 	
+	scalemul = $ or FU
 	local disp = 25
 	local off = {
 		x = P_RandomFixedRange(-disp,disp),
@@ -584,7 +585,7 @@ rawset(_G,"Soap_ImpactVFX",function(src,inf, distmul)
 		z = P_RandomFixedRange(-disp,disp)
 	}
 	
-	local spr_scale = FU*3/4 + P_RandomFixedSigned() / 4
+	local spr_scale = FixedMul(FU*3/4 + P_RandomFixedSigned() / 4, scalemul)
 	local tntstate = S_TNTBARREL_EXPL3
 	local rflags = RF_PAPERSPRITE|RF_FULLBRIGHT|RF_NOCOLORMAPS
 	local applycolor = (multiplayer or netgame)
@@ -1387,6 +1388,10 @@ rawset(_G,"SoapST_Hitbox",function(p)
 				end
 				hit = true
 			end
+		--Most likely a spike thing
+		elseif (found.info.mass == DMG_SPIKE)
+			Soap_ImpactVFX(found,me,nil,FU/4)
+			P_KillMobj(found,me,me)
 		end
 		
 		if hit
