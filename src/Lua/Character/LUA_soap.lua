@@ -1716,8 +1716,14 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 		and not ((me.eflags & MFE_SPRUNG)
 		or soap.speedlenient)
 			p.normalspeed = max(soap.accspeed, skin_t.normalspeed)
-			soap.dashcharge = 0
-			soap.chargingtime = 0
+			if soap.dashlose > 5
+				soap.dashcharge = 0
+				soap.chargingtime = 0
+			else
+				soap.dashlose = $ + 1
+			end
+		else
+			soap.dashlose = 0
 		end
 		
 		if (p.pflags & PF_SPINNING)
@@ -1907,6 +1913,7 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 	elseif soap.lastrdash or soap.resetdash
 		--local micros = getTimeMicros()
 		me.friction = ORIG_FRICTION
+		soap.dashlose = 0
 		
 		if p.normalspeed >= skins[p.skin].normalspeed + soap._maxdash
 		and me.health
@@ -3203,6 +3210,7 @@ local function try_pvp_collide(me,thing)
 	local soap2 = p2.soaptable
 	local battlepass = false --(soap.inBattle)
 	
+	if not (soap2) then return end
 	if soap2.iwashitthistic then return end
 	if not Soap_CanHurtPlayer(p, p2, battlepass) then return end
 	soap2.iwashitthistic = true

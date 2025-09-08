@@ -166,6 +166,7 @@ rawset(_G, "Soap_InitTable", function(p)
 		lastrdash = false,
 		dashangle = p.drawangle,
 		dashcharge = 0,
+		dashlose = 0,
 		chargedtime = 0,
 		chargingtime = 0,
 		resetdash = false,
