@@ -221,6 +221,7 @@ rawset(_G, "Soap_InitTable", function(p)
 		last = {
 			onground = true,
 			momz = 0,
+			--squashes arent a linked list, and this should really be named the 'tail' of the list
 			squash_head = 0,
 			
 			anim = {

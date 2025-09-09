@@ -2813,6 +2813,7 @@ addHook("FollowMobj",function(p, m_peel)
 		peel.spritexscale = FixedDiv(me.spritexscale, 2*FU)
 		peel.spriteyscale = FixedDiv(me.spriteyscale, 2*FU)
 		peel.pitch,peel.roll = 0,0
+		peel.translation = me.translation
 		
 		local pitchroll = 0
 		local pitch = me.pitch

@@ -7,7 +7,7 @@ local hl = Soap_Hitlag
 */
 
 hl.hitlagged = {}
-hl.hitlagTranslation = "Soap_AI2"
+hl.hitlagTranslation = "Soap_AI2" --"Soap_Hitlag" is too long to be parsed lmao
 
 --lets handle stunned enemies here too
 hl.stunned = {}
