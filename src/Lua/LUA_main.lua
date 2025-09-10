@@ -61,22 +61,22 @@ addHook("PlayerThink",function(p)
 		Soap_Booleans(p)
 		
 		soap.rmomz = me.z - soap.last.z
-		if me.skin == "soapthehedge"
+		if me.skin == SOAP_SKIN
 			local hook_event = Takis_Hook.events["Soap_Thinker"]
 			for i,v in ipairs(hook_event)
 				Takis_Hook.tryRunHook("Soap_Thinker", v, p)
 			end
-		else
-			Soap_FXDestruct(p)
 		end
-
-		if me.skin == "takisthefox"
+		
+		if me.skin == TAKIS_SKIN
 			local hook_event = Takis_Hook.events["Takis_Thinker"]
 			for i,v in ipairs(hook_event)
 				Takis_Hook.tryRunHook("Takis_Thinker", v, p)
 			end
-		else
-			--Soap_FXDestruct(p)
+		end
+		
+		if not (me.skin == SOAP_SKIN or me.skin == TAKIS_SKIN)
+			Soap_FXDestruct(p)
 		end
 		
 		--global thinker

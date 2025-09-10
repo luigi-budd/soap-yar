@@ -5,6 +5,8 @@
 if not rawget(_G,"Takis_Hook")
 	rawset(_G, "Takis_Hook", {})
 	Takis_Hook.events = {}
+	
+	--Dont "expose" deprecated hooks
 end
 
 /*
@@ -60,10 +62,22 @@ events["Soap_DashSpeeds"] = {handler = handler_snapany}
 events["Soap_OnStunEnemy"] = {typefor = typefor_mobj}
 events["Soap_StunnedThink"] = {typefor = typefor_mobj}
 events["Soap_OnMove"] = {}
-events["Soap_VFX"] = {handler = handler_snapany}
 
 events["Takis_Thinker"] = {}
-events["Takis_VFX"] = {handler = handler_snapany}
+
+-- hooks for BOTH skins
+events["Char_VFX"] = {handler = handler_snapany}
+
+local deprecated = {
+	["Soap_VFX"] = {
+		correct = "Char_VFX",
+		seen = false,
+	},
+	["Takis_VFX"] = {
+		correct = "Char_VFX",
+		seen = false,
+	},
+}
 
 --check for new events...
 for event_name, event_t in pairs(events)
@@ -76,13 +90,29 @@ for event_name, event_t in pairs(events)
 end
 
 Takis_Hook.addHook = function(hooktype, func, typefor)
-	if Takis_Hook.events[hooktype] then
+	local hook_okay = Takis_Hook.events[hooktype] ~= nil
+	local dep_t = nil
+	if not hook_okay
+		hook_okay = deprecated[hooktype] ~= nil
+		dep_t = deprecated[hooktype]
+	end
+	
+	if hook_okay then
+		if dep_t ~= nil
+			if not dep_t.seen
+				print("\x83TAKIS: \x82WARNING:\x80 Hook type \""..hooktype.."\" has been deprecated and will be removed. Use \""..dep_t.correct.."\" instead.")
+				S_StartSound(nil,sfx_skid)
+			end
+			hooktype = dep_t.correct
+		end
+		
 		table.insert(Takis_Hook.events[hooktype], {
 			func = func,
 			typedef = typefor,
 			errored = false
 		})
 	else
+		S_StartSound(nil,sfx_skid)
 		error("\x83TAKIS: \x82WARNING:\x80 Hook type \""..hooktype.."\" does not exist.", 2)
 	end
 end

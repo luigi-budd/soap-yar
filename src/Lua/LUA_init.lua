@@ -24,27 +24,27 @@ rawset(_G,"Soap_EnumFlags",function(prefix,enums)
 	end
 end)
 
---takis gets his noabil enums back lol (TODO: move this to takisinit when it exists)
-Soap_EnumFlags("NOABIL_", {
-	"CLUTCH",
-	"HAMMER",
-	"DIVE",
-	"SLIDE",
-	"SHIELD",
-	"THOK",
-	"AFTERIMAGE",	--i wouldnt really call afterimages an ability
-})
-
 rawset(_G, "ORIG_FRICTION", (232 << (FRACBITS-8))) --this should really be exposed...
 rawset(_G, "MFE_NOPITCHROLLEASING", MFE_NOPITCHROLLEASING or (1<<14))
 
+rawset(_G, "SOAP_SKIN", "soapthehedge")
+rawset(_G, "TAKIS_SKIN", "takisthefox")
+
 --from chrispy chars!!! by Lach!!!!
 rawset(_G,"SafeFreeslot",function(...)
-	for _, item in ipairs({...})
+	local to_freeslot = {...}
+	local returning = nil
+	local single = (#to_freeslot == 1)
+	for _, item in ipairs(to_freeslot)
 		if rawget(_G, item) == nil
-			freeslot(item)
+			if single
+				returning = freeslot(item)
+			else
+				freeslot(item)
+			end
 		end
 	end
+	return returning
 end)
 
 -- Both Takis and Soap will use the same table (Surely it wont get cluttered up soon!)
@@ -246,6 +246,41 @@ rawset(_G, "Soap_InitTable", function(p)
 		--takis specific
 		waittics = 0,
 		waitframe = A,
+		
+		clutch = {
+			/*
+			clutchcombo = 0,
+			clutchcombotime = 0,
+			clutchtime = 0,
+			clutchgood = 0,
+			clutchmisfire = 0,
+			clutchingtime = 0,
+			clutchspamcount = 0,
+			clutchspamtime = 0,
+			clutchnights = 0,
+			*/
+			
+			combo = 0,
+			combotime = 0,
+			
+			tics = 0, --clutchtime
+			time = 0, --clutchingtime
+			good = 0,
+			
+			misfire = 0,
+			
+			spamcount = 0,
+			spamtime = 0,
+			
+			nights = 0,
+			
+			firefx = 0,
+			spin = 0, --unused?
+		},
+		
+		-- for momentuminos
+		frictionfreeze = 0,
+		frictionremove = 0,
 	}
 	
 	CONS_Printf(p,"\x82Soap_InitTable(): Success!")

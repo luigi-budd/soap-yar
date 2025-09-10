@@ -11,6 +11,7 @@ local filetree = {
 	--character inits MUST be run before any of their thinkers/funcs!
 	"character/LUA_soapinit.lua",
 	"character/LUA_soapfunc.lua",
+	"character/LUA_takisinit.lua",
 	"character/LUA_takisfunc.lua",
 	
 	"LUA_main.lua",
@@ -22,6 +23,7 @@ local filetree = {
 	"LUA_misc.lua",
 	"LUA_compat.lua",
 	"LUA_clientsave.lua",
+	"LUA_watermark.lua",
 }
 local badfiles = {}
 

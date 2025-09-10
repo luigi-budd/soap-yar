@@ -916,7 +916,8 @@ rawset(_G, "Soap_WindLines", function(me,rmomz,color,forceang)
 	return wind
 end)
 
-rawset(_G,"Soap_MomentumAngle",function(mo,fallback,Amomx,Amomy)
+-- shitty takis func
+local function Soap_MomentumAngle(mo,fallback,Amomx,Amomy)
 	if not (mo and mo.valid) then return end
 	
 	local momx,momy = (Amomx ~= nil) and Amomx or mo.momx, (Amomy ~= nil) and Amomy or mo.momy
@@ -935,7 +936,7 @@ rawset(_G,"Soap_MomentumAngle",function(mo,fallback,Amomx,Amomy)
 	else
 		return (fallback ~= nil and fallback or ((mo.player and mo.player.valid) and mo.player.drawangle or mo.angle))
 	end
-end)
+end
 
 rawset(_G,"Soap_CheckFloorPic",function(me, checkgrounded)
 	if checkgrounded and not P_IsObjectOnGround(me) then return ""; end
@@ -977,15 +978,13 @@ rawset(_G,"Soap_FXDestruct",function(p)
 	local soap = p.soaptable
 
 	--remove fx
-	if me.skin ~= "takisthefox"
-		if (soap.fx.waterrun_L and soap.fx.waterrun_L.valid)
-			P_RemoveMobj(soap.fx.waterrun_L)
-			soap.fx.waterrun_L = nil
-		end
-		if (soap.fx.waterrun_R and soap.fx.waterrun_R.valid)
-			P_RemoveMobj(soap.fx.waterrun_R)
-			soap.fx.waterrun_R = nil
-		end
+	if (soap.fx.waterrun_L and soap.fx.waterrun_L.valid)
+		P_RemoveMobj(soap.fx.waterrun_L)
+		soap.fx.waterrun_L = nil
+	end
+	if (soap.fx.waterrun_R and soap.fx.waterrun_R.valid)
+		P_RemoveMobj(soap.fx.waterrun_R)
+		soap.fx.waterrun_R = nil
 	end
 	
 	if (soap.fx.uppercut_aura and soap.fx.uppercut_aura.valid)
@@ -1023,12 +1022,16 @@ end
 		[name]
 	}
 */
-rawset(_G,"Soap_AddSquash",function(p, x,y, name)
+rawset(_G,"Soap_AddSquash",function(p, x,y, name, singular)
 	local output = {
 		x = format_easestruct(x),
 		y = format_easestruct(y),
 		name = name,
 	}
+	
+	if singular and name ~= nil
+		Soap_RemoveSquash(p, name)
+	end
 	
 	table.insert(p.soaptable.squash, output)
 	return output
@@ -1040,7 +1043,6 @@ rawset(_G,"Soap_GetSquash",function(p, name)
 			return v
 		end
 	end
-	return false
 end)
 
 rawset(_G,"Soap_RemoveSquash",function(p, name)
@@ -2363,9 +2365,9 @@ rawset(_G,"Soap_VFX",function(p,me,soap, props)
 			["squish"] = boolean
 			["deathanims"] = boolean
 	*/
-	local hook_event = Takis_Hook.events["Soap_VFX"]
+	local hook_event = Takis_Hook.events["Char_VFX"]
 	for i,v in ipairs(hook_event)
-		local fxtable = Takis_Hook.tryRunHook("Soap_VFX", v, p, props)
+		local fxtable = Takis_Hook.tryRunHook("Char_VFX", v, p, props)
 		if fxtable == nil then continue end
 		
 		if fxtable.waterrun
@@ -2867,4 +2869,24 @@ rawset(_G, "Soap_StartQuake", function(intensity, time, epicenter, radius)
 		intensity = $ * 2
 	end
 	P_StartQuake(intensity,time,epicenter,radius)
+end)
+
+Soap_EnumFlags("CS_", {
+	"AUTOMATIC",
+	"MANUAL",
+	"STRAFE",
+	"OLDANALOG",
+})
+rawset(_G, "Soap_ControlStyle", function(p)
+	local flags = p.pflags & (PF_ANALOGMODE|PF_DIRECTIONCHAR)
+	
+	if flags == (PF_ANALOGMODE|PF_DIRECTIONCHAR)
+		return CS_AUTOMATIC
+	elseif flags == PF_DIRECTIONCHAR
+		return CS_MANUAL
+	elseif flags == 0
+		return CS_STRAFE
+	elseif flags == PF_ANALOGMODE
+		return CS_OLDANALOG
+	end
 end)

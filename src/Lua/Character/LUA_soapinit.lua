@@ -1,5 +1,3 @@
---TODO: all soap freeslots and constants go here
-
 --Soap-NOABILity, since takis uses NOABIL_
 Soap_EnumFlags("SNOABIL_", {
 	"RDASH",

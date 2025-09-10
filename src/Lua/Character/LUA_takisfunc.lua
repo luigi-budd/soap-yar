@@ -1,55 +1,352 @@
-rawset(_G,"Takis_VFX",function(p,me,soap, props)
-	local allowed = {
-		waterrun = true,
-		jumpdust = true,
-		landdust = true,
-		squish = true,
-		deathanims = true,
-	}
+rawset(_G,"Takis_DoClutch",function(p,riding)
+	local me = p.mo
+	local takis = p.soaptable
+	local clutch = takis.clutch
+	
+	if not (me and me.valid) then return end
+	if (p.playerstate == PST_DEAD) then return end
+	if not me.health then return end
+
+	if (p.powers[pw_carry] == CR_NIGHTSMODE)
+		if (p.bumpertime) then return end
+		if (p.drillmeter < 30) then return end
+		if (p.powers[pw_flashing] > (2*flashingtics/3)) then return end
+		if not (me.state == S_PLAY_NIGHTS_FLY or me.state == S_PLAY_NIGHTS_DRILL) then return end
+		--allow braking if you're not inputting anything
+		if not (p.cmd.forwardmove or p.cmd.sidemove) then return end
+		
+		--TakisSoundEffect(me,sfx_tk_cl0,255*3/5,p)
+		--TakisSoundEffect(me,sfx_tk_cl1,133,p)
+		if not takis.inWater
+			S_StartSoundAtVolume(me,sfx_tk_cl2,179)
+		else
+			S_StartSoundAtVolume(me,sfx_tk_cl3,220)
+		end
+		
+		--align yourself
+		local newangle = 0
+		do
+			if not (p.cmd.forwardmove)
+				if (p.cmd.sidemove > 0)
+					newangle = 0
+				elseif p.cmd.sidemove < 0
+					newangle = 180
+				end
+				
+			elseif not (p.cmd.sidemove)
+				if (p.cmd.forwardmove > 0)
+					newangle = 90
+				elseif p.cmd.forwardmove < 0
+					newangle = 270
+				end
+				
+			else
+				newangle = FixedInt(AngleFixed(
+					R_PointToAngle2(0,0,
+						p.cmd.sidemove*FU,
+						p.cmd.forwardmove*FU
+					)
+				))
+			end
+			newangle = $ - (p.viewrollangle/ANG1)
+			
+			if newangle < 0 then newangle = 360 + $ end
+		end
+		
+		p.flyangle = newangle
+		p.speed = min($ + 7500,20000)
+		p.drillmeter = max($ - 30, 0)
+		p.bumpertime = TR/2
+		clutch.nights = p.bumpertime
+		return
+	end
+	
+	--but wait! first thing we needa do is check if we're
+	--allowed to clutch on a rollout rock
+	if (p.powers[pw_carry] == CR_ROLLOUT)
+		local rock = me.tracer
+		local inwater = rock.eflags & (MFE_TOUCHWATER|MFE_UNDERWATER)
+		--if the rock isnt grounded, dont clutch
+		if not (P_IsObjectOnGround(rock) or inwater)
+			return
+		end
+	end
+	
+	local ccombo = min(clutch.combo,3)
+	
+	if ccombo >= 3
+		if me.friction < FU
+			me.friction = FU + FU/10
+			takis.frictionfreeze = 10
+		end
+	end
+	
+	--sounds mostly similar to final game
+	S_StartSoundAtVolume(me,sfx_tk_cl0,255*3/5)
+	S_StartSoundAtVolume(me,sfx_tk_cl1,133)
+	if not takis.inWater
+		S_StartSoundAtVolume(me,sfx_tk_cl2,179)
+	else
+		S_StartSoundAtVolume(me,sfx_tk_cl3,220)
+	end
+	
+	clutch.time = 1
+	
+	local thrust = 4*FU + FixedMul( (2*FU), (ccombo*FU)/2 )
+	
+	--not too fast, now
+	if thrust >= 13*FU
+		thrust = 13*FU
+	end
+	
+	local clutchadjust = clutch.tics --max((takis.clutchtime - p.cmd.latency),0)
+	local spammed = false
+	local combod = false
+	
+	--clutch boost
+	if (clutchadjust > 0)
+		if (clutchadjust <= 11)
+			combod = true
+			clutch.combo = $+1
+			clutch.combotime = 2*TR
+			clutch.good = TR
+			
+			S_StartSoundAtVolume(me,sfx_kc5b,255/2)
+			
+			--effect
+			local ghost = P_SpawnGhostMobj(me)
+			ghost.scale = 3*me.scale/2
+			ghost.destscale = FixedMul(me.scale,2)
+			ghost.colorized = true
+			ghost.frame = $|TR_TRANS10
+			ghost.blendmode = AST_ADD
+			--ghost.state = S_PLAY_TAKIS_TORNADO
+			ghost.tics = -1
+			if not (G_RingSlingerGametype())
+				P_ElementalFire(p)
+				clutch.firefx = 2
+			end
+			
+			ghost.momx,ghost.momy = me.momx,me.momy
+			ghost.momz = takis.rmomz
+			
+			thrust = $+(3*FU/2)+FU
+		--dont thrust too early, now!
+		elseif clutchadjust > 16
+		--Who cares!
+		and not p.exiting
+			
+			spammed = true
+			clutch.spamcount = $+1
+			clutch.combo = 0
+			clutch.combotime = 0
+			thrust = FU/5
+			if clutch.spamcount >= 3
+				thrust = 0
+			end
+			clutch.good = -TR
+		end
+	end
+	
+	if p.powers[pw_sneakers]
+		thrust = $*8/5
+	end
+	
+	if p.gotflag
+		thrust = $/6
+	end
+	
+	--stop that stupid momentum mod from givin
+	--us super speed for spamming
+	if thrust == 0
+	and not p.powers[pw_sneakers]
+	and (clutch.spamcount >= 3)
+		P_InstaThrust(me,Soap_ControlDir(p),FixedDiv(
+				FixedMul(takis.accspeed,me.scale),
+				3*FU
+			)
+		)
+		me.movefactor = $/2
+	end
+	
+	if (takis.accspeed > ((p.powers[pw_sneakers] or takis.isSuper) and 70*FU or 50*FU))
+		takis.frictionfreeze = 10
+		me.friction = FU + FU/10
+		thrust = FU
+	end
+	
+	local mo = (riding and riding.valid) and riding or ((p.powers[pw_carry] == CR_ROLLOUT) and me.tracer or me)
+	
+	local twod = (mo.flags2 & MF2_TWOD or twodlevel)
+	local ang = Soap_ControlDir(p) --((Soap_ControlStyle ~= CS_AUTOMATIC) and not twod) and Soap_ControlDir(p) or me.angle
+	
+	local speedmul = FU
+	if twod
+		speedmul = $*3/4
+		thrust = $/2
+	end
+	if (takis.inWater)
+	and not twod
+		speedmul = $*3/4
+	end
+	if (p.gotflag)
+		speedmul = $*7/10
+	end
+	
+	if (p.onconveyor == 4)
+		local convspeed = FixedHypot(p.cmomx,p.cmomy)
+		local convang = R_PointToAngle2(0,0, p.cmomx,p.cmomy)
+		
+		local angdiff = FixedAngle(
+			AngleFixed(convang) - AngleFixed(ang)
+		)
+		if AngleFixed(angdiff) > 180*FU
+			angdiff = InvAngle($)
+		end
+		
+		--only give extra speed when going against
+		if not (AngleFixed(angdiff) > 115*FU)
+			convspeed = 0
+		end
+		
+		thrust = $ + FixedMul(convspeed,me.scale)/4
+	end
+	
+	thrust = FixedMul(thrust,me.scale)
+	p.pflags = $ &~PF_SPINNING
+	if mo == me
+		P_Thrust(mo,ang,thrust)
+		p.drawangle = ang
+	else
+		if (p.powers[pw_carry] == CR_ROLLOUT)
+			P_InstaThrust(mo,ang,
+				FixedHypot(mo.momx,mo.momy)+thrust
+			)
+			p.drawangle = ang + ANGLE_180
+		else
+			if (p.powers[pw_carry] == CR_MINECART)
+				if takis.accspeed >= 90*mo.scale
+					mo.momx = $*8/10
+					mo.momy = $*8/10
+					thrust = 0
+				else
+					thrust = $/2
+				end
+			end
+			P_Thrust(mo,ang,thrust)
+			p.drawangle = ang
+		end
+	end
+	
+	local runspeed = FixedMul(skins[TAKIS_SKIN].runspeed,speedmul) - 4*FU
+	if takis.accspeed < runspeed
+		P_Thrust(mo,ang, FixedMul(runspeed - takis.accspeed,me.scale))
+	end
+	
+	--print(string.format("%f	  %f	%d	%f	%d", thrust, takis.accspeed, takis.clutchcombo, me.friction, takis.frictionfreeze))
+	
+	local ease_time = 5
+	local ease_func = "insine"
+	local strength = (FU/3)
+	Soap_AddSquash(p, {
+		ease_func = ease_func,
+		start_v = strength,
+		end_v = 0,
+		time = ease_time
+	}, {
+		ease_func = ease_func,
+		start_v = -strength*3/4,
+		end_v = 0,
+		time = ease_time
+	}, "Takis_Clutch", true)
 	
 	/*
-		return value: table - table keys: override default behavior
-		table entries:
-			["waterrun"] = boolean
-			["jumpdust"] = boolean
-			["landdust"] = boolean
-			["squish"] = boolean
+	if not combod
+		p.jp = 2
+		p.jt = -5
+	else
+		p.jp = 3
+		p.jt = -8
+	end
 	*/
-	local hook_event = Takis_Hook.events["Takis_VFX"]
-	for i,v in ipairs(hook_event)
-		local fxtable = Takis_Hook.tryRunHook("Takis_VFX", v, p, props)
-		if fxtable == nil then continue end
+	
+	if takis.onGround
+		me.state = S_PLAY_DASH
+		P_MovePlayer(p)
+		p.panim = PA_DASH
+	end
+	clutch.tics = 23
+	clutch.spamtime = 23
+	clutch.misfire = TR
+	--takis.bashspin = 9
+	--takis.ropeletgo = TR/5
+	
+	/*
+	if takis.clutchspamcount == 5
+		TakisAwardAchievement(p,ACHIEVEMENT_CLUTCHSPAM)
+	end
+	*/
+	
+	--takis.coyote = 0
+	takis.noability = $ &~NOABIL_AFTERIMAGE
+	
+	--save on effects?
+	if spammed then return end
+	
+	/*
+	--xmom code
+	local d1,d2
+	if takis.notCarried
+	and combod
+		d1 = P_SpawnMobjFromMobj(me, -20*cos(ang + ANGLE_45), -20*sin(ang + ANGLE_45), 0, MT_TAKIS_CLUTCHDUST)
+		d2 = P_SpawnMobjFromMobj(me, -20*cos(ang - ANGLE_45), -20*sin(ang - ANGLE_45), 0, MT_TAKIS_CLUTCHDUST)
+		d1.angle = R_PointToAngle2(me.x, me.y, d1.x, d1.y) --- ANG5
+		d2.angle = R_PointToAngle2(me.x, me.y, d2.x, d2.y) --+ ANG5
 		
-		if fxtable.waterrun
-			allowed.waterrun = false
+		if combod
+			d1.momx,d1.momy = mo.momx/2,mo.momy/2
+			d2.momx,d2.momy = mo.momx/2,mo.momy/2
+			d1.momz = takis.rmomz
+			d2.momz = takis.rmomz
 		end
-		if fxtable.jumpdust
-			allowed.jumpdust = false
-		end
-		if fxtable.landdust
-			allowed.landdust = false
-		end
-		if fxtable.squish
-			allowed.squish = false
-		end
-		if fxtable.deathanims
-			allowed.deathanims = false
-		end
+		
+		d1.state = S_TAKIS_CLUTCHDUST2
+		d2.state = S_TAKIS_CLUTCHDUST2
 	end
 	
-	if allowed.waterrun
-		Soap_VFXFuncs.waterrun(p,me,soap)
+	for j = -1,1,2
+		for i = 0,TAKIS_NET.noeffects and 2 or P_RandomRange(2,4)
+			if not combod
+				TakisKart_SpawnSpark(me,
+					ang+FixedAngle(45*FU*j+(P_RandomFixed()*((P_RandomChance(FU/2)) and 1 or -1))),
+					SKINCOLOR_ORANGE,
+					true,
+					true
+				)
+			end
+			
+			local dust = TakisSpawnDust(me,
+				ang+FixedAngle(45*FU*j+(P_RandomFixed()*((P_RandomChance(FU/2)) and 1 or -1))),
+				P_RandomRange(0,-50),
+				P_RandomRange(-1,2)*me.scale,
+				{
+					--xspread = 0,--(P_RandomFixed()/2*((P_RandomChance(FU/2)) and 1 or -1)),
+					--yspread = 0,--(P_RandomFixed()/2*((P_RandomChance(FU/2)) and 1 or -1)),
+					zspread = (P_RandomFixed()*((P_RandomChance(FU/2)) and 1 or -1)),
+					
+					thrust = P_RandomRange(0,-10)*me.scale,
+					thrustspread = (P_RandomFixed()*((P_RandomChance(FU/2)) and 1 or -1)),
+					
+					momz = (P_RandomRange(4,0)*i)*(me.scale/2),
+					momzspread = ((P_RandomChance(FU/2)) and 1 or -1),
+					
+					scale = me.scale,
+					scalespread = (P_RandomFixed()*((P_RandomChance(FU/2)) and 1 or -1)),
+					
+					fuse = 15+P_RandomRange(-5,5),
+				}
+			)
+		end
 	end
-	
-	if allowed.jumpdust
-		Soap_VFXFuncs.jumpdust(p,me,soap)
-	end
-	
-	if allowed.landdust
-		Soap_VFXFuncs.landdust(p,me,soap, props)
-	end
-	
-	if allowed.squish
-		Soap_VFXFuncs.squish(p,me,soap, props)
-	end
+	*/
 end)

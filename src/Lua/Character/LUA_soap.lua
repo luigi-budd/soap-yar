@@ -109,6 +109,7 @@ local function soap_poundonland(p,me,soap)
 	soap.pounding = false
 	soap.poundtime = 0
 	armasound(me,true)
+	S_StopSoundByID(me,sfx_tk_fst)
 	
 	--diou9rs8749843
 	if P_CheckDeathPitCollide(me) then return end
@@ -415,20 +416,27 @@ local function accelerative_speedlines(p,me,soap, speed, threshold, color)
 		end
 	end
 	
+	local fang
+	/*
+	if (soap.pounding)
+		fang = FixedAngle(P_RandomFixedRange(0,360))
+	end
+	*/
+	
 	if speed >= 8*threshold/5
-		Soap_WindLines(me,rmomz,color)
+		Soap_WindLines(me,rmomz,color,fang)
+		
 	elseif speed >= 7*threshold/5
-		if not (leveltime % 2)
-			Soap_WindLines(me,rmomz,color)
-		end
+	and not (leveltime % 2)
+		Soap_WindLines(me,rmomz,color,fang)
+		
 	elseif speed >= 6*threshold/5
-		if not (leveltime % 5)
-			Soap_WindLines(me,rmomz,color)
-		end
+	and not (leveltime % 5)
+		Soap_WindLines(me,rmomz,color,fang)
+		
 	elseif speed >= threshold
-		if not (leveltime % 7)
-			Soap_WindLines(me,rmomz,color)
-		end
+	and not (leveltime % 7)
+		Soap_WindLines(me,rmomz,color,fang)
 	end
 end
 
@@ -2021,6 +2029,10 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 			do_poundsquash(p,me,soap)
 		end
 		
+		if me.momz*soap.gravflip <= -25*me.scale
+		and soap.last.momz*soap.gravflip > -25*me.scale
+			S_StartSound(me, sfx_tk_fst)
+		end
 		if me.momz*soap.gravflip <= -10*me.scale
 			soap.afterimage = true
 		end
@@ -2123,6 +2135,7 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 			end
 		end
 		armasound(me,true)
+		S_StopSoundByID(me,sfx_tk_fst)
 	end
 	
 	if do_poundaura
@@ -2903,7 +2916,7 @@ addHook("PlayerThink",function(p)
 end)
 ----
 
-local function Soap_Bump(me,thing,line)
+local function Soap_Bump(me,thing,line, weak)
 	local p = me.player
 	local soap = p.soaptable
 
@@ -2923,7 +2936,7 @@ local function Soap_Bump(me,thing,line)
 		
 		--its ambiguous syntax to have the `func` definition on the same line
 		--as the call, so :shrug:
-		local func = (soap.onGround and P_Thrust or P_InstaThrust)
+		local func = ((soap.onGround or weak) and P_Thrust or P_InstaThrust)
 		func(me,
 			line_ang - ANGLE_90*(P_PointOnLineSide(me.x,me.y, line) and 1 or -1),
 			-speed
@@ -2938,7 +2951,7 @@ local function Soap_Bump(me,thing,line)
 			me.momy = 0
 		end
 		return true
-	else
+	elseif (thing and thing.valid)
 		local ang = R_PointToAngle2(me.x,me.y, thing.x,thing.y)
 		local speed = R_PointToDist2(0,0,thing.momx,thing.momy) + (R_PointToDist2(0,0,me.momx,me.momy) * 3/4) + FixedMul(
 			20*FU, FixedSqrt(FixedMul(thing.scale,me.scale))
@@ -2957,6 +2970,8 @@ local function Soap_Bump(me,thing,line)
 		end
 		return true
 	end
+	P_BounceMove(me)
+	return true
 end
 
 Takis_Hook.addHook("MoveBlocked",function(me,thing,line, goingup)
@@ -2990,7 +3005,7 @@ Takis_Hook.addHook("MoveBlocked",function(me,thing,line, goingup)
 		soap.canuppercut = true
 		soap.uppercutted = false
 		
-		Soap_Bump(me,thing,line)
+		return Soap_Bump(me,thing,line, true)
 	end
 end)
 

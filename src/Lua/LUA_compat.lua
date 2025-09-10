@@ -904,6 +904,7 @@ local function SetCompat()
 		printf("Added Orbit stuff.")
 	end
 end
+SetCompat()
 
 addHook("AddonLoaded",SetCompat)
 addHook("MapChange",SetCompat)
