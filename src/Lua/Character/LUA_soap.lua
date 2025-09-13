@@ -86,24 +86,6 @@ local function Soap_SuperReady(player)
 	return false
 end
 
---thanks katsy for this function
-local function stupidbouncesectors(mobj, sector)
-	if not (mobj.subsector and mobj.subsector.valid) then return false; end
-	if not (sector and sector.valid) then return false; end
-	for fof in sector.ffloors()
-		if not (fof.fofflags & FOF_BOUNCY) and (GetSecSpecial(fof.master.frontsector.special, 1) != 15)
-			continue
-		end
-		if not (fof.fofflags & FOF_EXISTS)
-			continue
-		end
-		if (mobj.z+mobj.height+mobj.momz < fof.bottomheight) or (mobj.z-mobj.momz > fof.topheight)
-			continue
-		end
-		return true
-	end
-end
-
 local function soap_poundonland(p,me,soap)
 	local poundtime = soap.poundtime
 	soap.pounding = false
@@ -184,7 +166,7 @@ local function soap_poundonland(p,me,soap)
 				P_SetObjectMomZ(me, 9*FU)
 				S_StartSoundAtVolume(me,sfx_kc52,180)
 				p.pflags = $ &~PF_THOKKED
-			elseif stupidbouncesectors(me,me.subsector.sector) 
+			elseif Soap_BouncyCheck(p) 
 				me.state = S_PLAY_ROLL
 			end
 		else
@@ -573,7 +555,7 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 	and (P_IsObjectOnGround(me))
 	and not soap.taunttime
 	and me.health
-	and (p.powers[pw_carry] == CR_NONE)
+	and (soap.notCarried)
 	and not (soap.noability & SNOABIL_TAUNTS)
 		if (soap.c2)
 			S_StartSound(me,sfx_flex)
@@ -713,22 +695,6 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 	end
 	
 	soap.pound_cooldown = max($ - 1, 0)
-	if me.eflags & MFE_SPRUNG
-	or (p.powers[pw_justsprung])
-	or (p.powers[pw_justlaunched] == 2)
-		soap.sprung = true
-		
-		--not on horiz springs
-		if p.powers[pw_justsprung]
-		and p.powers[pw_noautobrake]
-			soap.pound_cooldown = max($,p.powers[pw_noautobrake])
-		elseif p.powers[pw_justsprung]
-			soap.pound_cooldown = max($,TR/5)
-		end
-	elseif soap.onGround
-	or (p.powers[pw_carry] ~= CR_NONE)
-		soap.sprung = false
-	end
 	
 	--MF_NOSQUISH
 	local squishme = true
@@ -1406,7 +1372,7 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 	if (p.pflags & PF_JUMPED)
 	--or not (p.pflags & PF_SPINNING)
 	or soap.inPain
-	or (soap.isSliding or p.powers[pw_carry] ~= CR_NONE)
+	or (not soap.notCarried)
 	or ((not soap.onGround and soap.accspeed < 10*FU)
 		or (soap.accspeed < 5*FU and me.standingslope == nil)
 	)
@@ -1656,7 +1622,7 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 	--cancel r-dash when
 	if not me.health
 	or soap.inPain
-	or (p.powers[pw_carry] ~= CR_NONE)
+	or (not soap.notCarried)
 	or (soap.noability & SNOABIL_RDASH)
 		soap.rdashing = false
 	end
@@ -1667,7 +1633,7 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 	--idk why this lags
 	
 	--just take it off when we dont need it
-	p.charflags = $ &~SF_RUNONWATER
+	p.charflags = $ &~(SF_RUNONWATER|SF_NOSKID)
 	if soap.rdashing and not soap.resetdash
 		--local micros = getTimeMicros()
 		local skin_t = skins[p.skin]
@@ -1678,6 +1644,7 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 		if (me.eflags & MFE_SPRUNG)
 			soap.dashgrace = 5
 		end
+		p.charflags = $|SF_NOSKID
 		
 		if soap.use == 1
 		and (p.pflags & PF_SPINNING)
@@ -2020,7 +1987,7 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 		
 		--landed
 		if P_IsObjectOnGround(me) --(soap.onGround)
-		or (stupidbouncesectors(me,me.subsector.sector))
+		or (Soap_BouncyCheck(p))
 		and not P_CheckDeathPitCollide(me)
 			do_poundaura = false
 			soap_poundonland(p,me,soap)
@@ -2363,9 +2330,10 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 		--recovery jump
 		if soap.paintime >= TR/2
 		and (soap.jump == 1)
-		and (p.powers[pw_carry] == CR_NONE)
+		and (soap.notCarried)
 		--not in match!
 		and not Soap_IsCompGamemode()
+			p.pflags = $ &~(PF_JUMPED|PF_THOKKED)
 			P_DoJump(p, true)
 			me.translation = nil
 		end
@@ -3603,7 +3571,7 @@ Takis_Hook.addHook("PostThinkFrame",function(p)
 		--use soap.onGround here because our predicted
 		--landing shouldve already happened
 		if (soap.onGround)
-		or (stupidbouncesectors(me,me.subsector.sector))
+		or (Soap_BouncyCheck(p))
 		and not P_CheckDeathPitCollide(me)
 			soap_poundonland(p,me,soap)
 		end
@@ -3616,7 +3584,7 @@ Takis_Hook.addHook("PostThinkFrame",function(p)
 	end
 	
 	--Refresh stuff on bouncy sectors
-	if (stupidbouncesectors(me, me.subsector.sector))
+	if (Soap_BouncyCheck(p))
 		soap.airdashed = false
 		soap.canuppercut = true
 		p.pflags = $ &~PF_THOKKED

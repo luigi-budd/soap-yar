@@ -98,6 +98,7 @@ rawset(_G, "Soap_InitTable", function(p)
 		isSolForm = false,
 		doSuperBuffs = false,
 		isElevated = false,
+		notCarried = false,
 		
 		accspeed = 0,
 		gravflip = 1,
@@ -281,6 +282,8 @@ rawset(_G, "Soap_InitTable", function(p)
 		-- for momentuminos
 		frictionfreeze = 0,
 		frictionremove = 0,
+		
+		dived = false,
 	}
 	
 	CONS_Printf(p,"\x82Soap_InitTable(): Success!")

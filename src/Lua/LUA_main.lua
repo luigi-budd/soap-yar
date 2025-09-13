@@ -79,6 +79,23 @@ addHook("PlayerThink",function(p)
 			Soap_FXDestruct(p)
 		end
 		
+		if me.eflags & MFE_SPRUNG
+		or (p.powers[pw_justsprung])
+		or (p.powers[pw_justlaunched] == 2)
+			soap.sprung = true
+			
+			--not on horiz springs
+			if p.powers[pw_justsprung]
+			and p.powers[pw_noautobrake]
+				soap.pound_cooldown = max($,p.powers[pw_noautobrake])
+			elseif p.powers[pw_justsprung]
+				soap.pound_cooldown = max($,TR/5)
+			end
+		elseif soap.onGround
+		or (p.powers[pw_carry] ~= CR_NONE)
+			soap.sprung = false
+		end
+		
 		--global thinker
 		soap.nodamageforme = max($-1, 0)
 		

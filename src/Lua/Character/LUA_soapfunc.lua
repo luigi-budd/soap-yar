@@ -193,6 +193,7 @@ rawset(_G,"Soap_Booleans", function(p)
 		end
 	end
 	
+	soap.notCarried = (p.powers[pw_carry] == CR_NONE and not soap.isSliding)
 end)
 
 --came full circle
@@ -2888,5 +2889,25 @@ rawset(_G, "Soap_ControlStyle", function(p)
 		return CS_STRAFE
 	elseif flags == PF_ANALOGMODE
 		return CS_OLDANALOG
+	end
+end)
+
+--thanks katsy for this function
+rawset(_G, "Soap_BouncyCheck", function(p, sector)
+	local mobj = p.realmo
+	local sec = sector or mobj.subsector.sector
+	
+	if not (sector and sector.valid) then return false; end
+	for fof in sector.ffloors()
+		if not (fof.fofflags & FOF_BOUNCY) and (GetSecSpecial(fof.master.frontsector.special, 1) != 15)
+			continue
+		end
+		if not (fof.fofflags & FOF_EXISTS)
+			continue
+		end
+		if (mobj.z+mobj.height+mobj.momz < fof.bottomheight) or (mobj.z-mobj.momz > fof.topheight)
+			continue
+		end
+		return true
 	end
 end)

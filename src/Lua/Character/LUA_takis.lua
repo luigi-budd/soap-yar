@@ -119,6 +119,59 @@ Takis_Hook.addHook("Takis_Thinker",function(p)
 		end
 	end
 	
+	--c1 specials (TODO: taunts will go here enventually)
+	if (soap.c1)
+		
+		--dive
+		if soap.c1 == 1
+		and not soap.onGround
+		and not (soap.dived)
+		and (soap.notCarried)
+		and me.state ~= S_PLAY_PAIN
+		and me.health
+		--and not takis.hammerblastdown
+		--and not PSO
+		and not (soap.noability & NOABIL_DIVE)
+		and not (soap.inPain)
+			--takis.hammerblastjumped = 0
+			--soap.bashspin = 0
+			
+			local ang = Soap_ControlDir(p)
+			S_StartSound(me,soap.inWater and sfx_splash or sfx_tk_div)
+			
+			--im not sure if this actually does anything
+			--but it seems to work so im leaving it
+			if ((me.flags2 & MF2_TWOD)
+			or (twodlevel))
+				if (p.cmd.sidemove > 0)
+					ang = p.drawangle
+				elseif (p.cmd.sidemove < 0)
+					ang = InvAngle(p.drawangle)
+				end
+			end
+			
+			local speed = soap.accspeed
+			if soap.accspeed < 20*FU
+				speed = 20*FU
+			end
+			P_InstaThrust(me,ang,FixedMul(speed,me.scale))
+			
+			p.drawangle = ang
+			--CreateWindRing(p,me)
+			--TakisSpawnDustRing(me,16*me.scale,0)
+			
+			p.pflags = $|PF_THOKKED &~(PF_JUMPED|PF_SPINNING)
+			soap.dived = true
+			--takis.thokked = true
+			
+			me.state = S_PLAY_GLIDE
+			local momz = FixedDiv(me.momz,me.scale)*soap.gravflip
+			local thrust = min((momz/2)+7*FU,18*FU)
+			Soap_ZLaunch(me,thrust)
+		end
+		
+	end
+	
 	if not (soap.noability & NOABIL_AFTERIMAGE)
 		if clutch.time
 		/*
@@ -353,9 +406,22 @@ Takis_Hook.addHook("Takis_Thinker",function(p)
 		end
 	end
 	
+	--TODO: once state checkers like these are made, move this there
+	if soap.sprung
+	or Soap_BouncyCheck(p)
+	or soap.onGround
+	or (not soap.notCarried)
+		if Soap_BouncyCheck(p)
+			p.pflags = $ &~PF_THOKKED
+		end
+		
+		soap.dived = false
+	end
+	
 	Soap_VFX(p,me,soap, {
 		squishme = squishme,
 	})
+	Soap_DeathThinker(p,me,soap)
 end)
 
 --jump effect
@@ -406,6 +472,8 @@ addHook("JumpSpecial", function(p)
 		Soap_RemoveSquash(p, "Takis_Clutch")
 		me.soap_jumpdust = 4
 		me.soap_jumpeffect = nil
+		
+		soap.dived = false
 	end
 end)
 

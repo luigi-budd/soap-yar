@@ -10,3 +10,6 @@ end
 
 SafeFreeslot("sfx_tk_fst")
 sfxinfo[sfx_tk_fst].caption = "/"
+
+SafeFreeslot("sfx_tk_div")
+sfxinfo[sfx_tk_div].caption = "Dive"
