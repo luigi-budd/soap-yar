@@ -114,9 +114,9 @@ local function soap_poundonland(p,me,soap)
 			)
 		)
 		*/
-		local hook_event = Takis_Hook.events["Soap_OnMove"]
+		local hook_event = Takis_Hook.events["Char_OnMove"]
 		for i,v in ipairs(hook_event)
-			local newrad = Takis_Hook.tryRunHook("Soap_OnMove", v, p, "poundland",
+			local newrad = Takis_Hook.tryRunHook("Char_OnMove", v, p, "poundland",
 				br
 			)
 			if newrad ~= nil
@@ -1165,9 +1165,9 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 				min_speed = $*4/3
 				S_StartSound(me,sfx_s3k43)
 			end
-			local hook_event = Takis_Hook.events["Soap_OnMove"]
+			local hook_event = Takis_Hook.events["Char_OnMove"]
 			for i,v in ipairs(hook_event)
-				local new_t, new_min, new_max = Takis_Hook.tryRunHook("Soap_OnMove", v, p, "airdash", thrust,min_speed,max_speed)
+				local new_t, new_min, new_max = Takis_Hook.tryRunHook("Char_OnMove", v, p, "airdash", thrust,min_speed,max_speed)
 				
 				if new_t ~= nil
 				and type(new_t) == "number"
@@ -1327,9 +1327,9 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 				S_StartSoundAtVolume(me,sfx_sp_upr, 255 * 8/10)
 			end
 			
-			local hook_event = Takis_Hook.events["Soap_OnMove"]
+			local hook_event = Takis_Hook.events["Char_OnMove"]
 			for i,v in ipairs(hook_event)
-				Takis_Hook.tryRunHook("Soap_OnMove", v, p, "uppercut", sound)
+				Takis_Hook.tryRunHook("Char_OnMove", v, p, "uppercut", sound)
 			end
 			setstate = true
 		end
@@ -1359,9 +1359,9 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 			Soap_ZLaunch(me,13*FU)
 			p.pflags = $|PF_THOKKED|PF_JUMPED &~(PF_STARTJUMP|PF_SPINNING)
 			
-			local hook_event = Takis_Hook.events["Soap_OnMove"]
+			local hook_event = Takis_Hook.events["Char_OnMove"]
 			for i,v in ipairs(hook_event)
-				Takis_Hook.tryRunHook("Soap_OnMove", v, p, "pound")
+				Takis_Hook.tryRunHook("Char_OnMove", v, p, "pound")
 			end
 			setstate = true
 		end
@@ -2077,9 +2077,9 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 		end
 		
 		if (soap.pounding)
-			local hook_event = Takis_Hook.events["Soap_OnMove"]
+			local hook_event = Takis_Hook.events["Char_OnMove"]
 			for i,v in ipairs(hook_event)
-				Takis_Hook.tryRunHook("Soap_OnMove", v, p, "poundthinker")
+				Takis_Hook.tryRunHook("Char_OnMove", v, p, "poundthinker")
 			end
 		end
 		soap.poundtime = $ + 1
