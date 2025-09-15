@@ -189,6 +189,8 @@ local foolhardy_list = {
 	--dont feel like making the legs NOT be dereferenced
 	MT_GSNAPPER,
 	MT_DRAGONMINE,
+	--just kills you
+	MT_BUGGLE,
 }
 local function make_foolhardy(mo)
 	mo.foolhardy = true

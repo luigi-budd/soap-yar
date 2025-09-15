@@ -109,7 +109,7 @@ hl.iterateHitlagged = function()
 		if mo.soap_stunned
 		and (mo.health > 0)
 		and not mo.hitlag
-			mo.flags = $|MF_NOTHINK|MF_SLIDEME &~(MF_SPECIAL|MF_ENEMY|MF_FLOAT|MF_NOGRAVITY)
+			mo.flags = $|MF_NOTHINK|MF_SLIDEME &~(MF_SPECIAL|MF_ENEMY|MF_FLOAT|MF_NOGRAVITY|MF_PAIN)
 			mo.hldata_st_lastflags = lastflags
 			
 			if mo.health
@@ -354,6 +354,7 @@ hl.stunEnemy = function(mo,tics)
 	end
 	
 	mo.soap_stunned = $+tics
+	mo.flags = $|MF_NOTHINK|MF_SLIDEME &~(MF_SPECIAL|MF_ENEMY|MF_FLOAT|MF_NOGRAVITY|MF_PAIN)
 	/*
 	if mo.soap_stunned > hl.cv_hitlagtics.value
 		mo.soap_stunned = hl.cv_hitlagtics.value

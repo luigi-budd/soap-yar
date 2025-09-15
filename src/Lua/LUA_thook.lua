@@ -31,3 +31,9 @@ Takis_Hook.addHook("CanFlingThing",function(mo, p)
 		return false
 	end
 end, MT_RING_BLUEBOX)
+
+-- fuck it
+Takis_Hook.addHook("Soap_OnStunEnemy",function(mo)
+	P_KillMobj(mo)
+	return true
+end, MT_BUGGLE)

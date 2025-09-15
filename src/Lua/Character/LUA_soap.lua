@@ -2977,10 +2977,22 @@ Takis_Hook.addHook("MoveBlocked",function(me,thing,line, goingup)
 	end
 end)
 
+local function canBumpAtAll(p)
+	local me = p.realmo
+	local soap = p.soaptable
+
+	if (soap.rdashing)
+	and min(soap.accspeed, p.normalspeed) < skins[p.skin].normalspeed + soap._maxdash
+	and (me.state == S_PLAY_RUN)
+		return true
+	end
+	return false
+end
+
 local function handleBump(p,me,thing)
 	local soap = p.soaptable
 	if (soap.doSuperBuffs or p.powers[pw_invulnerability]) then return end
-	if soap.nodamageforme > 2 then return end
+	if soap.nodamageforme > 2 then soap.nodamageforme = 10; return end
 	
 	local max_speed = (skins[p.skin].normalspeed + soap._maxdash)
 	local speed_add = FixedMul(
@@ -2999,6 +3011,7 @@ local function handleBump(p,me,thing)
 				R_PointToAngle2(thing.x,thing.y, me.x,me.y),
 				FixedMul(3*FU + speed_add, -me.scale)
 			)
+			thing.z = $ + thing.scale*P_MobjFlip(thing)
 		end
 		if not (thing.player and thing.player.valid)
 			Soap_Hitlag.stunEnemy(thing, (TR*3/2) + (speed_add / FU / 5))
@@ -3017,8 +3030,8 @@ local function handleBump(p,me,thing)
 	P_MovePlayer(p)
 	S_StartSound(me, sfx_s3k49)
 	
-	soap.nodamageforme = 5
-	p.powers[pw_nocontrol] = 5
+	soap.nodamageforme = 10
+	p.powers[pw_nocontrol] = soap.nodamageforme
 	p.skidtime = TR/2
 	if p.powers[pw_carry] == CR_NONE
 		me.state = S_PLAY_SKID
@@ -3147,9 +3160,7 @@ local function try_pvp_collide(me,thing)
 			end
 			
 			--r-dashing but too slow to deal damage
-			if (soap.rdashing)
-			and min(soap.accspeed, p.normalspeed) < skins[p.skin].normalspeed + soap._maxdash
-			and (me.state == S_PLAY_RUN)
+			if canBumpAtAll(p)
 				handleBump(p,me,thing)
 				return false
 			end
@@ -3266,9 +3277,7 @@ local function try_pvp_collide(me,thing)
 	end
 	
 	--r-dashing but too slow to deal damage
-	if (soap.rdashing)
-	and min(soap.accspeed, p.normalspeed) < skins[p.skin].normalspeed + soap._maxdash
-	and (me.state == S_PLAY_RUN)
+	if canBumpAtAll(p)
 		handleBump(p,me,thing)
 		return false
 	end
@@ -3311,11 +3320,21 @@ addHook("ShouldDamage",function(me, inf,src)
 	if not (p.soaptable) then return end
 	if (me.hitlag) then return end
 	
-	if p.soaptable.nodamageforme
+	local soap = p.soaptable
+	
+	if canBumpAtAll(p)
 	and (inf and inf.valid or src and src.valid)
-		return false
+	and Soap_CanDamageEnemy(p,inf or src)
+		soap.nodamageforme = 10
+		print("!@$!@#")
+		canbump = true
 	end
 	
+	if soap.nodamageforme
+	and (inf and inf.valid or src and src.valid)
+	or canbump
+		return false
+	end
 end,MT_PLAYER)
 
 addHook("AbilitySpecial",function(p)
@@ -3404,6 +3423,17 @@ addHook("MobjDeath", function(me,inf,sor,dmgt)
 	
 	local p = me.player
 	local soap = p.soaptable
+	
+	--??? sometimes bumping certain enemies just kills you
+	--inexplicably, so detect when it happens and prevent it
+	if not ((inf and inf.valid) or (src and src.valid))
+		if (soap.nodamageforme >= 7)
+		or canBumpAtAll(p)
+			--and it STILL KILLS YOU FUCKIN WHYYYYYY
+			soap.nodamageforme = 10
+			return true
+		end
+	end
 	
 	me.soap_inf = inf
 	me.soap_sor = sor
