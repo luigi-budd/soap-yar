@@ -1,3 +1,5 @@
+local CV = SOAP_CV
+
 rawset(_G,"Takis_DoClutch",function(p,riding)
 	local me = p.mo
 	local takis = p.soaptable

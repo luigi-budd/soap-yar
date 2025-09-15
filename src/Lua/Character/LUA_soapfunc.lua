@@ -1546,9 +1546,9 @@ rawset(_G,"Soap_HandleNoAbils", function(p)
 	end
 	
 	--return value: new noabilities field (absolute)
-	local hook_event = Takis_Hook.events["Soap_NoAbility"]
+	local hook_event = Takis_Hook.events["Char_NoAbility"]
 	for i,v in ipairs(hook_event)
-		local new_noabil = Takis_Hook.tryRunHook("Soap_NoAbility", v, p, na)
+		local new_noabil = Takis_Hook.tryRunHook("Char_NoAbility", v, p, na)
 		if new_noabil ~= nil
 		and type(new_noabil) == "number"
 			na = abs(new_noabil)
