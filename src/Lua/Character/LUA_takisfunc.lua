@@ -350,3 +350,132 @@ rawset(_G,"Takis_DoClutch",function(p,riding)
 	end
 	*/
 end)
+
+local cv_hidetime = CV.FindVar("hidetime")
+rawset(_G,"Takis_HandleNoAbils", function(p)
+	local soap = p.soaptable
+	local me = p.realmo
+	local na = 0
+	
+	if not (me and me.valid) then return end
+	if p.spectator
+		soap.noability = NOABIL_ALL
+		return
+	end
+	
+	if (p.gotflag)
+	or (p.gotcrystal)
+		na = $|NOABIL_HAMMER|NOABIL_AFTERIMAGE
+	end
+	
+	local hiding = false
+	if (gametyperules & (GTR_STARTCOUNTDOWN|GTR_FRIENDLY) == GTR_STARTCOUNTDOWN)
+		if leveltime <= cv_hidetime.value*TR
+			hiding = true
+			if (gametyperules & (GTR_BLINDFOLDED|GTR_TAG))
+				if not (p.pflags & PF_TAGIT)
+					hiding = false
+				end
+			end
+		else
+			if (gametyperules & GTR_HIDEFROZEN)
+			and not (p.pflags & PF_TAGIT)
+				hiding = true
+			end
+		end
+	end
+	
+	if (p.exiting)
+	or (p.inkart)
+	or hiding or ((gametyperules & GTR_RACE) and p.realtime == 0)
+		na = $|NOABIL_ALL &~NOABIL_CLUTCH
+		/*
+		if (p.exiting)
+		or (hiding or ((gametyperules & GTR_RACE) and p.realtime == 0))
+			na = $ &~SNOABIL_BOTHTAUNTS
+		end
+		*/
+	end
+	
+	/*
+	if (soap.isSliding)
+		na = $|SNOABIL_CROUCH|SNOABIL_RDASH|SNOABIL_AIRDASH|SNOABIL_POUND
+	end
+	if p.powers[pw_carry] == CR_ROPEHANG
+		na = $|SNOABIL_AIRDASH|SNOABIL_UPPERCUT	
+	elseif p.powers[pw_carry] == CR_MACESPIN
+		na = $|SNOABIL_AIRDASH|SNOABIL_CROUCH|SNOABIL_POUND|SNOABIL_UPPERCUT
+	end
+	
+	if soap.taunttime
+		na = $|SNOABIL_CROUCH|SNOABIL_TOP
+	end
+	*/
+	
+	--battle special cases
+	if soap.inBattle
+		local noaction = false
+		if p.powers[pw_nocontrol]
+		or p.powers[pw_carry]
+		or (p.airdodge > 0)
+		or (CBW_Battle.Exiting or CBW_Battle.Timeout)
+		or (p.isjettysyn)
+			noaction = true
+		end
+		
+		if (p.tumble)
+		or P_PlayerInPain(p)
+		--or not CBW_Battle.CanDoAction(p)
+		or noaction
+			na = $|SNOABIL_ALL
+			if (CBW_Battle.Exiting or CBW_Battle.Timeout)
+				na = $ &~(SNOABIL_BOTHTAUNTS)
+			end
+		end
+	end
+	
+	--Gametypes
+	if (MM and MM:isMM())
+	or gametype == GT_ZE2
+		local debugmode = false
+		if (MM and MM:isMM())
+			if CV_MM.debug.value
+				debugmode = true
+			end
+		elseif gametype == GT_ZE2
+			if ZE2.cv_debug.value
+				debugmode = true
+			end
+		end
+		
+		if not debugmode
+			na = $|SNOABIL_TAUNTSONLY|SNOABIL_BREAKDANCE
+		end
+		if gametype == GT_ZE2
+			if ZE2.game_ended
+				na = $ &~SNOABIL_BREAKDANCE
+			end
+		end
+	end
+	
+	if (me.state >= S_PLAY_SUPER_TRANS1)
+	and (me.state <= S_PLAY_SUPER_TRANS6)
+		na = $|SNOABIL_ALL
+	end
+	
+	if (PSO)
+		na = $|SNOABIL_ALL &~SNOABIL_BOTHTAUNTS
+	end
+	
+	--return value: new noabilities field (absolute)
+	local hook_event = Takis_Hook.events["Char_NoAbility"]
+	for i,v in ipairs(hook_event)
+		local new_noabil = Takis_Hook.tryRunHook("Char_NoAbility", v, p, na)
+		if new_noabil ~= nil
+		and type(new_noabil) == "number"
+			na = abs(new_noabil)
+		end
+	end
+	
+	soap.noability = $|na
+end)

@@ -19,6 +19,18 @@ local function stupidbouncesectors(mobj, sector)
     end
 end
 
+local function P_PitchRoll(me, frac)
+	me.eflags = $|MFE_NOPITCHROLLEASING
+	local angle = R_PointToAngle2(0,0, me.momx,me.momy)
+	local mang = R_PointToAngle2(0,0, FixedHypot(me.momx, me.momy), me.momz)
+	mang = InvAngle($)
+	
+	local destpitch = FixedMul(mang, cos(angle))
+	local destroll = FixedMul(mang, sin(angle))
+	me.pitch = P_AngleLerp(frac, $, destpitch)
+	me.roll  = P_AngleLerp(frac, $, destroll)
+end
+
 Takis_Hook.addHook("Takis_Thinker",function(p)
 	local me = p.realmo
 	local soap = p.soaptable
@@ -51,6 +63,51 @@ Takis_Hook.addHook("Takis_Thinker",function(p)
 		end
 	else
 		soap.waittics = 0
+	end
+	
+	--momentum speedslop msv6
+	do
+		local topspeed = p.normalspeed
+		if (me.state == S_PLAY_RUN)
+			topspeed = p.runspeed + 2*FU
+		end
+		
+		if (gametyperules & GTR_FRIENDLY)
+			if (p.cmd.forwardmove or p.cmd.sidemove)
+			and soap.accspeed >= topspeed
+			and me.friction < FU
+				me.friction = FU - FU/50
+			end
+		end
+		
+		if me.friction > ORIG_FRICTION
+		and not p.spectator
+			if (soap.frictionfreeze == 0)
+				local offset = soap.accspeed - topspeed
+				
+				--staying at slightly above top speed
+				if (offset <= FU*3/2)
+					soap.frictionremove = $ + 1
+					if soap.frictionremove >= TR/2
+						me.friction = ORIG_FRICTION
+					end
+				else
+					soap.frictionremove = 0
+				end
+				
+			else
+				soap.frictionfreeze = $-1
+				if soap.accspeed >= 80*FU
+					soap.frictionfreeze = $/2
+				end
+				soap.frictionfreeze = max($,0)
+				soap.frictionremove = 0
+				me.friction = FU
+			end
+		else
+			soap.frictionfreeze = 0
+			soap.frictionremove = 0
+		end
 	end
 	
 	--clutch timers
@@ -170,6 +227,15 @@ Takis_Hook.addHook("Takis_Thinker",function(p)
 			Soap_ZLaunch(me,thrust)
 		end
 		
+	end
+	
+	if (me.state == S_PLAY_GLIDE)
+		P_PitchRoll(me, FU/5)
+		if soap.accspeed > FU
+			p.drawangle = R_PointToAngle2(0,0,me.momx,me.momy)
+		else
+			p.drawangle = me.angle
+		end
 	end
 	
 	if not (soap.noability & NOABIL_AFTERIMAGE)
@@ -358,51 +424,6 @@ Takis_Hook.addHook("Takis_Thinker",function(p)
 			me.state = S_PLAY_DASH
 			Soap_ResetState(p)
 			p.panim = PA_DASH
-		end
-	end
-	
-	--momentum speedslop msv6
-	do
-		local topspeed = p.normalspeed
-		if (me.state == S_PLAY_RUN)
-			topspeed = p.runspeed + 2*FU
-		end
-		
-		if (gametyperules & GTR_FRIENDLY)
-			if (p.cmd.forwardmove or p.cmd.sidemove)
-			and soap.accspeed >= topspeed
-			and me.friction < FU
-				me.friction = FU - FU/50
-			end
-		end
-		
-		if me.friction > ORIG_FRICTION
-		and not p.spectator
-			if (soap.frictionfreeze == 0)
-				local offset = soap.accspeed - topspeed
-				
-				--staying at slightly above top speed
-				if (offset <= FU*3/2)
-					soap.frictionremove = $ + 1
-					if soap.frictionremove >= TR/2
-						me.friction = ORIG_FRICTION
-					end
-				else
-					soap.frictionremove = 0
-				end
-				
-			else
-				soap.frictionfreeze = $-1
-				if soap.accspeed >= 80*FU
-					soap.frictionfreeze = $/2
-				end
-				soap.frictionfreeze = max($,0)
-				soap.frictionremove = 0
-				me.friction = FU
-			end
-		else
-			soap.frictionfreeze = 0
-			soap.frictionremove = 0
 		end
 	end
 	

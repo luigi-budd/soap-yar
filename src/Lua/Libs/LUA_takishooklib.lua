@@ -57,18 +57,26 @@ events["PostThinkFrame"] = {}
 events["MoveBlocked"] = {handler = handler_snapany} --runs for every skin
 
 events["Soap_Thinker"] = {}
-events["Soap_NoAbility"] = {handler = handler_snapany}
 events["Soap_DashSpeeds"] = {handler = handler_snapany}
 events["Soap_OnStunEnemy"] = {typefor = typefor_mobj}
 events["Soap_StunnedThink"] = {typefor = typefor_mobj}
-events["Soap_OnMove"] = {}
 
 events["Takis_Thinker"] = {}
 
 -- hooks for BOTH skins
+events["Char_OnMove"] = {}
+events["Char_NoAbility"] = {handler = handler_snapany}
 events["Char_VFX"] = {handler = handler_snapany}
 
 local deprecated = {
+	["Soap_OnMove"] = {
+		correct = "Char_OnMove",
+		seen = false,
+	},
+	["Soap_NoAbility"] = {
+		correct = "Char_NoAbility",
+		seen = false,
+	},
 	["Soap_VFX"] = {
 		correct = "Char_VFX",
 		seen = false,
