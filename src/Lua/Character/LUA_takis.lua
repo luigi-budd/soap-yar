@@ -174,6 +174,31 @@ Takis_Hook.addHook("Takis_Thinker",function(p)
 		and not (soap.isSliding)
 			Takis_DoClutch(p)
 		end
+
+		--hammer blast
+		if soap.use == (TR/5)
+		and not soap.onGround
+		and not soap.hammerblastdown
+		and not (soap.inPain or soap.inFakePain)
+		and me.health
+		and (soap.notCarried)
+		and not (soap.noability & NOABIL_HAMMER)
+		and not (soap.bombdive.started)
+			p.pflags = $|PF_THOKKED
+			p.pflags = $ &~PF_SHIELDABILITY
+
+			soap.hammerblastdown = 1
+			soap.hammerblastangle = p.drawangle
+			S_StartSoundAtVolume(me,sfx_tk_ahm, 255*9/10)
+			Soap_ZLaunch(me,
+				10*skins["takisthefox"].jumpfactor
+			)
+
+			me.state = S_PLAY_MELEE
+			me.tics = -1
+			print("ok")
+			--P_SetObjectMomZ(me,-9*FU)
+		end
 	end
 	
 	--c1 specials (TODO: taunts will go here enventually)

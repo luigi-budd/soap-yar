@@ -278,7 +278,13 @@ rawset(_G, "Soap_InitTable", function(p)
 			firefx = 0,
 			spin = 0, --unused?
 		},
-		
+
+		-- SAXA: i think this is for the hammer blast
+		bombdive = {
+			started = false,
+			tics = 0,
+		},
+
 		-- for momentuminos
 		frictionfreeze = 0,
 		frictionremove = 0,
