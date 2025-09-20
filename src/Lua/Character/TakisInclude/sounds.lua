@@ -13,3 +13,6 @@ sfxinfo[sfx_tk_fst].caption = "/"
 
 SafeFreeslot("sfx_tk_div")
 sfxinfo[sfx_tk_div].caption = "Dive"
+
+SafeFreeslot("sfx_tk_ahm")
+sfxinfo[sfx_tk_ahm].caption = "Hammer blast start"
