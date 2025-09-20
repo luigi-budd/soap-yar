@@ -912,6 +912,13 @@ local function SetCompat()
 			if not (RSR.GamemodeActive()) then return end
 			return true
 		end)
+		
+		local thinker = function(p)
+			p.realmo.soap_landondeath = nil
+		end
+		Takis_Hook.addHook("Soap_Thinker",thinker)
+		Takis_Hook.addHook("Takis_Thinker",thinker)
+		
 		compat.rsr = true
 		printf("Added RSR stuff.")
 	end

@@ -1930,7 +1930,18 @@ rawset(_G,"Soap_DeathThinker",function(p,me,soap)
 	if me.soap_landondeath
 		me.flags = $ &~MF_NOCLIPHEIGHT
 		me.fuse = -1
-		p.deadtimer = min($, 3)
+		
+		local freezeme = true
+		if Soap_IsCompGamemode()
+		or (me.subsector and me.subsector.sector.damagetype == SD_DEATHPITTILT
+			or me.subsector.sector.damagetype == SD_DEATHPITNOTILT)
+		or (me.soap_deadtimer >= 2*TR)
+			freezeme = false
+		end
+		
+		if freezeme
+			p.deadtimer = min($, 3)
+		end
 		
 		if soap.onGround
 		and (me.soap_deadtimer > 3)
@@ -1960,6 +1971,7 @@ rawset(_G,"Soap_DeathThinker",function(p,me,soap)
 		end
 	elseif (me.state == S_PLAY_SOAP_KNOCKOUT)
 		if not (soap.onGround)
+		and not (me.flags & MF_NOCLIPHEIGHT)
 			me.soap_landondeath = true
 			me.state = S_PLAY_DEAD
 		else

@@ -3367,6 +3367,9 @@ addHook("MobjDamage", function(me,inf,sor,dmg,dmgt)
 	local p = me.player 
 	local soap = p.soaptable
 	
+	if (soap.hurtframe == leveltime) then return; end
+	soap.hurtframe = leveltime
+	
 	local hook_event,hook_name = Takis_Hook.findEvent("Char_OnDamage")
 	if hook_event
 		for i,v in ipairs(hook_event)

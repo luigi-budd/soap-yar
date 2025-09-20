@@ -125,6 +125,8 @@ rawset(_G, "Soap_InitTable", function(p)
 		--if this gets too big in 1 tic, dont process any pvp
 		damagedealtthistic = 0,
 		iwashitthistic = false,
+		--the leveltime we were hurt so we dont keep calling hooks
+		hurtframe = 0,
 		
 		--if true, no crouching until c3 is let go
 		crouch_cooldown = false,
