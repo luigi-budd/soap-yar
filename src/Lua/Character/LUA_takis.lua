@@ -879,6 +879,16 @@ addHook("MobjDamage", function(me,inf,sor,dmg,dmgt)
 	local p = me.player 
 	local soap = p.soaptable
 
+	local hook_event,hook_name = Takis_Hook.findEvent("Char_OnDamage")
+	if hook_event
+		for i,v in ipairs(hook_event)
+			local short = Takis_Hook.tryRunHook(hook_name, v, me,inf,sor,dmg,dmgt)
+			
+			-- does not short out the calling MobjDamage
+			if short == true then return; end
+		end
+	end
+	
 	if ((p.powers[pw_flashing])
 	and (p.powers[pw_carry] == CR_NIGHTSMODE))
 		return

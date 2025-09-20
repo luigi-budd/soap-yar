@@ -470,12 +470,14 @@ rawset(_G,"Takis_HandleNoAbils", function(p)
 	end
 	
 	--return value: new noabilities field (absolute)
-	local hook_event = Takis_Hook.events["Char_NoAbility"]
-	for i,v in ipairs(hook_event)
-		local new_noabil = Takis_Hook.tryRunHook("Char_NoAbility", v, p, na)
-		if new_noabil ~= nil
-		and type(new_noabil) == "number"
-			na = abs(new_noabil)
+	local hook_event,hook_name = Takis_Hook.findEvent("Char_NoAbility")
+	if hook_event
+		for i,v in ipairs(hook_event)
+			local new_noabil = Takis_Hook.tryRunHook(hook_name, v, p, na)
+			if new_noabil ~= nil
+			and type(new_noabil) == "number"
+				na = abs(new_noabil)
+			end
 		end
 	end
 	

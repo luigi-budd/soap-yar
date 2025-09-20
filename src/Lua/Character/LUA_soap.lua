@@ -114,14 +114,16 @@ local function soap_poundonland(p,me,soap)
 			)
 		)
 		*/
-		local hook_event = Takis_Hook.events["Char_OnMove"]
-		for i,v in ipairs(hook_event)
-			local newrad = Takis_Hook.tryRunHook("Char_OnMove", v, p, "poundland",
-				br
-			)
-			if newrad ~= nil
-			and (tonumber(newrad) ~= nil)
-				br = abs(newrad)
+		local hook_event,hook_name = Takis_Hook.findEvent("Char_OnMove")
+		if hook_event
+			for i,v in ipairs(hook_event)
+				local newrad = Takis_Hook.tryRunHook(hook_name, v, p, "poundland",
+					br
+				)
+				if newrad ~= nil
+				and (tonumber(newrad) ~= nil)
+					br = abs(newrad)
+				end
 			end
 		end
 		
@@ -914,21 +916,23 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 	local my_dashtime = SOAP_DASHTIME
 	local my_noadjust = false
 	do
-		local hook_event = Takis_Hook.events["Soap_DashSpeeds"]
-		for i,v in ipairs(hook_event)
-			local new_md,new_dt,no_adjust = Takis_Hook.tryRunHook("Soap_DashSpeeds", v, p,my_maxdash,my_dashtime)
-			
-			if new_md ~= nil
-			and type(new_md) == "number"
-				my_maxdash = abs(new_md)
-			end
-			if new_dt ~= nil
-			and type(new_dt) == "number"
-				my_dashtime = abs(new_dt)
-			end
-			if no_adjust ~= nil
-			and type(no_adjust) == "boolean"
-				my_noadjust = no_adjust
+		local hook_event,hook_name = Takis_Hook.findEvent("Soap_DashSpeeds")
+		if hook_event
+			for i,v in ipairs(hook_event)
+				local new_md,new_dt,no_adjust = Takis_Hook.tryRunHook(hook_name, v, p,my_maxdash,my_dashtime)
+				
+				if new_md ~= nil
+				and type(new_md) == "number"
+					my_maxdash = abs(new_md)
+				end
+				if new_dt ~= nil
+				and type(new_dt) == "number"
+					my_dashtime = abs(new_dt)
+				end
+				if no_adjust ~= nil
+				and type(no_adjust) == "boolean"
+					my_noadjust = no_adjust
+				end
 			end
 		end
 		
@@ -1165,21 +1169,23 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 				min_speed = $*4/3
 				S_StartSound(me,sfx_s3k43)
 			end
-			local hook_event = Takis_Hook.events["Char_OnMove"]
-			for i,v in ipairs(hook_event)
-				local new_t, new_min, new_max = Takis_Hook.tryRunHook("Char_OnMove", v, p, "airdash", thrust,min_speed,max_speed)
-				
-				if new_t ~= nil
-				and type(new_t) == "number"
-					thrust = abs(new_t)
-				end
-				if new_min ~= nil
-				and type(new_min) == "number"
-					min_speed = abs(new_min)
-				end
-				if new_max ~= nil
-				and type(new_max) == "number"
-					max_speed = abs(new_max)
+			local hook_event,hook_name = Takis_Hook.findEvent("Char_OnMove")
+			if hook_event
+				for i,v in ipairs(hook_event)
+					local new_t, new_min, new_max = Takis_Hook.tryRunHook(hook_name, v, p, "airdash", thrust,min_speed,max_speed)
+					
+					if new_t ~= nil
+					and type(new_t) == "number"
+						thrust = abs(new_t)
+					end
+					if new_min ~= nil
+					and type(new_min) == "number"
+						min_speed = abs(new_min)
+					end
+					if new_max ~= nil
+					and type(new_max) == "number"
+						max_speed = abs(new_max)
+					end
 				end
 			end
 			
@@ -1327,9 +1333,11 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 				S_StartSoundAtVolume(me,sfx_sp_upr, 255 * 8/10)
 			end
 			
-			local hook_event = Takis_Hook.events["Char_OnMove"]
-			for i,v in ipairs(hook_event)
-				Takis_Hook.tryRunHook("Char_OnMove", v, p, "uppercut", sound)
+			local hook_event,hook_name = Takis_Hook.findEvent("Char_OnMove")
+			if hook_event
+				for i,v in ipairs(hook_event)
+					Takis_Hook.tryRunHook(hook_name, v, p, "uppercut", sound)
+				end
 			end
 			setstate = true
 		end
@@ -1359,9 +1367,11 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 			Soap_ZLaunch(me,13*FU)
 			p.pflags = $|PF_THOKKED|PF_JUMPED &~(PF_STARTJUMP|PF_SPINNING)
 			
-			local hook_event = Takis_Hook.events["Char_OnMove"]
-			for i,v in ipairs(hook_event)
-				Takis_Hook.tryRunHook("Char_OnMove", v, p, "pound")
+			local hook_event,hook_name = Takis_Hook.findEvent("Char_OnMove")
+			if hook_event
+				for i,v in ipairs(hook_event)
+					Takis_Hook.tryRunHook(hook_name, v, p, "pound")
+				end
 			end
 			setstate = true
 		end
@@ -2077,9 +2087,11 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 		end
 		
 		if (soap.pounding)
-			local hook_event = Takis_Hook.events["Char_OnMove"]
-			for i,v in ipairs(hook_event)
-				Takis_Hook.tryRunHook("Char_OnMove", v, p, "poundthinker")
+			local hook_event,hook_name = Takis_Hook.findEvent("Char_OnMove")
+			if hook_event
+				for i,v in ipairs(hook_event)
+					Takis_Hook.tryRunHook(hook_name, v, p, "poundthinker")
+				end
 			end
 		end
 		soap.poundtime = $ + 1
@@ -3326,7 +3338,6 @@ addHook("ShouldDamage",function(me, inf,src)
 	and (inf and inf.valid or src and src.valid)
 	and Soap_CanDamageEnemy(p,inf or src)
 		soap.nodamageforme = 10
-		print("!@$!@#")
 		canbump = true
 	end
 	
@@ -3355,7 +3366,17 @@ addHook("MobjDamage", function(me,inf,sor,dmg,dmgt)
 	
 	local p = me.player 
 	local soap = p.soaptable
-
+	
+	local hook_event,hook_name = Takis_Hook.findEvent("Char_OnDamage")
+	if hook_event
+		for i,v in ipairs(hook_event)
+			local short = Takis_Hook.tryRunHook(hook_name, v, me,inf,sor,dmg,dmgt)
+			
+			-- does not short out the calling MobjDamage
+			if short == true then return; end
+		end
+	end
+	
 	if ((p.powers[pw_flashing])
 	and (p.powers[pw_carry] == CR_NIGHTSMODE))
 		return

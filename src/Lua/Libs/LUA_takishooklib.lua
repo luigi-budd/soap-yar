@@ -67,6 +67,7 @@ events["Takis_Thinker"] = {}
 events["Char_OnMove"] = {}
 events["Char_NoAbility"] = {handler = handler_snapany}
 events["Char_VFX"] = {handler = handler_snapany}
+events["Char_OnDamage"] = {handler = handler_snaptrue}
 
 local deprecated = {
 	["Soap_OnMove"] = {
@@ -148,4 +149,25 @@ Takis_Hook.tryRunHook = function(hooktype, v, ...)
 	if override == nil then return nil; end
 	if type(override) == "table" then return unpack(override)
 	else return override; end
+end
+
+local notvalid = {}
+Takis_Hook.findEvent = function(hooktype)
+	local name = hooktype
+	local events = Takis_Hook.events[name]
+	
+	if events == nil
+	and deprecated[hooktype] ~= nil
+		name = deprecated[hooktype].correct
+		events = Takis_Hook[name]
+	end
+	
+	if events == nil
+	and not (notvalid[name])
+		notvalid[name] = true
+		print('\x83TAKIS:\x82WARNING\x80: could not find hookevent "'..hooktype..'"')
+	end
+	
+	--can still return nil!
+	return events, name
 end

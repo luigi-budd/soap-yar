@@ -516,11 +516,13 @@ rawset(_G, "Soap_CanHurtPlayer", function(p1,p2,nobs)
 			if false, force no hits
 			if nil, use the above checks
 		*/
-		local hook_event = Takis_Hook.events["CanPlayerHurtPlayer"]
-		for i,v in ipairs(hook_event)
-			local result = Takis_Hook.tryRunHook("CanPlayerHurtPlayer", v, p1,p2,nobs)
-			if result ~= nil
-				allowhurt = result
+		local hook_event,hook_name = Takis_Hook.findEvent("CanPlayerHurtPlayer")
+		if hook_event
+			for i,v in ipairs(hook_event)
+				local result = Takis_Hook.tryRunHook(hook_name, v, p1,p2,nobs)
+				if result ~= nil
+					allowhurt = result
+				end
 			end
 		end
 	end
@@ -692,18 +694,19 @@ rawset(_G,"Soap_CanDamageEnemy",function(p, mobj,flags,exclude)
 		if false, force no hits
 		if nil, use the above checks
 	*/
-	local hook_event = Takis_Hook.events["CanFlingThing"]
-	for i,v in ipairs(hook_event)
-		if hook_event.typefor ~= nil
-			if hook_event.typefor(mobj, v.typedef) == false then continue end
-		end
-		
-		local result = Takis_Hook.tryRunHook("CanFlingThing", v, mobj, p,flags,false,exclude)
-		if result ~= nil
-			flingable = result
+	local hook_event,hook_name = Takis_Hook.findEvent("CanFlingThing")
+	if hook_event
+		for i,v in ipairs(hook_event)
+			if hook_event.typefor ~= nil
+				if hook_event.typefor(mobj, v.typedef) == false then continue end
+			end
+			
+			local result = Takis_Hook.tryRunHook(hook_name, v, mobj, p,flags,false,exclude)
+			if result ~= nil
+				flingable = result
+			end
 		end
 	end
-	
 	return flingable
 end)
 
@@ -1546,15 +1549,16 @@ rawset(_G,"Soap_HandleNoAbils", function(p)
 	end
 	
 	--return value: new noabilities field (absolute)
-	local hook_event = Takis_Hook.events["Char_NoAbility"]
-	for i,v in ipairs(hook_event)
-		local new_noabil = Takis_Hook.tryRunHook("Char_NoAbility", v, p, na)
-		if new_noabil ~= nil
-		and type(new_noabil) == "number"
-			na = abs(new_noabil)
+	local hook_event,hook_name = Takis_Hook.findEvent("Char_NoAbility")
+	if hook_event
+		for i,v in ipairs(hook_event)
+			local new_noabil = Takis_Hook.tryRunHook(hook_name, v, p, na)
+			if new_noabil ~= nil
+			and type(new_noabil) == "number"
+				na = abs(new_noabil)
+			end
 		end
 	end
-	
 	soap.noability = $|na
 end)
 
@@ -2366,25 +2370,27 @@ rawset(_G,"Soap_VFX",function(p,me,soap, props)
 			["squish"] = boolean
 			["deathanims"] = boolean
 	*/
-	local hook_event = Takis_Hook.events["Char_VFX"]
-	for i,v in ipairs(hook_event)
-		local fxtable = Takis_Hook.tryRunHook("Char_VFX", v, p, props)
-		if fxtable == nil then continue end
-		
-		if fxtable.waterrun
-			allowed.waterrun = false
-		end
-		if fxtable.jumpdust
-			allowed.jumpdust = false
-		end
-		if fxtable.landdust
-			allowed.landdust = false
-		end
-		if fxtable.squish
-			allowed.squish = false
-		end
-		if fxtable.deathanims
-			allowed.deathanims = false
+	local hook_event,hook_name = Takis_Hook.findEvent("Char_VFX")
+	if hook_event
+		for i,v in ipairs(hook_event)
+			local fxtable = Takis_Hook.tryRunHook(hook_name, v, p, props)
+			if fxtable == nil then continue end
+			
+			if fxtable.waterrun
+				allowed.waterrun = false
+			end
+			if fxtable.jumpdust
+				allowed.jumpdust = false
+			end
+			if fxtable.landdust
+				allowed.landdust = false
+			end
+			if fxtable.squish
+				allowed.squish = false
+			end
+			if fxtable.deathanims
+				allowed.deathanims = false
+			end
 		end
 	end
 	

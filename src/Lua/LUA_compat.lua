@@ -8,6 +8,7 @@ local compat = {
 	--solform = false,
 	mmportrait = false,
 	orbitcompat = false,
+	rsr = false,
 }
 local compat_names = {
 	["takiskart"]	= "TakisKart        ",
@@ -20,6 +21,7 @@ local compat_names = {
 	["ze2config"]	= "ZE2 Config.      ",
 	["mmportrait"]	= "EPIC!MM support  ",
 	["orbitcompat"] = "Orbit Compat.    ",
+	["rsr"]			= "RingSlinger Neo  ",
 }
 
 local function dust_type(me)
@@ -902,6 +904,16 @@ local function SetCompat()
 		
 		compat.orbitcompat = true
 		printf("Added Orbit stuff.")
+	end
+	
+	if RSR
+	and not compat.rsr
+		Takis_Hook.addHook("Char_OnDamage",function(me)
+			if not (RSR.GamemodeActive()) then return end
+			return true
+		end)
+		compat.rsr = true
+		printf("Added RSR stuff.")
 	end
 end
 SetCompat()
