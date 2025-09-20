@@ -170,9 +170,12 @@ hl.iterateHitlagged = function()
 				mo.soap_setvfx = true
 			end
 			
-			local hook_event = Takis_Hook.events["Soap_StunnedThink"]
+			local hook_event,hook_name = Takis_Hook.findEvent("Soap_StunnedThink")
 			for i,v in ipairs(hook_event)
-				local result = Takis_Hook.tryRunHook("Soap_StunnedThink", v, mo)
+				if hook_event.typefor ~= nil
+					if hook_event.typefor(mo, v.typedef) == false then continue end
+				end
+				local result = Takis_Hook.tryRunHook(hook_name, v, mo)
 			end
 			
 			if hl.cv_hitlagtics.value
@@ -354,6 +357,7 @@ hl.stunEnemy = function(mo,tics)
 	end
 	
 	mo.soap_stunned = $+tics
+	local oldflags = mo.flags
 	mo.flags = $|MF_NOTHINK|MF_SLIDEME &~(MF_SPECIAL|MF_ENEMY|MF_FLOAT|MF_NOGRAVITY|MF_PAIN)
 	/*
 	if mo.soap_stunned > hl.cv_hitlagtics.value
@@ -361,9 +365,12 @@ hl.stunEnemy = function(mo,tics)
 	end
 	*/
 	
-	local hook_event = Takis_Hook.events["Soap_OnStunEnemy"]
+	local hook_event,hook_name = Takis_Hook.findEvent("Soap_OnStunEnemy")
 	for i,v in ipairs(hook_event)
-		local result = Takis_Hook.tryRunHook("Soap_OnStunEnemy", v, mo,tics)
+		if hook_event.typefor ~= nil
+			if hook_event.typefor(mo, v.typedef) == false then continue end
+		end
+		local result = Takis_Hook.tryRunHook(hook_name, v, mo,tics)
 		if not (mo and mo.valid) then return end
 	end
 	
@@ -374,7 +381,7 @@ hl.stunEnemy = function(mo,tics)
 	end
 	table.insert(hl.stunned, {
 		mo,
-		mo.flags,
+		oldflags,
 		(mo.player and mo.player.valid) and mo.player.drawangle,
 		(mo.player and mo.player.valid) and mo.player.pflags,
 		mo.z, mo.floorz,
