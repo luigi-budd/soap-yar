@@ -244,6 +244,7 @@ Takis_Hook.addHook("Takis_Thinker",function(p)
 			
 			p.pflags = $|PF_THOKKED &~(PF_JUMPED|PF_SPINNING)
 			soap.dived = true
+			soap.sprung = false
 			--takis.thokked = true
 			
 			me.state = S_PLAY_GLIDE
