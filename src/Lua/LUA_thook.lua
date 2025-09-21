@@ -37,3 +37,105 @@ Takis_Hook.addHook("Soap_OnStunEnemy",function(mo)
 	P_KillMobj(mo)
 	return true
 end, MT_BUGGLE)
+
+SafeFreeslot("S_ROSY_DEAD")
+states[S_ROSY_DEAD] = {
+	sprite = SPR_PLAY,
+	sprite2 = SPR2_DEAD,
+	frame = A|FF_ANIMATE,
+	tics = TR,
+	action = function(mo)
+		local dead = P_SpawnGhostMobj(mo)
+		dead.tics = 4*TR
+		dead.fuse = dead.tics
+		dead.sprite2 = SPR2_DEAD
+		dead.frame = ($ &~(FF_TRANSMASK)) | (mo.frame & FF_TRANSMASK)
+		dead.flags = $ &~MF_NOGRAVITY
+		
+		dead.destscale = dead.scale * 2
+		P_SetScale(dead, dead.destscale, true)
+		dead.spritexscale = $ / 2
+		dead.spriteyscale = $ / 2
+		
+		P_SetObjectMomZ(dead, 7*FU)
+		mo.flags2 = $|MF2_DONTDRAW
+		P_RemoveMobj(mo)
+	end
+}
+
+mobjinfo[MT_ROSY].deathstate = S_ROSY_DEAD
+mobjinfo[MT_ROSY].spawnhealth = 1
+mobjinfo[MT_ROSY].flags = $|MF_SHOOTABLE
+
+mobjinfo[MT_FANG].stunstate = S_PLAY_PAIN
+--mobjinfo[MT_METALSONIC_BATTLE].stunstate = S_METALSONIC_PAIN
+
+-- also make things stuff
+local MOBJ_LIST = {
+	--un-jostleable
+	[1] = {
+		mobjs = {
+			MT_STEAM
+		},
+		hook = "MobjSpawn",
+		func = function(mo)
+			mo.soap_nojostle = true
+		end,
+	},
+	--foolhardy (super bomb survival)
+	[2] = {
+		mobjs = {
+			MT_EGGMOBILE3,
+			MT_EGGMOBILE4,
+			MT_METALSONIC_BATTLE,
+			MT_BLASTEXECUTOR,
+			--dont feel like making the legs NOT be dereferenced
+			MT_GSNAPPER,
+			MT_DRAGONMINE,
+			--just kills you
+			MT_BUGGLE,
+		},
+		hook = "MobjSpawn",
+		func = function(mo)
+			mo.foolhardy = true
+			if mo.type == MT_METALSONIC_BATTLE
+				mo.nohitlagforme = true
+			end
+		end
+	},
+	--non flingables
+	[3] = {
+		mobjs = {
+			MT_EGGMAN_GOLDBOX,
+			MT_EGGMAN_BOX,
+			MT_BIGMINE,
+			MT_SHELL,
+			MT_STEAM,	--thz steam
+			--strange divide by 0 with one of these 2
+			/*
+			--doesnt seem to happen anymore?
+			MT_ROLLOUTSPAWN,
+			MT_ROLLOUTROCK,
+			*/
+			MT_DUSTDEVIL,
+			MT_DUSTLAYER,
+			MT_STARPOST,
+		},
+		hook = "MobjSpawn",
+		func = function(mo)
+			if not mo
+			or not mo.valid
+				return
+			end
+			
+			mo.takis_flingme = false
+		end
+	},
+}	
+
+for i = 1,#MOBJ_LIST
+	local data = MOBJ_LIST[i]
+	for k,motype in pairs(data.mobjs)
+		addHook(data.hook, data.func, motype)
+	end
+end

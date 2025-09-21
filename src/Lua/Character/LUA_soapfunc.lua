@@ -1401,6 +1401,7 @@ rawset(_G,"SoapST_Hitbox",function(p)
 			end
 		--Most likely a spike thing
 		elseif (found.info.mass == DMG_SPIKE)
+		and (found.takis_flingme ~= false)
 			Soap_ImpactVFX(found,me,nil,FU/4)
 			P_KillMobj(found,me,me)
 		end

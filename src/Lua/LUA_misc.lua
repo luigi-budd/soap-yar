@@ -41,37 +41,6 @@ addHook("MobjThinker",function(ai)
 	ai.checkedit = true
 end,MT_SOAP_AFTERIMAGE)
 
-SafeFreeslot("S_ROSY_DEAD")
-states[S_ROSY_DEAD] = {
-	sprite = SPR_PLAY,
-	sprite2 = SPR2_DEAD,
-	frame = A|FF_ANIMATE,
-	tics = TR,
-	action = function(mo)
-		local dead = P_SpawnGhostMobj(mo)
-		dead.tics = 4*TR
-		dead.fuse = dead.tics
-		dead.sprite2 = SPR2_DEAD
-		dead.frame = ($ &~(FF_TRANSMASK)) | (mo.frame & FF_TRANSMASK)
-		dead.flags = $ &~MF_NOGRAVITY
-		
-		dead.destscale = dead.scale * 2
-		P_SetScale(dead, dead.destscale, true)
-		dead.spritexscale = $ / 2
-		dead.spriteyscale = $ / 2
-		
-		P_SetObjectMomZ(dead, 7*FU)
-		mo.flags2 = $|MF2_DONTDRAW
-		P_RemoveMobj(mo)
-	end
-}
-mobjinfo[MT_ROSY].deathstate = S_ROSY_DEAD
-mobjinfo[MT_ROSY].spawnhealth = 1
-mobjinfo[MT_ROSY].flags = $|MF_SHOOTABLE
-
-mobjinfo[MT_FANG].stunstate = S_PLAY_PAIN
---mobjinfo[MT_METALSONIC_BATTLE].stunstate = S_METALSONIC_PAIN
-
 --this isnt hardcode so get the state_t from states
 local halftics = states[mobjinfo[MT_SOAP_SPEEDLINE].spawnstate].tics/2
 addHook("MobjThinker",function(wind)
@@ -179,39 +148,6 @@ addHook("MobjThinker",function(spark)
 	spark.angle = spark.adjust_angle
 	spark.flags2 = $^^MF2_DONTDRAW
 end,MT_SOAP_SPARK)
-
---super bomb survival
-local foolhardy_list = {
-	MT_EGGMOBILE3,
-	MT_EGGMOBILE4,
-	MT_METALSONIC_BATTLE,
-	MT_BLASTEXECUTOR,
-	--dont feel like making the legs NOT be dereferenced
-	MT_GSNAPPER,
-	MT_DRAGONMINE,
-	--just kills you
-	MT_BUGGLE,
-}
-local function make_foolhardy(mo)
-	mo.foolhardy = true
-	if mo.type == MT_METALSONIC_BATTLE
-		mo.nohitlagforme = true
-	end
-end
-for k,type in ipairs(foolhardy_list)
-	addHook("MobjSpawn", make_foolhardy, type)
-end
-
-local nobounce_list = {
-	MT_STEAM,
-}
-local function make_unbouncy(mo)
-	mo.soap_nojostle = true
-end
-for k,type in ipairs(nobounce_list)
-	addHook("MobjSpawn", make_unbouncy, type)
-end
-
 
 addHook("MobjThinker",function(mo)
 	if not (mo.target and mo.target.valid)
