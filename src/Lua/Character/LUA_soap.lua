@@ -3334,6 +3334,7 @@ addHook("ShouldDamage",function(me, inf,src)
 	
 	local soap = p.soaptable
 	
+	local canbump = false
 	if canBumpAtAll(p)
 	and (inf and inf.valid or src and src.valid)
 	and Soap_CanDamageEnemy(p,inf or src)
