@@ -1115,7 +1115,7 @@ rawset(_G, "Soap_TickSquashes",function(p,me,soap, donttick)
 	
 	if not donttick
 		if soap.afterimage
-		and (me.skin == "soapthehedge" or me.skin == "takisthefox")
+		and (me.skin == SOAP_SKIN or me.skin == "takisthefox")
 			Soap_CreateAfterimage(p, me)
 		end
 	end
@@ -1266,7 +1266,7 @@ local function TryTopClash(p,me,found)
 				R_PointToAngle2(me.x,me.y, found.x,found.y),
 				20*me.scale + R_PointToDist2(0,0,me.momx,me.momy)
 			)
-			if (skins[found.player.skin].name == "soapthehedge")
+			if (skins[found.player.skin].name == SOAP_SKIN)
 				found.player.soaptable.linebump = max($, 12)
 			end
 		end

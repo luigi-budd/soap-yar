@@ -433,7 +433,7 @@ local discoranges = {
 
 Takis_Hook.addHook("PreThinkFrame",function(p)
 	local me = p.realmo
-	if (me.skin ~= "soapthehedge") then return end
+	if (me.skin ~= SOAP_SKIN) then return end
 	local soap = p.soaptable
 	
 	if soap.fakeskidtime
@@ -2561,7 +2561,7 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 	end
 	
 	if Cosmetics
-		Cosmetics.SkinOffsets["soapthehedge"] = cos_height
+		Cosmetics.SkinOffsets[SOAP_SKIN] = cos_height
 	end
 	
 	Soap_DeathThinker(p,me,soap)
@@ -2603,7 +2603,7 @@ addHook("PlayerCanDamage",function(p, targ)
 	
 	if not (p.mo and p.mo.valid) then return end
 	
-	if p.mo.skin ~= "soapthehedge" then return end
+	if p.mo.skin ~= SOAP_SKIN then return end
 	
 	local soap = p.soaptable
 	local me = p.mo
@@ -2625,7 +2625,7 @@ addHook("PlayerHeight",function(p)
 	local soap = p.soaptable
 	
 	if not (me and me.valid) then return end
-	if me.skin ~= "soapthehedge" then return end
+	if me.skin ~= SOAP_SKIN then return end
 	if not soap then return end
 	
 	if (p.pflags & PF_THOKKED)
@@ -2659,7 +2659,7 @@ addHook("PlayerCanEnterSpinGaps",function(p)
 	local me = p.mo
 	local soap = p.soaptable
 	
-	if me.skin == "soapthehedge"
+	if me.skin == SOAP_SKIN
 		local phigh = me.height
 		
 		/*
@@ -2852,7 +2852,7 @@ end,peelout_mobj)
 addHook("PlayerCanDamage",function(p)
 	local me = p.mo
 	if not (me and me.valid) then return end
-	if (me.skin ~= "soapthehedge") then return end
+	if (me.skin ~= SOAP_SKIN) then return end
 	local soap = p.soaptable
 	
 	if soap.pounding then return true; end
@@ -2879,7 +2879,7 @@ addHook("PlayerThink",function(p)
 	local soap = p.soaptable
 	
 	--lol
-	if (me.skin ~= "soapthehedge")
+	if (me.skin ~= SOAP_SKIN)
 		--free the other guy
 		if (me.punchtarget and me.punchtarget.valid)
 			Soap_GrabFree(me, me.punchtarget)
@@ -2958,7 +2958,7 @@ Takis_Hook.addHook("MoveBlocked",function(me,thing,line, goingup)
 	local p = me.player
 	local soap = p.soaptable
 	
-	if me.skin ~= "soapthehedge" then return end
+	if me.skin ~= SOAP_SKIN then return end
 	if goingup then return end
 	
 	if not (me.health)
@@ -3085,7 +3085,7 @@ local function try_pvp_collide(me,thing)
 	local soap = p.soaptable
 	
 	if not soap then return end
-	if me.skin ~= "soapthehedge" then return end
+	if me.skin ~= SOAP_SKIN then return end
 	if (soap.damagedealtthistic > SOAP_MAXDAMAGETICS) then return end
 	soap.damagedealtthistic = $ + 1
 	
@@ -3353,7 +3353,7 @@ addHook("AbilitySpecial",function(p)
 	local me = p.mo
 	if not (me and me.valid) then return end
 	
-	if me.skin ~= "soapthehedge" then return end
+	if me.skin ~= SOAP_SKIN then return end
 	if (me.eflags & MFE_SPRUNG) or p.powers[pw_justsprung] >= 4 then return end
 	
 	p.soaptable.doublejumped = true
@@ -3363,7 +3363,7 @@ end)
 --handle soap damage
 addHook("MobjDamage", function(me,inf,sor,dmg,dmgt)
 	if not (me and me.valid) then return end
-	if me.skin ~= "soapthehedge" then return end
+	if me.skin ~= SOAP_SKIN then return end
 	
 	local p = me.player 
 	local soap = p.soaptable
@@ -3443,7 +3443,7 @@ end,MT_PLAYER)
 --soap died by thing
 addHook("MobjDeath", function(me,inf,sor,dmgt)
 	if not (me and me.valid) then return end
-	if me.skin ~= "soapthehedge" then return end
+	if me.skin ~= SOAP_SKIN then return end
 	if not (me.player and me.player.valid) then return end
 	
 	local p = me.player
@@ -3493,7 +3493,7 @@ end)
 
 --jump effect
 addHook("JumpSpecial", function(p)
-	if p.mo.skin ~= "soapthehedge" then return end
+	if p.mo.skin ~= SOAP_SKIN then return end
 	
 	local me = p.mo
 	local soap = p.soaptable
@@ -3547,7 +3547,7 @@ Takis_Hook.addHook("PostThinkFrame",function(p)
 	
 	soap.damagedealtthistic = 0
 	soap.iwashitthistic = false
-	if me.skin ~= "soapthehedge" then return end
+	if me.skin ~= SOAP_SKIN then return end
 	
 	if me.hitlag
 		--still tick down

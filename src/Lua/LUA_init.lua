@@ -26,6 +26,8 @@ end)
 
 rawset(_G, "ORIG_FRICTION", (232 << (FRACBITS-8))) --this should really be exposed...
 rawset(_G, "MFE_NOPITCHROLLEASING", MFE_NOPITCHROLLEASING or (1<<14))
+rawset(_G, "RF_ALWAYSONTOP", RF_ALWAYSONTOP or 0x00010000)
+rawset(_G, "RF_HIDEINSKYBOX", RF_HIDEINSKYBOX or 0x00020000)
 
 rawset(_G, "SOAP_SKIN", "soapthehedge")
 rawset(_G, "TAKIS_SKIN", "takisthefox")
