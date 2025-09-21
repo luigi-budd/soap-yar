@@ -1047,8 +1047,11 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 					maximumspeed
 				)
 				if soap.inBattle
+				and not (p.pflags & PF_SPINNING)
 					if p.normalspeed >= maximumspeed
-						me.movefactor = $ / 3
+						p.acceleration = skins[p.skin].acceleration / 2
+					else
+						p.acceleration = skins[p.skin].acceleration
 					end
 				end
 				
