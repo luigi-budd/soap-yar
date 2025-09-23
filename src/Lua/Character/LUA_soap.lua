@@ -2564,7 +2564,9 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 	end
 	
 	Soap_DeathThinker(p,me,soap)
-	Soap_SolThinker(p,me,soap)	
+	Soap_SolThinker(p,me,soap)
+	
+	me.nohitlagforme = (p.powers[pw_invulnerability] > 0)
 end)
 
 addHook("PlayerSpawn",function(p)
@@ -2915,6 +2917,7 @@ local function Soap_Bump(me,thing,line, weak)
 		
 		--its ambiguous syntax to have the `func` definition on the same line
 		--as the call, so :shrug:
+		--C DOESNT COMPLAIN....
 		local func = ((soap.onGround or weak) and P_Thrust or P_InstaThrust)
 		func(me,
 			line_ang - ANGLE_90*(P_PointOnLineSide(me.x,me.y, line) and 1 or -1),
@@ -2932,7 +2935,7 @@ local function Soap_Bump(me,thing,line, weak)
 		return true
 	elseif (thing and thing.valid)
 		local ang = R_PointToAngle2(me.x,me.y, thing.x,thing.y)
-		local speed = R_PointToDist2(0,0,thing.momx,thing.momy) + (R_PointToDist2(0,0,me.momx,me.momy) * 3/4) + FixedMul(
+		local speed = R_PointToDist2(0,0,thing.momx,thing.momy) + (R_PointToDist2(0,0,me.momx,me.momy)/2) + FixedMul(
 			20*FU, FixedSqrt(FixedMul(thing.scale,me.scale))
 		)
 		if soap.onGround then speed = FixedDiv($, me.friction) end
@@ -3054,6 +3057,7 @@ local function handleBump(p,me,thing)
 	if P_IsLocalPlayer(p)
 		S_StartSound(me, sfx_skid)
 	end
+	return true
 end
 
 local function try_pound_bounce(me,thing)
@@ -3172,8 +3176,10 @@ local function try_pvp_collide(me,thing)
 			
 			--r-dashing but too slow to deal damage
 			if canBumpAtAll(p)
-				handleBump(p,me,thing)
-				return false
+				if handleBump(p,me,thing)
+					return false
+				end
+				return
 			end
 			
 			--hit by r-dash / b-rush
@@ -3289,8 +3295,10 @@ local function try_pvp_collide(me,thing)
 	
 	--r-dashing but too slow to deal damage
 	if canBumpAtAll(p)
-		handleBump(p,me,thing)
-		return false
+		if handleBump(p,me,thing)
+			return false
+		end
+		return
 	end
 	
 	--hit by r-dash / b-rush
