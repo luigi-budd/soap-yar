@@ -30,7 +30,7 @@ local badfiles = {}
 local function strapper(file)
 	local loaded = loadfile(file)
 	if type(loaded) == "string"
-		error("\x85Something went wrong, but we couldn't find why. Check the logs.",2)
+		error(string.format("\x85Something went wrong, but we couldn't find out why. Report the bug and send the latest-log.txt.\n     \x86(got: \"%s\")", loaded),2)
 	end
 	loaded()
 end
@@ -51,7 +51,7 @@ end
 for k,info in ipairs(badfiles)
 	local filename = info.filename
 	local reason = info.reason
-	print('\x82"'..filename..'\x82"\x85 FAILED')
+	print('\x82* "'..filename..'\x82"\x85 FAILED')
 	print('   \x82->\x80'..tostring(reason))
 end
 
