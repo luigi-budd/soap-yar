@@ -1316,7 +1316,7 @@ rawset(_G,"SoapST_Hitbox",function(p)
 		)
 		wind.source = me
 		wind.angle = angle + ANGLE_90
-		wind.color = p.skincolor
+		wind.color = me.color
 		wind.spritexscale = 2*FU
 		wind.spriteyscale = FU * 8/10
 		wind.rollangle = -ANG20

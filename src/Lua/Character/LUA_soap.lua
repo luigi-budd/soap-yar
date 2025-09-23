@@ -1046,14 +1046,6 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 					--dont go over
 					maximumspeed
 				)
-				if soap.inBattle
-				and not (p.pflags & PF_SPINNING)
-					if p.normalspeed >= maximumspeed
-						p.acceleration = skins[p.skin].acceleration / 2
-					else
-						p.acceleration = skins[p.skin].acceleration
-					end
-				end
 				
 				--readjust our normalspeed if the dash threshold changed
 				if not soap._noadjust
@@ -2220,6 +2212,7 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 			end
 			p.powers[pw_strong] = $|STR_SPIKE|STR_ANIM
 			p.acceleration = skins[p.skin].acceleration * 2
+			me.friction = FU - FU/45
 			
 			soap.bm.damaging = true
 			soap.bm.dmg_props = {
