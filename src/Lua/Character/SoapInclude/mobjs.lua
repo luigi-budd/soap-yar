@@ -136,7 +136,7 @@ SafeFreeslot("SPR_SOAP_SPARK")
 SafeFreeslot("S_SOAP_SPARK")
 states[S_SOAP_SPARK] = {
     sprite = SPR_SOAP_SPARK,
-    frame = A|FF_ADD|FF_FULLBRIGHT|FF_PAPERSPRITE|FF_ANIMATE,
+    frame = A|FF_FULLBRIGHT|FF_PAPERSPRITE|FF_ANIMATE|FF_ADD,
 	var1 = 5,
 	var2 = 2,
 	tics = 5*2,

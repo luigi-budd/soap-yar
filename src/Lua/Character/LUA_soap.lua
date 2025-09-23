@@ -2229,16 +2229,16 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 				sp.angle = p.drawangle + sp.adjust_angle
 				sp.target = me
 				
-				sp.spritexscale = FU/2
-				sp.spriteyscale = sp.spritexscale
+				sp.spritexscale = FU
+				sp.spriteyscale = FU * 3/4
 				
 				if ((leveltime - soap.topsound) % 28 == 0)
 					S_StartSoundAtVolume(me,sfx_s3k79, 255/2)
 				end
 				
-				if (leveltime & 1)
+				do --if (leveltime & 1)
 					local spark = P_SpawnMobjFromMobj(me,0,0,0,MT_SOAP_WALLBUMP)
-					local speed = 6*me.scale
+					local speed = 12*me.scale
 					local limit = 28
 					local my_ang = FixedAngle(P_RandomFixedRange(0,360))
 					
@@ -2252,6 +2252,9 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 					spark.color = p.skincolor
 					spark.colorized = true
 					spark.fuse = TR
+					
+					spark.spritexscale = FU * 3/2
+					spark.spriteyscale = spark.spritexscale
 					
 					spark.random = P_RandomRange(-limit,limit) * ANG1
 				end

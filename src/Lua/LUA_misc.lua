@@ -146,7 +146,7 @@ addHook("MobjThinker",function(spark)
 	
 	P_MoveOrigin(spark, me.x,me.y,me.z)
 	spark.angle = spark.adjust_angle
-	spark.flags2 = $^^MF2_DONTDRAW
+	--spark.flags2 = $^^MF2_DONTDRAW
 end,MT_SOAP_SPARK)
 
 addHook("MobjThinker",function(mo)
