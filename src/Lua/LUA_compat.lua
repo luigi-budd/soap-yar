@@ -47,17 +47,17 @@ end
 local function SetCompat()
 	if TakisKart_Karters
 	and not compat.takiskart
-		TakisKart_Karters["soapthehedge"] = true
+		TakisKart_Karters[SOAP_SKIN] = true
 		
-		TakisKart_KarterData["soapthehedge"] = {
+		TakisKart_KarterData[SOAP_SKIN] = {
 			basenormalspeed = 43,
 			stats = {9,7},
 			nolookback = true,
 			legacyframes = true
 		}
-		if not TakisKart_Karters["takisthefox"]
-			TakisKart_Karters["takisthefox"] = true
-			TakisKart_KarterData["takisthefox"] = {
+		if not TakisKart_Karters[TAKIS_SKIN]
+			TakisKart_Karters[TAKIS_SKIN] = true
+			TakisKart_KarterData[TAKIS_SKIN] = {
 				basenormalspeed = 43,
 				
 				--speed,weight
@@ -420,7 +420,7 @@ local function SetCompat()
 			return na
 		end)
 		
-		B.SkinVars["soapthehedge"] = {
+		B.SkinVars[SOAP_SKIN] = {
 			flags = SKINVARS_GUARD|SKINVARS_NOSPINSHIELD,
 			weight = 125,
 			shields = 1,
@@ -626,7 +626,7 @@ local function SetCompat()
 		local Act = B.Action
 		local G = B.GuardFunc
 		
-		S["takisthefox"] = {
+		S[TAKIS_SKIN] = {
 			flags = SKINVARS_GUARD|SKINVARS_NOSPINSHIELD|SKINVARS_GUNSLINGER,
 			weight = 100,
 			special = Act.CombatRoll,
@@ -720,7 +720,7 @@ local function SetCompat()
 			local soap = p.soaptable
 			
 			if not soap then return end
-			if me.skin ~= "soapthehedge" then return end
+			if me.skin ~= SOAP_SKIN then return end
 			
 			if thing.type ~= MT_PIZZA_ENEMY then return end
 			if not Soap_ZCollide(me,thing) then return end
@@ -739,7 +739,7 @@ local function SetCompat()
 	and not compat.heist
 		local FH = FangsHeist
 		
-		FH.makeCharacter("soapthehedge", {
+		FH.makeCharacter(SOAP_SKIN, {
 			isAttacking = function(self, p)
 				return (p.heist.attack_time) or p.mo.state == S_PLAY_MELEE
 			end,
@@ -815,7 +815,7 @@ local function SetCompat()
 	
 	if mrceCharacterPhysics
 	and not compat.mrce
-		mrceCharacterPhysics("soapthehedge",
+		mrceCharacterPhysics(SOAP_SKIN,
 			false,false,0,false
 		)
 		
@@ -825,7 +825,7 @@ local function SetCompat()
 	
 	if ZE2 and (ZE2.AddCharacterConfig ~= nil)
 	and not compat.ze2config
-		ZE2:AddCharacterConfig("soapthehedge", {
+		ZE2:AddCharacterConfig(SOAP_SKIN, {
             health = 125,
 			charflags = SF_FASTEDGE,
 			speed = "normal",
@@ -833,7 +833,7 @@ local function SetCompat()
             desc2 = "And also survive!",
 			desc3 = "Hefty and reliable!",
 		})
-		ZE2:AddCharacterConfig("takisthefox", {
+		ZE2:AddCharacterConfig(TAKIS_SKIN, {
 			speed = "normal",
 			health = 80,
 			desc1 = "Ready to blast zombies.",
@@ -851,7 +851,7 @@ local function SetCompat()
 			color = SKINCOLOR_AQUAMARINE1
 		end
 		
-		solchars["soapthehedge"] = {color, 2}
+		solchars[SOAP_SKIN] = {color, 2}
 		
 		compat.solform = true
 		printf("Added Sol forms.")
@@ -859,8 +859,8 @@ local function SetCompat()
 	*/
 	if MM and MM.showdownSprites
 	and not compat.mmportraits
-		MM.showdownSprites["soapthehedge"] = "MMSD_SOAPTH"
-		MM.showdownSprites["takisthefox"] = "MMSD_TAKISTF"
+		MM.showdownSprites[SOAP_SKIN] = "MMSD_SOAPTH"
+		MM.showdownSprites[TAKIS_SKIN] = "MMSD_TAKISTF"
 		
 		local function novfx()
 			if not (MM and MM:isMM()) then return end
@@ -881,7 +881,7 @@ local function SetCompat()
 			local me = p.realmo
 			if not (me and me.valid) then return end
 			if p.spectator then return end
-			if not (me.skin == "soapthehedge" or me.skin == "takisthefox") then return end
+			if not (me.skin == SOAP_SKIN or me.skin == TAKIS_SKIN) then return end
 			
 			me.soap_landondeath = false
 		end)

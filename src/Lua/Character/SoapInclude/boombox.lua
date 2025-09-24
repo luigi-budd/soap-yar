@@ -96,7 +96,7 @@ states[S_SOAP_BOOMBOX] = {
 			end
 		end
 		
-		if not (me and me.valid and me.skin == "soapthehedge" and me.health)
+		if not (me and me.valid and me.skin == SOAP_SKIN and me.health)
 		or killCond
 			local speed = 5*mo.scale
 			for i = 0,P_RandomRange(20,29)

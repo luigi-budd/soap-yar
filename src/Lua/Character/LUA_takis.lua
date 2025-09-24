@@ -739,6 +739,8 @@ local function try_pvp_collide(me,thing)
 	local soap = p.soaptable
 	
 	if not soap then return end
+	if (soap.damagedealtthistic > SOAP_MAXDAMAGETICS) then return end
+	soap.damagedealtthistic = $ + 1
 	if me.skin ~= TAKIS_SKIN then return end
 	
 	local DealDamage = (p.powers[pw_super] or soap.isSolForm or p.powers[pw_invulnerability]) and P_KillMobj or P_DamageMobj
@@ -895,18 +897,6 @@ end
 
 addHook("MobjMoveCollide",try_pvp_collide,MT_PLAYER)
 addHook("MobjCollide",try_pvp_collide,MT_PLAYER)
-addHook("ShouldDamage",function(me, inf,src)
-	local p = me.player
-	if not (p and p.valid) then return end
-	if not (p.soaptable) then return end
-	if (me.hitlag) then return end
-	
-	if p.soaptable.nodamageforme
-	and (inf and inf.valid or src and src.valid)
-		return false
-	end
-	
-end,MT_PLAYER)
 
 --various effects
 --handle soap damage

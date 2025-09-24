@@ -1,7 +1,7 @@
 addHook("HUD",function(v,p)
-	if gametype ~= GT_COOP then return end
+	if not (gametyperules & GTR_FRIENDLY) then return end
 	local skin_name = skins[p.skin].name
-	if not (skin_name == "soapthehedge" or skin_name == "takisthefox") then return end
+	if not (skin_name == SOAP_SKIN or skin_name == TAKIS_SKIN) then return end
 	
 	local width = (v.width() / v.dupx())+1
 	

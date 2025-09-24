@@ -3049,6 +3049,7 @@ end
 local function try_pvp_collide(me,thing)
 	if not (me and me.valid) then return end
 	if not (thing and thing.valid) then return end
+	if (thing.flags & MF_MISSILE) then return end
 	
 	--??? why?
 	if not me.health then return end
@@ -3062,9 +3063,9 @@ local function try_pvp_collide(me,thing)
 	local soap = p.soaptable
 	
 	if not soap then return end
-	if me.skin ~= SOAP_SKIN then return end
 	if (soap.damagedealtthistic > SOAP_MAXDAMAGETICS) then return end
 	soap.damagedealtthistic = $ + 1
+	if me.skin ~= SOAP_SKIN then return end
 	
 	local DealDamage = (soap.doSuperBuffs or p.powers[pw_invulnerability]) and P_KillMobj or P_DamageMobj
 	
@@ -3309,6 +3310,7 @@ addHook("MobjMoveCollide",try_pvp_collide,MT_PLAYER)
 addHook("MobjCollide",try_pvp_collide,MT_PLAYER)
 addHook("ShouldDamage",function(me, inf,src)
 	local p = me.player
+	if skins[p.skin].name ~= SOAP_SKIN then return end
 	if not (p and p.valid) then return end
 	if not (p.soaptable) then return end
 	if (me.hitlag) then return end
@@ -3404,12 +3406,6 @@ addHook("MobjDamage", function(me,inf,sor,dmg,dmgt)
 			)
 		end
 		
-		/*
-		if takis.heartcards > (not extraheight and 1 or 0)
-			S_StartAntonOw(mo)
-		end
-		*/
-		
 		if (dmgt == DMG_FIRE)
 			soap.firepain = TR * 2
 			S_StartSound(me, sfx_s3kc2s)
@@ -3437,6 +3433,7 @@ addHook("MobjDeath", function(me,inf,sor,dmgt)
 	
 	--??? sometimes bumping certain enemies just kills you
 	--inexplicably, so detect when it happens and prevent it
+	/*
 	if not ((inf and inf.valid) or (src and src.valid))
 		if (soap.nodamageforme >= 7)
 		or canBumpAtAll(p)
@@ -3445,6 +3442,7 @@ addHook("MobjDeath", function(me,inf,sor,dmgt)
 			return true
 		end
 	end
+	*/
 	
 	me.soap_inf = inf
 	me.soap_sor = sor

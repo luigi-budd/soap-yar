@@ -118,7 +118,8 @@ Takis_Hook.addHook = function(hooktype, func, typefor)
 		table.insert(Takis_Hook.events[hooktype], {
 			func = func,
 			typedef = typefor,
-			errored = false
+			errored = false,
+			id = #Takis_Hook.events[hooktype]
 		})
 	else
 		S_StartSound(nil,sfx_skid)

@@ -134,15 +134,15 @@ addHook("PostThinkFrame",function()
 		end
 		-- This is placed after the hookcalls so any squahes
 		-- added can immediately take effect
-		if (me.skin == "soapthehedge"
-		or me.skin == "takisthefox")
+		if (me.skin == SOAP_SKIN
+		or me.skin == TAKIS_SKIN)
 			Soap_TickSquashes(p,me,soap, me.hitlag)
 		end
 		
 		me.oldhitlag = me.hitlag
 		
-		if not (me.skin == "soapthehedge"
-		or me.skin == "takisthefox")
+		if not (me.skin == SOAP_SKIN
+		or me.skin == TAKIS_SKIN)
 			if soap.last.squash_head
 			or (soap.spritexscale ~= FU
 			or soap.spriteyscale ~= FU)
