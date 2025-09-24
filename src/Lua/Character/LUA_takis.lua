@@ -37,6 +37,7 @@ Takis_Hook.addHook("Takis_Thinker",function(p)
 	
 	local squishme = true
 	local clutch = soap.clutch
+	local hammer = soap.hammer
 	soap.afterimage = false
 	
 	--TODO: move this skid block somewhere else?
@@ -178,25 +179,22 @@ Takis_Hook.addHook("Takis_Thinker",function(p)
 		--hammer blast
 		if soap.use == (TR/5)
 		and not soap.onGround
-		and not soap.hammerblastdown
-		and not (soap.inPain or soap.inFakePain)
+		and not hammer.down
+		and not (soap.inPain)
 		and me.health
 		and (soap.notCarried)
 		and not (soap.noability & NOABIL_HAMMER)
-		and not (soap.bombdive.started)
-			p.pflags = $|PF_THOKKED
-			p.pflags = $ &~PF_SHIELDABILITY
-
-			soap.hammerblastdown = 1
-			soap.hammerblastangle = p.drawangle
+			p.pflags = $|PF_THOKKED &~PF_SHIELDABILITY
+			
+			hammer.down = 1
+			hammer.angle = p.drawangle
 			S_StartSoundAtVolume(me,sfx_tk_ahm, 255*9/10)
 			Soap_ZLaunch(me,
 				10*skins["takisthefox"].jumpfactor
 			)
-
+			
 			me.state = S_PLAY_MELEE
 			me.tics = -1
-			print("ok")
 			--P_SetObjectMomZ(me,-9*FU)
 		end
 	end
@@ -299,7 +297,7 @@ Takis_Hook.addHook("Takis_Thinker",function(p)
 						--d1.scale = $*2/3
 						d1.destscale = FU/10
 						d1.angle = R_PointToAngle2(me.x+me.momx, me.y+me.momy, d1.x, d1.y) --- ANG5
-
+						
 						--d2.scale = $*2/3
 						d2.destscale = FU/10
 						d2.angle = R_PointToAngle2(me.x+me.momx, me.y+me.momy, d2.x, d2.y) --+ ANG5
@@ -431,6 +429,32 @@ Takis_Hook.addHook("Takis_Thinker",function(p)
 		end
 		clutch.time = 0
 	end
+	
+	--hammer blast thinker
+	--hammerblast thinker
+	--hammerblast stuff
+	--this is a bad spot for this but fuck it
+	p.thrustfactor = skins[TAKIS_SKIN].thrustfactor
+	if hammer.down
+		Takis_AbilityHelpers.hammerthinker(p)
+	else
+		p.powers[pw_strong] = $ &~(STR_SPRING|STR_HEAVY)
+		/*
+		if takis.transfo & TRANSFO_METAL
+			p.powers[pw_strong] = $|STR_HEAVY
+		end
+		*/
+		hammer.up = 0
+		S_StopSoundByID(me,sfx_tk_fst)
+		--S_StopSoundByID(me,sfx_takhmb)
+	end
+	
+	if hammer.jumped
+		hammer.jumped = $+1
+		if soap.onGround
+			hammer.jumped = 0
+		end
+	end
 
 	if not soap.afterimage
 		if me.state == S_PLAY_DASH
@@ -487,10 +511,10 @@ addHook("JumpSpecial", function(p)
 	if (p.pflags & PF_JUMPSTASIS) then return end
 	if (p.pflags & (PF_JUMPED|PF_STARTJUMP) == PF_JUMPED) then return end
 	if (p.jumpfactor <= 0) then return end
+	if (me.ceilingz - me.floorz <= me.height - 1) then return end
 	
 	if soap.onGround
 	or me.soap_jumpeffect
-		
 		Soap_DustRing(me,
 			dust_type(me), 8,
 			{me.x,me.y,me.z},
@@ -502,24 +526,12 @@ addHook("JumpSpecial", function(p)
 			dust_noviewmobj
 		)
 		
-		local ease_time = 8
-		local ease_func = "outsine"
-		Soap_AddSquash(p, {
-			ease_func = ease_func,
-			start_v = -FU*7/10,
-			end_v = 0,
-			time = ease_time
-		}, {
-			ease_func = ease_func,
-			start_v = FU/2,
-			end_v = 0,
-			time = ease_time
-		})
+		Soap_SquashMacro(p, {ease_func = "outsine", ease_time = 8, x = -FU*7/10, y = -FU/2})
+		
 		Soap_RemoveSquash(p, "landeffect")
 		Soap_RemoveSquash(p, "Takis_Clutch")
 		me.soap_jumpdust = 4
 		me.soap_jumpeffect = nil
-		
 		soap.dived = false
 	end
 end)

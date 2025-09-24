@@ -56,8 +56,8 @@ addHook("HUD",function(v,p)
 	
 	if not (me and me.valid) then return end
 	
-	if SOAP_DEBUG & DEBUG_POWERS
-		if not (oldflags & DEBUG_POWERS)
+	if SOAP_DEBUG & DEBUG_BUTTONS
+		if not (oldflags & DEBUG_BUTTONS)
 			oldlives = hud.enabled("lives")
 			hud.disable("lives")
 		end
@@ -66,6 +66,49 @@ addHook("HUD",function(v,p)
 		local flags = V_HUDTRANS|V_PERPLAYER|V_SNAPTOBOTTOM|V_SNAPTOLEFT
 		local color = (p.skincolor and skincolors[p.skincolor].ramp[4] or 0)
 		local color2 = (ColorOpposite(p.skincolor) and skincolors[ColorOpposite(p.skincolor)].ramp[4] or 0)
+
+		v.drawString(
+			x + 145 - 2,
+			y - 10 - 23,
+			p.cmd.forwardmove,
+			flags,
+			"thin-center"
+		)
+		v.drawString(
+			x + 145 + 16,
+			y - 10 - 6,
+			p.cmd.sidemove,
+			flags,
+			"thin"
+		)
+		
+		v.drawScaled(
+			(x + 145 - 2)*FU,
+			(y - 10 - 2)*FU,
+			FU*6/5,
+			v.cachePatch("TA_LIVESFILL_FILL"),
+			flags,
+			v.getColormap(nil,SKINCOLOR_CARBON)
+		)
+		
+		v.drawScaled(
+			(x + 145 - 2)*FU,
+			(y - 10 - 2)*FU,
+			FU/6,
+			v.cachePatch("TA_LIVESFILL_FILL"),
+			flags,
+			v.getColormap(nil,ColorOpposite(p.skincolor), nil)
+		)
+		
+		v.drawScaled(
+			(x + 145 + p.cmd.sidemove/4 - 2)*FU,
+			(y - 10 - p.cmd.forwardmove/4 - 2)*FU,
+			FU/6,
+			v.cachePatch("TA_LIVESFILL_FILL"),
+			flags,
+			v.getColormap(nil,p.skincolor)
+		)
+		
 		DrawButton(v, p, x, y, flags, color, color2, soap.jump, soap.jump_R, 'J', 'left')
 		DrawButton(v, p, x+11, y, flags, color, color2, soap.use, soap.use_R, 'S', 'left')
 		DrawButton(v, p, x+22, y, flags, color, color2, soap.tossflag, soap.tossflag_R, 'TF', 'thin')
@@ -124,7 +167,7 @@ addHook("HUD",function(v,p)
 		drawflag(v,x+60,y-30,"FS",flags,V_GREENMAP,V_REDMAP,"thin",(p.pflags & PF_FULLSTASIS == PF_FULLSTASIS))
 		drawflag(v,x+78,y-30,"JS",flags,V_GREENMAP,V_REDMAP,"thin",(p.pflags & PF_JUMPSTASIS))
 		drawflag(v,x+96,y-30,"SS",flags,V_GREENMAP,V_REDMAP,"thin",(p.pflags & PF_STASIS))
-	elseif oldflags & DEBUG_POWERS
+	elseif oldflags & DEBUG_BUTTONS
 		if oldlives
 			hud.enable("lives")
 		end

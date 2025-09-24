@@ -7,6 +7,8 @@ Soap_EnumFlags("NOABIL_", {
 	"SHIELD",
 	"THOK",
 	"AFTERIMAGE",	--i wouldnt really call afterimages an ability
+	
+	"SHOTGUN", --HOLDOVER: remove all remnants
 })
 local function fakeenum(name,val)
 	rawset(_G,name,val)
@@ -15,6 +17,8 @@ end
 
 --remove the 'S' for consistancy's sake
 fakeenum("NOABIL_ALL",SNOABIL_ALL)
+
+rawset(_G, "TAKIS_HAMMERDISP", FixedMul(52*FU,9*FU/10))
 
 local includes = {
 	"sounds.lua",

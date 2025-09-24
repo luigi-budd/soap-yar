@@ -3,9 +3,9 @@
 	- GLideKS : let me use all the effects in the 'NWF_Winds/' folder lol
 */
 /*
-	TODO:
-	-character specific states, sounds, mobjs should all be freeslotted
-	 in their character files
+	Collaborators:
+	- Saxashitter/Saxa2007 : assistant coding
+	
 */
 
 rawset(_G, "TR", TICRATE)
@@ -284,16 +284,19 @@ rawset(_G, "Soap_InitTable", function(p)
 			firefx = 0,
 			spin = 0, --unused?
 		},
-
-		-- SAXA: i think this is for the hammer blast
-		bombdive = {
-			started = false,
-			tics = 0,
-		},
-
+		
 		-- for momentuminos
 		frictionfreeze = 0,
 		frictionremove = 0,
+		
+		-- hammer blast
+		hammer = {
+			down = 0, --goin down?
+			up = 0, --for softlock prevention
+			wentdown = false,
+			jumped = 0, --probably was used in the old addon? old carry over from older versions?
+			angle = 0,
+		},
 		
 		dived = false,
 	}

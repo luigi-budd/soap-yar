@@ -19,7 +19,7 @@ local function enumflags(prefix, enums, callback)
 end
 
 enumflags("DEBUG_",{
-	"POWERS",
+	"BUTTONS",
 	"RDASH",
 }, function(k,enum,val)
 	DEBUGTOENUM[val] = enum

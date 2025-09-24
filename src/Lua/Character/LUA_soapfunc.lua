@@ -648,10 +648,6 @@ end)
 
 -- p might not be valid
 rawset(_G,"Soap_CanDamageEnemy",function(p, mobj,flags,exclude)
-	if (CanFlingThing ~= nil)
-		return CanFlingThing(p, mobj,flags,false,exclude)
-	end
-	
 	local flingable = false
 	flags = $ or MF_ENEMY|MF_BOSS|MF_MONITOR|MF_SHOOTABLE
 	exclude = $ or 0
@@ -1057,6 +1053,35 @@ rawset(_G,"Soap_RemoveSquash",function(p, name)
 		end
 	end
 	return false
+end)
+
+-- easy macro for less copy-paste
+local function parse(arg, default)
+	if arg == nil then return default end
+	return arg
+end
+rawset(_G,"Soap_SquashMacro",function(p, props)
+	local ease_func	= parse(props.ease_func, "linear")
+	local ease_time = parse(props.ease_time, TR)
+	local strength	= parse(props.strength, FU/2)
+	local squish	= parse(props.squish, strength * 3/4)
+	local xstr		= parse(props.x, strength)
+	local ystr		= parse(props.y, squish)
+	local endx		= parse(props.endx, 0)
+	local endy		= parse(props.endy, 0)
+	local name		= props.name
+	
+	Soap_AddSquash(p, {
+		ease_func = ease_func,
+		start_v = xstr,
+		end_v = endx,
+		time = ease_time
+	}, {
+		ease_func = ease_func,
+		start_v = -ystr,
+		end_v = endy,
+		time = ease_time
+	}, name)
 end)
 
 rawset(_G, "Soap_TickSquashes",function(p,me,soap, donttick)
@@ -2887,6 +2912,12 @@ rawset(_G, "Soap_StartQuake", function(intensity, time, epicenter, radius)
 		intensity = $ / 2
 	elseif SOAP_CV.quake_mul.value == 3 --double
 		intensity = $ * 2
+	end
+	
+	--Accept mobjs as epicenter points
+	if type(epicenter) == "userdata" and userdataType(epicenter) == "mobj_t"
+		local temp = epicenter
+		epicenter = {temp.x,temp.y,temp.z}
 	end
 	P_StartQuake(intensity,time,epicenter,radius)
 end)

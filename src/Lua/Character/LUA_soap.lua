@@ -179,20 +179,7 @@ local function soap_poundonland(p,me,soap)
 			end
 		end
 		
-		local ease_func = "insine"
-		local ease_time = TR/3
-		local strength = FU*3/4
-		Soap_AddSquash(p, {
-			ease_func = ease_func,
-			start_v = strength,
-			end_v = 0,
-			time = ease_time
-		}, {
-			ease_func = ease_func,
-			start_v = -strength*3/4,
-			end_v = 0,
-			time = ease_time
-		})
+		Soap_SquashMacro(p, {ease_func = "insine", ease_time = TR/3, strength = FU*3/4})
 		Soap_DustRing(me,
 			dust_type(me),
 			16 + max(
@@ -1063,20 +1050,7 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 					soap.chargedtime = 10
 					soap.speedlenient = max($,4)
 					
-					local ease_time = soap.chargedtime * 3/4
-					local ease_func = "insine"
-					local strength = (FU/3)
-					Soap_AddSquash(p, {
-						ease_func = ease_func,
-						start_v = strength,
-						end_v = 0,
-						time = ease_time
-					}, {
-						ease_func = ease_func,
-						start_v = -strength*3/4,
-						end_v = 0,
-						time = ease_time
-					})
+					Soap_SquashMacro(p, {ease_func = "insine", ease_time = soap.chargedtime * 3/4, strength = (FU/3)})
 					
 					if (p.powers[pw_shield] & SH_NOSTACK == SH_FLAMEAURA)
 						S_StartSound(me,sfx_s3k43)
@@ -3514,6 +3488,7 @@ addHook("JumpSpecial", function(p)
 	if (p.pflags & PF_JUMPSTASIS) then return end
 	if (p.pflags & (PF_JUMPED|PF_STARTJUMP) == PF_JUMPED) then return end
 	if (p.jumpfactor <= 0) then return end
+	if (me.ceilingz - me.floorz <= me.height - 1) then return end
 	
 	if soap.onGround
 	or me.soap_jumpeffect
@@ -3528,19 +3503,8 @@ addHook("JumpSpecial", function(p)
 			dust_noviewmobj
 		)
 		
-		local ease_time = 8
-		local ease_func = "outsine"
-		Soap_AddSquash(p, {
-			ease_func = ease_func,
-			start_v = -FU*7/10,
-			end_v = 0,
-			time = ease_time
-		}, {
-			ease_func = ease_func,
-			start_v = FU/2,
-			end_v = 0,
-			time = ease_time
-		})
+		Soap_SquashMacro(p, {ease_func = "outsine", ease_time = 8, x = -FU*7/10, y = -FU/2})
+		
 		Soap_RemoveSquash(p, "landeffect")
 		me.soap_jumpdust = 4
 		me.soap_jumpeffect = nil
