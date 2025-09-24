@@ -3312,8 +3312,13 @@ addHook("ShouldDamage",function(me, inf,src)
 	if not (p and p.valid) then return end
 	if not (p.soaptable) then return end
 	if (me.hitlag) then return end
+	if not (inf and inf.valid or src and src.valid) then return end
+	if inf.flags & MF_MISSILE then return end
 	
 	local soap = p.soaptable
+	
+	if (leveltime == soap.trydamageframe) then return end
+	soap.trydamageframe = leveltime
 	
 	local canbump = false
 	if canBumpAtAll(p)

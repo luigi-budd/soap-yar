@@ -131,6 +131,7 @@ rawset(_G, "Soap_InitTable", function(p)
 		iwashitthistic = false,
 		--the leveltime we were hurt so we dont keep calling hooks
 		hurtframe = 0,
+		trydamageframe = 0, --ditto, but for ShouldDamage
 		
 		--if true, no crouching until c3 is let go
 		crouch_cooldown = false,
