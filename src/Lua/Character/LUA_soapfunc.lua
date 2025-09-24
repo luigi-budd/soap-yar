@@ -9,13 +9,13 @@ end
 local function spawnbubble(p,me,soap)
 	local h = FixedDiv(me.height, me.scale)/FU
 	local buble = P_SpawnMobjFromMobj(me,
-		P_RandomFixedRange(-16,16),
-		P_RandomFixedRange(-16,16),
-		P_RandomFixedRange(0,h),
+		Soap_RandomFixedRange(-16,16),
+		Soap_RandomFixedRange(-16,16),
+		Soap_RandomFixedRange(0,h),
 		MT_THOK
 	)
-	P_SetObjectMomZ(buble, P_RandomFixedRange(1,4))
-	P_Thrust(buble, R_PointToAngle2(buble.x,buble.y, me.x,me.y), P_RandomFixedRange(1,4))
+	P_SetObjectMomZ(buble, Soap_RandomFixedRange(1,4))
+	P_Thrust(buble, R_PointToAngle2(buble.x,buble.y, me.x,me.y), Soap_RandomFixedRange(1,4))
 	buble.fuse = P_RandomRange(TR/2, TR)
 	buble.color = me.color
 	buble.colorized = true
@@ -24,7 +24,7 @@ local function spawnbubble(p,me,soap)
 	buble.blendmode = AST_ADD
 	buble.renderflags = $|RF_SEMIBRIGHT
 	buble.mirrored = P_RandomChance(FU/2)
-	local scale = P_RandomFixedRange(0, 2)/3
+	local scale = Soap_RandomFixedRange(0, 2)/3
 	buble.spritexscale = $ + scale
 	buble.spriteyscale = $ + scale
 	return buble
@@ -583,12 +583,12 @@ rawset(_G,"Soap_ImpactVFX",function(src,inf, distmul, scalemul)
 	scalemul = $ or FU
 	local disp = 25
 	local off = {
-		x = P_RandomFixedRange(-disp,disp),
-		y = P_RandomFixedRange(-disp,disp),
-		z = P_RandomFixedRange(-disp,disp)
+		x = Soap_RandomFixedRange(-disp,disp),
+		y = Soap_RandomFixedRange(-disp,disp),
+		z = Soap_RandomFixedRange(-disp,disp)
 	}
 	
-	local spr_scale = FixedMul(FU*3/4 + P_RandomFixedSigned() / 4, scalemul)
+	local spr_scale = FixedMul(FU*3/4 + Soap_RandomFixedSigned() / 4, scalemul)
 	local tntstate = S_TNTBARREL_EXPL3
 	local rflags = RF_PAPERSPRITE|RF_FULLBRIGHT|RF_NOCOLORMAPS
 	local applycolor = (multiplayer or netgame)
@@ -861,7 +861,7 @@ rawset(_G, "Soap_WindLines", function(me,rmomz,color,forceang)
 	local wind = P_SpawnMobj(
 		me.x, --+ P_RandomRange(-36,36)*me.scale + offx,
 		me.y, --+ P_RandomRange(-36,36)*me.scale + offy,
-		me.z + (height) + P_RandomFixedRange(-height/FU,height/FU),
+		me.z + (height) + Soap_RandomFixedRange(-height/FU,height/FU),
 		MT_SOAP_SPEEDLINE
 	)
 	
@@ -877,13 +877,13 @@ rawset(_G, "Soap_WindLines", function(me,rmomz,color,forceang)
 	end
 	
 	local pushangle = wind.angle + ANGLE_90
-	local pushpush = FixedAngle(P_RandomFixedRange(WIND_PUSHANG_MIN,WIND_PUSHANG_MAX))
+	local pushpush = FixedAngle(Soap_RandomFixedRange(WIND_PUSHANG_MIN,WIND_PUSHANG_MAX))
 	local pushsign = P_RandomSign()
-	local pushdist = (FixedMul(P_RandomFixedRange(WIND_PUSHMIN,WIND_PUSHMAX), me.scale) + (me.radius - FixedMul(mobjinfo[MT_PLAYER].radius,me.scale))) * pushsign
+	local pushdist = (FixedMul(Soap_RandomFixedRange(WIND_PUSHMIN,WIND_PUSHMAX), me.scale) + (me.radius - FixedMul(mobjinfo[MT_PLAYER].radius,me.scale))) * pushsign
 	local sidex,sidey
 	--forward + backward shift for downwards movement
 	do
-		local distance = P_RandomFixedRange(-WIND_PUSHMAX,WIND_PUSHMAX)
+		local distance = Soap_RandomFixedRange(-WIND_PUSHMAX,WIND_PUSHMAX)
 		distance = FixedMul($, abs(sin(zangle)))
 		sidex = P_ReturnThrustX(nil,wind.angle, distance)
 		sidey = P_ReturnThrustY(nil,wind.angle, distance)
@@ -896,11 +896,11 @@ rawset(_G, "Soap_WindLines", function(me,rmomz,color,forceang)
 	--Painful
 	P_Thrust(wind,
 		wind.angle + (pushpush)*pushsign,
-		FixedMul(FixedMul(P_RandomFixedRange(2,7), cos(zangle)), me.scale)
+		FixedMul(FixedMul(Soap_RandomFixedRange(2,7), cos(zangle)), me.scale)
 	)
 	P_Thrust(wind,
 		wind.angle + ANGLE_90*pushsign,
-		FixedMul(abs(FixedMul(P_RandomFixedRange(2,7), sin(zangle))), me.scale)
+		FixedMul(abs(FixedMul(Soap_RandomFixedRange(2,7), sin(zangle))), me.scale)
 	)
 	wind.angle = $ - (pushpush/3)*pushsign
 	
@@ -1168,7 +1168,7 @@ rawset(_G,"Soap_SpawnBumpSparks",function(me, thing, line, followme)
 	end
 	
 	local fa = FixedDiv(360*FU, 8*FU)
-	local random = P_RandomFixedRange(0,73)
+	local random = Soap_RandomFixedRange(0,73)
 	local speed = 6*me.scale
 	local limit = 28
 	for i = 1,8
@@ -1332,7 +1332,7 @@ rawset(_G,"SoapST_Hitbox",function(p)
 	for i = -1, 1, 2
 		local offsetx = P_ReturnThrustX(nil,angle, FixedDiv(range,me.scale)* i)
 		local offsety = P_ReturnThrustY(nil,angle, FixedDiv(range,me.scale) * i)
-		local offsetz = P_RandomFixedRange(height/4,height)
+		local offsetz = Soap_RandomFixedRange(height/4,height)
 		local wind = P_SpawnMobjFromMobj(me,
 			offsetx,
 			offsety,
@@ -1705,7 +1705,7 @@ rawset(_G,"Soap_DeathThinker",function(p,me,soap)
 				P_RandomRange(0, FixedDiv(me.height,me.scale)/FU)*FU,
 				MT_SPINDUST
 			)
-			sweat.spritexscale = $ + P_RandomFixedRange(0,1)/4
+			sweat.spritexscale = $ + Soap_RandomFixedRange(0,1)/4
 			sweat.spriteyscale = sweat.spritexscale
 			
 			if (me.soap_inf and me.soap_inf.valid)
@@ -1760,9 +1760,9 @@ rawset(_G,"Soap_DeathThinker",function(p,me,soap)
 				local speed = 5*me.scale
 				for i = 0,P_RandomRange(20,29)
 					local poof = P_SpawnMobjFromMobj(me,
-						P_RandomFixedRange(-15,15),
-						P_RandomFixedRange(-15,15),
-						FixedDiv(me.height,me.scale)/2 + P_RandomFixedRange(-15,15),
+						Soap_RandomFixedRange(-15,15),
+						Soap_RandomFixedRange(-15,15),
+						FixedDiv(me.height,me.scale)/2 + Soap_RandomFixedRange(-15,15),
 						MT_THOK
 					)
 					poof.state = mobjinfo[MT_SPINDUST].spawnstate
@@ -1772,7 +1772,7 @@ rawset(_G,"Soap_DeathThinker",function(p,me,soap)
 					)
 					P_3DThrust(poof, hang,vang, speed)
 					
-					poof.spritexscale = $ + P_RandomFixedRange(0,2)/3
+					poof.spritexscale = $ + Soap_RandomFixedRange(0,2)/3
 					poof.spriteyscale = poof.spritexscale
 				end
 				S_StartSound(me,sfx_s3k51)
@@ -1793,7 +1793,7 @@ rawset(_G,"Soap_DeathThinker",function(p,me,soap)
 					shoe.sprite = SPR_PLAY
 					shoe.sprite2 = SPR2_MSC3
 					shoe.angle = angle + adjust
-					P_SetObjectMomZ(shoe, P_RandomFixedRange(14,20))
+					P_SetObjectMomZ(shoe, Soap_RandomFixedRange(14,20))
 					P_Thrust(shoe, angle + adjust, 1*me.scale)
 					shoe.random = P_RandomRange(-28,28) * ANG1
 					shoe.fuse = 5*TR
@@ -1894,9 +1894,9 @@ rawset(_G,"Soap_DeathThinker",function(p,me,soap)
 					local speed = 5*me.scale
 					for i = 0,P_RandomRange(20,29)
 						local poof = P_SpawnMobjFromMobj(me,
-							P_RandomFixedRange(-15,15),
-							P_RandomFixedRange(-15,15),
-							FixedDiv(me.height,me.scale)/2 + P_RandomFixedRange(-15,15),
+							Soap_RandomFixedRange(-15,15),
+							Soap_RandomFixedRange(-15,15),
+							FixedDiv(me.height,me.scale)/2 + Soap_RandomFixedRange(-15,15),
 							MT_SMOKE
 						)
 						local hang,vang = R_PointTo3DAngles(
@@ -1906,7 +1906,7 @@ rawset(_G,"Soap_DeathThinker",function(p,me,soap)
 						P_3DThrust(poof, hang,vang, speed)
 						P_SetObjectMomZ(poof, FU)
 						
-						poof.spritexscale = $ + P_RandomFixedRange(0,2)/3
+						poof.spritexscale = $ + Soap_RandomFixedRange(0,2)/3
 						poof.spriteyscale = poof.spritexscale
 					end
 					S_StopSound(me)
@@ -1925,9 +1925,9 @@ rawset(_G,"Soap_DeathThinker",function(p,me,soap)
 				local speed = 5 * me.scale
 				for i = 0,P_RandomRange(20,25)
 					local poof = P_SpawnMobjFromMobj(me,
-						P_RandomFixedRange(-15,15),
-						P_RandomFixedRange(-15,15),
-						FixedDiv(me.height,me.scale)/2 + P_RandomFixedRange(-15,15),
+						Soap_RandomFixedRange(-15,15),
+						Soap_RandomFixedRange(-15,15),
+						FixedDiv(me.height,me.scale)/2 + Soap_RandomFixedRange(-15,15),
 						P_RandomRange(MT_SMALLBUBBLE, MT_MEDIUMBUBBLE)
 					)
 					poof.tics = -1
@@ -1938,7 +1938,7 @@ rawset(_G,"Soap_DeathThinker",function(p,me,soap)
 					)
 					P_3DThrust(poof, hang,vang, speed)
 					
-					poof.spritexscale = $ + P_RandomFixedRange(0,2)/3
+					poof.spritexscale = $ + Soap_RandomFixedRange(0,2)/3
 					poof.spriteyscale = poof.spritexscale
 					poof.color = me.color
 					poof.colorized = true
@@ -2775,9 +2775,9 @@ rawset(_G, "Soap_Grabbing",function(p,me,soap)
 				)
 				fling.flags = $|MF_NOCLIPTHING
 				fling.fuse = TR/2
-				fling.angle = angle + FixedAngle(P_RandomFixedRange(-90,90))
+				fling.angle = angle + FixedAngle(Soap_RandomFixedRange(-90,90))
 				P_SetObjectMomZ(fling,
-					P_RandomFixedRange(3, 6)
+					Soap_RandomFixedRange(3, 6)
 				)
 				P_Thrust(fling, fling.angle, 10*fling.scale)
 				P_GivePlayerRings(play, -1)

@@ -308,9 +308,9 @@ local function SetCompat()
 				do
 					local color = G_GametypeHasTeams() and ((p.ctfteam == 1 and skincolor_redteam or skincolor_bluering)) or p.skincolor
 					local spark = P_SpawnMobjFromMobj(me,
-						P_RandomFixedRange(-range,range),
-						P_RandomFixedRange(-range,range),
-						P_RandomFixedRange(0,range),
+						Soap_RandomFixedRange(-range,range),
+						Soap_RandomFixedRange(-range,range),
+						Soap_RandomFixedRange(0,range),
 						MT_WATERZAP
 					)
 					spark.spritexscale = FU*7
@@ -327,13 +327,13 @@ local function SetCompat()
 					spark.momz = $ + soap.rmomz
 					
 					--top sparks
-					local angle = FixedAngle(P_RandomFixedRange(0,360))
+					local angle = FixedAngle(Soap_RandomFixedRange(0,360))
 					local rad = FixedDiv(me.radius,me.scale)
 					local hei = FixedDiv(me.height,me.scale)
 					spark = P_SpawnMobjFromMobj(me,
 						P_ReturnThrustX(nil,angle,rad),
 						P_ReturnThrustY(nil,angle,rad),
-						(hei/2) + P_RandomFixedRange(-17,17), MT_SOAP_SPARK
+						(hei/2) + Soap_RandomFixedRange(-17,17), MT_SOAP_SPARK
 					)
 					spark.color = color
 					spark.adjust_angle = angle

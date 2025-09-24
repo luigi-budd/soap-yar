@@ -129,7 +129,7 @@ hl.iterateHitlagged = function()
 			
 			if P_IsObjectOnGround(mo)
 			and v.tics
-				P_SetObjectMomZ(mo, P_RandomFixedRange(3,6))
+				P_SetObjectMomZ(mo, Soap_RandomFixedRange(3,6))
 				S_StartSound(mo,sfx_s3k49)
 			end
 			v.tics = $ + 1

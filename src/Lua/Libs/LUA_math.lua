@@ -22,11 +22,11 @@ rawset(_G,"clamp",function(minimum,value,maximum)
 	return max(minimum,min(maximum,value))
 end)
 
-rawset(_G,"P_RandomFixedSigned",do
+rawset(_G,"Soap_RandomFixedSigned",do
 	return P_RandomFixed() * sign(P_SignedRandom())
 end)
-rawset(_G,"P_RandomFixedRange",function(a,b)
-	return P_RandomRange(a,b)*FU + P_RandomFixedSigned()
+rawset(_G,"Soap_RandomFixedRange",function(a,b)
+	return P_RandomRange(a,b)*FU + Soap_RandomFixedSigned()
 end)
 rawset(_G,"P_RandomSign",do
 	return sign(P_SignedRandom()) or -1 -- -1 if sign is 0
