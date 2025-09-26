@@ -914,6 +914,8 @@ local function SetCompat()
 		end)
 		
 		local thinker = function(p)
+			if not (RSR.GamemodeActive()) then return end
+			
 			p.realmo.soap_landondeath = nil
 		end
 		Takis_Hook.addHook("Soap_Thinker",thinker)
