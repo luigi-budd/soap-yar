@@ -2938,6 +2938,7 @@ Takis_Hook.addHook("MoveBlocked",function(me,thing,line, goingup)
 	if goingup then return end
 	
 	if not (me.health)
+	and not (p.spectator or p.playerstate ~= PST_DEAD)
 		Soap_Bump(me,thing,line)
 		return
 	end
