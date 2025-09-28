@@ -3381,7 +3381,7 @@ addHook("MobjDamage", function(me,inf,sor,dmg,dmgt)
 
 	if p.ptsr and p.ptsr.outofgame then return end
 	if (p.guard ~= nil and (p.guard == 1)) then return end
-	--p.pflags = $ &~(PF_THOKKED|PF_JUMPED|PF_SHIELDABILITY)
+	p.pflags = $ &~(PF_THOKKED|PF_JUMPED|PF_SHIELDABILITY)
 	
 	S_StartSoundAtVolume(me,sfx_sp_smk,255*3/4)
 	S_StartSound(me,sfx_sp_dmg)

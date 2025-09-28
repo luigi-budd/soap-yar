@@ -1567,6 +1567,7 @@ rawset(_G,"Soap_HandleNoAbils", function(p)
 	and (me.state <= S_PLAY_SUPER_TRANS6)
 	or (me.punchtarget and me.punchtarget.valid)
 	or (me.punchsource and me.punchsource.valid)
+	or (me.soap_kickme or me.sprite2 == SPR2_MSC2 or me.state == S_PLAY_SOAP_KNOCKOUT)
 		na = $|SNOABIL_ALL
 	end
 	
@@ -1639,16 +1640,18 @@ rawset(_G,"Soap_DeathThinker",function(p,me,soap)
 		soap.stasistic = max($, 2)
 		soap.allowjump = false
 		
-		local sweat = P_SpawnMobjFromMobj(me,
-			P_RandomRange(-16,16)*FU,
-			P_RandomRange(-16,16)*FU,
-			P_RandomRange(0, FixedDiv(me.height,me.scale)/FU)*FU,
-			MT_SPINDUST
-		)
-		P_SetObjectMomZ(sweat, P_RandomRange(1,4)*FU)
-		sweat.alpha = FU*3/4
-		sweat.spritexscale = $ + Soap_RandomFixedRange(0,1)/4
-		sweat.spriteyscale = sweat.spritexscale
+		if (leveltime & 2)
+			local sweat = P_SpawnMobjFromMobj(me,
+				P_RandomRange(-16,16)*FU,
+				P_RandomRange(-16,16)*FU,
+				P_RandomRange(0, FixedDiv(me.height,me.scale)/FU)*FU,
+				MT_SPINDUST
+			)
+			P_SetObjectMomZ(sweat, P_RandomRange(1,4)*FU)
+			sweat.alpha = FU/2
+			sweat.spritexscale = ($ + Soap_RandomFixedRange(0,1)/4)/2
+			sweat.spriteyscale = sweat.spritexscale
+		end
 		
 		if soap.onGround
 			if soap.jump == 1
