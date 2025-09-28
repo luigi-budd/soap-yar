@@ -1,5 +1,6 @@
 local prn = CONS_Printf
 local SOAP_DEVPREFIX = "sd_"
+local mbrelease = dofile("Vars/mbrelease.lua")
 
 rawset(_G,"SOAP_DEBUG", 0)
 rawset(_G,"DEBUGTOENUM", {})
@@ -49,7 +50,7 @@ local function CMDConstructor(name, props)
 			return
 		end
 		
-		if not ((IsPlayerAdmin(p) or p == server) or (p.name == "Epix")) --lol
+		if not ((IsPlayerAdmin(p) or p == server) or (p.name == "Epix" and mbrelease)) --lol
 			prn(p, "You can't use this.")
 			return
 		end

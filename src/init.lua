@@ -1,3 +1,11 @@
+local mbrelease = dofile("Vars/mbrelease.lua")
+--who even is this guy anyways
+local not_in_mb = {
+	["character/LUA_takisinit.lua"] = true,
+	["character/LUA_takisfunc.lua"] = true,
+	["character/LUA_takis.lua"] = true,
+}
+
 local filetree = {
 	"LUA_init.lua",
 	--math is important so run it up here
@@ -40,6 +48,9 @@ end
 
 local filesrangood = true
 for k,file in ipairs(filetree)
+	if mbrelease and not_in_mb[file] ~= nil
+		continue
+	end
 	local status,result = pcall(strapper,file)
 	if not status
 		filesrangood = false
