@@ -5,7 +5,7 @@ addHook("HUD",function(v,p)
 	
 	local width = (v.width() / v.dupx())+1
 	
-	local str = "-- DEMO --   Not representative of final product.   "
+	local str = "-- DEMO --   Not representative of final product.   -- DEMO --   Made by EpixGamer21   "
 	local wid = v.stringWidth(str,0,"thin")/2
 	local flags = V_REDMAP|V_SNAPTOBOTTOM|V_ALLOWLOWERCASE|V_30TRANS|V_SNAPTOLEFT
 	local offset = 4
