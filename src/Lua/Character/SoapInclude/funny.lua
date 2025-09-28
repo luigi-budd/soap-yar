@@ -141,6 +141,7 @@ Takis_Hook.addHook("MoveBlocked", function(me, thing,line)
 	local soap = p.soaptable
 	
 	if me.orbitbonk
+	and (Orbit and Orbit.version ~= "0.4.37")
 		S_StartSound(me, sfx_s3k49)
 		Soap_SpawnBumpSparks(me, thing, line)
 		if (line and line.valid)
