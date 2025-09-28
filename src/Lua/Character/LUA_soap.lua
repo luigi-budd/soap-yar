@@ -2679,7 +2679,7 @@ end)
 local peelout_mobj = MT_TFOG
 local peels = 9
 
-addHook("FollowMobj",function(p, m_peel)
+addHook("FollowMobj",function(p, m_peel) --master peel
 	if m_peel.outs == nil then m_peel.outs = {} end
 	
 	local me = p.mo
@@ -2802,23 +2802,10 @@ addHook("FollowMobj",function(p, m_peel)
 		local pitchroll = 0
 		local pitch = me.pitch
 		local roll = me.roll
-		--we're boring and dont have pitch/roll-tation
-		if not takis_custombuild
-			if (me.standingslope)
-				local slope = me.standingslope
-				local nz = slope.normal.z
-				local ny = slope.normal.y
-				local nx = slope.normal.x
-				
-				pitch = R_PointToAngle2(0,0, FixedSqrt(
-					FixedMul(ny,ny) + FixedMul(nz,nz)), nx
-				)
-				roll = R_PointToAngle2(0,0, nz, ny)
-			end
-		end
-		do
+		--we're awesome and have pitch/roll-tation
+		if takis_custombuild
+		and (CV.FindVar("pitchroll-tation") and CV.FindVar("pitchroll-tation").value)
 			local r_angle = p.drawangle + ANGLE_90
-			
 			pitchroll = FixedMul(pitch,-sin(r_angle)) + FixedMul(roll,cos(r_angle))
 		end
 		
