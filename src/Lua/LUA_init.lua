@@ -221,6 +221,10 @@ rawset(_G, "Soap_InitTable", function(p)
 			lockmove = 0,
 		},
 		
+		hud = {
+			painsurge = 0,
+		},
+		
 		--FU + spritex/yscale
 		spritexscale = 0,
 		spriteyscale = 0,
@@ -255,6 +259,9 @@ rawset(_G, "Soap_InitTable", function(p)
 		waittics = 0,
 		waitframe = A,
 		
+		bashspin = 0,
+		bashendangle = nil,
+		
 		clutch = {
 			/*
 			clutchcombo = 0,
@@ -283,7 +290,7 @@ rawset(_G, "Soap_InitTable", function(p)
 			nights = 0,
 			
 			firefx = 0,
-			spin = 0, --unused?
+			spin = 0, --for slingshots
 		},
 		
 		-- for momentuminos

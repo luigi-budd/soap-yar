@@ -22,6 +22,7 @@ rawset(_G, "TAKIS_HAMMERDISP", FixedMul(52*FU,9*FU/10))
 
 local includes = {
 	"sounds.lua",
+	"player.lua"
 }
 for k,file in ipairs(includes)
 	dofile("Character/TakisInclude/"..file)

@@ -280,7 +280,7 @@ rawset(_G,"Takis_DoClutch",function(p,riding)
 	clutch.tics = 23
 	clutch.spamtime = 23
 	clutch.misfire = TR
-	--takis.bashspin = 9
+	takis.bashspin = 9
 	--takis.ropeletgo = TR/5
 	
 	/*
@@ -1102,7 +1102,7 @@ rawset(_G,"Takis_AbilityHelpers",{
 		
 		local superspeed = -60*me.scale
 		if (me.momz*takis.gravflip <= superspeed + 5*me.scale)
-		and not (takis.lastmomz*takis.gravflip <= superspeed + 5*me.scale)
+		and not (takis.last.momz*takis.gravflip <= superspeed + 5*me.scale)
 			S_StartSound(me,sfx_tk_fst)
 		end
 		

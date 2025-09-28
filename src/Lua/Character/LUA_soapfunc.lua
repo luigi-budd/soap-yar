@@ -1590,6 +1590,77 @@ end)
 
 local soap_airfric = tofixed("0.96")
 rawset(_G,"Soap_DeathThinker",function(p,me,soap)
+	if me.sprite2 == SPR2_MSC2
+		local sweat = P_SpawnMobjFromMobj(me,
+			P_RandomRange(-16,16)*FU,
+			P_RandomRange(-16,16)*FU,
+			P_RandomRange(0, FixedDiv(me.height,me.scale)/FU)*FU,
+			MT_SPINDUST
+		)
+		sweat.spritexscale = $ + Soap_RandomFixedRange(0,1)/4
+		sweat.spriteyscale = sweat.spritexscale
+		
+		if (me.soap_inf and me.soap_inf.valid)
+		and me.soap_inf.color ~= SKINCOLOR_NONE
+			sweat.color = me.soap_inf.color
+			sweat.colorized = true
+		end
+		
+		sweat.destscale = 1
+		sweat.scalespeed = FixedDiv($, sweat.scale)
+		P_SetObjectMomZ(sweat, FU*4)
+		
+		if (me.momz*soap.gravflip < 0)
+		and soap.accspeed > FU
+		or (P_IsObjectOnGround(me) and soap.accspeed > 2*FU)
+			/*
+			me.rollangle = R_PointToAngle2(0, 0,
+				R_PointToDist2(0,0,me.momx,me.momy), me.momz/3
+			)
+			*/
+			me.momx = FixedMul($, soap_airfric)
+			me.momy = FixedMul($, soap_airfric)
+		end
+		
+		--lmao handle this here too
+		if soap.onGround
+		and me.health
+			me.state = S_PLAY_SOAP_KNOCKOUT
+			me.soap_kickme = true
+		end
+	elseif me.soap_kickme
+		if (not me.health)
+		or (soap.inPain)
+			me.soap_kickme = nil
+		end
+		if me.state ~= S_PLAY_SOAP_KNOCKOUT
+			me.state = S_PLAY_SOAP_KNOCKOUT
+		end
+		soap.stasistic = max($, 2)
+		soap.allowjump = false
+		
+		local sweat = P_SpawnMobjFromMobj(me,
+			P_RandomRange(-16,16)*FU,
+			P_RandomRange(-16,16)*FU,
+			P_RandomRange(0, FixedDiv(me.height,me.scale)/FU)*FU,
+			MT_SPINDUST
+		)
+		P_SetObjectMomZ(sweat, P_RandomRange(1,4)*FU)
+		sweat.alpha = FU*3/4
+		sweat.spritexscale = $ + Soap_RandomFixedRange(0,1)/4
+		sweat.spriteyscale = sweat.spritexscale
+		
+		if soap.onGround
+			if soap.jump == 1
+				me.soap_kickme = nil
+				P_DoJump(p,true,false)
+			end
+			if R_PointToDist2(0,0,me.momx,me.momy) >= 3*me.scale
+				P_SpawnSkidDust(p,me.radius,true)
+			end
+		end
+	end
+	
 	if p.playerstate ~= PST_DEAD
 		if (soap.firepain)
 			local rad = FixedDiv(me.radius,me.scale)/FU
@@ -1664,10 +1735,12 @@ rawset(_G,"Soap_DeathThinker",function(p,me,soap)
 	soap.rdashing = false
 	soap.pounding = false
 	
+	-- A knockout!!
 	if ((CBW_Battle
 	and (CBW_Battle.Exiting or CBW_Battle.Timeout))
 	or (me.soap_knockout))
 	and not me.health
+	and soap.deathtype ~= DMG_DEATHPIT
 	--and (me.soap_deadtimer <= TR/3)
 		if me.sprite2 ~= SPR2_MSC2
 		and not (soap.onGround and me.soap_deadtimer > 3)
@@ -1696,38 +1769,6 @@ rawset(_G,"Soap_DeathThinker",function(p,me,soap)
 				p.drawangle = me.angle
 				--no seenames
 				me.angle = $ + ANGLE_45
-			end
-		end
-		if me.sprite2 == SPR2_MSC2
-			local sweat = P_SpawnMobjFromMobj(me,
-				P_RandomRange(-16,16)*FU,
-				P_RandomRange(-16,16)*FU,
-				P_RandomRange(0, FixedDiv(me.height,me.scale)/FU)*FU,
-				MT_SPINDUST
-			)
-			sweat.spritexscale = $ + Soap_RandomFixedRange(0,1)/4
-			sweat.spriteyscale = sweat.spritexscale
-			
-			if (me.soap_inf and me.soap_inf.valid)
-			and me.soap_inf.color ~= SKINCOLOR_NONE
-				sweat.color = me.soap_inf.color
-				sweat.colorized = true
-			end
-			
-			sweat.destscale = 1
-			sweat.scalespeed = FixedDiv($, sweat.scale)
-			P_SetObjectMomZ(sweat, FU*4)
-			
-			if (me.momz*soap.gravflip < 0)
-			and soap.accspeed > FU
-			or (P_IsObjectOnGround(me) and soap.accspeed > 2*FU)
-				/*
-				me.rollangle = R_PointToAngle2(0, 0,
-					R_PointToDist2(0,0,me.momx,me.momy), me.momz/3
-				)
-				*/
-				me.momx = FixedMul($, soap_airfric)
-				me.momy = FixedMul($, soap_airfric)
 			end
 		end
 	end
@@ -1994,6 +2035,9 @@ rawset(_G,"Soap_DeathThinker",function(p,me,soap)
 				)
 				me.soap_landondeath = false
 			end
+		elseif not soap.onGround
+		and me.state == S_PLAY_SOAP_KNOCKOUT
+			me.state = S_PLAY_DEAD
 		end
 	elseif (me.state == S_PLAY_SOAP_KNOCKOUT)
 		if not (soap.onGround)
@@ -2960,4 +3004,11 @@ rawset(_G, "Soap_BouncyCheck", function(p, sector)
 		end
 		return true
 	end
+end)
+
+rawset(_G, "Soap_HUDTicker", function(p)
+	local soap = p.soaptable
+	local hud = soap.hud
+	
+	hud.painsurge = max($-1,0)
 end)

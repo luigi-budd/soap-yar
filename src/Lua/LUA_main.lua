@@ -136,6 +136,7 @@ addHook("PostThinkFrame",function()
 		-- added can immediately take effect
 		if (me.skin == SOAP_SKIN
 		or me.skin == TAKIS_SKIN)
+		and not (me.pizza_in or me.pizza_out) --Bruh!
 			Soap_TickSquashes(p,me,soap, me.hitlag)
 		end
 		

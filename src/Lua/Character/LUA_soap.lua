@@ -520,7 +520,10 @@ end)
 Takis_Hook.addHook("Soap_Thinker",function(p)
 	local me = p.realmo
 	local soap = p.soaptable
-
+	
+	--ticked back here so any changes will be instant
+	Soap_HUDTicker(p,me,soap)
+	
 	soap.afterimage = false
 	local cos_height = 6
 	--for reset state
@@ -2330,6 +2333,20 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 		soap.airdashed = false
 		
 		soap.paintime = $ + 1
+		
+		--DAMMIT!!!
+		if me.soap_damagevar ~= nil
+			P_Thrust(me, me.soap_damagevar.ang, me.soap_damagevar.speed)
+			if me.soap_damagevar.speed >= 30*me.scale
+				me.state = S_PLAY_DEAD
+				me.frame = A|($ &~FF_FRAMEMASK)
+				me.sprite2 = SPR2_MSC2
+				me.tics = -1
+				
+				S_StartSound(me,sfx_sp_oww)
+			end
+			me.soap_damagevar = nil
+		end
 	else
 		soap.paintime = 0
 		
@@ -2539,7 +2556,6 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 	
 	Soap_DeathThinker(p,me,soap)
 	Soap_SolThinker(p,me,soap)
-	
 	me.nohitlagforme = (p.powers[pw_invulnerability] > 0)
 end)
 
@@ -2938,7 +2954,8 @@ Takis_Hook.addHook("MoveBlocked",function(me,thing,line, goingup)
 	if goingup then return end
 	
 	if not (me.health)
-	and not (p.spectator or p.playerstate ~= PST_DEAD)
+	or (me.sprite2 == SPR2_MSC2)
+	and not (p.spectator or p.playerstate == PST_REBORN)
 		Soap_Bump(me,thing,line)
 		return
 	end
@@ -3377,34 +3394,36 @@ addHook("MobjDamage", function(me,inf,sor,dmg,dmgt)
 
 	if p.ptsr and p.ptsr.outofgame then return end
 	if (p.guard ~= nil and (p.guard == 1)) then return end
-	p.pflags = $ &~(PF_THOKKED|PF_JUMPED|PF_SHIELDABILITY)
+	--p.pflags = $ &~(PF_THOKKED|PF_JUMPED|PF_SHIELDABILITY)
+	
+	S_StartSoundAtVolume(me,sfx_sp_smk,255*3/4)
+	S_StartSound(me,sfx_sp_dmg)
+	Soap_ImpactVFX(me, inf, nil, power)
+	if Soap_IsLocalPlayer(p)
+		Soap_StartQuake((20 + p.timeshit*3/2)*FU, 16 + 16*(p.losstime / (10*TR)),
+			nil,
+			512*me.scale
+		)
+	end
 	
 	if me.health
-		S_StartSoundAtVolume(me,sfx_sp_smk,255*3/4)
-		S_StartSound(me,sfx_sp_dmg)
+		local power = 0
 		if (inf and inf.valid)
-			local inf_speed = FixedHypot(inf.momx,inf.momy)
+			local inf_speed = R_PointToDist2(0,0,inf.momx,inf.momy)
+			power = FU + FixedDiv(inf_speed, 40*inf.scale)
 			Soap_DamageSfx(me, inf_speed, 40*inf.scale, {
 				ultimate = (not soap.inBattle) and true or false,
 				nosfx = true
 			})
 			
-			P_Thrust(me, 
-				R_PointToAngle2(inf.x,inf.y,
-					me.x,me.y
-				),
-				inf_speed
-			)
-		else
+			me.soap_damagevar = {
+				ang = R_PointToAngle2(inf.x,inf.y, me.x,me.y),
+				speed = inf_speed
+			}
 			S_StartSound(me,sfx_sp_db0)
-		end
-		
-		Soap_ImpactVFX(me, inf)
-		if Soap_IsLocalPlayer(p)
-			Soap_StartQuake((20 + p.timeshit*3/2)*FU, 16 + 16*(p.losstime / (10*TR)),
-				nil,
-				512*me.scale
-			)
+			if inf_speed >= 30*me.scale
+				soap.hud.painsurge = 4
+			end
 		end
 		
 		if (dmgt == DMG_FIRE)
@@ -3419,7 +3438,6 @@ addHook("MobjDamage", function(me,inf,sor,dmg,dmgt)
 			S_StartSound(me, sfx_s250)
 		end
 	end
-
 end,MT_PLAYER)
 
 --soap death hook
@@ -3457,22 +3475,35 @@ addHook("MobjDeath", function(me,inf,sor,dmgt)
 		soap.deathtype = DMG_SPACEDROWN
 	end
 	
-	if (sor and sor.valid and (sor.flags & MF_BOSS))
+	if (sor and sor.valid)
 		local killer = sor
 		if (inf and inf.valid) then killer = inf; end
 		
-		me.z = $ + FU*soap.gravflip
-		local power = FixedHypot(FixedHypot(killer.momx,killer.momy),killer.momz)
-		P_InstaThrust(me, R_PointToAngle2(killer.x,killer.y,me.x,me.y), power)
-		P_SetObjectMomZ(me, 12*FU)
+		if (sor.flags & MF_BOSS)
+			me.z = $ + FU*soap.gravflip
+			local power = FixedHypot(FixedHypot(killer.momx,killer.momy),killer.momz)
+			P_InstaThrust(me, R_PointToAngle2(killer.x,killer.y,me.x,me.y), power)
+			P_SetObjectMomZ(me, 12*FU)
+			
+			me.soap_knockout = true
+			me.soap_knockout_speed = {
+				me.momx,me.momy,me.momz
+			}
+			
+			p.drawangle = R_PointToAngle2(me.x,me.y,killer.x,killer.y)
+			soap.deathtype = 0
+			return
+		end
 		
-		me.soap_knockout = true
-		me.soap_knockout_speed = {
-			me.momx,me.momy,me.momz
-		}
-		
-		p.drawangle = R_PointToAngle2(me.x,me.y,killer.x,killer.y)
-		soap.deathtype = 0
+		local speed = FixedHypot(FixedHypot(killer.momx,killer.momy),killer.momz)
+		if speed >= 30*me.scale
+			me.soap_knockout = true
+			me.soap_knockout_speed = {
+				me.momx,me.momy,me.momz
+			}
+			soap.deathtype = 0
+			soap.hud.painsurge = 4
+		end
 	end
 end)
 

@@ -687,7 +687,6 @@ local function SetCompat()
 				PTSR.DoParry(touch,pizza)
 				return true
 			end
-			
 		end)
 		PTSR_AddHook("pfthink",function(pizza)
 			if pizza.pizza_target and pizza.pizza_target.valid and pizza.pizza_target.hitlag

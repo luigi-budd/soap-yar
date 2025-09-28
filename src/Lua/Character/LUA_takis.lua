@@ -39,6 +39,7 @@ Takis_Hook.addHook("Takis_Thinker",function(p)
 	local clutch = soap.clutch
 	local hammer = soap.hammer
 	soap.afterimage = false
+	p.powers[pw_strong] = $ &~(STR_SPIKE)
 	
 	--TODO: move this skid block somewhere else?
 	if (p.skidtime)
@@ -209,12 +210,12 @@ Takis_Hook.addHook("Takis_Thinker",function(p)
 		and (soap.notCarried)
 		and me.state ~= S_PLAY_PAIN
 		and me.health
-		--and not takis.hammerblastdown
+		and not hammer.down
 		--and not PSO
 		and not (soap.noability & NOABIL_DIVE)
 		and not (soap.inPain)
-			--takis.hammerblastjumped = 0
-			--soap.bashspin = 0
+			hammer.jumped = 0
+			soap.bashspin = 0
 			
 			local ang = Soap_ControlDir(p)
 			S_StartSound(me,soap.inWater and sfx_splash or sfx_tk_div)
@@ -282,6 +283,7 @@ Takis_Hook.addHook("Takis_Thinker",function(p)
 		and ((me.health) or (p.playerstate == PST_LIVE))
 			clutch.time = $+1
 			soap.afterimage = true
+			p.powers[pw_strong] = $|STR_SPIKE
 			
 			--[[
 			if not (takis.bashtime)
@@ -433,7 +435,7 @@ Takis_Hook.addHook("Takis_Thinker",function(p)
 	--hammer blast thinker
 	--hammerblast thinker
 	--hammerblast stuff
-	--this is a bad spot for this but fuck it
+	--this is a bad spot for this but eh fuck it
 	p.thrustfactor = skins[TAKIS_SKIN].thrustfactor
 	if hammer.down
 		Takis_AbilityHelpers.hammerthinker(p)
@@ -468,7 +470,7 @@ Takis_Hook.addHook("Takis_Thinker",function(p)
 			
 			Soap_ResetState(p)
 		end
-	else--if not takis.bashspin
+	elseif not soap.bashspin
 		if me.state == S_PLAY_WALK
 		or me.state == S_PLAY_RUN
 			me.state = S_PLAY_DASH
@@ -488,6 +490,36 @@ Takis_Hook.addHook("Takis_Thinker",function(p)
 		
 		soap.dived = false
 	end
+	
+	if soap.bashspin
+	and not ((p.pflags & PF_SPINNING)
+	or p.skidtime and me.state == S_PLAY_SKID
+	or (soap.inPain))
+		if me.state ~= S_PLAY_TAKIS_TORNADO
+			me.state = S_PLAY_TAKIS_TORNADO
+		end
+		if soap.bashspin == 1 then soap.bashendangle = p.drawangle end
+		p.drawangle = me.angle - (soap.bashspin*ANG30)
+		soap.bashspin = $-1
+	else
+		if (p.skidtime and me.state == S_PLAY_SKID)
+		or (p.pflags & PF_SPINNING)
+		or (soap.inPain)
+			soap.bashspin = 0
+		end
+		
+		if (p.powers[pw_carry] == CR_NONE or p.powers[pw_carry] == CR_ROLLOUT)
+		and me.state == S_PLAY_TAKIS_TORNADO
+			me.state = S_PLAY_WALK
+			Soap_ResetState(p)
+			
+			if hammer.jumped
+				me.state = S_PLAY_SPIN
+			end
+		end
+	end
+	if not soap.bashspin then soap.bashendangle = nil end
+	if soap.bashspin < 0 then soap.bashspin = 0 end
 	
 	Soap_VFX(p,me,soap, {
 		squishme = squishme,

@@ -1,5 +1,5 @@
-local cv_fov --Needed for both
-local cv_glshearing --Needed for K_GetScreenCoords
+local cv_fov
+local cv_glshearing
 
 /*
 	Code updated in Lua by GenericHeroGuy for libSG
@@ -25,7 +25,7 @@ rawset(_G, "K_GetScreenCoords",function(vid,p,cam, point, props)
 	local x,y,scale
 	local targx,targy,targz
 	
-	local dist, twodee_dist
+	local dist
 	local distfact
 	local offset
 	
@@ -50,15 +50,27 @@ rawset(_G, "K_GetScreenCoords",function(vid,p,cam, point, props)
 	local camAngle = cam.angle
 	local camAiming = cam.aiming
 	local camPos = {x = cam.x, y = cam.y, z = cam.z}
-	if (not cam.chase)
-		if (takis_custombuild ~= nil) and (P_GetLocalAngle ~= nil)
+	if (not cam.chase) -- in first-person
+		if (P_GetLocalAngle ~= nil) --localaiming functions exist?
+		and (p == consoleplayer or p == secondarydisplayplayer)
 			camAngle = P_GetLocalAngle(p)
 			camAiming = P_GetLocalAiming(p)
-		elseif (SUBVERSION < 16) --assuming camera fix was merged into 2.2.16
+		elseif (SUBVERSION < 16) --assuming camera fix was merged into 2.2.16, and we're on 2.2.15
 			local m = p.realmo
 			camPos = {x = m.x, y = m.y, z = p.viewz}
-			camAngle = p.cmd.angleturn << 16
-			camAiming = p.cmd.aiming << 16
+			--sglib uses p.realmo.angle, so...
+			camAngle = m.angle
+			camAiming = p.aiming
+		--if we ARE on 2.2.16 then do nothing, everythings already correct
+		end
+	end
+	if (p.awayviewmobj and p.awayviewmobj.valid and p.awayviewtics > 0)
+		local away = p.awayviewmobj
+		--not on our camera?
+		if not (away.x == camPos.x and away.y == camPos.y and away.z + 20*FU == camPos.z)
+			camPos = {x = away.x, y = away.y, z = away.z + 20*FU}
+			camAngle = away.angle
+			camAiming = p.awayviewaiming
 		end
 	end
 	
@@ -96,7 +108,6 @@ rawset(_G, "K_GetScreenCoords",function(vid,p,cam, point, props)
 	end
 	
 	dist = R_PointToDist2(camPos.x,camPos.y, targx,targy)
-	twodee_dist = dist
 	
 	local opengl = vid.renderer() == "opengl"
 	if opengl and (cv_glshearing.value == 1
@@ -141,8 +152,8 @@ rawset(_G, "K_GetScreenCoords",function(vid,p,cam, point, props)
 		y = $ + offset
 	end
 	
-	scale = FixedDiv(yres, twodee_dist + 1)
-	scale = FixedDiv($, FixedDiv(cv_fov.value, 90*FU))
+	dist = FixedMul($, FixedDiv(cv_fov.value, 90*FU))
+	scale = FixedDiv(yres, dist + 1)
 	
 	-- project the angle to get our final X coordinate
 	x = FixedMul(tan(x), fov)

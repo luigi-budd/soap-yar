@@ -7,6 +7,7 @@ local filetree = {
 	"libs/LUA_takishooklib.lua",
 	"libs/LUA_hitlag.lua",
 	"libs/LUA_world2screen.lua",
+	"libs/LUA_customhud.lua",
 	
 	--character inits MUST be run before any of their thinkers/funcs!
 	"character/LUA_soapinit.lua",
@@ -18,6 +19,8 @@ local filetree = {
 	
 	"character/LUA_soap.lua",
 	"character/LUA_takis.lua",
+	--character hud
+	"HUD/main.lua",
 	
 	"LUA_thook.lua",
 	"LUA_misc.lua",
