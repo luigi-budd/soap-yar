@@ -158,3 +158,40 @@ mobjinfo[MT_SOAP_STUNNED] = {
 	height = 10*FRACUNIT,
 	flags = MF_NOCLIPTHING|MF_NOCLIPHEIGHT|MF_NOCLIP|MF_NOGRAVITY
 }
+
+-- better MT_SPINDUST
+SafeFreeslot("MT_SOAP_DUST")
+mobjinfo[MT_SOAP_DUST] = {
+	doomednum = -1,
+	spawnstate = S_SPINDUST1,
+	radius = 4*FRACUNIT,
+	height = 4*FRACUNIT,
+	flags = MF_NOBLOCKMAP|MF_NOGRAVITY|MF_NOCLIPHEIGHT|MF_NOCLIP
+}
+
+SafeFreeslot("S_SOAP_LUNGEVFX")
+states[S_SOAP_LUNGEVFX] = {
+	sprite = SPR_SOAP_GFX,
+	frame = 3|FF_PAPERSPRITE|FF_ADD|FF_FULLBRIGHT,
+	tics = 1,
+	action = function(mo)
+		local me = mo.target
+		if not (me and me.valid) then return end
+		if me.sprite2 ~= SPR2_ROLL then P_RemoveMobj(mo); return end
+		
+		mo.rollangle = $ - ANGLE_45
+		local a = mo.adjust.ang
+		P_MoveOrigin(mo,
+			me.x + P_ReturnThrustX(nil,a,mo.adjust.x),
+			me.y + P_ReturnThrustY(nil,a,mo.adjust.y),
+			me.z
+		)
+		if me.eflags & MFE_VERTICALFLIP
+			mo.eflags = $|MFE_VERTICALFLIP
+			mo.flags2 = $|MF2_OBJECTFLIP
+			
+			mo.z = me.z + me.height - z - mo.height
+		end
+	end,
+	nextstate = S_SOAP_LUNGEVFX
+}

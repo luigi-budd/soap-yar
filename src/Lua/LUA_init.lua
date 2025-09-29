@@ -137,8 +137,6 @@ rawset(_G, "Soap_InitTable", function(p)
 		crouch_cooldown = false,
 		crouch_time = 0,
 		crouch_removed = false, --was_crouching
-		slipping = false,
-		sliptime = 0,
 		
 		pounding = false,
 		pound_cooldown = 0,

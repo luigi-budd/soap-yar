@@ -26,7 +26,7 @@ rawset(_G,"Soap_RandomFixedSigned",do
 	return P_RandomFixed() * sign(P_SignedRandom())
 end)
 rawset(_G,"Soap_RandomFixedRange",function(a,b)
-	return P_RandomRange(a,b)*FU + Soap_RandomFixedSigned()
+	return clamp(a*FU, P_RandomRange(a,b)*FU + Soap_RandomFixedSigned(), b*FU)
 end)
 rawset(_G,"P_RandomSign",do
 	return sign(P_SignedRandom()) or -1 -- -1 if sign is 0

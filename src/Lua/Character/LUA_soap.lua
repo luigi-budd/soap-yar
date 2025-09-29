@@ -51,7 +51,7 @@ local armacolors = {
 }
 
 local function dust_type(me)
-	return (me.eflags & (MFE_UNDERWATER|MFE_TOUCHWATER)) and P_RandomRange(MT_SMALLBUBBLE,MT_MEDIUMBUBBLE) or MT_SPINDUST
+	return (me.eflags & (MFE_UNDERWATER|MFE_TOUCHWATER)) and P_RandomRange(MT_SMALLBUBBLE,MT_MEDIUMBUBBLE) or MT_SOAP_DUST
 end
 local function dust_noviewmobj(dust)
 	dust.dontdrawforviewmobj = me
@@ -411,6 +411,43 @@ local function accelerative_speedlines(p,me,soap, speed, threshold, color)
 	end
 end
 
+local function dolunge(p,me,soap, fromjump)
+	if me.state ~= S_PLAY_SOAP_SLIP then return end
+	p.charflags = $|SF_NOSKID
+	if not fromjump
+		P_DoJump(p,true,true)
+		p.pflags = $|PF_JUMPED|PF_JUMPDOWN
+		soap.jump = max($,1)
+		p.cmd.buttons = $|BT_JUMP
+	end
+	
+	me.soap_lungeadjusted = nil --(p.cmd.forwardmove ~= 0 or p.cmd.sidemove ~= 0)
+	local ang = Soap_ControlDir(p)
+	if soap.accspeed < 35*FU
+		P_InstaThrust(me, ang, FixedHypot(me.momx,me.momy) + (soap.inWater and 5 or 12)*me.scale)
+	end
+	S_StartSound(me, sfx_sp_cln)
+	
+	for i = 0,8
+		Soap_WindLines(me,nil,nil,nil, i < 4 and 1 or -1)
+	end
+	me.soap_lungeeffect = 12
+	me.soap_lungeangle = ang
+	local ghost = P_SpawnGhostMobj(me)
+	ghost.scale = 3*me.scale/2
+	ghost.destscale = FixedMul(me.scale,2)
+	ghost.color = SKINCOLOR_SAPPHIRE
+	ghost.colorized = true
+	ghost.frame = $|TR_TRANS50
+	ghost.blendmode = AST_ADD
+	ghost.state = S_PLAY_ROLL
+	ghost.tics = -1
+	
+	ghost.momx,ghost.momy = me.momx,me.momy
+	ghost.momz = me.momz
+	me.soap_lungeghost = ghost
+end
+
 local discoranges = {
 	["DISCO1"] = true,
 	["DISCO2"] = true,
@@ -423,7 +460,11 @@ Takis_Hook.addHook("PreThinkFrame",function(p)
 	if (me.skin ~= SOAP_SKIN) then return end
 	local soap = p.soaptable
 	
+	p.pflags = $ &~SF_NOSKID
+	if me.soap_lungeeffect then p.charflags = $|SF_NOSKID end
+	
 	if soap.fakeskidtime
+	and not (p.charflags & SF_NOSKID)
 		if P_GetPlayerControlDirection(p) == 1
 			p.cmd.forwardmove = $/2
 		end
@@ -659,7 +700,7 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 						FixedDiv(boom.height,boom.scale)/2 + Soap_RandomFixedRange(-15,15),
 						MT_THOK
 					)
-					poof.state = mobjinfo[MT_SPINDUST].spawnstate
+					poof.state = mobjinfo[MT_SOAP_DUST].spawnstate
 					local hang,vang = R_PointTo3DAngles(
 						poof.x,poof.y,poof.z,
 						boom.x,boom.y,boom.z + boom.height/2
@@ -712,6 +753,7 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 	if (soap.c2)
 	or forced_crouch
 		
+		--[[
 		--crouching
 		if soap.onGround
 		and me.health
@@ -733,7 +775,7 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 				P_MovePlayer(p)
 				
 				soap.crouch_cooldown = true
-				
+			
 			--spin launch
 			elseif not can_crouch --soap.rdashing
 			and not (p.pflags & PF_SPINNING)
@@ -798,6 +840,66 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 				soap.crouch_time = $ + 1
 			end
 		end
+		]]--
+		
+		if (soap.c2 == 1 or (me.eflags & MFE_JUSTHITFLOOR))
+			--slide
+			if me.state ~= S_PLAY_SOAP_SLIP
+			and soap.onGround
+			and not (p.pflags & PF_SPINNING)
+			and soap.taunttime == 0
+			and me.health
+			and not (soap.noability & SNOABIL_CROUCH)
+			and soap.notCarried
+			and not soap.pounding
+				local ang = Soap_ControlDir(p)
+				S_StartSound(me,sfx_tk_sld)
+				
+				local thrust = 7*FU + (soap.accspeed)
+				if thrust > 22*FU
+					if (soap.accspeed < 22*FU)
+						thrust = (22*FU - soap.accspeed) + soap.accspeed
+					else
+						thrust = 0
+					end
+				end
+				
+				thrust = FixedMul($,me.scale)
+				if thrust > 0
+					P_InstaThrust(me,ang,thrust)
+				end
+				
+				me.state = S_PLAY_SOAP_SLIP
+				p.pflags = $|PF_SPINNING
+				P_MovePlayer(p)
+				if not ((p.cmd.forwardmove) and (p.cmd.sidemove))
+				and soap.accspeed + thrust < 14*FU
+					P_InstaThrust(me,ang,15*me.scale)
+				end
+				
+				local start = (R_PointToAngle2(0,0,me.momx,me.momy) + ANGLE_180) - ANGLE_45
+				local ang_frac = FixedDiv(90*FU, 12*FU)
+				local dist = FixedDiv(me.radius,me.scale)
+				for i = 0,8
+					local fa = start + FixedAngle((ang_frac*i) + Soap_RandomFixedRange(-5,5))
+					local dust = P_SpawnMobjFromMobj(me,
+						P_ReturnThrustX(nil,fa, dist),
+						P_ReturnThrustY(nil,fa, dist),
+						0, MT_SOAP_DUST
+					)
+					dust.angle = fa
+					P_Thrust(dust,fa, FixedMul(Soap_RandomFixedRange(1,15),me.scale))
+					P_SetObjectMomZ(dust, Soap_RandomFixedRange(3,15))
+					dust.scale = $ * 7/6
+					
+					Soap_WindLines(me,0,nil,nil, i < 4 and 1 or -1)
+				end
+			--auto-lunge / auto lunge
+			elseif me.state == S_PLAY_SOAP_SLIP
+			--and soap.onGround
+				dolunge(p,me,soap)
+			end
+		end
 		
 		if (p.pflags & (PF_JUMPED|PF_THOKKED) == PF_JUMPED)
 		and (soap.c2 == 1)
@@ -828,6 +930,32 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 		end
 	else
 		soap.crouch_cooldown = false
+	end
+	
+	if me.state == S_PLAY_SOAP_SLIP
+		local angle,thrust = Soap_SlopeInfluence(me,p, {
+			allowstand = true, allowmult = true
+		})
+		if angle ~= nil
+			P_Thrust(me,angle,thrust*3/4)
+		end
+		
+		if soap.accspeed >= 4*FU
+		and soap.onGround
+			local chance = P_RandomChance(FU/3)
+			if soap.accspeed >= 15*FU
+				chance = true
+			end
+			
+			--kick up dust
+			if chance
+				p.dashspeed = 100*FU
+				P_DoSpinDashDust(p)
+				if not (me.eflags & (MFE_UNDERWATER|MFE_TOUCHLAVA) == MFE_UNDERWATER)
+					S_StartSound(me,sfx_s3k7e)
+				end
+			end
+		end
 	end
 	
 	if not soap.crouching
@@ -883,11 +1011,19 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 	end
 	
 	if not (soap.noability & SNOABIL_CROUCH)
+		local last = soap.last.anim.state
+		if (me.state == S_PLAY_SOAP_SLIP
+		and last ~= S_PLAY_SOAP_SLIP)
+		or (me.state == S_PLAY_ROLL
+		and last ~= S_PLAY_ROLL)
+			soap.setrolltrol = false
+		end
+		
 		if p.pflags & PF_JUMPED then p.pflags = $ &~PF_SPINNING end
 		if (p.pflags & PF_SPINNING)
 		and soap.onGround
 			if not soap.setrolltrol
-				p.thrustfactor = skins[p.skin].thrustfactor * 7
+				p.thrustfactor = skins[p.skin].thrustfactor * (me.state == S_PLAY_SOAP_SLIP and 3 or 7)
 			end
 			soap.setrolltrol = true
 		else
@@ -954,6 +1090,7 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 					if p.powers[pw_carry] == CR_NONE
 						me.state = S_PLAY_SKID
 						me.tics = p.skidtime
+						P_Thrust(me,me.angle, -3*me.scale)
 					end
 					soap.fakeskidtime = p.skidtime
 					p.pflags = $ &~PF_SPINNING
@@ -1248,7 +1385,7 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 				S_StartSound(me, sfx_wdjump)
 				
 				Soap_DustRing(me,
-					MT_SPINDUST,
+					MT_SOAP_DUST,
 					16,
 					{me.x,me.y,me.z},
 					me.radius * 3/2,
@@ -1348,138 +1485,6 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 			setstate = true
 		end
 		
-	end
-	
-	--sm64
-	if (p.pflags & PF_JUMPED)
-	--or not (p.pflags & PF_SPINNING)
-	or soap.inPain
-	or (not soap.notCarried)
-	or ((not soap.onGround and soap.accspeed < 10*FU)
-		or (soap.accspeed < 5*FU and me.standingslope == nil)
-	)
-	or not (me.health)
-		soap.slipping = false
-	end
-	if soap.slipping
-		local slope = me.standingslope
-		p.pflags = $|PF_SPINNING
-		soap.allowjump = true
-		soap.stasistic = max($, 3)
-		
-		if (slope)
-			local angdiff = R_PointToAngle2(0, 0, me.momx, me.momy) - slope.xydirection
-			local speed = FixedHypot(me.momx, me.momy)
-			
-			--going down it
-			if (P_ReturnThrustY(me, slope.zangle, P_ReturnThrustX(me, angdiff, speed))*soap.gravflip < 0)
-				P_ButteredSlope(me)
-			end
-		end
-		
-		if soap.onGround
-			local destang = R_PointToAngle2(0,0,me.momx,me.momy)
-			
-			if soap.sidemove ~= 0
-				local adjust = (abs(soap.sidemove) * 3) * FU/525
-				if (soap.accspeed < 12*FU)
-					adjust = FixedMul($, ease.outquad(FixedDiv(soap.accspeed,12*FU),FU,0))
-				end
-				
-				local angle = destang
-				local turn = soap.sidemove
-				--if we're facing OPPOSITE destang, make right inputs turn right,
-				--otherwise, make right inputs turn left and vice versa
-				if not (abs(destang - me.angle) > ANGLE_90)
-					turn = -$
-				end
-				if turn < 0
-					angle = $ - ANGLE_90
-				else
-					angle = $ + ANGLE_90
-				end
-				
-				P_Thrust(me, angle, FixedMul(adjust, me.scale))
-			end
-			
-			p.drawangle = destang + ANGLE_180
-			
-			local friction = ORIG_FRICTION + FU/13
-			if (me.standingslope)
-				me.friction = max($, friction)
-			else
-				--modifying friction doesnt do anything when the player
-				--is spinning so we have to do it ourselves
-				me.momx = FixedMul($, friction)
-				me.momy = FixedMul($, friction)
-			end
-		else
-			P_PitchRoll(me, FU/4)
-		end
-		
-		if soap.sliptime > 4
-		and (not slope
-		or (slope and abs(slope.zdelta) <= FU/4 or soap.accspeed < FU))
-		and soap.accspeed <= FU
-			soap.slipping = false
-		end
-		soap.sliptime = $ + 1
-		
-		local chance = P_RandomChance(FU/3)
-		if soap.accspeed >= 30*FU
-			chance = true
-		end
-		if soap.accspeed <= 7*FU
-			chance = false
-		end
-		if chance
-		and not (me.eflags & (MFE_UNDERWATER|MFE_TOUCHLAVA) == MFE_UNDERWATER)
-		and soap.onGround
-			S_StartSound(me,sfx_s3k7e)
-			local dust = P_SpawnMobjFromMobj(me,
-				P_RandomRange(-16,16)*FU,
-				P_RandomRange(-16,16)*FU,
-				0,
-				MT_SPINDUST
-			)
-			dust.destscale = 1
-			dust.scalespeed = FixedDiv($, dust.scale)
-			P_SetObjectMomZ(dust, FU*4 + soap.accspeed/20)
-			
-			P_InstaThrust(dust,
-				R_PointToAngle2(dust.x,dust.y, me.x,me.y),
-				-5*me.scale
-			)
-			--Yes!!
-			if P_RandomChance(FU/2)
-				local dust = P_SpawnMobjFromMobj(me,
-					P_RandomRange(-16,16)*FU,
-					P_RandomRange(-16,16)*FU,
-					0,
-					MT_SPINDUST
-				)
-				dust.destscale = 1
-				dust.scalespeed = FixedDiv($, dust.scale)
-				P_SetObjectMomZ(dust, FU*4 + soap.accspeed/20)
-				
-				P_InstaThrust(dust,
-					R_PointToAngle2(dust.x,dust.y, me.x,me.y),
-					-5*me.scale
-				)
-			end
-		end
-		if me.state ~= S_PLAY_SOAP_SLIP
-			me.state = S_PLAY_SOAP_SLIP
-		end
-	else
-		if soap.sliptime
-		and not setstate
-		and not (p.pflags & PF_JUMPED)
-			Soap_ResetState(p)
-			if not soap.onGround then me.state = S_PLAY_FALL end
-		end
-		
-		soap.sliptime = 0
 	end
 	
 	local spawn_aura = false
@@ -1615,7 +1620,7 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 	--idk why this lags
 	
 	--just take it off when we dont need it
-	p.charflags = $ &~(SF_RUNONWATER|SF_NOSKID)
+	p.charflags = $ &~(SF_RUNONWATER|SF_NOSKID)|(me.soap_lungeeffect and SF_NOSKID or 0)
 	if soap.rdashing and not soap.resetdash
 		--local micros = getTimeMicros()
 		local skin_t = skins[p.skin]
@@ -1628,9 +1633,12 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 		end
 		p.charflags = $|SF_NOSKID
 		
+		local uncurled = false
 		if soap.use == 1
 		and (p.pflags & PF_SPINNING)
 		and soap.onGround
+			uncurled = me.state == S_PLAY_SOAP_SLIP
+			
 			p.pflags = $ &~PF_SPINNING
 			p.thrustfactor = skin_t.thrustfactor
 			me.state = S_PLAY_RUN
@@ -1683,12 +1691,7 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 			soap.dashlose = 0
 		end
 		
-		if (p.pflags & PF_SPINNING)
-			if (me.state ~= S_PLAY_ROLL)
-			and (me.sprite2 ~= SPR2_MLEE)
-				me.state = S_PLAY_ROLL
-			end
-		else
+		if not (p.pflags & PF_SPINNING)
 			if p.normalspeed < dashspeed
 				if (me.state == S_PLAY_DASH)
 					me.state = S_PLAY_RUN
@@ -1714,6 +1717,10 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 		end
 		
 		if p.normalspeed < dashspeed
+			if uncurled
+				me.momx = FixedMul($, FU*5/6)
+				me.momy = FixedMul($, FU*5/6)
+			end
 			p.runspeed = max(soap.accspeed - 5*FU, FU)
 			
 			local eased = 0
@@ -1818,7 +1825,7 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 								Soap_RandomFixedRange(-4,4) + P_ReturnThrustX(nil, p.drawangle + sideangle * i, sidemove),
 								Soap_RandomFixedRange(-4,4) + P_ReturnThrustY(nil, p.drawangle + sideangle * i, sidemove),
 								0,
-								MT_SPINDUST
+								MT_SOAP_DUST
 							)
 							if me.eflags & (MFE_TOUCHWATER|MFE_UNDERWATER)
 								kickup.state = mobjinfo[MT_SMALLBUBBLE].spawnstate
@@ -1878,6 +1885,7 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 		and not soap.inPain
 		and P_GetPlayerControlDirection(p) ~= 1
 		and not p.guard
+		and not (p.charflags & SF_NOSKID)
 			p.skidtime = TR/2
 			if p.powers[pw_carry] == CR_NONE
 				me.state = S_PLAY_SKID
@@ -2569,7 +2577,6 @@ addHook("PlayerSpawn",function(p)
 	soap.sprung = false
 	soap.jumptime = 0
 	soap.rmomz = 0
-	soap.slipping = false
 	
 	soap.pounding = false
 	
@@ -3530,6 +3537,9 @@ addHook("JumpSpecial", function(p)
 		Soap_RemoveSquash(p, "landeffect")
 		me.soap_jumpdust = 4
 		me.soap_jumpeffect = nil
+		
+		--lunge
+		dolunge(p,me,soap, true)
 	end
 end)
 
@@ -3650,6 +3660,7 @@ Takis_Hook.addHook("PostThinkFrame",function(p)
 	if soap.rdashing
 	and (me.state == S_PLAY_JUMP or me.state == S_PLAY_ROLL)
 	and (p.pflags & PF_JUMPED)
+	and not (me.soap_lungeeffect)
 		if p.normalspeed >= skins[p.skin].normalspeed + soap._maxdash
 		or soap.airdashed
 			if (me.state ~= S_PLAY_DASH)
@@ -3661,7 +3672,7 @@ Takis_Hook.addHook("PostThinkFrame",function(p)
 	
 	if soap.uppercut_spin ~= 0
 		if not (me.flags & MF_NOTHINK)
-			p.drawangle = me.angle - FixedAngle(soap.uppercut_spin)
+			p.drawangle = (p.cmd.angleturn << 16) - FixedAngle(soap.uppercut_spin)
 			
 			local grav_mul = abs(FixedDiv(P_GetMobjGravity(me),me.scale/2))
 			soap.uppercut_spin = P_AngleLerp(
@@ -3683,7 +3694,7 @@ Takis_Hook.addHook("PostThinkFrame",function(p)
 						P_ReturnThrustX(nil,ang,rad),
 						P_ReturnThrustY(nil,ang,rad),
 						hei/2,
-						MT_SPINDUST
+						MT_SOAP_DUST
 					)
 					P_Thrust(dust, R_PointToAngle2(dust.x,dust.y,me.x,me.y), -5*me.scale)
 					dust.momx = $ + me.momx

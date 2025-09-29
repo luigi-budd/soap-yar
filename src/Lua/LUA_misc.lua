@@ -224,5 +224,13 @@ local function FreezeInHitlag(mo)
 		return true
 	end
 end
-
 addHook("MobjThinker",FreezeInHitlag,MT_SOAP_FREEZEGFX)
+
+local dust_mul = FU*19/22
+addHook("MobjThinker",function(mo)
+	if not mo.extravalue1
+		mo.tics = $ + P_RandomKey(7)
+		mo.extravalue1 = 1
+	end
+	mo.momx,mo.momy,mo.momz = FixedMul($1,dust_mul),FixedMul($2,dust_mul),FixedMul($3,dust_mul)
+end,MT_SOAP_DUST)

@@ -16,3 +16,6 @@ sfxinfo[sfx_tk_div].caption = "Dive"
 
 SafeFreeslot("sfx_tk_ahm")
 sfxinfo[sfx_tk_ahm].caption = "Swing"
+
+SafeFreeslot("sfx_tk_sld")
+sfxinfo[sfx_tk_sld].caption = "Slide"

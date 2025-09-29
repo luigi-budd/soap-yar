@@ -33,6 +33,8 @@ SafeFreeslot("sfx_sp_grb")
 sfxinfo[sfx_sp_grb].caption = "Grab"
 SafeFreeslot("sfx_sp_pry")
 sfxinfo[sfx_sp_pry].caption = "Parry"
+SafeFreeslot("sfx_sp_cln")
+sfxinfo[sfx_sp_cln].caption = "Slide lunge"
 
 for i = 0, 3
 	SafeFreeslot("sfx_sp_dm"..i)

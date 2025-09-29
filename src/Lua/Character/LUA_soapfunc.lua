@@ -1,6 +1,6 @@
 local CV = SOAP_CV
 local function dust_type(me)
-	return (me.eflags & (MFE_UNDERWATER|MFE_TOUCHWATER)) and P_RandomRange(MT_SMALLBUBBLE,MT_MEDIUMBUBBLE) or MT_SPINDUST
+	return (me.eflags & (MFE_UNDERWATER|MFE_TOUCHWATER)) and P_RandomRange(MT_SMALLBUBBLE,MT_MEDIUMBUBBLE) or MT_SOAP_DUST
 end
 local function dust_noviewmobj(dust)
 	dust.dontdrawforviewmobj = me
@@ -822,7 +822,7 @@ local WIND_PUSHMIN = (20)
 local WIND_PUSHMAX = (31)
 local WIND_PUSHANG_MIN = 29
 local WIND_PUSHANG_MAX = 35
-rawset(_G, "Soap_WindLines", function(me,rmomz,color,forceang)
+rawset(_G, "Soap_WindLines", function(me,rmomz,color,forceang,forceside)
 	if not (me and me.valid) then return end --?
 	if not me.health then return end
 	
@@ -878,7 +878,7 @@ rawset(_G, "Soap_WindLines", function(me,rmomz,color,forceang)
 	
 	local pushangle = wind.angle + ANGLE_90
 	local pushpush = FixedAngle(Soap_RandomFixedRange(WIND_PUSHANG_MIN,WIND_PUSHANG_MAX))
-	local pushsign = P_RandomSign()
+	local pushsign = (forceside ~= nil) and sign(forceside) or P_RandomSign()
 	local pushdist = (FixedMul(Soap_RandomFixedRange(WIND_PUSHMIN,WIND_PUSHMAX), me.scale) + (me.radius - FixedMul(mobjinfo[MT_PLAYER].radius,me.scale))) * pushsign
 	local sidex,sidey
 	--forward + backward shift for downwards movement
@@ -1513,10 +1513,6 @@ rawset(_G,"Soap_HandleNoAbils", function(p)
 		na = $|SNOABIL_CROUCH|SNOABIL_TOP
 	end
 	
-	if (soap.slipping)
-		na = $|SNOABIL_BOTHTAUNTS
-	end
-	
 	--battle special cases
 	if soap.inBattle
 		local noaction = false
@@ -1596,7 +1592,7 @@ rawset(_G,"Soap_DeathThinker",function(p,me,soap)
 			P_RandomRange(-16,16)*FU,
 			P_RandomRange(-16,16)*FU,
 			P_RandomRange(0, FixedDiv(me.height,me.scale)/FU)*FU,
-			MT_SPINDUST
+			MT_SOAP_DUST
 		)
 		sweat.spritexscale = $ + Soap_RandomFixedRange(0,1)/4
 		sweat.spriteyscale = sweat.spritexscale
@@ -1645,7 +1641,7 @@ rawset(_G,"Soap_DeathThinker",function(p,me,soap)
 				P_RandomRange(-16,16)*FU,
 				P_RandomRange(-16,16)*FU,
 				P_RandomRange(0, FixedDiv(me.height,me.scale)/FU)*FU,
-				MT_SPINDUST
+				MT_SOAP_DUST
 			)
 			P_SetObjectMomZ(sweat, P_RandomRange(1,4)*FU)
 			sweat.alpha = FU/2
@@ -1809,7 +1805,7 @@ rawset(_G,"Soap_DeathThinker",function(p,me,soap)
 						FixedDiv(me.height,me.scale)/2 + Soap_RandomFixedRange(-15,15),
 						MT_THOK
 					)
-					poof.state = mobjinfo[MT_SPINDUST].spawnstate
+					poof.state = mobjinfo[MT_SOAP_DUST].spawnstate
 					local hang,vang = R_PointTo3DAngles(
 						poof.x,poof.y,poof.z,
 						me.x,me.y,me.z + me.height/2
@@ -2171,11 +2167,13 @@ end)
 local lavacolor = SKINCOLOR_KETCHUP
 local goocolor = SKINCOLOR_PURPLE
 local waterruntype = MT_SOAP_FREEZEGFX
+local water_movefactor = tofixed("0.445")
+local water_friction = tofixed("0.973")
 local function VFX_Waterrun(p,me,soap)
 	--low friction on water
 	if soap.onWater
-		me.movefactor = tofixed("0.445")
-		me.friction = tofixed("0.973")
+		me.movefactor = water_movefactor
+		me.friction = water_friction
 	end
 	
 	local top_height = me.z + me.height
@@ -2428,11 +2426,83 @@ local function VFX_Squish(p,me,soap, props)
 		soap.spriteyscale = $1+mom,$2-(mom*9/10)
 	end
 end
+
+local function VFX_Lunge(p,me,soap, props)
+	if me.soap_lungeeffect
+		-- does something vfx shouldnt do (modify player)
+		if me.soap_lungeeffect == 12
+			local func = me.standingslope and FixedDiv or FixedMul
+			me.momz = func($, soap.inWater and FU*4/5 or FU*3/4)
+			me.soap_lungelenient = true
+		end
+		--late readjust
+		if me.soap_lungeeffect >= 10
+		and not me.soap_lungeadjusted
+		and (p.cmd.forwardmove ~= 0 or p.cmd.sidemove ~= 0)
+			-- dont re-add the boost
+			local ang = Soap_ControlDir(p)
+			P_InstaThrust(me, ang, FixedHypot(me.momx,me.momy))
+			me.soap_lungeadjusted = true
+			me.soap_lungeangle = ang
+			
+			local g = me.soap_lungeghost
+			if (g and g.valid)
+				P_SetOrigin(g, me.x,me.y,me.z)
+				g.angle = ang
+				g.momx,g.momy = me.momx,me.momy
+				g.momz = me.momz
+			end
+		end
+		
+		if me.soap_lungeeffect >= 3
+			Soap_WindLines(me)
+		end
+		if me.soap_lungeeffect & 2
+			local ang = me.soap_lungeangle or R_PointToAngle2(0,0,me.momx,me.momy)
+			local rad = FixedDiv(me.radius + 4*me.scale,me.scale)/FU
+			local xoff = Soap_RandomFixedRange(-rad,rad)
+			local yoff = Soap_RandomFixedRange(-rad,rad)
+			local roll = P_SpawnMobjFromMobj(me,
+				P_ReturnThrustX(nil,ang - ANGLE_90, xoff),
+				P_ReturnThrustY(nil,ang - ANGLE_90, yoff),
+				0,MT_SOAP_FREEZEGFX
+			)
+			if (roll and roll.valid)
+				roll.target = me
+				roll.angle = ang - AngleFixed(Soap_RandomFixedRange(-12,12))
+				roll.adjust = {
+					ang = ang - ANGLE_90,
+					x = FixedMul(xoff,me.scale), y = FixedMul(yoff,me.scale)
+				}
+				roll.state = S_SOAP_LUNGEVFX
+				if (roll and roll.valid)
+					roll.rollangle = Soap_RandomFixedRange(0,360)*ANG1
+					roll.fuse = P_RandomRange(4,8)
+				end
+			end
+		end
+		
+		me.soap_lungeeffect = $ - 1
+		if not me.soap_lungeeffect then me.soap_lungeeffect = nil; end
+	end
+	
+	if me.soap_lungeangle ~= nil
+	and (me.state == S_PLAY_JUMP
+	or me.state == S_PLAY_ROLL)
+	and not soap.onGround
+		p.drawangle = me.soap_lungeangle
+	elseif not me.soap_lungelenient
+		me.soap_lungeangle = nil
+	end
+	me.soap_lungelenient = nil
+end
+
 rawset(_G, "Soap_VFXFuncs",{
 	waterrun = VFX_Waterrun,
 	jumpdust = VFX_JumpDust,
 	landdust = VFX_LandDust,
 	squish = VFX_Squish,
+	lunge = VFX_Lunge,
 })
 
 --preferrably we could handle the auras here but ehh whatever
@@ -2444,16 +2514,18 @@ rawset(_G,"Soap_VFX",function(p,me,soap, props)
 		landdust = true,
 		squish = true,
 		deathanims = true,
+		lunge = true,
 	}
 	
 	/*
-		return value: table - table keys: override default behavior
+		return value: table - table keys: override default behavior (if true, the vfx will not play)
 		table entries:
 			["waterrun"] = boolean
 			["jumpdust"] = boolean
 			["landdust"] = boolean
 			["squish"] = boolean
 			["deathanims"] = boolean
+			etc...
 	*/
 	local hook_event,hook_name = Takis_Hook.findEvent("Char_VFX")
 	if hook_event
@@ -2476,6 +2548,12 @@ rawset(_G,"Soap_VFX",function(p,me,soap, props)
 			if fxtable.deathanims
 				allowed.deathanims = false
 			end
+			if fxtable.deathanims
+				allowed.deathanims = false
+			end
+			if fxtable.lunge
+				allowed.lunge = false
+			end
 		end
 	end
 	
@@ -2493,6 +2571,10 @@ rawset(_G,"Soap_VFX",function(p,me,soap, props)
 	
 	if allowed.squish
 		VFX_Squish(p,me,soap, props)
+	end
+	
+	if allowed.lunge
+		VFX_Lunge(p,me,soap, props)
 	end
 	
 	soap.allowdeathanims = allowed.deathanims

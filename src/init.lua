@@ -1,8 +1,8 @@
 local mbrelease = dofile("Vars/mbrelease.lua")
 --who even is this guy anyways
 local not_in_mb = {
-	["character/LUA_takisinit.lua"] = true,
-	["character/LUA_takisfunc.lua"] = true,
+	--["character/LUA_takisinit.lua"] = true,
+	--["character/LUA_takisfunc.lua"] = true,
 	["character/LUA_takis.lua"] = true,
 }
 
