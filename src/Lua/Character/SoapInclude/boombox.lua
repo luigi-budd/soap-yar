@@ -209,7 +209,8 @@ mobjinfo[MT_SOAP_BOOMBOX] = {
 	spawnhealth = 1,
 	height = 28*FRACUNIT,
 	radius = 14*FRACUNIT,
-	flags = MF_NOCLIPTHING
+	flags = MF_NOCLIPTHING,
+	painchance = FU / 10
 }
 addHook("ShouldDamage",function(mo,_,_,_,dmgt)
 	if dmgt == DMG_DEATHPIT

@@ -645,7 +645,7 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 				boom.lifetime = 0
 				S_StartSoundAtVolume(me,sfx_sp_jm2, 255 * 8/10)
 				boom.songid = 1
-				if P_RandomChance(FU / 10)
+				if P_RandomChance(boom.info.painchance)
 					boom.funny = true
 					boom.songid = P_RandomRange(2, #SOAP_BOOMBOXJAMS)
 				end
@@ -3608,8 +3608,6 @@ Takis_Hook.addHook("PostThinkFrame",function(p)
 			local height = me.z + p.viewheight - eased
 			p.viewz = min($, height)
 		end
-	else
-		crouch_lerp = 0
 	end
 	
 	--this is really cool
