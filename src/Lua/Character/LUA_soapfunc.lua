@@ -330,7 +330,11 @@ end)
 
 rawset(_G,"Soap_ControlDir",function(p)
 	if (p.soaptable and p.soaptable.in2D)
-		return (p.cmd.sidemove < 0) and ANGLE_180 or 0
+		if p.cmd.sidemove == 0
+			return p.realmo.angle
+		else
+			return (p.cmd.sidemove < 0) and ANGLE_180 or 0
+		end
 	end
 	return (p.cmd.angleturn << 16) + R_PointToAngle2(0, 0, p.cmd.forwardmove << 16, -p.cmd.sidemove << 16)
 end)
@@ -2429,7 +2433,6 @@ end
 
 local function VFX_Lunge(p,me,soap, props)
 	if me.soap_lungeeffect
-		
 		-- does something vfx shouldnt do (modify player)
 		if me.soap_lungeeffect == 12
 			local func = me.standingslope and FixedDiv or FixedMul
@@ -2459,7 +2462,7 @@ local function VFX_Lunge(p,me,soap, props)
 		if me.soap_lungeeffect >= 3
 			Soap_WindLines(me)
 		end
-		if me.soap_lungeeffect & 2
+		do --if me.soap_lungeeffect & 2
 			local ang = me.soap_lungeangle or R_PointToAngle2(0,0,me.momx,me.momy)
 			local rad = FixedDiv(me.radius + 4*me.scale,me.scale)/FU
 			local xoff = Soap_RandomFixedRange(-rad,rad)

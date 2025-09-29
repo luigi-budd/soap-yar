@@ -466,6 +466,7 @@ local function dolunge(p,me,soap, fromjump)
 	ghost.momx,ghost.momy = me.momx,me.momy
 	ghost.momz = me.momz
 	me.soap_lungeghost = ghost
+	me.pitch,me.roll = 0,0
 end
 
 local discoranges = {
@@ -490,13 +491,17 @@ Takis_Hook.addHook("PreThinkFrame",function(p)
 		if not me.soap_lungefromjump
 			p.cmd.buttons = $|BT_JUMP
 		end
-	elseif me.soap_lungeangle ~= nil
+	elseif (me.soap_lungeangle ~= nil or me.soap_lungekeep)
 	and not me.soap_lungefromjump
 		if (p.cmd.buttons & BT_CUSTOM2)
 			p.cmd.buttons = $|BT_JUMP
+			me.soap_lungekeep = true
 		else
 			me.soap_lungefromjump = true
+			me.soap_lungekeep = nil
 		end
+	else
+		me.soap_lungekeep = nil
 	end
 	
 	if soap.fakeskidtime
@@ -990,6 +995,8 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 					S_StartSound(me,sfx_s3k7e)
 				end
 			end
+		elseif not soap.onGround
+			P_PitchRoll(me, FU/10)
 		end
 	end
 	
@@ -1520,6 +1527,12 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 			setstate = true
 		end
 		
+		-- auto lunge part 2
+		if (soap.jump == 1)
+		and me.state == S_PLAY_SOAP_SLIP
+		and not soap.onGround
+			dolunge(p,me,soap)
+		end
 	end
 	
 	local spawn_aura = false

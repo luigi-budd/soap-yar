@@ -192,6 +192,9 @@ states[S_SOAP_LUNGEVFX] = {
 			
 			mo.z = me.z + me.height - z - mo.height
 		end
+		if mo.fuse < 3
+			mo.alpha = $ - (FU/3)
+		end
 	end,
 	nextstate = S_SOAP_LUNGEVFX
 }
