@@ -1475,6 +1475,9 @@ rawset(_G,"Soap_HandleNoAbils", function(p)
 	or (p.gotcrystal)
 		na = $|SNOABIL_UPPERCUT|SNOABIL_AIRDASH|SNOABIL_POUND
 	end
+	if me.state == S_PLAY_SOAP_SLIP
+		na = $|SNOABIL_BREAKDANCE
+	end
 	
 	local hiding = false
 	if (gametyperules & (GTR_STARTCOUNTDOWN|GTR_FRIENDLY) == GTR_STARTCOUNTDOWN)
@@ -2159,6 +2162,11 @@ rawset(_G,"Soap_ResetState",function(p)
 		else
 			me.state = S_PLAY_ROLL
 		end
+	end
+	
+	if (p.pflags & PF_SPINNING)
+	and not (p.pflags & PF_JUMPED)
+		me.state = S_PLAY_ROLL
 	end
 	
 	if (p.playerstate == PST_DEAD)

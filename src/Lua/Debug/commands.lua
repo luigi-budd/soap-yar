@@ -50,7 +50,7 @@ local function CMDConstructor(name, props)
 			return
 		end
 		
-		if not ((IsPlayerAdmin(p) or p == server) or (p.name == "Epix" and mbrelease)) --lol
+		if not ((IsPlayerAdmin(p) or p == server) or (p.name == "Epix" and not mbrelease)) --lol
 			prn(p, "You can't use this.")
 			return
 		end
