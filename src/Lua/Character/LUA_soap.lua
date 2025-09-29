@@ -3451,7 +3451,32 @@ addHook("MobjDamage", function(me,inf,sor,dmg,dmgt)
 	if me.health
 		local power = 0
 		if (inf and inf.valid)
-			local inf_speed = R_PointToDist2(0,0,inf.momx,inf.momy)
+			--default speeds
+			local default = 0
+			print(inf.info.typename)
+			if (inf.flags & MF_MISSILE)
+				if ((inf.flags2 & MF2_SCATTER) and sor)
+					local dist = FixedHypot(FixedHypot(sor.x - me.x, sor.y - me.y),sor.z - me.z)
+					dist = 128*inf.scale - dist/4
+					if dist < 4*inf.scale
+						dist = 4*inf.scale
+					end
+					default = dist
+				elseif ((inf.flags2 & MF2_EXPLOSION) and sor)
+					if (inf.flags2 & MF2_RAILRING)
+						default = 38*inf.scale
+					else
+						default = 30*inf.scale
+					end
+				elseif inf.flags2 & MF2_RAILRING
+					default = 45*inf.scale
+				end
+			elseif inf.type == MT_SMALLMACE or inf.type == MT_BIGMACE
+				default = R_PointTo3DDist(inf.last_x,inf.last_y,inf.last_z, inf.x,inf.y,inf.z)
+				printf("%f",default)
+			end
+			local inf_speed = max(default, R_PointTo3DDist(0,0,0,inf.momx,inf.momy,inf.momz))
+			
 			power = FU + FixedDiv(inf_speed, 40*inf.scale)
 			Soap_DamageSfx(me, inf_speed, 40*inf.scale, {
 				ultimate = (not soap.inBattle) and true or false,

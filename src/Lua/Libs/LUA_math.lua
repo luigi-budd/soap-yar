@@ -41,6 +41,7 @@ rawset(_G,"R_PointTo3DAngles",function(x1,y1,z1, x2,y2,z2)
 end)
 
 --this function is a fraud...
+-- R_PointToDist3D?
 rawset(_G,"R_PointTo3DDist",function(x1,y1,z1, x2,y2,z2)
 	--return R_PointToDist2(0, 0, R_PointToDist2(x1,y1,x2,y2), z1 - z2)
 	return FixedHypot(FixedHypot(x2 - x1, y2 - y1), z2 - z1)
