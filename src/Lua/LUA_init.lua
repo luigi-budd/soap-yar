@@ -167,6 +167,7 @@ rawset(_G, "Soap_InitTable", function(p)
 		--if non-zero, delay airdash until this tics to 0
 		airdashcharge = 0,
 		noairdashforme = false,
+		airdashcamera = false,
 		
 		rdashing = false,
 		lastrdash = false,
