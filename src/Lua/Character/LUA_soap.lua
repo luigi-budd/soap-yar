@@ -3438,9 +3438,9 @@ addHook("MobjDamage", function(me,inf,sor,dmg,dmgt)
 	if (p.guard ~= nil and (p.guard == 1)) then return end
 	p.pflags = $ &~(PF_THOKKED|PF_JUMPED|PF_SHIELDABILITY)
 	
+	local power = 0
 	S_StartSoundAtVolume(me,sfx_sp_smk,255*3/4)
 	S_StartSound(me,sfx_sp_dmg)
-	Soap_ImpactVFX(me, inf, nil, power)
 	if Soap_IsLocalPlayer(p)
 		Soap_StartQuake((20 + p.timeshit*3/2)*FU, 16 + 16*(p.losstime / (10*TR)),
 			nil,
@@ -3449,11 +3449,9 @@ addHook("MobjDamage", function(me,inf,sor,dmg,dmgt)
 	end
 	
 	if me.health
-		local power = 0
 		if (inf and inf.valid)
 			--default speeds
 			local default = 0
-			print(inf.info.typename)
 			if (inf.flags & MF_MISSILE)
 				if ((inf.flags2 & MF2_SCATTER) and sor)
 					local dist = FixedHypot(FixedHypot(sor.x - me.x, sor.y - me.y),sor.z - me.z)
@@ -3473,12 +3471,11 @@ addHook("MobjDamage", function(me,inf,sor,dmg,dmgt)
 				end
 			elseif inf.type == MT_SMALLMACE or inf.type == MT_BIGMACE
 				default = R_PointTo3DDist(inf.last_x,inf.last_y,inf.last_z, inf.x,inf.y,inf.z)
-				printf("%f",default)
 			end
 			local inf_speed = max(default, R_PointTo3DDist(0,0,0,inf.momx,inf.momy,inf.momz))
 			
-			power = FU + FixedDiv(inf_speed, 40*inf.scale)
-			Soap_DamageSfx(me, inf_speed, 40*inf.scale, {
+			power = FU + FixedDiv(inf_speed, 40*me.scale)
+			Soap_DamageSfx(me, inf_speed, 40*me.scale, {
 				ultimate = (not soap.inBattle) and true or false,
 				nosfx = true
 			})
@@ -3505,6 +3502,7 @@ addHook("MobjDamage", function(me,inf,sor,dmg,dmgt)
 			S_StartSound(me, sfx_s250)
 		end
 	end
+	Soap_ImpactVFX(me, inf, nil, power)
 end,MT_PLAYER)
 
 --soap death hook
