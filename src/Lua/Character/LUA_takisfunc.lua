@@ -122,7 +122,7 @@ rawset(_G,"Takis_DoClutch",function(p,riding)
 			ghost.colorized = true
 			ghost.frame = $|TR_TRANS10
 			ghost.blendmode = AST_ADD
-			--ghost.state = S_PLAY_TAKIS_TORNADO
+			ghost.state = S_PLAY_TAKIS_TORNADO
 			ghost.tics = -1
 			if not (G_RingSlingerGametype())
 				P_ElementalFire(p)
@@ -249,7 +249,7 @@ rawset(_G,"Takis_DoClutch",function(p,riding)
 	
 	local ease_time = 5
 	local ease_func = "insine"
-	local strength = (FU/3)
+	local strength = combod and (FU * 3/4) or (FU/2)
 	Soap_AddSquash(p, {
 		ease_func = ease_func,
 		start_v = strength,

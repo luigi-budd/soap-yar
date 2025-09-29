@@ -175,9 +175,9 @@ states[S_SOAP_LUNGEVFX] = {
 	frame = 3|FF_PAPERSPRITE|FF_ADD|FF_FULLBRIGHT,
 	tics = 1,
 	action = function(mo)
-		local me = mo.target
+		local me = mo.tracer
 		if not (me and me.valid) then return end
-		if me.sprite2 ~= SPR2_ROLL then P_RemoveMobj(mo); return end
+		if not (me.sprite2 == SPR2_ROLL or me.state == S_PLAY_JUMP) then P_RemoveMobj(mo); return end
 		
 		mo.rollangle = $ - ANGLE_45
 		local a = mo.adjust.ang

@@ -411,15 +411,35 @@ local function accelerative_speedlines(p,me,soap, speed, threshold, color)
 	end
 end
 
+local function do_jump_effect(p,me,soap)
+	Soap_DustRing(me,
+		dust_type(me), 8,
+		{me.x,me.y,me.z},
+		me.radius / 2,
+		8*me.scale,
+		me.scale * 3/2,
+		me.scale / 2,
+		false,
+		dust_noviewmobj
+	)
+	
+	Soap_SquashMacro(p, {ease_func = "outsine", ease_time = 8, x = -FU*7/10, y = -FU/2})
+	
+	Soap_RemoveSquash(p, "landeffect")
+	me.soap_jumpdust = 4
+	me.soap_jumpeffect = nil
+end
+
 local function dolunge(p,me,soap, fromjump)
 	if me.state ~= S_PLAY_SOAP_SLIP then return end
 	p.charflags = $|SF_NOSKID
+	me.soap_lungefromjump = fromjump
 	if not fromjump
+		do_jump_effect(p,me,soap)
 		P_DoJump(p,true,true)
-		p.pflags = $|PF_JUMPED|PF_JUMPDOWN
-		soap.jump = max($,1)
-		p.cmd.buttons = $|BT_JUMP
+		p.pflags = $|PF_JUMPED|PF_JUMPDOWN|PF_STARTJUMP
 	end
+	Soap_RemoveSquash(p, "soap_slide")
 	
 	me.soap_lungeadjusted = nil --(p.cmd.forwardmove ~= 0 or p.cmd.sidemove ~= 0)
 	local ang = Soap_ControlDir(p)
@@ -460,8 +480,24 @@ Takis_Hook.addHook("PreThinkFrame",function(p)
 	if (me.skin ~= SOAP_SKIN) then return end
 	local soap = p.soaptable
 	
+	--ticked back here so any changes will be instant
+	--(also out of the way of hitlag)
+	Soap_HUDTicker(p,me,soap)
+	
 	p.pflags = $ &~SF_NOSKID
-	if me.soap_lungeeffect then p.charflags = $|SF_NOSKID end
+	if me.soap_lungeeffect
+		p.charflags = $|SF_NOSKID
+		if not me.soap_lungefromjump
+			p.cmd.buttons = $|BT_JUMP
+		end
+	elseif me.soap_lungeangle ~= nil
+	and not me.soap_lungefromjump
+		if (p.cmd.buttons & BT_CUSTOM2)
+			p.cmd.buttons = $|BT_JUMP
+		else
+			me.soap_lungefromjump = true
+		end
+	end
 	
 	if soap.fakeskidtime
 	and not (p.charflags & SF_NOSKID)
@@ -561,9 +597,6 @@ end)
 Takis_Hook.addHook("Soap_Thinker",function(p)
 	local me = p.realmo
 	local soap = p.soaptable
-	
-	--ticked back here so any changes will be instant
-	Soap_HUDTicker(p,me,soap)
 	
 	soap.afterimage = false
 	local cos_height = 6
@@ -876,6 +909,8 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 				and soap.accspeed + thrust < 14*FU
 					P_InstaThrust(me,ang,15*me.scale)
 				end
+				Soap_SquashMacro(p, {ease_func = "insine", ease_time = 12, strength = (FU/3), name = "soap_slide"})
+				Soap_RemoveSquash(p, "landeffect")
 				
 				local start = (R_PointToAngle2(0,0,me.momx,me.momy) + ANGLE_180) - ANGLE_45
 				local ang_frac = FixedDiv(90*FU, 12*FU)
@@ -3521,22 +3556,7 @@ addHook("JumpSpecial", function(p)
 	
 	if soap.onGround
 	or me.soap_jumpeffect
-		Soap_DustRing(me,
-			dust_type(me), 8,
-			{me.x,me.y,me.z},
-			me.radius / 2,
-			8*me.scale,
-			me.scale * 3/2,
-			me.scale / 2,
-			false,
-			dust_noviewmobj
-		)
-		
-		Soap_SquashMacro(p, {ease_func = "outsine", ease_time = 8, x = -FU*7/10, y = -FU/2})
-		
-		Soap_RemoveSquash(p, "landeffect")
-		me.soap_jumpdust = 4
-		me.soap_jumpeffect = nil
+		do_jump_effect(p,me,soap)
 		
 		--lunge
 		dolunge(p,me,soap, true)

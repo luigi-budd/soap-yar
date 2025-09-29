@@ -7,7 +7,7 @@ local cv_save = {
 	CV.ai_style.name,
 	CV.quake_mul.name,
 }
-
+local mode = "cvars"
 local function printf(...)
 	for k,str in ipairs({...})
 		print("\x83SOAP (I/O)\x80: "..str)
@@ -18,24 +18,38 @@ end
 do
 	local file = io.openlocal(filepath, "r")
 	if file
+		printf("Loading preferences from '"..filepath.."'...")
 		local count = 1
 		local cvarname = ''
 		for line in file:lines()
-			--Load values every other line
-			if count % 2 == 0
-				local cvar = CV.FindVar(cvarname)
-				if cvar and cvarname:sub(1,4) == "soap"
-					CV_Set(cvar, line)
-				else
-					printf("Bad cvar name '"..cvarname.."'")
+			if mode == "cvars"
+				if line:find("LOAD IO")
+					mode = "io"
+					continue
 				end
+				
+				--Load values every other line
+				if count % 2 == 0
+					local cvar = CV.FindVar(cvarname)
+					if cvar and cvarname:sub(1,4) == "soap"
+						CV_Set(cvar, line)
+					else
+						printf("Bad cvar name '"..cvarname.."'")
+					end
+					count = $ + 1
+					continue
+				end
+				cvarname = line
 				count = $ + 1
-				continue
+			elseif mode == "io"
+				-- Does nothing.
+				--TODO: set cvars here too, then on PlayerJoin,
+				--		check for consoleplayer, and send commands based on
+				--		those cvars' values
 			end
-			cvarname = line
-			count = $ + 1
 		end
 		file:close()
+		printf("Done.")
 	end
 end
 
@@ -47,6 +61,8 @@ addHook("GameQuit",do
 		file:write(tostring(cvname).."\n")
 		file:write(tostring(cv.string).."\n")
 	end
+	file:write("LOAD IO\n")
+	file:write("test\n")
 	file:flush()
 	file:close()
 end)

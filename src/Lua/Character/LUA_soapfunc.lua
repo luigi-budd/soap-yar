@@ -2429,10 +2429,12 @@ end
 
 local function VFX_Lunge(p,me,soap, props)
 	if me.soap_lungeeffect
+		
 		-- does something vfx shouldnt do (modify player)
 		if me.soap_lungeeffect == 12
 			local func = me.standingslope and FixedDiv or FixedMul
 			me.momz = func($, soap.inWater and FU*4/5 or FU*3/4)
+			P_SetObjectMomZ(me, FixedDiv(me.momz*soap.gravflip,me.scale))
 			me.soap_lungelenient = true
 		end
 		--late readjust
@@ -2468,17 +2470,15 @@ local function VFX_Lunge(p,me,soap, props)
 				0,MT_SOAP_FREEZEGFX
 			)
 			if (roll and roll.valid)
-				roll.target = me
-				roll.angle = ang - AngleFixed(Soap_RandomFixedRange(-12,12))
+				roll.tracer = me
+				roll.angle = ang + FixedAngle(Soap_RandomFixedRange(-15,15))
 				roll.adjust = {
 					ang = ang - ANGLE_90,
 					x = FixedMul(xoff,me.scale), y = FixedMul(yoff,me.scale)
 				}
+				roll.rollangle = Soap_RandomFixedRange(0,360)*ANG1
+				roll.fuse = P_RandomRange(4,8)
 				roll.state = S_SOAP_LUNGEVFX
-				if (roll and roll.valid)
-					roll.rollangle = Soap_RandomFixedRange(0,360)*ANG1
-					roll.fuse = P_RandomRange(4,8)
-				end
 			end
 		end
 		
