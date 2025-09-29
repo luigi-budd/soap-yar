@@ -15,14 +15,13 @@ CV.quake_mul = CV_RegisterVar({
 	PossibleValue = {Off = 0, Half = 1, Normal = 2, Double = 3},
 })
 
--- i know this is probably ugly as fuck, but i dont actually know how to make this work with cvars without Synch problems?
 local function airdashCMD(p,arg)
 	if not arg then
 		local stat = (p.soaptable and p.soaptable.airdashcamera) and "On" or "Off"
 		CONS_Printf(p,"\"soap_airdashcamera\" is \""..stat.."\" default is \"Off\"")
 		return
 	end
-	if not p.soaptable then -- safety
+	if not p.soaptable then
 		CONS_Printf(p,"You can't use this right now.")
 		return
 	end
