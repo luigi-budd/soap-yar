@@ -55,6 +55,22 @@ hl.iterateHitlagged = function()
 					p.powers[pw_flashing] = max($,flashingtics)
 				end
 				
+				/*
+				printf("p.speed: %f\nrmomx,rmomy: %f, %f\nmomx,momy: %f, %f\nspinning: %d",
+					p.speed, p.rmomx,p.rmomy, mo.momx,mo.momy, p.pflags & PF_SPINNING
+				)
+				*/
+				
+				--reverse friction
+				if P_IsObjectOnGround(mo)
+					mo.friction = FU
+					
+					if (p.pflags & PF_SPINNING)
+						mo.momx = $ + (v[9] - $)
+						mo.momy = $ + (v[10] - $)
+					end
+				end
+				
 				--freeze in place
 				if Soap_IsLocalPlayer(p)
 					local cam = (p == displayplayer) and camera or camera2
@@ -72,6 +88,8 @@ hl.iterateHitlagged = function()
 				mo.hitlag = hl.cv_hitlagtics.value
 			end
 			mo.hitlag = max($ - 1, 0)
+			v[9] = mo.momx
+			v[10] = mo.momy
 		else
 			mo.flags = $ &~MF_NOTHINK --mo.hldata_st_lastflags or lastflags
 			mo.spritexoffset = 0
@@ -87,9 +105,13 @@ hl.iterateHitlagged = function()
 					p.followmobj.spritexoffset = 0
 					p.followmobj.translation = nil
 				end
-				p.pflags = $ &~PF_STARTJUMP
+				p.pflags = $|v[11] &~PF_STARTJUMP
+				P_MovePlayer(p)
 				if not (mo.state == S_PLAY_PAIN)
 					p.powers[pw_flashing] = 0
+				end
+				if (p.pflags & PF_SPINNING)
+					mo.state = v[5]
 				end
 			end
 			S_StopSoundByID(mo, sfx_kc38)
@@ -255,27 +277,27 @@ hl.iterateHitlaggedPostThink = function()
 				mo.translation = hl.hitlagTranslation
 			end
 			
-			if (mo.player and mo.player.valid)
-				local p = mo.player
-				p.pflags = $|v[4]|PF_FULLSTASIS|PF_JUMPSTASIS
-				if (p.followmobj and p.followmobj.valid)
-					p.followmobj.spritexoffset = mo.spritexoffset
-					p.followmobj.translation = mo.translation
-				end
-				
-				p.drawangle = v[3]
-			end
-			
-			P_SetMobjStateNF(mo, v[5])
-			mo.frame = A
-			mo.sprite = v[6]
-			if (mo.skin and mo.sprite == SPR_PLAY)
-				mo.sprite2 = v[8]
-			end
-			mo.frame = v[7]
-			
-			mo.flags2 = $ &~MF2_DONTDRAW
 		end
+		if (mo.player and mo.player.valid)
+			local p = mo.player
+			p.pflags = $|(mo.hitlag and v[4]|PF_FULLSTASIS|PF_JUMPSTASIS or 0)|v[11]
+			if (p.followmobj and p.followmobj.valid)
+				p.followmobj.spritexoffset = mo.spritexoffset
+				p.followmobj.translation = mo.translation
+			end
+			
+			p.drawangle = v[3]
+		end
+		
+		P_SetMobjStateNF(mo, v[5])
+		mo.frame = A
+		mo.sprite = v[6]
+		if (mo.skin and mo.sprite == SPR_PLAY)
+			mo.sprite2 = v[8]
+		end
+		mo.frame = v[7]
+		
+		mo.flags2 = $ &~MF2_DONTDRAW
 	end
 end
 
@@ -335,7 +357,8 @@ hl.addHitlag = function(
 		mo.flags,
 		(mo.player and mo.player.valid) and mo.player.drawangle,
 		(mo.player and mo.player.valid) and mo.player.pflags,
-		mo.state, mo.sprite, mo.frame, mo.sprite2
+		mo.state, mo.sprite, mo.frame, mo.sprite2, mo.momx,mo.momy, -- indexes 9 and 10 are saved for old momx/y
+		(mo.player and mo.player.valid) and (mo.player.pflags & PF_SPINNING) or 0 --save PF_SPINNING
 	})
 end
 
