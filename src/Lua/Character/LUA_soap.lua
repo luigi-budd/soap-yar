@@ -941,10 +941,12 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 			end
 		end
 		
+		--super transformation
 		if (p.pflags & (PF_JUMPED|PF_THOKKED) == PF_JUMPED)
 		and (soap.c2 == 1)
 		and Soap_SuperReady(p)
 		and not soap.isSolForm
+		and (me.soap_lungeangle == nil)
 			P_DoSuperTransformation(p)
 		end
 		
