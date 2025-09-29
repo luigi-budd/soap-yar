@@ -332,7 +332,11 @@ rawset(_G,"Soap_ControlDir",function(p)
 	if (p.soaptable and p.soaptable.in2D)
 		return (p.cmd.sidemove < 0) and ANGLE_180 or 0
 	end
-	return (p.cmd.angleturn << 16) + R_PointToAngle2(0, 0, p.cmd.forwardmove << 16, -p.cmd.sidemove << 16)
+	if (p.soaptable and p.soaptable.airdashcamera) then
+		return p.mo.angle
+	else
+		return (p.cmd.angleturn << 16) + R_PointToAngle2(0, 0, p.cmd.forwardmove << 16, -p.cmd.sidemove << 16)
+	end
 end)
 
 --tatsuru
