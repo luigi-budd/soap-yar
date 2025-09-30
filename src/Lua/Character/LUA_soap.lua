@@ -431,42 +431,7 @@ local function do_jump_effect(p,me,soap)
 end
 
 local function dolunge(p,me,soap, fromjump)
-	if me.state ~= S_PLAY_SOAP_SLIP then return end
-	p.charflags = $|SF_NOSKID
-	me.soap_lungefromjump = fromjump
-	if not fromjump
-		do_jump_effect(p,me,soap)
-		P_DoJump(p,true,true)
-		p.pflags = $|PF_JUMPED|PF_JUMPDOWN|PF_STARTJUMP
-	end
-	Soap_RemoveSquash(p, "soap_slide")
-	
-	me.soap_lungeadjusted = nil --(p.cmd.forwardmove ~= 0 or p.cmd.sidemove ~= 0)
-	local ang = Soap_ControlDir(p)
-	if soap.accspeed < 35*FU
-		P_InstaThrust(me, ang, FixedHypot(me.momx,me.momy) + (soap.inWater and 5 or 12)*me.scale)
-	end
-	S_StartSound(me, sfx_sp_cln)
-	
-	for i = 0,8
-		Soap_WindLines(me,nil,nil,nil, i < 4 and 1 or -1)
-	end
-	me.soap_lungeeffect = 12
-	me.soap_lungeangle = ang
-	local ghost = P_SpawnGhostMobj(me)
-	ghost.scale = 3*me.scale/2
-	ghost.destscale = FixedMul(me.scale,2)
-	ghost.color = SKINCOLOR_SAPPHIRE
-	ghost.colorized = true
-	ghost.frame = $|TR_TRANS50
-	ghost.blendmode = AST_ADD
-	ghost.state = S_PLAY_ROLL
-	ghost.tics = -1
-	
-	ghost.momx,ghost.momy = me.momx,me.momy
-	ghost.momz = me.momz
-	me.soap_lungeghost = ghost
-	me.pitch,me.roll = 0,0
+	Soap_DoLunge(p, fromjump)
 end
 
 local discoranges = {
@@ -480,28 +445,29 @@ Takis_Hook.addHook("PreThinkFrame",function(p)
 	local me = p.realmo
 	if (me.skin ~= SOAP_SKIN) then return end
 	local soap = p.soaptable
+	local lunge = soap.lunge
 	
 	--ticked back here so any changes will be instant
 	--(also out of the way of hitlag)
 	Soap_HUDTicker(p,me,soap)
 	
 	p.pflags = $ &~SF_NOSKID
-	if me.soap_lungeeffect
+	if lunge.effect
 		p.charflags = $|SF_NOSKID
-		if not me.soap_lungefromjump
+		if not lunge.fromjump
 			p.cmd.buttons = $|BT_JUMP
 		end
-	elseif (me.soap_lungeangle ~= nil or me.soap_lungekeep)
-	and not me.soap_lungefromjump
+	elseif (lunge.angle ~= nil or lunge.keep)
+	and not lunge.fromjump
 		if (p.cmd.buttons & BT_CUSTOM2)
 			p.cmd.buttons = $|BT_JUMP
-			me.soap_lungekeep = true
+			lunge.keep = true
 		else
-			me.soap_lungefromjump = true
-			me.soap_lungekeep = nil
+			lunge.fromjump = true
+			lunge.keep = false
 		end
 	else
-		me.soap_lungekeep = nil
+		lunge.keep = false
 	end
 	
 	if soap.fakeskidtime
@@ -770,6 +736,7 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 	--MF_NOSQUISH
 	local squishme = true
 	
+	local lunge = soap.lunge
 	local was_crouching = soap.crouching
 	soap.crouch_removed = was_crouching
 	soap.crouching = false
@@ -884,35 +851,44 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 			--slide
 			if me.state ~= S_PLAY_SOAP_SLIP
 			and soap.onGround
-			and not (p.pflags & PF_SPINNING)
+			-- and not (p.pflags & PF_SPINNING)
 			and soap.taunttime == 0
 			and me.health
 			and not (soap.noability & SNOABIL_CROUCH)
 			and soap.notCarried
 			and not soap.pounding
-				local ang = Soap_ControlDir(p)
-				S_StartSound(me,sfx_tk_sld)
+				--if you were spinning already, and WERENT sliding,
+				--you can flop on your belly so you can lunge later
+				local wasspinning = (p.pflags & PF_SPINNING)
 				
-				local thrust = 7*FU + (soap.accspeed)
-				if thrust > 22*FU
-					if (soap.accspeed < 22*FU)
-						thrust = (22*FU - soap.accspeed) + soap.accspeed
-					else
-						thrust = 0
+				local ang, thrust
+				if not wasspinning
+					ang = Soap_ControlDir(p)
+					S_StartSound(me,sfx_tk_sld)
+					
+					thrust = 7*FU + (soap.accspeed)
+					if thrust > 22*FU
+						if (soap.accspeed < 22*FU)
+							thrust = (22*FU - soap.accspeed) + soap.accspeed
+						else
+							thrust = 0
+						end
 					end
-				end
-				
-				thrust = FixedMul($,me.scale)
-				if thrust > 0
-					P_InstaThrust(me,ang,thrust)
+					
+					thrust = FixedMul($,me.scale)
+					if thrust > 0
+						P_InstaThrust(me,ang,thrust)
+					end
 				end
 				
 				me.state = S_PLAY_SOAP_SLIP
 				p.pflags = $|PF_SPINNING
-				P_MovePlayer(p)
-				if not ((p.cmd.forwardmove) and (p.cmd.sidemove))
-				and soap.accspeed + thrust < 14*FU
-					P_InstaThrust(me,ang,15*me.scale)
+				if not wasspinning
+					P_MovePlayer(p)
+					if not ((p.cmd.forwardmove) and (p.cmd.sidemove))
+					and soap.accspeed + thrust < 14*FU
+						P_InstaThrust(me,ang,15*me.scale)
+					end
 				end
 				Soap_SquashMacro(p, {ease_func = "insine", ease_time = 12, strength = (FU/3), name = "soap_slide"})
 				Soap_RemoveSquash(p, "landeffect")
@@ -946,7 +922,7 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 		and (soap.c2 == 1)
 		and Soap_SuperReady(p)
 		and not soap.isSolForm
-		and (me.soap_lungeangle == nil)
+		and (lunge.angle == nil)
 			P_DoSuperTransformation(p)
 		end
 		
@@ -1170,11 +1146,18 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 				local old_speed = p.normalspeed
 				local extracharge = 0
 				
-				--speed boost when landing from an airdash,
-				--pizza-tower style
-				if soap.airdashed
-				and (soap.accspeed >= 28*FU)
-					p.normalspeed = $ + soap._maxdash/2
+				--speed boost when landing from an airdash, pizza tower style
+				if (soap.airdashed
+				and soap.accspeed >= 28*FU)
+				or (lunge.angle ~= nil
+				and soap.accspeed >= 20*FU) -- landing from a lunge
+					--lunges give more speed
+					if lunge.angle ~= nil
+						-- lunge caps out at 35*FU
+						p.normalspeed = $ + FixedMul(soap._maxdash, clamp(0,FixedDiv(soap.accspeed, 45*FU),FU))
+					else
+						p.normalspeed = $ + soap._maxdash/2
+					end
 				end
 				
 				--this code is based off a script my friend marilyn wrote,
@@ -1304,7 +1287,7 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 		and me.health
 		and (p.powers[pw_carry] == CR_NONE)
 		and not soap.noairdashforme
-		and not (soap.noability & SNOABIL_AIRDASH)
+		and not (soap.noability & SNOABIL_AIRDASH or soap.lunge.lockout)
 			local thrust = 12*FU
 			local min_speed = 25*FU
 			local max_speed = clamp(39*FU, soap.accspeed, 39*FU + soap._maxdash)
@@ -1670,7 +1653,7 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 	--idk why this lags
 	
 	--just take it off when we dont need it
-	p.charflags = $ &~(SF_RUNONWATER|SF_NOSKID)|(me.soap_lungeeffect and SF_NOSKID or 0)
+	p.charflags = $ &~(SF_RUNONWATER|SF_NOSKID)|(lunge.effect and SF_NOSKID or 0)
 	if soap.rdashing and not soap.resetdash
 		--local micros = getTimeMicros()
 		local skin_t = skins[p.skin]
@@ -2644,6 +2627,7 @@ addHook("PlayerSpawn",function(p)
 	end
 	
 	soap.deathtype = 0
+	Soap_ResetLunge(p)
 end)
 
 addHook("PlayerCanDamage",function(p, targ)
@@ -3611,6 +3595,7 @@ local crouch_lerp = 0
 Takis_Hook.addHook("PostThinkFrame",function(p)
 	local me = p.realmo
 	local soap = p.soaptable
+	local lunge = soap.lunge
 	
 	soap.damagedealtthistic = 0
 	soap.iwashitthistic = false
@@ -3720,11 +3705,22 @@ Takis_Hook.addHook("PostThinkFrame",function(p)
 		me.frame = ($ &~FF_FRAMEMASK)|newframe
 		me.tics = -1
 	end
+	if me.state == S_PLAY_ROLL
+	and (lunge.angle ~= nil)
+		me.tics = min($,1)
+		local f = me.frame & FF_FRAMEMASK
+		if (f == C)
+			f = D
+		elseif (f == F)
+			f = A
+		end
+		me.frame = ($ &~FF_FRAMEMASK)|f
+	end
 	
 	if soap.rdashing
 	and (me.state == S_PLAY_JUMP or me.state == S_PLAY_ROLL)
 	and (p.pflags & PF_JUMPED)
-	and not (me.soap_lungeeffect)
+	and not (lunge.effect)
 		if p.normalspeed >= skins[p.skin].normalspeed + soap._maxdash
 		or soap.airdashed
 			if (me.state ~= S_PLAY_DASH)

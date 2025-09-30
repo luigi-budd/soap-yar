@@ -1478,6 +1478,9 @@ rawset(_G,"Soap_HandleNoAbils", function(p)
 	if me.state == S_PLAY_SOAP_SLIP
 		na = $|SNOABIL_BREAKDANCE
 	end
+	if soap.lunge.lockout
+		na = $|SNOABIL_AIRDASH
+	end
 	
 	local hiding = false
 	if (gametyperules & (GTR_STARTCOUNTDOWN|GTR_FRIENDLY) == GTR_STARTCOUNTDOWN)
@@ -2440,25 +2443,30 @@ local function VFX_Squish(p,me,soap, props)
 end
 
 local function VFX_Lunge(p,me,soap, props)
-	if me.soap_lungeeffect
+	local lunge = soap.lunge
+	local doeffect = (lunge.effect > 0) --or (me.momz * soap.gravflip > 0)
+	
+	if lunge.lockout then lunge.lockout = $ - 1; end
+	
+	if lunge.effect
 		-- does something vfx shouldnt do (modify player)
-		if me.soap_lungeeffect == 12
+		if lunge.effect == 12
 			local func = me.standingslope and FixedDiv or FixedMul
 			me.momz = func($, soap.inWater and FU*4/5 or FU*3/4)
 			P_SetObjectMomZ(me, FixedDiv(me.momz*soap.gravflip,me.scale))
-			me.soap_lungelenient = true
+			lunge.lenient = true
 		end
 		--late readjust
-		if me.soap_lungeeffect >= 10
-		and not me.soap_lungeadjusted
+		if lunge.effect >= 10
+		and not lunge.adjusted
 		and (p.cmd.forwardmove ~= 0 or p.cmd.sidemove ~= 0)
 			-- dont re-add the boost
 			local ang = Soap_ControlDir(p)
 			P_InstaThrust(me, ang, FixedHypot(me.momx,me.momy))
-			me.soap_lungeadjusted = true
-			me.soap_lungeangle = ang
+			lunge.adjusted = true
+			lunge.angle = ang
 			
-			local g = me.soap_lungeghost
+			local g = lunge.ghost
 			if (g and g.valid)
 				P_SetOrigin(g, me.x,me.y,me.z)
 				g.angle = ang
@@ -2467,45 +2475,44 @@ local function VFX_Lunge(p,me,soap, props)
 			end
 		end
 		
-		if me.soap_lungeeffect >= 3
+		if lunge.effect >= 3
 			Soap_WindLines(me)
 		end
-		do --if me.soap_lungeeffect & 2
-			local ang = me.soap_lungeangle or R_PointToAngle2(0,0,me.momx,me.momy)
-			local rad = FixedDiv(me.radius + 4*me.scale,me.scale)/FU
-			local xoff = Soap_RandomFixedRange(-rad,rad)
-			local yoff = Soap_RandomFixedRange(-rad,rad)
-			local roll = P_SpawnMobjFromMobj(me,
-				P_ReturnThrustX(nil,ang - ANGLE_90, xoff),
-				P_ReturnThrustY(nil,ang - ANGLE_90, yoff),
-				0,MT_SOAP_FREEZEGFX
-			)
-			if (roll and roll.valid)
-				roll.tracer = me
-				roll.angle = ang + FixedAngle(Soap_RandomFixedRange(-15,15))
-				roll.adjust = {
-					ang = ang - ANGLE_90,
-					x = FixedMul(xoff,me.scale), y = FixedMul(yoff,me.scale)
-				}
-				roll.rollangle = Soap_RandomFixedRange(0,360)*ANG1
-				roll.fuse = P_RandomRange(4,8)
-				roll.state = S_SOAP_LUNGEVFX
-			end
-		end
 		
-		me.soap_lungeeffect = $ - 1
-		if not me.soap_lungeeffect then me.soap_lungeeffect = nil; end
+		lunge.effect = $ - 1
+	end
+	if doeffect
+		local ang = lunge.angle or R_PointToAngle2(0,0,me.momx,me.momy)
+		local rad = FixedDiv(me.radius + 4*me.scale,me.scale)/FU
+		local xoff = Soap_RandomFixedRange(-rad,rad)
+		local yoff = Soap_RandomFixedRange(-rad,rad)
+		local roll = P_SpawnMobjFromMobj(me,
+			P_ReturnThrustX(nil,ang - ANGLE_90, xoff),
+			P_ReturnThrustY(nil,ang - ANGLE_90, yoff),
+			0,MT_SOAP_FREEZEGFX
+		)
+		if (roll and roll.valid)
+			roll.tracer = me
+			roll.angle = ang + FixedAngle(Soap_RandomFixedRange(-15,15))
+			roll.adjust = {
+				ang = ang - ANGLE_90,
+				x = FixedMul(xoff,me.scale), y = FixedMul(yoff,me.scale)
+			}
+			roll.rollangle = Soap_RandomFixedRange(0,360)*ANG1
+			roll.fuse = P_RandomRange(4,8)
+			roll.state = S_SOAP_LUNGEVFX
+		end
 	end
 	
-	if me.soap_lungeangle ~= nil
+	if lunge.angle ~= nil
 	and (me.state == S_PLAY_JUMP
 	or me.state == S_PLAY_ROLL)
 	and not soap.onGround
-		p.drawangle = me.soap_lungeangle
-	elseif not me.soap_lungelenient
-		me.soap_lungeangle = nil
+		p.drawangle = lunge.angle
+	elseif not lunge.lenient
+		lunge.angle = nil
 	end
-	me.soap_lungelenient = nil
+	lunge.lenient = false
 end
 
 rawset(_G, "Soap_VFXFuncs",{
@@ -3107,4 +3114,81 @@ rawset(_G, "Soap_HUDTicker", function(p)
 	local hud = soap.hud
 	
 	hud.painsurge = max($-1,0)
+end)
+
+rawset(_G, "Soap_ResetLunge",function(p)
+	p.soaptable.lunge = {
+		lenient = false, --dont reset lunge.angle this tic
+		angle = nil, --if not nil, force drawangle to this
+		fromjump = nil, --lunged from JumpSpecial? also used for c2 to jump
+		keep = false, --keep translating c2 to jump input
+		effect = 0, --tics for effect
+		adjusted = false, --late adjustment for input latency
+		ghost = nil, --reference to ghost vfx
+		lockout = 0, --lockout for airdash
+	}
+end)
+
+local function do_jump_effect(p,me,soap)
+	Soap_DustRing(me,
+		dust_type(me), 8,
+		{me.x,me.y,me.z},
+		me.radius / 2,
+		8*me.scale,
+		me.scale * 3/2,
+		me.scale / 2,
+		false,
+		dust_noviewmobj
+	)
+	
+	Soap_SquashMacro(p, {ease_func = "outsine", ease_time = 8, x = -FU*7/10, y = -FU/2})
+	
+	Soap_RemoveSquash(p, "landeffect")
+	me.soap_jumpdust = 4
+	me.soap_jumpeffect = nil
+end
+rawset(_G, "Soap_DoLunge",function(p, fromjump)
+	local me = p.realmo
+	local soap = p.soaptable
+	local lunge = soap.lunge
+
+	if me.state ~= S_PLAY_SOAP_SLIP then return end
+	
+	p.charflags = $|SF_NOSKID
+	lunge.fromjump = fromjump
+	if not fromjump
+		do_jump_effect(p,me,soap)
+		P_DoJump(p,true,true)
+		p.pflags = $|PF_JUMPED|PF_JUMPDOWN|PF_STARTJUMP
+	end
+	Soap_RemoveSquash(p, "soap_slide")
+	
+	lunge.adjusted = false --(p.cmd.forwardmove ~= 0 or p.cmd.sidemove ~= 0)
+	local ang = Soap_ControlDir(p)
+	if soap.accspeed < 35*FU
+		P_InstaThrust(me, ang, FixedHypot(me.momx,me.momy) + (soap.inWater and 5 or 12)*me.scale)
+	end
+	S_StartSound(me, sfx_sp_cln)
+	
+	for i = 0,8
+		Soap_WindLines(me,nil,nil,nil, i < 4 and 1 or -1)
+	end
+	lunge.effect = 12
+	lunge.angle = ang
+	lunge.lockout = lunge.effect + 6
+	
+	local ghost = P_SpawnGhostMobj(me)
+	ghost.scale = 3*me.scale/2
+	ghost.destscale = FixedMul(me.scale,2)
+	ghost.color = SKINCOLOR_SAPPHIRE
+	ghost.colorized = true
+	ghost.frame = $|TR_TRANS50
+	ghost.blendmode = AST_ADD
+	ghost.state = S_PLAY_ROLL
+	ghost.tics = -1
+	
+	ghost.momx,ghost.momy = me.momx,me.momy
+	ghost.momz = me.momz
+	lunge.ghost = ghost
+	me.pitch,me.roll = 0,0
 end)

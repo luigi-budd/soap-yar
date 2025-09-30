@@ -189,6 +189,19 @@ rawset(_G, "Soap_InitTable", function(p)
 		_maxdashtime = 0,
 		_noadjust = false,
 		
+		-- Update Soap_ResetLunge too
+		-- thinker is in the vfx function lololololol
+		lunge = {
+			lenient = false, --dont reset lunge.angle this tic
+			angle = nil, --if not nil, force drawangle to this
+			fromjump = nil, --lunged from JumpSpecial? also used for c2 to jump
+			keep = false, --keep translating c2 to jump input
+			effect = 0, --tics for effect
+			adjusted = false, --late adjustment for input latency
+			ghost = nil, --reference to ghost vfx
+			lockout = 0, --lockout for airdash
+		},
+		
 		fx = {
 			waterrun_L = nil,
 			waterrun_R = nil,

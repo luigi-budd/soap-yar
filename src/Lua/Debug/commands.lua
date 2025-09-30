@@ -144,7 +144,7 @@ CMDConstructor("shield", {prefix = SOAP_DEVPREFIX, func = function(p,...)
 	end
 end})
 
-CMDConstructor("debug", {prefix = SOAP_DEVPREFIX, outoflevels = true, func = function(p,...)
+CMDConstructor("debug", {prefix = SOAP_DEVPREFIX, outoflevels = true, checksoap = false, func = function(p,...)
 	local args = {...}
 	if not #args
 		prn(p, "Current flags enabled:")
@@ -174,7 +174,7 @@ CMDConstructor("debug", {prefix = SOAP_DEVPREFIX, outoflevels = true, func = fun
 	end
 end,flags = COM_LOCAL})
 
-CMDConstructor("die", {prefix = SOAP_DEVPREFIX, func = function(p,...)
+CMDConstructor("kill", {prefix = SOAP_DEVPREFIX, func = function(p,...)
 	local args = {...}
 	local type = args[1]
 	if type == nil then return end
