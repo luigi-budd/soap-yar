@@ -184,7 +184,7 @@ Takis_Hook.addHook("Takis_Thinker",function(p)
 		and not (soap.inPain)
 		and me.health
 		and (soap.notCarried)
-		and not (soap.noability & NOABIL_HAMMER)
+		and not (soap.noability & NOABIL_HAMMER or hammer.lockout)
 			p.pflags = $|PF_THOKKED &~PF_SHIELDABILITY
 			
 			hammer.down = 1
@@ -450,7 +450,9 @@ Takis_Hook.addHook("Takis_Thinker",function(p)
 		S_StopSoundByID(me,sfx_tk_fst)
 		--S_StopSoundByID(me,sfx_takhmb)
 	end
-	
+	if hammer.lockout
+		hammer.lockout = $ - 1
+	end
 	if hammer.jumped
 		hammer.jumped = $+1
 		if soap.onGround

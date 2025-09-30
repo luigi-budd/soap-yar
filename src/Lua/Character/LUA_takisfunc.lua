@@ -281,7 +281,7 @@ rawset(_G,"Takis_DoClutch",function(p,riding)
 	clutch.spamtime = 23
 	clutch.misfire = TR
 	takis.bashspin = 9
-	--takis.ropeletgo = TR/5
+	takis.hammer.lockout = TR/5
 	
 	/*
 	if takis.clutchspamcount == 5
@@ -368,6 +368,10 @@ rawset(_G,"Takis_HandleNoAbils", function(p)
 	if (p.gotflag)
 	or (p.gotcrystal)
 		na = $|NOABIL_HAMMER|NOABIL_AFTERIMAGE
+	end
+	
+	if soap.hammer.lockout
+		na = $|NOABIL_HAMMER
 	end
 	
 	local hiding = false
