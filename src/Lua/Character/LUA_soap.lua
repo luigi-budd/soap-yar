@@ -129,7 +129,7 @@ local function soap_poundonland(p,me,soap)
 		
 		if br >= 140*me.scale
 			S_StartSound(me, sfx_s3k9b)
-			S_StartSound(me, sfx_s3k5f)
+			S_StartSoundAtVolume(me, sfx_s3k5f, 255/2)
 			
 			local iterations = 16
 			local ang = FixedDiv(360*FU, iterations*FU)
@@ -3410,6 +3410,34 @@ addHook("AbilitySpecial",function(p)
 end)
 
 --various effects
+
+local function get_inf_speed(me,inf,sor)
+	local default = 0
+	if (inf.flags & MF_MISSILE)
+		if ((inf.flags2 & MF2_SCATTER) and sor)
+			local dist = FixedHypot(FixedHypot(sor.x - me.x, sor.y - me.y),sor.z - me.z)
+			dist = 128*inf.scale - dist/4
+			if dist < 4*inf.scale
+				dist = 4*inf.scale
+			end
+			default = dist
+		elseif ((inf.flags2 & MF2_EXPLOSION) and sor)
+			if (inf.flags2 & MF2_RAILRING)
+				default = 38*inf.scale
+			else
+				default = 30*inf.scale
+			end
+		elseif inf.flags2 & MF2_RAILRING
+			default = 45*inf.scale
+		end
+	elseif inf.type == MT_SMALLMACE or inf.type == MT_BIGMACE
+		default = R_PointTo3DDist(inf.last_x,inf.last_y,inf.last_z, inf.x,inf.y,inf.z)
+	elseif inf.type == MT_TNTBARREL or inf.type == MT_PROXIMITYTNT
+		default = 32 * inf.scale
+	end
+	return max(default, R_PointTo3DDist(0,0,0,inf.momx,inf.momy,inf.momz))
+end
+
 --handle soap damage
 addHook("MobjDamage", function(me,inf,sor,dmg,dmgt)
 	if not (me and me.valid) then return end
@@ -3453,28 +3481,7 @@ addHook("MobjDamage", function(me,inf,sor,dmg,dmgt)
 	if me.health
 		if (inf and inf.valid)
 			--default speeds
-			local default = 0
-			if (inf.flags & MF_MISSILE)
-				if ((inf.flags2 & MF2_SCATTER) and sor)
-					local dist = FixedHypot(FixedHypot(sor.x - me.x, sor.y - me.y),sor.z - me.z)
-					dist = 128*inf.scale - dist/4
-					if dist < 4*inf.scale
-						dist = 4*inf.scale
-					end
-					default = dist
-				elseif ((inf.flags2 & MF2_EXPLOSION) and sor)
-					if (inf.flags2 & MF2_RAILRING)
-						default = 38*inf.scale
-					else
-						default = 30*inf.scale
-					end
-				elseif inf.flags2 & MF2_RAILRING
-					default = 45*inf.scale
-				end
-			elseif inf.type == MT_SMALLMACE or inf.type == MT_BIGMACE
-				default = R_PointTo3DDist(inf.last_x,inf.last_y,inf.last_z, inf.x,inf.y,inf.z)
-			end
-			local inf_speed = max(default, R_PointTo3DDist(0,0,0,inf.momx,inf.momy,inf.momz))
+			local inf_speed = get_inf_speed(me,inf,sor)
 			
 			power = FU + FixedDiv(inf_speed, 40*me.scale)
 			Soap_DamageSfx(me, inf_speed, 40*me.scale, {
@@ -3546,10 +3553,10 @@ addHook("MobjDeath", function(me,inf,sor,dmgt)
 		local killer = sor
 		if (inf and inf.valid) then killer = inf; end
 		
+		local speed = get_inf_speed(me,killer,sor)
 		if (sor.flags & MF_BOSS)
 			me.z = $ + FU*soap.gravflip
-			local power = FixedHypot(FixedHypot(killer.momx,killer.momy),killer.momz)
-			P_InstaThrust(me, R_PointToAngle2(killer.x,killer.y,me.x,me.y), power)
+			P_InstaThrust(me, R_PointToAngle2(killer.x,killer.y,me.x,me.y), speed)
 			P_SetObjectMomZ(me, 12*FU)
 			
 			me.soap_knockout = true
@@ -3562,7 +3569,6 @@ addHook("MobjDeath", function(me,inf,sor,dmgt)
 			return
 		end
 		
-		local speed = FixedHypot(FixedHypot(killer.momx,killer.momy),killer.momz)
 		if speed >= 30*me.scale
 			me.soap_knockout = true
 			me.soap_knockout_speed = {
