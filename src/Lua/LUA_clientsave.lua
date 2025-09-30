@@ -46,6 +46,8 @@ do
 				--TODO: set cvars here too, then on PlayerJoin,
 				--		check for consoleplayer, and send commands based on
 				--		those cvars' values
+				--TODO: probably still do those, but instead use the IO
+				--		system from the io branch
 			end
 		end
 		file:close()
