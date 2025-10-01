@@ -113,9 +113,6 @@ mobjinfo[MT_SOAP_AFTERIMAGE] = {
 	flags = MF_NOCLIP|MF_NOCLIPHEIGHT|MF_NOGRAVITY|MF_NOBLOCKMAP
 }
 
---[done]TODO: rename "SPR_SOAP_WALLBUMP" to be more generic, will be used
---		as general effect spr_ in the future
---TODO: ^^^ MAKE SWEAT SPRITES FOR R-DASH
 SafeFreeslot("SPR_SOAP_GFX")
 SafeFreeslot("S_SOAP_WALLBUMP")
 states[S_SOAP_WALLBUMP] = {
