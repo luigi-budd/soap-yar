@@ -1326,7 +1326,7 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 			end
 			
 			soap.airdashcharge = 0 --(gametyperules & GTR_FRIENDLY == 0) and TR/3 or 0
-			local angle = Soap_ControlDir(p)
+			local angle = ((soap.io.airdashmode == "inputs" and not soap.in2D) and Soap_ControlDir(p) or me.angle)
 			if soap.accspeed + thrust < max_speed
 				if soap.accspeed + thrust < min_speed
 					thrust = $ + (min_speed - (soap.accspeed + thrust))

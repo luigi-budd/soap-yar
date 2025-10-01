@@ -87,6 +87,10 @@ rawset(_G, "Soap_InitTable", function(p)
 		stasistic = 0,
 		allowjump = false, -- &~PF_JUMPSTASIS
 		
+		io = {
+			airdashmode = "inputs",
+		},
+		
 		noability = 0,
 		
 		onGround = false,
