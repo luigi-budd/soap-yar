@@ -1160,7 +1160,8 @@ rawset(_G,"Soap_IsLocalPlayer",function(p)
 	return (p == displayplayer or p == secondarydisplayplayer)
 end)
 
-rawset(_G,"Soap_SpawnBumpSparks",function(me, thing, line, followme)
+rawset(_G,"Soap_SpawnBumpSparks",function(me, thing, line, followme, scale)
+	scale = $ or me.scale
 	local angle = R_PointToAngle2(0,0,me.momx,me.momy) + ANGLE_90
 	if (line and line.valid)
 		angle = R_PointToAngle2(line.v1.x, line.v1.y, line.v2.x, line.v2.y)
@@ -1173,7 +1174,7 @@ rawset(_G,"Soap_SpawnBumpSparks",function(me, thing, line, followme)
 	
 	local fa = FixedDiv(360*FU, 8*FU)
 	local random = Soap_RandomFixedRange(0,73)
-	local speed = 6*me.scale
+	local speed = 6*scale
 	local limit = 28
 	for i = 1,8
 		local my_ang = FixedAngle((fa * i) + random)
@@ -1185,10 +1186,10 @@ rawset(_G,"Soap_SpawnBumpSparks",function(me, thing, line, followme)
 		P_InstaThrust(spark, angle, FixedMul(cos(my_ang), speed))
 		spark.momz = FixedMul(sin(my_ang), speed)
 		
-		P_SetScale(spark,me.scale / 10, true)
-		spark.destscale = me.scale
+		P_SetScale(spark,scale / 10, true)
+		spark.destscale = scale
 		--5 tics
-		spark.scalespeed = FixedDiv(me.scale - me.scale / 10, 5*FU)
+		spark.scalespeed = FixedDiv(scale - scale / 10, 5*FU)
 		
 		--spark.mirrored = P_RandomChance(FU/2)
 		spark.fuse = TR*3/4
@@ -1235,16 +1236,14 @@ local function top_hitenemy(me,thing)
 			512*me.scale
 		)
 		
+		P_DamageMobj(thing, me,me)
+		thing.z = $ + FU*P_MobjFlip(thing)
 		P_InstaThrust(thing,
 			R_PointToAngle2(thing.x,thing.y, me.x,me.y),
-			20*me.scale
+			-12*me.scale
 		)
-		if (thing.player)
-			P_MovePlayer(thing.player)
-		end
-		Soap_ZLaunch(thing,6*FU,true)
+		Soap_ZLaunch(thing,8*FU,true)
 		
-		P_DamageMobj(thing, me,me)
 		Soap_Hitlag.addHitlag(me, 3, false)
 	elseif (thing.player and thing.player.valid)
 	and (thing.player.guard ~= nil)
@@ -1285,7 +1284,7 @@ local function TryTopClash(p,me,found)
 		)
 		soap.linebump = max($,12)
 		Soap_Hitlag.addHitlag(me, 12, false)
-		Soap_SpawnBumpSparks(me, found)
+		Soap_SpawnBumpSparks(me, found,nil,nil, 3 * me.scale)
 		
 		--Higher defenses ignore the top
 		if (dpri == 2)
@@ -1302,6 +1301,7 @@ local function TryTopClash(p,me,found)
 		
 		S_StartSound(me,sfx_sp_pry)
 		S_StartSound(me,sfx_s259)
+		-- parry fx
 		if B
 			local dx = ((me.x + found.x) / 2)
 			local dy = ((me.y + found.y) / 2)
@@ -1317,6 +1317,7 @@ local function TryTopClash(p,me,found)
 			P_SetOrigin(sh,dx,dy,sh.z)
 			sh.renderflags = $|RF_PAPERSPRITE|RF_FULLBRIGHT
 			sh.angle = sb.angle
+			sh.scale = $ * 4
 		end
 		return true
 	end
@@ -1449,6 +1450,11 @@ rawset(_G,"SoapST_Start",function(p)
 	local me = p.mo
 	local soap = p.soaptable
 	
+	if soap.inPain
+	or soap.inSlide
+	or p.tumble --battle
+		return
+	end
 	if soap.toptics then return end
 	if not (me.health) then return end
 	if (soap.noability & SNOABIL_TOP) then return end
@@ -2451,7 +2457,7 @@ local function VFX_Lunge(p,me,soap, props)
 	if lunge.effect
 		-- does something vfx shouldnt do (modify player)
 		if lunge.effect == 12
-			local func = me.standingslope and FixedDiv or FixedMul
+			local func = (me.standingslope and (me.standingslope.flags & SL_NOPHYSICS == 0)) and FixedDiv or FixedMul
 			me.momz = func($, soap.inWater and FU*4/5 or FU*3/4)
 			P_SetObjectMomZ(me, FixedDiv(me.momz*soap.gravflip,me.scale))
 			lunge.lenient = true

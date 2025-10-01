@@ -142,7 +142,7 @@ addHook("MobjThinker",function(spark)
 		return
 	end
 	
-	if (spark.flags & MF_NOTHINK) then return true; end
+	if (spark.flags & MF_NOTHINK or me.flags & MF_NOTHINK) then return true; end
 	
 	P_MoveOrigin(spark, me.x,me.y,me.z)
 	spark.angle = spark.adjust_angle
