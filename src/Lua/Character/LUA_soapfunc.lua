@@ -44,6 +44,13 @@ local BTtoTable = {
 }
 
 local function btntic(p,tic,enum)
+	-- Fuck You Demos
+	-- Fuck You Shitty Chud Game
+	if (leveltime == 0)
+		p.soaptable[BTtoTable[enum].."_R"] = 0
+		return 0
+	end
+	
 	local btn = p.cmd.buttons
 	if btn & enum
 		if tic ~= 0

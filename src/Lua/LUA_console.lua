@@ -6,7 +6,15 @@ addHook("NetVars",function(n) iAmLua = n($); end)
 
 local function CVSynched_CanChange(cv, value)
 	if gamestate ~= GS_LEVEL
-	or not (consoleplayer and consoleplayer.valid and consoleplayer.soaptable)
+		-- its whatever, itll still be synched when we join a game
+		if (gamestate == GS_TITLESCREEN)
+			return true
+		end
+		print("You must be in a level to use this.")
+		return false
+	end
+	
+	if not (consoleplayer and consoleplayer.valid and consoleplayer.soaptable)
 		print("You must be in a level to use this.")
 		return false
 	end

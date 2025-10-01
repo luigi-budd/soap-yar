@@ -215,8 +215,6 @@ rawset(_G, "Soap_InitTable", function(p)
 			pound_aura = nil,
 			uppercut_aura = nil,
 			dash_aura = nil,
-			
-			boombox = nil,
 		},
 		
 		bm = {

@@ -166,6 +166,7 @@ Takis_Hook.addHook("Takis_Thinker",function(p)
 	--spin specials
 	if (soap.use)
 		
+		--clutch
 		if (soap.use == 1)
 		and (soap.onGround)
 		and not soap.taunttime
