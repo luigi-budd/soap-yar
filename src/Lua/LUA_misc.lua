@@ -34,9 +34,17 @@ addHook("MobjThinker",function(ai)
 	
 	ai.frame = ai.takis_frame
 	
-	local sine = abs(sin(FixedAngle(leveltime*FU*10)))
-	ai.alpha = AI_MINALPHA + max(sine - AI_MINALPHA, 0)
-	ai.flags2 = $ &~MF2_DONTDRAW
+	if SOAP_CV.ai_style.value == 3 then
+		if (leveltime/4) & 1 then
+			ai.flags2 = $|MF2_DONTDRAW
+		else
+			ai.flags2 = $ &~MF2_DONTDRAW
+		end
+	else
+		local sine = abs(sin(FixedAngle(leveltime*FU*10)))
+		ai.alpha = AI_MINALPHA + max(sine - AI_MINALPHA, 0)
+		ai.flags2 = $ &~MF2_DONTDRAW
+	end
 	
 	ai.checkedit = true
 end,MT_SOAP_AFTERIMAGE)
