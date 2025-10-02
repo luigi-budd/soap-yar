@@ -316,10 +316,13 @@ rawset(_G,"Soap_CreateAfterimage", function(p,me)
 				ghost2.fuse = 4
 				ghost2.renderflags = $|rflags|RF_PAPERSPRITE
 				ghost2.blendmode = blendmode
-				
+				if SOAP_CV.ai_style.value == 3
+					ghost2.translation = (soap.aiswap) and "Soap_AI1" or "Soap_AI2"
+				else
+					local sine = abs(sin(FixedAngle(leveltime*FU*10)))
+					ghost2.alpha = AI_MINALPHA + max(sine - AI_MINALPHA, 0)
+				end
 				ghost2.angle = peel.angle
-				local sine = abs(sin(FixedAngle(leveltime*FU*10)))
-				ghost2.alpha = AI_MINALPHA + max(sine - AI_MINALPHA, 0)
 				
 				--dont copy color
 				ghost2.color = rainbow
@@ -341,6 +344,8 @@ rawset(_G,"Soap_CreateAfterimage", function(p,me)
 			end
 		end
 	end
+
+	soap.aiswap = leveltime/2 & 1
 	
 	return ghost
 end)
