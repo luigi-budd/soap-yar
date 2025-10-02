@@ -3,7 +3,22 @@ SkinName = soapthehedge
 DisplayName = 
 TagTextColor = SKINCOLOR_BLUE
 TagOutlineColor = SKINCOLOR_ORANGE
-NameTag = CHRTAG
-OppositeColor = SKINCOLOR_RED
-PlayerText = Nerfed just for Saxa's MM!
+NameTag = SP_CHRTG
+OppositeColor = SKINCOLOR_MINT
+PlayerText = ^5 -- DEMO --^0
+
+Leaking a publically availiable addon?
+Epic fail!
+
+^2Supports:^0
+* EPIC! Murder Mystery
+* Pizza Tower Spice
+   Runners
+* SRB2 Infinity
+* BattleMod v9+ 
+* Ringsligner
+   Revolution
+^3And more to come!
+
+^5 -- DEMO --^0
 #
