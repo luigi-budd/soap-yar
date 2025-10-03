@@ -2158,9 +2158,9 @@ rawset(_G,"Soap_ResetState",function(p)
 		end
 	end
 	
-	if ((p.panim == PA_SPRING and me.momz*takis.gravflip < 0)
+	if ((p.panim == PA_SPRING and me.momz*soap.gravflip < 0)
 	or ((((p.charflags & SF_NOJUMPSPIN) and (p.pflags & PF_JUMPED)
-	and p.panim == PA_JUMP)) and (me.momz*takis.gravflip < 0)))
+	and p.panim == PA_JUMP)) and (me.momz*soap.gravflip < 0)))
 		me.state = S_PLAY_FALL
 	elseif (onground and (p.panim == PA_SPRING or p.panim == PA_FALL
 	or p.panim == PA_RIDE or p.panim == PA_JUMP) and not me.momz)
