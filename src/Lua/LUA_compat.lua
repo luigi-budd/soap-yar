@@ -21,7 +21,7 @@ local compat_names = {
 	["ze2config"]	= "ZE2 Config.      ",
 	["mmportrait"]	= "EPIC!MM support  ",
 	["orbitcompat"] = "Orbit Compat.    ",
-	["rsr"]			= "RingSlinger Neo  ",
+	["rsr"]			= "RingSlinger Rev. ",
 }
 
 local function dust_type(me)
