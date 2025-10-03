@@ -1541,9 +1541,9 @@ rawset(_G,"Soap_HandleNoAbils", function(p)
 	if (soap.isSliding)
 		na = $|SNOABIL_CROUCH|SNOABIL_RDASH|SNOABIL_AIRDASH|SNOABIL_POUND
 	end
-	if p.powers[pw_carry] == CR_ROPEHANG
-		na = $|SNOABIL_AIRDASH|SNOABIL_UPPERCUT|SNOABIL_POUND
-	elseif p.powers[pw_carry] == CR_MACESPIN
+	if p.powers[pw_carry] == CR_MACESPIN
+	or p.powers[pw_carry] == CR_ROPEHANG
+	or p.powers[pw_carry] == CR_ROLLOUT
 		na = $|SNOABIL_AIRDASH|SNOABIL_CROUCH|SNOABIL_POUND|SNOABIL_UPPERCUT
 	end
 	
