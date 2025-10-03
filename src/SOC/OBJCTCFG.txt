@@ -7,16 +7,16 @@ NameTag = SP_CHRTG
 OppositeColor = SKINCOLOR_MINT
 PlayerText = ^5 -- DEMO --^0
 
-Leaking a publically availiable addon?
+Leaking a publicly available addon?
 Epic fail!
 
 ^2Supports:^0
 * EPIC! Murder Mystery
-* Pizza Tower Spice
+* Pizza Time Spice
    Runners
 * SRB2 Infinity
 * BattleMod v9+ 
-* Ringsligner
+* Ringslinger
    Revolution
 ^3And more to come!
 
