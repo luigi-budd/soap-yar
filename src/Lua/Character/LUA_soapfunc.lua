@@ -215,7 +215,12 @@ rawset(_G,"Soap_CreateAfterimage", function(p,me)
 	if not (me and me.valid) then return end
 	
 	local soap = p.soaptable
-	local rflags = RF_FULLBRIGHT|RF_NOCOLORMAPS
+	local rflags
+	if SOAP_CV.ai_style.value == 3 then
+		rflags = RF_FULLBRIGHT
+	else
+		rflags = RF_FULLBRIGHT|RF_NOCOLORMAPS
+	end
 	
 	local of = {
 		FixedDiv(-me.momx,me.scale),
@@ -252,6 +257,11 @@ rawset(_G,"Soap_CreateAfterimage", function(p,me)
 		rainbow = ColorOpposite(p.skincolor)
 	elseif SOAP_CV.ai_style.value == 2
 		rainbow = classic
+	elseif SOAP_CV.ai_style.value == 3
+		rainbow = SKINCOLOR_JET
+		ghost.alpha = FU
+		blendmode = AST_COPY
+		ghost.translation = (soap.aiswap) and "Soap_AI1" or "Soap_AI2"
 	end
 	
 	ghost.colorized = true
@@ -306,10 +316,13 @@ rawset(_G,"Soap_CreateAfterimage", function(p,me)
 				ghost2.fuse = 4
 				ghost2.renderflags = $|rflags|RF_PAPERSPRITE
 				ghost2.blendmode = blendmode
-				
+				if SOAP_CV.ai_style.value == 3
+					ghost2.translation = (soap.aiswap) and "Soap_AI1" or "Soap_AI2"
+				else
+					local sine = abs(sin(FixedAngle(leveltime*FU*10)))
+					ghost2.alpha = AI_MINALPHA + max(sine - AI_MINALPHA, 0)
+				end
 				ghost2.angle = peel.angle
-				local sine = abs(sin(FixedAngle(leveltime*FU*10)))
-				ghost2.alpha = AI_MINALPHA + max(sine - AI_MINALPHA, 0)
 				
 				--dont copy color
 				ghost2.color = rainbow
@@ -331,6 +344,8 @@ rawset(_G,"Soap_CreateAfterimage", function(p,me)
 			end
 		end
 	end
+
+	soap.aiswap = leveltime/2 & 1
 	
 	return ghost
 end)

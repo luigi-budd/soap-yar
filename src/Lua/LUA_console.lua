@@ -47,7 +47,7 @@ CV.ai_style = CV_RegisterVar({
 	name = "soap_afterimagestyle",
 	defaultvalue = "Opposite",
 	flags = CV_SHOWMODIF,
-	PossibleValue = {Rainbow = 0, Opposite = 1, Classic = 2},
+	PossibleValue = {Rainbow = 0, Opposite = 1, Classic = 2, Retro = 3},
 })
 
 CV.quake_mul = CV_RegisterVar({
