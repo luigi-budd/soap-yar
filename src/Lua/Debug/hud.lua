@@ -52,7 +52,19 @@ local function drawflag(v,x,y,string,flags,onmap,offmap,align,flag)
 	v.drawString(x,y,string,flags|map,align)
 end
 
+local v_width,v_height = 0,0
+local function drawLine(v, x, y, t, angle, length, color)
+    for i=0, length-1 do
+		local destx = x + FixedMul(i*FU, cos(angle))
+		local desty = y - FixedMul(i*FU, sin(angle))
+		if destx < 0 or destx > v_width then continue end
+		if desty < 0 or desty > v_height then continue end
+        v.drawFixedFill(destx, desty, t*FU, t*FU, color)
+    end
+end
 local function WRAP_buttons(v,p,c, me,soap)
+	v_width = (v.width() / v.dupx())*FU
+	v_height = (v.height() / v.dupy())*FU
 	local color = (p.skincolor and skincolors[p.skincolor].ramp[4] or 0)
 	local color2 = (ColorOpposite(p.skincolor) and skincolors[ColorOpposite(p.skincolor)].ramp[4] or 0)
 	
@@ -83,47 +95,57 @@ local function WRAP_buttons(v,p,c, me,soap)
 	local x, y = 15, 176
 	local flags = V_HUDTRANS|V_PERPLAYER|V_SNAPTOBOTTOM|V_SNAPTOLEFT
 	
-	v.drawString(
-		x + 145 - 2,
-		y - 10 - 23,
-		p.cmd.forwardmove,
-		flags,
-		"thin-center"
-	)
-	v.drawString(
-		x + 145 + 16,
-		y - 10 - 6,
-		p.cmd.sidemove,
-		flags,
-		"thin"
-	)
-	
-	v.drawScaled(
-		(x + 145 - 2)*FU,
-		(y - 10 - 2)*FU,
-		FU*6/5,
-		v.cachePatch("TA_LIVESFILL_FILL"),
-		flags,
-		v.getColormap(nil,SKINCOLOR_CARBON)
-	)
-	
-	v.drawScaled(
-		(x + 145 - 2)*FU,
-		(y - 10 - 2)*FU,
-		FU/6,
-		v.cachePatch("TA_LIVESFILL_FILL"),
-		flags,
-		v.getColormap(nil,ColorOpposite(p.skincolor), nil)
-	)
-	
-	v.drawScaled(
-		(x + 145 + p.cmd.sidemove/4 - 2)*FU,
-		(y - 10 - p.cmd.forwardmove/4 - 2)*FU,
-		FU/6,
-		v.cachePatch("TA_LIVESFILL_FILL"),
-		flags,
-		v.getColormap(nil,p.skincolor)
-	)
+	--control display
+	do
+		--string values
+		v.drawString(x + 145 - 2, y - 10 - 23,
+			p.cmd.forwardmove,
+			flags,"thin-center"
+		)
+		v.drawString(x + 145 + 16, y - 10 - 6,
+			p.cmd.sidemove,
+			flags,"thin"
+		)
+		
+		--backing
+		v.drawScaled(
+			(x + 145 - 2)*FU,
+			(y - 10 - 2)*FU,
+			FU*6/5,
+			v.cachePatch("TA_LIVESFILL_FILL"),
+			flags,
+			v.getColormap(nil,SKINCOLOR_CARBON)
+		)
+		
+		-- 0,0 circle
+		v.drawScaled(
+			(x + 145 - 2)*FU,
+			(y - 10 - 2)*FU,
+			FU/6,
+			v.cachePatch("TA_LIVESFILL_FILL"),
+			flags,
+			v.getColormap(nil,ColorOpposite(p.skincolor), nil)
+		)
+		
+		if (p.cmd.forwardmove ~= 0 or p.cmd.sidemove ~= 0)
+		and v.drawFixedFill ~= nil
+			local x,y = (x + 145 - 2)*FU, (y - 10 - 2)*FU
+			local ang = InvAngle(R_PointToAngle2(x,y, x + (p.cmd.forwardmove*FU), y + (p.cmd.sidemove*FU))) + ANGLE_90
+			drawLine(v, x, y, 1, ang,
+				FixedHypot(p.cmd.sidemove/4, p.cmd.forwardmove/4), color2|flags
+			)
+		end
+		
+		-- input circle
+		v.drawScaled(
+			(x + 145 - 2)*FU + (p.cmd.sidemove*FU/4),
+			(y - 10 - 2)*FU - (p.cmd.forwardmove*FU/4),
+			FU/6,
+			v.cachePatch("TA_LIVESFILL_FILL"),
+			flags,
+			v.getColormap(nil,p.skincolor)
+		)
+	end
 	
 	DrawButton(v, p, x, y, flags, color, color2, soap.jump, soap.jump_R, 'J', 'left')
 	DrawButton(v, p, x+11, y, flags, color, color2, soap.use, soap.use_R, 'S', 'left')

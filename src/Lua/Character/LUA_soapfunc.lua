@@ -210,7 +210,7 @@ local AICOLOR_LENGTH = AICOLOR_END - AICOLOR_START
 local AI_MINALPHA = FU/4
 --came like 150% circle since this is old takis afterimages, used in an older Soap_CreateAfterimage, being used in this new Soap_CreateAfterimage
 local AICOLOR_RANDOM = {SKINCOLOR_FLAME, SKINCOLOR_SUNSET, SKINCOLOR_AQUA, SKINCOLOR_VAPOR, SKINCOLOR_PURPLE}
-
+local AI_OFFSET = 4
 rawset(_G,"Soap_CreateAfterimage", function(p,me)
 	if not (me and me.valid) then return end
 	
@@ -223,9 +223,9 @@ rawset(_G,"Soap_CreateAfterimage", function(p,me)
 	end
 	
 	local of = {
-		FixedDiv(-me.momx,me.scale),
-		FixedDiv(-me.momy,me.scale),
-		FixedDiv(-soap.rmomz*soap.gravflip,me.scale)
+		FixedDiv(-me.momx,me.scale) + Soap_RandomFixedRange(-AI_OFFSET,AI_OFFSET),
+		FixedDiv(-me.momy,me.scale) + Soap_RandomFixedRange(-AI_OFFSET,AI_OFFSET),
+		FixedDiv(-soap.rmomz*soap.gravflip,me.scale) + Soap_RandomFixedRange(-AI_OFFSET,AI_OFFSET)
 	}
 	
 	local ghost = P_SpawnMobjFromMobj(me, of[1],of[2],of[3], MT_SOAP_AFTERIMAGE)
