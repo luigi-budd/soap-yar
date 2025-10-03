@@ -5,7 +5,7 @@
 /*
 	Collaborators:
 	- Saxashitter/Saxa2007 : assistant coding
-	
+	- `Green`/greenbulb : useless dumb shit
 */
 
 rawset(_G, "TR", TICRATE)
