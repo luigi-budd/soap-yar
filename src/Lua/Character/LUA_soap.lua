@@ -1613,6 +1613,9 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 			soap.afterimage = true
 			if Soap_DirBreak(p,me, R_PointToAngle2(0,0,me.momx,me.momy))
 				Soap_Hitlag.addHitlag(me, 7, false)
+				soap.canuppercut = true
+				P_SetObjectMomZ(me, 5*FU,true)
+				soap.uppercut_spin = $ - ANGLE_90
 			end
 		else
 			if me.state == S_PLAY_MELEE
