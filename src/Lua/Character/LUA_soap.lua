@@ -358,7 +358,7 @@ local function spawn_sweat_mobjs(p,me,soap)
 	)
 	P_Thrust(sweat, 
 		R_PointToAngle2(0,0,me.momx,me.momy) + FixedAngle(Soap_RandomFixedRange(-45,45)),
-		-Soap_RandomFixedRange(2,5)
+		-FixedMul(Soap_RandomFixedRange(2,5), me.scale)
 	)
 	sweat.momx = $ + me.momx/2
 	sweat.momy = $ + me.momy/2
@@ -2387,9 +2387,26 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 				me.sprite2 = SPR2_MSC2
 				me.tics = -1
 				
-				S_StartSound(me,sfx_sp_oww)
+				S_StartSound(me,P_RandomChance(FU/50) and sfx_sp_em1 or sfx_sp_oww)
 			end
 			me.soap_damagevar = nil
+		end
+		if soap.paintime == 1 and (soap.hud.painsurge == 0)
+		and (soap.accspeed >= 30*FU)
+			local power = FU + FixedDiv(soap.accspeed, 40*FU)
+			Soap_DamageSfx(me, soap.accspeed, 40*FU, {
+				ultimate = (not soap.inBattle) and true or false,
+				nosfx = true
+			})
+			
+			me.state = S_PLAY_DEAD
+			me.frame = A|($ &~FF_FRAMEMASK)
+			me.sprite2 = SPR2_MSC2
+			me.tics = -1
+			
+			S_StartSound(me,P_RandomChance(FU/50) and sfx_sp_em1 or sfx_sp_oww)
+			S_StartSound(me,sfx_sp_db0)
+			soap.hud.painsurge = 4
 		end
 	else
 		soap.paintime = 0
