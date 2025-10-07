@@ -195,3 +195,63 @@ states[S_SOAP_LUNGEVFX] = {
 	end,
 	nextstate = S_SOAP_LUNGEVFX
 }
+
+local soap_impactvfx = {}
+rawset(_G, "SOAP_IMPACTVFX_OFFSET", 4)
+rawset(_G, "SOAP_IMPACTVFX_LENGTH", 6) -- `(SOAP_IMPACTVFX_LENGTH + 1) * offset` to get the next set of vfx
+rawset(_G, "SOAP_IMPACTVFX_SETS",   3) -- 4 sets - 1
+rawset(_G, "SOAP_IMPACTVFX_HEIGHT", 171*FU)
+local soap_impactscale = FU*3/2
+SafeFreeslot("S_SOAP_IMPACT")
+states[S_SOAP_IMPACT] = {
+    sprite = SPR_SOAP_GFX,
+    frame = SOAP_IMPACTVFX_OFFSET|FF_ANIMATE|FF_PAPERSPRITE|FF_FULLBRIGHT,
+	var1 = SOAP_IMPACTVFX_LENGTH,
+	var2 = 2,
+	tics = (SOAP_IMPACTVFX_LENGTH*2)+2,
+	action = function(mo)
+		--mo.fuse = states[mo.state].tics
+		mo.destscale = mo.scale*2
+		mo.dispoffset = 5
+		
+		--mo.spriteyoffset = 5*FU
+		mo.renderflags = $|RF_NOCOLORMAPS|RF_ALWAYSONTOP
+		mo.spritexscale = FixedMul($, soap_impactscale)
+		mo.spriteyscale = FixedMul($, soap_impactscale)
+		
+		table.insert(soap_impactvfx, mo)
+	end
+}
+
+local function trim_impactvfx()
+	for k,mo in ipairs(soap_impactvfx)
+		if not (mo and mo.valid and mo.frameoffset ~= nil)
+			table.remove(soap_impactvfx, k)
+			continue
+		end
+	end
+end
+
+addHook("PreThinkFrame",do
+	if (#soap_impactvfx == 0) then return end
+	trim_impactvfx()
+	
+	for k,mo in ipairs(soap_impactvfx)
+		if not (mo and mo.valid) then continue end -- FUCK YOU!!! FUCK YOU FUCK YOU FUCK YOU!!!!
+		if not mo.extravalue1 then continue end
+		mo.frame = $ - mo.frameoffset
+	end
+end)
+addHook("PostThinkFrame",do
+	if (#soap_impactvfx == 0) then return end
+	trim_impactvfx()
+	
+	for k,mo in ipairs(soap_impactvfx)
+		if not (mo and mo.valid) then continue end -- FUCK YOU!!! FUCK YOU FUCK YOU FUCK YOU!!!!
+		mo.frame = $ + mo.frameoffset
+		mo.extravalue1 = 1
+	end
+end)
+addHook("NetVars",function(n)
+	soap_impactvfx = n($)
+end)

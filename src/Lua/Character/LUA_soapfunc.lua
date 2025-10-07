@@ -599,13 +599,6 @@ end)
 
 --@src is the source of the vfx, not of the damage (thats @inf)
 rawset(_G,"Soap_ImpactVFX",function(src,inf, distmul, scalemul)
-	/*
-	if (SpawnBam ~= nil)
-		SpawnBam(src,true)
-		return
-	end
-	*/
-	
 	scalemul = $ or FU
 	local disp = 25
 	local off = {
@@ -615,9 +608,10 @@ rawset(_G,"Soap_ImpactVFX",function(src,inf, distmul, scalemul)
 	}
 	
 	local spr_scale = FixedMul(FU*3/4 + Soap_RandomFixedSigned() / 4, scalemul)
-	local tntstate = S_TNTBARREL_EXPL3
+	local tntstate = S_SOAP_IMPACT --S_TNTBARREL_EXPL3
 	local rflags = RF_PAPERSPRITE|RF_FULLBRIGHT|RF_NOCOLORMAPS
 	local applycolor = (multiplayer or netgame)
+	local frameoffset = (SOAP_IMPACTVFX_LENGTH + 1) * P_RandomRange(0, SOAP_IMPACTVFX_SETS)
 	
 	if distmul ~= nil
 		off.x = FixedMul($, distmul)
@@ -632,7 +626,7 @@ rawset(_G,"Soap_ImpactVFX",function(src,inf, distmul, scalemul)
 		
 		if (i == 0)
 			--50% of sprite's height - y offset
-			adjust = FixedMul(34*FU, spr_scale) + off.z
+			--adjust = FixedMul(SOAP_IMPACTVFX_HEIGHT/2, spr_scale) + off.z
 			angle = 0
 		end
 		
@@ -643,11 +637,12 @@ rawset(_G,"Soap_ImpactVFX",function(src,inf, distmul, scalemul)
 		if (inf and inf.valid)
 			P_SetScale(bam, inf.scale, true)
 		end
-		P_SetMobjStateNF(bam, tntstate)
+		bam.state = tntstate
 		bam.spritexscale = FixedMul($, spr_scale)
 		bam.spriteyscale = bam.spritexscale
 		bam.renderflags = $|rflags
 		bam.angle = angle
+		bam.frameoffset = frameoffset
 		if inf and inf.valid
 		and applycolor
 			bam.color = inf.color
@@ -657,7 +652,7 @@ rawset(_G,"Soap_ImpactVFX",function(src,inf, distmul, scalemul)
 		end
 		
 		if i == 0
-			bam.spriteyoffset = -34*FU
+			--bam.spriteyoffset = -(SOAP_IMPACTVFX_HEIGHT/2)
 			bam.renderflags = $|RF_FLOORSPRITE|RF_NOSPLATBILLBOARD
 			P_SetOrigin(bam, bam.x,bam.y,
 				src.z + FixedMul(34*src.scale, spr_scale) + off.z

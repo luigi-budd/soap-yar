@@ -3627,7 +3627,7 @@ Takis_Hook.addHook("PostThinkFrame",function(p)
 	soap.damagedealtthistic = 0
 	soap.iwashitthistic = false
 	if me.skin ~= SOAP_SKIN then return end
-	local usejumpspin = (not (p.charflags & SF_NOJUMPSPIN)) and (lunge.angle == nil)
+	local usejumpspin = (not (p.charflags & SF_NOJUMPSPIN)) or (lunge.angle ~= nil)
 	if (mariomode)
 		p.charflags = $|SF_NOJUMPSPIN
 	end
