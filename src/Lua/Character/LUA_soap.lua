@@ -2648,6 +2648,13 @@ addHook("PlayerSpawn",function(p)
 	
 	soap.deathtype = 0
 	Soap_ResetLunge(p)
+	
+	if me.skin ~= SOAP_SKIN then return end
+	if mariomode
+		p.charflags = $|SF_NOJUMPSPIN
+	else
+		p.charflags = $ &~SF_NOJUMPSPIN
+	end
 end)
 
 addHook("PlayerCanDamage",function(p, targ)
@@ -3620,6 +3627,10 @@ Takis_Hook.addHook("PostThinkFrame",function(p)
 	soap.damagedealtthistic = 0
 	soap.iwashitthistic = false
 	if me.skin ~= SOAP_SKIN then return end
+	local usejumpspin = (not (p.charflags & SF_NOJUMPSPIN)) and (lunge.angle == nil)
+	if (mariomode)
+		p.charflags = $|SF_NOJUMPSPIN
+	end
 	
 	if me.hitlag
 		--still tick down
@@ -3637,7 +3648,7 @@ Takis_Hook.addHook("PostThinkFrame",function(p)
 				S_StartSound(me,sfx_sp_dss)
 			end
 		end
-		if not (p.charflags & SF_NOJUMPSPIN)
+		if usejumpspin
 			if me.state == S_PLAY_JUMP
 			or me.sprite2 == SPR2_JUMP
 				me.state = S_PLAY_ROLL
@@ -3659,7 +3670,7 @@ Takis_Hook.addHook("PostThinkFrame",function(p)
 		end
 	end
 	
-	if not (p.charflags & SF_NOJUMPSPIN)
+	if usejumpspin
 		if me.state == S_PLAY_JUMP
 		or me.sprite2 == SPR2_JUMP
 			me.state = S_PLAY_ROLL
