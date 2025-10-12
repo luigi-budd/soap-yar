@@ -1,18 +1,12 @@
 -- Just temporary until a system is sorted out.
 
 addHook("HUD",function(v,p)
-	v.dointerp = function(tag)
-		if v.interpolate == nil then return end
-		v.interpolate(tag)
-	end
-	
 	local soap = p.soaptable
 	if not soap then return end
 	if not (skins[p.skin].name == SOAP_SKIN) then return end
 	local hud = soap.hud
 	
 	if hud.painsurge
-		v.dointerp(100)
 		local frame = hud.painsurge
 		local patch = v.cachePatch("SOAP_PS_"..frame)
 		local wid = (v.width() / v.dupx()) + 1
