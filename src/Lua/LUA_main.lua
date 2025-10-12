@@ -1,3 +1,5 @@
+local mbrelease = dofile("Vars/mbrelease.lua")
+
 addHook("PreThinkFrame",function()
 	for p in players.iterate
 		if not (p and p.valid) then continue end
@@ -69,13 +71,14 @@ addHook("PlayerThink",function(p)
 		end
 		
 		if me.skin == TAKIS_SKIN
+		and not mbrelease
 			local hook_event = Takis_Hook.events["Takis_Thinker"]
 			for i,v in ipairs(hook_event)
 				Takis_Hook.tryRunHook("Takis_Thinker", v, p)
 			end
 		end
 		
-		if not (me.skin == SOAP_SKIN or me.skin == TAKIS_SKIN)
+		if not (me.skin == SOAP_SKIN or (me.skin == TAKIS_SKIN and not mbrelease))
 			Soap_FXDestruct(p)
 		end
 		
@@ -135,7 +138,7 @@ addHook("PostThinkFrame",function()
 		-- This is placed after the hookcalls so any squahes
 		-- added can immediately take effect
 		if (me.skin == SOAP_SKIN
-		or me.skin == TAKIS_SKIN)
+		or (me.skin == TAKIS_SKIN and not mbrelease))
 		and not (me.pizza_in or me.pizza_out) --Bruh!
 			Soap_TickSquashes(p,me,soap, me.hitlag)
 		end
@@ -143,7 +146,7 @@ addHook("PostThinkFrame",function()
 		me.oldhitlag = me.hitlag
 		
 		if not (me.skin == SOAP_SKIN
-		or me.skin == TAKIS_SKIN)
+		or (me.skin == TAKIS_SKIN and not mbrelease))
 			if soap.last.squash_head
 			or (soap.spritexscale ~= FU
 			or soap.spriteyscale ~= FU)
