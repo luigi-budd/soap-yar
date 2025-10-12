@@ -24,6 +24,5 @@ addHook("HUD",function(v,p)
 				(p.ctfteam == 1 and skincolor_redteam or skincolor_blueteam) or p.skincolor
 			)
 		)
-		v.dointerp(false)
 	end
 end,"game")
