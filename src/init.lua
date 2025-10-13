@@ -6,6 +6,8 @@ local not_in_mb = {
 	["character/LUA_takis.lua"] = true,
 }
 
+rawset(_G,"MENULIB_ROOT","Libs/Menulib/")
+dofile(MENULIB_ROOT .. "exec.lua")
 local filetree = {
 	"LUA_init.lua",
 	--math is important so run it up here

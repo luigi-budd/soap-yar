@@ -668,14 +668,14 @@ rawset(_G,"Soap_ImpactVFX",function(src,inf, distmul, scalemul)
 end)
 
 -- p might not be valid
-rawset(_G,"Soap_CanDamageEnemy",function(p, mobj,flags,exclude)
+rawset(_G,"Soap_CanDamageEnemy",function(p, mobj,flags,exclude, nobs)
 	local flingable = false
 	flags = $ or MF_ENEMY|MF_BOSS|MF_MONITOR|MF_SHOOTABLE
 	exclude = $ or 0
 	
 	if not (mobj and mobj.valid) then return false end
 	
-	if (mobj.flags2 & MF2_FRET)
+	if (mobj.flags2 & MF2_FRET and not nobs)
 		return false
 	end
 	
