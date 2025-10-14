@@ -1,5 +1,6 @@
 rawset(_G,"Soap_Hitlag",{})
 local hl = Soap_Hitlag
+local CV = SOAP_CV
 
 /*
 	mobj->foolhardy: mobj will not be stunned
@@ -12,21 +13,27 @@ hl.hitlagTranslation = "Soap_AI2" --"Soap_Hitlag" is too long to be parsed lmao
 --lets handle stunned enemies here too
 hl.stunned = {}
 
+local hlt_pv = {MIN = 0, /*off*/ MAX = 9001} --its over 9
 hl.cv_hitlagtics = CV_RegisterVar({
 	name = "soap_maxhitlagtics",
 	--too early to use TR i guess
 	defaultvalue = tostring(TICRATE),
 	flags = CV_NETVAR|CV_SHOWMODIF,
-	PossibleValue = {MIN = 0, /*off*/ MAX = 9001}, --its over 9
+	PossibleValue = hlt_pv
 })
+CV.hitlag_tics = hl.cv_hitlagtics
+CV.PossibleValues["soap_maxhitlagtics"] = {values = hlt_pv, min = 0, max = 10*TR} -- probably cap it in the menu
 
 --lol
+local hlm_pv = {MIN = FU, MAX = 20*FU}
 hl.cv_hitlagmulti = CV_RegisterVar({
 	name = "soap_hitlagmul",
 	defaultvalue = "1.0",
 	flags = CV_NETVAR|CV_FLOAT|CV_SHOWMODIF,
-	PossibleValue = {MIN = FU, MAX = 20*FU},
+	PossibleValue = hlm_pv,
 })
+CV.hitlag_mul = hl.cv_hitlagmulti
+CV.PossibleValues["soap_hitlagmul"] = {values = hlt_pv, min = FU, max = 20*FU}
 
 hl.iterateHitlagged = function()
 	for k,v in ipairs(hl.hitlagged)

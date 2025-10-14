@@ -94,6 +94,7 @@ MenuLib.client = {
 	
 	mouse_x = (BASEVIDWIDTH*FU) / 2,
 	mouse_y = (BASEVIDHEIGHT*FU) / 2,
+	mouse_graphic = nil,
 	
 	--the button ID that we're hovering over
 	hovering = -1,
@@ -131,8 +132,6 @@ local tree = {
 	
 	"Functions/exec",
 	"HUD/exec",
-
-	"debug",
 }
 
 for k,file in ipairs(tree)

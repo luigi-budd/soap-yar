@@ -1,5 +1,6 @@
 rawset(_G, "SOAP_CV",{})
 local CV = SOAP_CV
+CV.PossibleValues = {}
 
 local iAmLua = "iAmLua"..P_RandomFixed()
 addHook("NetVars",function(n) iAmLua = n($); end)
@@ -43,19 +44,23 @@ local function CMD_Constructor(cv_name, tablename, type)
 	end)
 end
 
+local ai_pv = {Rainbow = 0, Opposite = 1, Classic = 2, Retro = 3}
 CV.ai_style = CV_RegisterVar({
 	name = "soap_afterimagestyle",
 	defaultvalue = "Opposite",
 	flags = CV_SHOWMODIF,
-	PossibleValue = {Rainbow = 0, Opposite = 1, Classic = 2, Retro = 3},
+	PossibleValue = ai_pv,
 })
+CV.PossibleValues["soap_afterimagestyle"] = {values = ai_pv, length = 4}
 
+local quake_pv = {Off = 0, Half = 1, Normal = 2, Double = 3}
 CV.quake_mul = CV_RegisterVar({
 	name = "soap_quakes",
 	defaultvalue = "Normal",
 	flags = CV_SHOWMODIF,
-	PossibleValue = {Off = 0, Half = 1, Normal = 2, Double = 3},
+	PossibleValue = quake_pv,
 })
+CV.PossibleValues["soap_quakes"] = {values = quake_pv, length = 4}
 
 --these will need to be synched
 CV.crouch_toggle = CV_RegisterVar({

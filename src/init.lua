@@ -32,6 +32,8 @@ local filetree = {
 	--character hud
 	"HUD/main.lua",
 	
+	"menus/LUA_main.lua",
+	
 	"LUA_thook.lua",
 	"LUA_misc.lua",
 	"LUA_compat.lua",
