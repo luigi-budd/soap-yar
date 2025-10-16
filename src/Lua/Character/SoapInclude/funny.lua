@@ -1,3 +1,5 @@
+local mbrelease = dofile("Vars/mbrelease.lua")
+
 SafeFreeslot("sfx_sp_em0")
 sfxinfo[sfx_sp_em0] = {
 	flags = SF_X2AWAYSOUND,
@@ -43,7 +45,7 @@ COM_AddCommand("fu", function(p)
 	if not (p.soaptable and p.realmo and p.realmo.valid) then return end
 	
 	local certified = false
-	if (p.name == "Epix" --lol
+	if ((p.name == "Epix" and not mbrelease) --lol
 	or p.soaptable.isElevated)
 		certified = true
 	end

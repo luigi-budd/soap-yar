@@ -1478,6 +1478,10 @@ rawset(_G,"SoapST_Start",function(p)
 	
 	soap.topwindup = 13
 	soap.toptics = TR
+	if (p.pflags & PF_SPINNING)
+		p.pflags = $ &~PF_SPINNING
+		Soap_ResetState(p)
+	end
 	
 	S_StartSound(me, sfx_sp_tch)
 end)
