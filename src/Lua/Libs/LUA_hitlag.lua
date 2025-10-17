@@ -386,6 +386,16 @@ hl.stunEnemy = function(mo,tics)
 		tics = FixedMul($, hl.cv_hitlagmulti.value)
 	end
 	
+	local hook_event,hook_name = Takis_Hook.findEvent("Soap_OnStunEnemy")
+	for i,v in ipairs(hook_event)
+		if hook_event.typefor ~= nil
+			if hook_event.typefor(mo, v.typedef) == false then continue end
+		end
+		local result = Takis_Hook.tryRunHook(hook_name, v, mo,tics)
+		if result then return end
+		if not (mo and mo.valid) then return end
+	end
+	
 	mo.soap_stunned = $+tics
 	local oldflags = mo.flags
 	mo.flags = $|MF_NOTHINK|MF_SLIDEME &~(MF_SPECIAL|MF_ENEMY|MF_FLOAT|MF_NOGRAVITY|MF_PAIN)
@@ -395,14 +405,6 @@ hl.stunEnemy = function(mo,tics)
 	end
 	*/
 	
-	local hook_event,hook_name = Takis_Hook.findEvent("Soap_OnStunEnemy")
-	for i,v in ipairs(hook_event)
-		if hook_event.typefor ~= nil
-			if hook_event.typefor(mo, v.typedef) == false then continue end
-		end
-		local result = Takis_Hook.tryRunHook(hook_name, v, mo,tics)
-		if not (mo and mo.valid) then return end
-	end
 	
 	for k,v in ipairs(hl.stunned)
 		if v[1] == mo
