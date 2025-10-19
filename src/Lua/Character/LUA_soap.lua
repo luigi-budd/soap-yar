@@ -1125,11 +1125,7 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 		if (soap.in2D)
 			rightway = abs(p.cmd.sidemove) > 0
 		else
-			if p.cmd.sidemove ~= 0
-				rightway = (p.cmd.forwardmove >= 0)
-			else
-				rightway = (p.cmd.forwardmove > 0)
-			end
+			rightway = (p.cmd.forwardmove ~= 0) or (p.cmd.sidemove ~= 0)
 		end
 		
 		if (P_GetPlayerControlDirection(p) == 1)
@@ -1169,18 +1165,28 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 					
 					zangle = AngleFixed($)/FU
 					if zangle >= 180 then zangle = $ - 360 end
+					zangle = -$
 					
 					--only add speed going DOWN slopes,
 					--and never remove speed... (butteredslope should handle that)
-					if -zangle > 0
+					if zangle > 0
+						local frac_zangle = zangle * (FU/38)
+						
 						--GFZ2 slope-compliant
-						p.normalspeed = $ - zangle * (FU/38)
-						soap.chargingtime = min($ - zangle/5, 3*TR)
+						p.normalspeed = $ + frac_zangle
+						soap.chargingtime = $ + zangle/4
+						
 						if p.normalspeed > maximumspeed
-						and (-zangle * (FU/38) >= FU*6/10)
-							soap.chargingtime = 3*TR
-							extracharge = (p.normalspeed - maximumspeed)/5
+							if (frac_zangle >= FU*56/100)
+								soap.chargingtime = 3*TR
+								extracharge = (p.normalspeed - maximumspeed)/5
+							--weak
+							else
+								soap.chargingtime = $ + zangle/7
+								extracharge = (p.normalspeed - maximumspeed)/16
+							end
 						end
+						soap.chargingtime =  min($, 3*TR)
 						soap.speedlenient = max($, 3)
 					--...BUT!!!	if we're going uphill while waterrunning,
 					--we should be getting speed back, since water should
@@ -1195,11 +1201,21 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 					end
 				end
 				
-				p.normalspeed = min(
-					$ + (soap._maxdash/soap._maxdashtime),
-					--dont go over
-					maximumspeed
-				)
+				local slow_speed = (skin_t.normalspeed - 7*FU)
+				if soap.inWater
+					slow_speed = $/3
+				end
+				if soap.in2D
+					slow_speed = $/2
+				end
+				
+				if (soap.accspeed > slow_speed)
+					p.normalspeed = min(
+						$ + (soap._maxdash/soap._maxdashtime),
+						--dont go over
+						maximumspeed
+					)
+				end
 				
 				--readjust our normalspeed if the dash threshold changed
 				if not soap._noadjust

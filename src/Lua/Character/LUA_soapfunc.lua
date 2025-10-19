@@ -610,7 +610,7 @@ rawset(_G,"Soap_ImpactVFX",function(src,inf, distmul, scalemul)
 	local spr_scale = FixedMul(FU*3/4 + Soap_RandomFixedSigned() / 4, scalemul)
 	local tntstate = S_SOAP_IMPACT --S_TNTBARREL_EXPL3
 	local rflags = RF_PAPERSPRITE|RF_FULLBRIGHT|RF_NOCOLORMAPS
-	local applycolor = (multiplayer or netgame)
+	local applycolor = ((multiplayer or netgame) and (gametyperules & GTR_FRIENDLY == 0))
 	local frameoffset = (SOAP_IMPACTVFX_LENGTH + 1) * P_RandomRange(0, SOAP_IMPACTVFX_SETS)
 	
 	if distmul ~= nil
