@@ -138,9 +138,9 @@ SOAP_MENUS.buttontoggle = function(v, x,y, width, props)
 		y = $ + 1
 		do
 			local w = 20
-			hover = ML.mouseInZone(right-w, y, w,10) and not sld_grabbed and canPress
+			hover = ML.mouseInZone(right-w, y, w,10) and not sld_grabbed
 			local c = 0
-			if hover
+			if hover and canPress
 				c = (ML.client.mouseHeld > 0) and 4 or 2
 				ML.client.canPressSomething = true
 				if (ML.client.mouseHeld == -1)
@@ -294,11 +294,11 @@ ML.addMenu({
 		
 		SOAP_MENUS.buttontoggle(v, cx,cy, menu.width - 4, {
 			cv_name = "soap_hitlagmul", name = "Hitlag Multiplier",
-			cv_type = "slider", fixed = true
+			cv_type = "slider", fixed = true, adminonly = true
 		})
 		SOAP_MENUS.buttontoggle(v, cx,cy+13, menu.width - 4, {
 			cv_name = "soap_maxhitlagtics", name = "Max Hitlag Tics",
-			cv_type = "slider",
+			cv_type = "slider", adminonly = true
 		})
 		
 		v.drawString(props.corner_x + 1,props.corner_y + menu.height - 5, string.format("\x82\compver: \x80%s\x82\t".."compdate: \x80%s",compver,compdate),V_ALLOWLOWERCASE,"small-thin")
