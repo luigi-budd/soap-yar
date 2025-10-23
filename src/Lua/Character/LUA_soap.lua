@@ -2659,13 +2659,15 @@ addHook("PlayerSpawn",function(p)
 	soap.toptics = 0
 	if soap.topwindup
 		soap.topwindup = 0
-		me.translation = nil
+		if (me and me.valid)
+			me.translation = nil
+		end
 	end
 	
 	soap.deathtype = 0
 	Soap_ResetLunge(p)
 	
-	if me.skin ~= SOAP_SKIN then return end
+	if skins[p.skin].name ~= SOAP_SKIN then return end
 	if mariomode
 		p.charflags = $|SF_NOJUMPSPIN
 	else
