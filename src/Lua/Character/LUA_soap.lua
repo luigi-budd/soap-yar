@@ -2709,10 +2709,6 @@ addHook("PlayerHeight",function(p)
 	and (me.sprite2 == SPR2_MLEE)
 		return P_GetPlayerHeight(p)
 	end
-	
-	if soap.crouching
-		return P_GetPlayerSpinHeight(p)
-	end
 end)
 
 addHook("PlayerSpawn",function(p)
@@ -2725,39 +2721,6 @@ addHook("PlayerSpawn",function(p)
 	if not soap then return end
 	
 	soap.last.onground = P_IsObjectOnGround(me)
-end)
-
-addHook("PlayerCanEnterSpinGaps",function(p)
-	if not (p and p.valid) then return end
-	if not (p.soaptable) then return end
-	
-	if not (p.mo and p.mo.valid) then return end
-	
-	local me = p.mo
-	local soap = p.soaptable
-	
-	if me.skin == SOAP_SKIN
-		local phigh = me.height
-		
-		/*
-		if takis.crushtime
-			local high = P_GetPlayerHeight(p)
-			if p.pflags & PF_SPINNING
-				high = P_GetPlayerSpinHeight(p)
-			end
-			phigh = FixedMul(high,FixedDiv(takis.spriteyscale,FU))
-		end
-		if ((takis.transfo & TRANSFO_TORNADO)
-		and not (takis.nadocrash))
-		or (me.state == S_PLAY_TAKIS_SLIDE)
-			phigh = P_GetPlayerSpinHeight(p)
-		end
-		*/
-		
-		if phigh <= P_GetPlayerSpinHeight(p)
-			return true
-		end
-	end
 end)
 
 --use an extremely obscure mt_* so the mobjthinker destructor
