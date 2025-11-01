@@ -405,6 +405,8 @@ rawset(_G, "Soap_DirBreak", function(p, me, angle, nomom)
 		if not (newsec and newsec.valid) then continue end
 		
 		for rover in newsec.ffloors()
+			-- ..? srb2gens gives a weird error about "flags" being an invalid option...
+			if not (rover and rover.valid) then continue end
 			if not (rover.flags & FF_EXISTS) then continue end
 			if not (rover.flags & FF_BUSTUP) then continue end
 			
@@ -1177,7 +1179,7 @@ rawset(_G,"Soap_IsLocalPlayer",function(p)
 	return (p == displayplayer or p == secondarydisplayplayer)
 end)
 
-rawset(_G,"Soap_SpawnBumpSparks",function(me, thing, line, followme, scale)
+rawset(_G,"Soap_SpawnBumpSparks",function(me, thing, line, followme, scale, floor)
 	scale = $ or me.scale
 	local angle = R_PointToAngle2(0,0,me.momx,me.momy) + ANGLE_90
 	if (line and line.valid)
@@ -1193,6 +1195,7 @@ rawset(_G,"Soap_SpawnBumpSparks",function(me, thing, line, followme, scale)
 	local random = Soap_RandomFixedRange(0,73)
 	local speed = 6*scale
 	local limit = 28
+	local list = {}
 	for i = 1,8
 		local my_ang = FixedAngle((fa * i) + random)
 		
@@ -1200,16 +1203,21 @@ rawset(_G,"Soap_SpawnBumpSparks",function(me, thing, line, followme, scale)
 			FixedDiv((41*me.height)/48, me.scale),
 			MT_SOAP_WALLBUMP
 		)
-		P_InstaThrust(spark, angle, FixedMul(cos(my_ang), speed))
-		spark.momz = FixedMul(sin(my_ang), speed)
+		if floor
+			P_InstaThrust(spark, angle + my_ang, speed)
+		else
+			P_InstaThrust(spark, angle, FixedMul(cos(my_ang), speed))
+			spark.momz = FixedMul(sin(my_ang), speed)
+		end
 		
 		P_SetScale(spark,scale / 10, true)
 		spark.destscale = scale
 		--5 tics
-		spark.scalespeed = FixedDiv(scale - scale / 10, 5*FU)
+		spark.scalespeed = FixedDiv(scale - (scale / 10), 5*FU)
 		
 		--spark.mirrored = P_RandomChance(FU/2)
 		spark.fuse = TR*3/4
+		spark.startfuse = spark.fuse
 		
 		spark.random = P_RandomRange(-limit,limit) * ANG1
 		if followme
@@ -1217,7 +1225,9 @@ rawset(_G,"Soap_SpawnBumpSparks",function(me, thing, line, followme, scale)
 			spark.momx = $ + me.momx * 3/4
 			spark.momy = $ + me.momy * 3/4
 		end
+		list[i] = spark
 	end
+	return list
 end)
 
 --spinning top stuff is separated to make it easier to use in other cases
@@ -2453,6 +2463,19 @@ local function VFX_LandDust(p,me,soap, props)
 			time = ease_time
 		}, "landeffect")
 		S_StartSoundAtVolume(me,sfx_s3k4c,255/2)
+		
+		local grav = -abs(P_GetMobjGravity(me))
+		if soap.last.momz*soap.gravflip <= 35*grav
+			S_StartSoundAtVolume(me, sfx_tk_lfh, 255*3/4)
+			
+			local rich = 10*FU
+			if momz - 18*FU > 0
+				rich = $ + abs(momz - 18*FU)
+			end
+			if (Soap_IsLocalPlayer(p))
+				Soap_StartQuake(rich,15)
+			end
+		end
 	end
 end
 
@@ -2542,12 +2565,52 @@ local function VFX_Lunge(p,me,soap, props)
 	lunge.lenient = false
 end
 
+local function VFX_CeilingHit(p,me,soap, props)
+	local ceilz = (soap.gravflip == 1) and me.ceilingz or me.floorz
+	local top = (soap.gravflip == -1) and me.z or me.z + me.height
+	local dobonk = false
+	
+	if me.momz/me.scale == 0
+	and (soap.last.momz*soap.gravflip > 0)
+		if (
+			top >= ceilz-me.scale 
+			and top <= ceilz+me.scale
+		)
+			dobonk = true
+		end
+	end
+	
+	if P_IsObjectInGoop(me)
+		dobonk = false
+	end
+	
+	if dobonk
+		if not mariomode
+			S_StartSound(me, sfx_tk_ceh, p)
+		end
+		p.jt = -3
+		
+		local s = Soap_SpawnBumpSparks(me,nil,nil,nil, FU*3/4, true)
+		for i = 1,8
+			local b = s[i]
+			if b and b.valid
+				b.fuse = 17
+				b.startfuse = b.fuse
+			end
+		end
+		Soap_SquashMacro(p, {ease_func = "insine", ease_time = 10, strength = (FU/3)})
+		Soap_StartQuake(5*FU,10)
+	end
+	
+end
+
 rawset(_G, "Soap_VFXFuncs",{
 	waterrun = VFX_Waterrun,
 	jumpdust = VFX_JumpDust,
 	landdust = VFX_LandDust,
 	squish = VFX_Squish,
 	lunge = VFX_Lunge,
+	ceilinghit = VFX_CeilingHit,
 })
 
 --preferrably we could handle the auras here but ehh whatever
@@ -2560,6 +2623,7 @@ rawset(_G,"Soap_VFX",function(p,me,soap, props)
 		squish = true,
 		deathanims = true,
 		lunge = true,
+		ceilinghit = true,
 	}
 	
 	/*
@@ -2599,6 +2663,9 @@ rawset(_G,"Soap_VFX",function(p,me,soap, props)
 			if fxtable.lunge
 				allowed.lunge = false
 			end
+			if fxtable.ceilinghit
+				allowed.ceilinghit = false
+			end
 		end
 	end
 	
@@ -2620,6 +2687,10 @@ rawset(_G,"Soap_VFX",function(p,me,soap, props)
 	
 	if allowed.lunge
 		VFX_Lunge(p,me,soap, props)
+	end
+	
+	if allowed.ceilinghit
+		VFX_CeilingHit(p,me,soap, props)
 	end
 	
 	soap.allowdeathanims = allowed.deathanims

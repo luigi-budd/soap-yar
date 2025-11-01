@@ -100,7 +100,8 @@ addHook("MobjThinker",function(bump)
 		end
 	end
 	
-	if bump.fuse == TR/2
+	if bump.startfuse ~= nil
+	and bump.fuse == bump.startfuse * 3/8
 		bump.destscale = 0
 		bump.scalespeed = FixedDiv(bump.scale, bump.fuse*FU)
 	end
