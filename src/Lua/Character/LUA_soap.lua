@@ -1110,12 +1110,13 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 					if p.powers[pw_carry] == CR_NONE
 						me.state = S_PLAY_SKID
 						me.tics = p.skidtime
-						P_Thrust(me,me.angle, -3*me.scale)
+						P_Thrust(me,me.angle, -5*me.scale)
+						P_MovePlayer(p)
 					end
 					soap.fakeskidtime = p.skidtime
 					p.pflags = $ &~PF_SPINNING
 				end
-				me.soap_grabcooldown = TR*3
+				me.soap_grabcooldown = TR
 			end
 			soap.use_R = 0
 		end
