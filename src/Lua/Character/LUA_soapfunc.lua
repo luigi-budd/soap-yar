@@ -964,7 +964,7 @@ end
 rawset(_G,"Soap_CheckFloorPic",function(me, checkgrounded)
 	if checkgrounded and not P_IsObjectOnGround(me) then return ""; end
 	
-	local flip = me.eflags & MFE_VERTICALFLIP
+	local flip = (me.eflags & MFE_VERTICALFLIP == MFE_VERTICALFLIP)
 	local floorpic = me.subsector.sector.floorpic
 	if flip
 		floorpic = me.subsector.sector.ceilingpic
@@ -984,7 +984,6 @@ rawset(_G,"Soap_CheckFloorPic",function(me, checkgrounded)
 		end
 		
 		-- over/under
-		--TODO: checkgrounded works for both gravstates
 		if (me.z > topheight and checkgrounded)
 		or me.z + me.height < bottomheight -- FU
 			continue

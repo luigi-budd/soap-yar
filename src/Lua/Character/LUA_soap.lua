@@ -697,7 +697,7 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 				soap.boombox = boom
 				
 				local speed = 5*me.scale
-				for i = 0,P_RandomRange(20,29)
+				for i = 0,P_RandomRange(15,22)
 					local poof = P_SpawnMobjFromMobj(boom,
 						Soap_RandomFixedRange(-15,15),
 						Soap_RandomFixedRange(-15,15),
@@ -741,111 +741,8 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 	soap.crouch_removed = was_crouching
 	soap.crouching = false
 	
-	local forced_crouch = false
-	if not ((me.flags & MF_NOCLIPHEIGHT)
-	or (p.pflags & PF_GODMODE))
-	and me.health
-		if (me.ceilingz - me.floorz < P_GetPlayerHeight(p))
-		and not (p.pflags & PF_SPINNING)
-		and not (soap.noability & SNOABIL_CROUCH)
-		and (p.powers[pw_carry] == CR_NONE)
-			forced_crouch = true
-			p.pflags = $ &~PF_SPINNING
-		end
-	end
-	
 	--c2 specials
 	if (soap.c2)
-	or forced_crouch
-		
-		--[[
-		--crouching
-		if soap.onGround
-		and me.health
-		and not (soap.pounding)
-		and not (soap.taunttime)
-		and not soap.crouch_cooldown
-		and not soap.slipping
-		and not (soap.noability & SNOABIL_CROUCH)
-			local can_crouch = (
-				soap.accspeed <= 10*FU or was_crouching or soap.slipping or forced_crouch
-			)
-			
-			--uncurl
-			if (p.pflags & PF_SPINNING)
-			and soap.c2 == 1
-			and soap.onGround
-				p.pflags = $ &~PF_SPINNING
-				me.state = S_PLAY_WALK
-				P_MovePlayer(p)
-				
-				soap.crouch_cooldown = true
-			
-			--spin launch
-			elseif not can_crouch --soap.rdashing
-			and not (p.pflags & PF_SPINNING)
-			and (soap.c2 == 1 or me.eflags & MFE_JUSTHITFLOOR)
-			and (abs(p.cmd.forwardmove) or abs(p.cmd.sidemove))
-				p.pflags = $|PF_SPINNING
-				me.state = S_PLAY_ROLL
-				S_StartSound(me,sfx_zoom)
-				
-			--actually crouch
-			elseif not (p.pflags & PF_SPINNING)
-			and can_crouch
-				soap.crouching = true
-				soap.noability = $|SNOABIL_RDASH|SNOABIL_UPPERCUT|SNOABIL_TAUNTS
-				
-				p.normalspeed = skins[p.skin].normalspeed / 2
-				p.accelstart = skins[p.skin].accelstart * 2
-				
-				soap.rdashing = false
-				
-				if soap.crouch_time == 0
-					Soap_RemoveSquash(p, "crouchup_anim")
-					
-					local ease_time = soap_crouchanimtime
-					local ease_func = "outback"
-					local end_val = -FU/2
-					Soap_AddSquash(p, {
-						ease_func = ease_func,
-						start_v = 0,
-						end_v = tofixed("0.6"),
-						time = ease_time
-					}, {
-						ease_func = ease_func,
-						start_v = 0,
-						end_v = end_val,
-						time = ease_time
-					}, "crouchdown_anim")
-				end
-				
-				--TODO: remove when crouch animations are added
-				if soap.crouch_time >= soap_crouchanimtime
-					soap.spritexscale = FixedMul($, tofixed("1.6"))
-					soap.spriteyscale = $/2
-				end
-				cos_height = $ - 3
-				
-				--slip down steep slopes
-				P_ButteredSlope(me)
-				if me.standingslope
-					local slope = me.standingslope
-					
-					if (abs(slope.zdelta) >= FU/4)
-						soap.slipping = true
-						if soap.accspeed < 10*FU
-							P_Thrust(me, slope.xydirection,
-								10*me.scale * sign(slope.zdelta)
-							)
-						end
-					end
-				end
-				
-				soap.crouch_time = $ + 1
-			end
-		end
-		]]--
 		
 		if (soap.c2 == 1 or (me.eflags & MFE_JUSTHITFLOOR))
 			--slide
@@ -2002,6 +1899,12 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 		p.pflags = $|PF_JUMPED|PF_JUMPSTASIS
 		me.pitch = FixedMul($, FU*3/4)
 		me.roll = FixedMul($, FU*3/4)
+		
+		if (p.cmd.forwardmove == 0 and p.cmd.sidemove == 0)
+			local drag = FU * 98/10
+			me.momx = FixedMul($, drag)
+			me.momy = FixedMul($, drag)
+		end
 		
 		if me.health
 			p.powers[pw_strong] = $|STR_SPRING|STR_HEAVY|STR_SPIKE
