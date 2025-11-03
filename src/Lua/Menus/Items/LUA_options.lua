@@ -1,11 +1,6 @@
 local ML = MenuLib
 local CV = SOAP_CV
 
-SOAP_MENUS.templates = {
-	button = {
-	}
-}
-
 local widths = {
 	["BIG"] = 12,
 	["MEDIUM"] = 10,

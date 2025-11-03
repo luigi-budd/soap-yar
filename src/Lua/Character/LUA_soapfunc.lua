@@ -2464,8 +2464,8 @@ local function VFX_LandDust(p,me,soap, props)
 		}, "landeffect")
 		S_StartSoundAtVolume(me,sfx_s3k4c,255/2)
 		
-		local grav = -abs(P_GetMobjGravity(me))
-		if soap.last.momz*soap.gravflip <= 35*grav
+		local grav = -(FU + (FU - abs(FixedDiv(P_GetMobjGravity(me), me.scale/2)))/2 )
+		if soap.last.momz*soap.gravflip <= 18*grav
 			S_StartSoundAtVolume(me, sfx_tk_lfh, 255*3/4)
 			
 			local rich = 10*FU
