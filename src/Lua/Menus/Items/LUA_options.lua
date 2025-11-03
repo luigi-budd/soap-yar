@@ -256,6 +256,8 @@ SOAP_MENUS.buttontoggle = function(v, x,y, width, props)
 end
 
 local compver,compdate = (loadfile("Vars/compver.lua"))(), (loadfile("Vars/compdate.lua"))()
+local mbrelease = (loadfile("Vars/mbrelease.lua"))()
+local debug = (loadfile("Vars/debugflag.lua"))()
 ML.addMenu({
 	stringId = "soap_options",
 	title = "Soap Options",
@@ -296,7 +298,20 @@ ML.addMenu({
 			cv_type = "slider", adminonly = true
 		})
 		
-		v.drawString(props.corner_x + 1,props.corner_y + menu.height - 5, string.format("\x82\compver: \x80%s\x82\t".."compdate: \x80%s",compver,compdate),V_ALLOWLOWERCASE,"small-thin")
+		local workx = props.corner_x + (menu.width - 1)
+		local worky = props.corner_y + menu.height - 5
+		v.drawString(props.corner_x + 1,worky, string.format("\x82\compver: \x80%s\x82\t".."compdate: \x80%s",compver,compdate),V_ALLOWLOWERCASE,"small-thin")
+		if (mbrelease)
+			local str = "\x84MB Version"
+			v.drawString(workx,worky, str, V_ALLOWLOWERCASE, "small-thin-right")
+			workx = $ - (v.stringWidth(str,0,"thin")/2) - 4
+		end
+		if (debug)
+			local str = "\x87".."Debug enabled"
+			v.drawString(workx,worky, str, V_ALLOWLOWERCASE, "small-thin-right")
+			workx = $ - (v.stringWidth(str,0,"thin")/2) - 4
+		end
+		
 		sld_display.tics = max($ - 1, 0)
 	end
 })
