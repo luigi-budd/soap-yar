@@ -100,7 +100,7 @@ local function soap_poundonland(p,me,soap)
 		local battle_tumble = false
 		local br = 64*me.scale
 		if abs(soap.last.momz) >= 20*me.scale
-			br = $ + abs(soap.last.momz)-20*me.scale / 2
+			br = $ + (abs(soap.last.momz)-20*me.scale) * 3/4
 		end
 		
 		/*
@@ -188,7 +188,7 @@ local function soap_poundonland(p,me,soap)
 			),
 			{me.x,me.y,me.z},
 			me.radius * 3/2,
-			br/2, --soap.last.momz,
+			br/3, --soap.last.momz,
 			me.scale / 2,
 			me.scale * 3/2,
 			false, dust_noviewmobj
@@ -1900,8 +1900,9 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 		me.pitch = FixedMul($, FU*3/4)
 		me.roll = FixedMul($, FU*3/4)
 		
+		-- no inputs stabilizes yourself
 		if (p.cmd.forwardmove == 0 and p.cmd.sidemove == 0)
-			local drag = FU * 98/10
+			local drag = FU * 98/100
 			me.momx = FixedMul($, drag)
 			me.momy = FixedMul($, drag)
 		end
@@ -2955,7 +2956,7 @@ local function handleBump(p,me,thing)
 			Soap_ZLaunch(thing, FixedMul(3*FU + speed_add/5, me.scale))
 			P_Thrust(thing,
 				R_PointToAngle2(thing.x,thing.y, me.x,me.y),
-				FixedMul(3*FU + speed_add, -me.scale)
+				FixedMul(8*FU + speed_add, -me.scale)
 			)
 			thing.z = $ + thing.scale*P_MobjFlip(thing)
 		end

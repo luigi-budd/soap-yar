@@ -66,6 +66,7 @@ states[S_ROSY_DEAD] = {
 mobjinfo[MT_ROSY].deathstate = S_ROSY_DEAD
 mobjinfo[MT_ROSY].spawnhealth = 1
 mobjinfo[MT_ROSY].flags = $|MF_SHOOTABLE
+mobjinfo[MT_ROSY].stunstate = S_PLAY_PAIN
 
 mobjinfo[MT_FANG].stunstate = S_PLAY_PAIN
 --mobjinfo[MT_METALSONIC_BATTLE].stunstate = S_METALSONIC_PAIN

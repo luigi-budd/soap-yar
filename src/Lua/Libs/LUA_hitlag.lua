@@ -35,6 +35,10 @@ hl.cv_hitlagmulti = CV_RegisterVar({
 CV.hitlag_mul = hl.cv_hitlagmulti
 CV.PossibleValues["soap_hitlagmul"] = {values = hlt_pv, min = FU, max = 20*FU}
 
+local function dust_type(me)
+	return (me.eflags & (MFE_UNDERWATER|MFE_TOUCHWATER)) and P_RandomRange(MT_SMALLBUBBLE,MT_MEDIUMBUBBLE) or MT_SOAP_DUST
+end
+
 hl.iterateHitlagged = function()
 	for k,v in ipairs(hl.hitlagged)
 		local mo = v[1]
@@ -160,9 +164,39 @@ hl.iterateHitlagged = function()
 			and v.tics
 				P_SetObjectMomZ(mo, Soap_RandomFixedRange(3,6))
 				S_StartSound(mo,sfx_s3k49)
+				Soap_DustRing(mo,
+					dust_type(mo),
+					P_RandomRange(8,10),
+					{mo.x,mo.y,mo.z},
+					32*mo.scale,
+					mo.scale*5,
+					mo.scale,
+					mo.scale/2,
+					false
+				)
 			end
 			v.tics = $ + 1
 			
+			local old_pos = {
+				x = mo.x, y = mo.y,
+				momx = mo.momx, momy = mo.momy
+			}
+			local tmresult, tmthing = P_TryMove(mo, mo.x + mo.momx, mo.y + mo.momy, true)
+			if not tmresult
+				P_BounceMove(mo)
+				S_StartSound(mo,sfx_s3k49)
+				if (tmthing and tmthing.valid and tmthing ~= mo)
+					Soap_SpawnBumpSparks(mo,tmthing)
+				else
+					old_pos.momx2 = mo.momx
+					old_pos.momy2 = mo.momy
+					mo.momx,mo.momy = old_pos.momx, old_pos.momy
+					Soap_SpawnBumpSparks(mo)
+					mo.momx,mo.momy = old_pos.momx2, old_pos.momy2
+				end
+			else
+				P_MoveOrigin(mo, old_pos.x,old_pos.y, mo.z)
+			end
 			P_XYMovement(mo)
 			if (mo and mo.valid)
 				if not P_ZMovement(mo)

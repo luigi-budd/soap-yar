@@ -736,7 +736,7 @@ rawset(_G,"Soap_DustRing",function(src,
 	pos,
 	radius, speed,
 	initscale, scale,
-	threeaxis, --TODO
+	threeaxis, --TODO: implement this
 	callback
 )
 	radius = $ or 0
@@ -806,6 +806,7 @@ rawset(_G,"Soap_JostleThings",function(me, found, range)
 	
 	local tumbled = false
 	local nobounce = false --bruh
+	local nothrust = false
 	if found.player and me.player.soaptable.inBattle
 		local p = me.player
 		local p2 = found.player
@@ -833,10 +834,36 @@ rawset(_G,"Soap_JostleThings",function(me, found, range)
 	end
 	
 	if (found.flags & MF_NOGRAVITY) then return end
+	if (found.flags & MF_SPRING)
+		if found.info.mass ~= 0
+			nothrust = true
+			-- diag springs are unaffected
+			if found.info.damage ~= 0
+				nobounce = true
+			end
+		end
+		if (found.standingslope)
+			nobounce = true
+			nothrust = true
+		end
+	end
+
 	if not nobounce
 		--dont crush us
 		if ((found.flags & MF_MONITOR) or (found.type == MT_SPIKE)) then range = $ / 2 end
-		Soap_ZLaunch(found, abs(range / 16) * P_MobjFlip(me))
+		
+		-- force is probably already scaled to our size
+		local force = abs(range / 16) * P_MobjFlip(me)
+		if (found.eflags & MFE_UNDERWATER)
+			force = FixedMul($,FixedDiv(117*FU,200*FU))
+		end
+		found.momz = $ + (force * P_MobjFlip(found))
+	end
+	if not nothrust
+		P_Thrust(found,
+			R_PointToAngle2(me.x,me.y, found.x,found.y),
+			(range / 16)
+		)
 	end
 	return tumbled
 end)
