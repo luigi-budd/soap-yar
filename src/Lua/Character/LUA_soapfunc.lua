@@ -906,11 +906,19 @@ rawset(_G, "Soap_WindLines", function(me,rmomz,color,forceang,forceside)
 		end
 	end
 	*/
+	local offx = me.momx
+	local offy = me.momy
+	do
+		local progress = P_RandomFixed()
+		offx = FixedMul($, progress)
+		offy = FixedMul($, progress)
+	end
+	
 	local zangle = R_PointToAngle2(0, 0, R_PointToDist2(0,0,me.momx,me.momy), momz)
 	local height = (me.height)/2
 	local wind = P_SpawnMobj(
-		me.x, --+ P_RandomRange(-36,36)*me.scale + offx,
-		me.y, --+ P_RandomRange(-36,36)*me.scale + offy,
+		me.x,
+		me.y,
 		me.z + (height) + Soap_RandomFixedRange(-height/FU,height/FU),
 		MT_SOAP_SPEEDLINE
 	)
@@ -939,8 +947,8 @@ rawset(_G, "Soap_WindLines", function(me,rmomz,color,forceang,forceside)
 		sidey = P_ReturnThrustY(nil,wind.angle, distance)
 	end
 	P_SetOrigin(wind,
-		me.x + P_ReturnThrustX(nil,pushangle,pushdist) + sidex,
-		me.y + P_ReturnThrustY(nil,pushangle,pushdist) + sidey,
+		me.x + P_ReturnThrustX(nil,pushangle,pushdist) + sidex + offx,
+		me.y + P_ReturnThrustY(nil,pushangle,pushdist) + sidey + offy,
 		wind.z
 	)
 	--Painful
