@@ -2462,7 +2462,7 @@ local function VFX_LandDust(p,me,soap, props)
 	and not props.was_pounding
 	and me.health
 	and not (p.powers[pw_carry] == CR_NIGHTSMODE)
-		local momz = abs(FixedDiv(soap.last.momz, me.scale))
+		local momz = abs(FixedDiv(soap.last.momz, me.scale or 1))
 		
 		Soap_DustRing(me,
 			dust_type(me),

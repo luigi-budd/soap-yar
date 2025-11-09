@@ -3651,7 +3651,7 @@ Takis_Hook.addHook("PostThinkFrame",function(p)
 		if not (me.flags & MF_NOTHINK)
 			p.drawangle = (p.cmd.angleturn << 16) - FixedAngle(soap.uppercut_spin)
 			
-			local grav_mul = abs(FixedDiv(P_GetMobjGravity(me),me.scale/2))
+			local grav_mul = abs(FixedDiv(P_GetMobjGravity(me),(me.scale/2) or 1))
 			soap.uppercut_spin = P_AngleLerp(
 				FixedMul(FU/7, grav_mul),
 				$, 0
