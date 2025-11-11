@@ -893,7 +893,6 @@ local function SetCompat()
 		Takis_Hook.addHook("CanPlayerHurtPlayer",function(p1,p2, nobs)
 			if not (p2.mo and p2.mo.valid) then return end
 			if skins[p2.skin].name ~= "orbit" then return end
-			local o = p2.orbittable
 			
 			if not Orbit.Yar --demos 4.37 and before
 				local o = p2.orbittable
