@@ -888,16 +888,23 @@ local function SetCompat()
 		compat.mmportraits = true
 		printf("Added EPIC!MM stuff.")
 	end
-	if (skins["orbit"] ~= nil)
+	if (skins["orbit"] ~= nil) and Orbit
 	and not compat.orbitcompat
 		Takis_Hook.addHook("CanPlayerHurtPlayer",function(p1,p2, nobs)
 			if not (p2.mo and p2.mo.valid) then return end
 			if skins[p2.skin].name ~= "orbit" then return end
-			local o = p2.orbittable
 			
-			if (o.frozen)
-				--p1.soaptable.damagedealtthistic = SOAP_MAXDAMAGETICS
-				return false
+			if not Orbit.Yar --demos 4.37 and before
+				local o = p2.orbittable
+				
+				if (o.frozen)
+					--p1.soaptable.damagedealtthistic = SOAP_MAXDAMAGETICS
+					return false
+				end
+			else
+				if p2.mo.orbit_frozen
+					return false
+				end
 			end
 		end)
 		
