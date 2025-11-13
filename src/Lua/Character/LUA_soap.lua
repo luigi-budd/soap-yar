@@ -30,7 +30,6 @@ local soap_baseuppercutturn = (360 + 180)*FU
 local soap_pound_factor = tofixed("0.75")
 local CV = SOAP_CV
 
-local soap_crouchanimtime = 13
 local max_mentums = (FU - ORIG_FRICTION) * 95 / 100
 local soap_lowfriction = tofixed("0.97")
 
@@ -598,7 +597,6 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 			S_StartSound(me,sfx_flex)
 			me.state = S_PLAY_SOAP_FLEX
 			soap.taunttime = TR
-			soap.crouch_cooldown = true
 		elseif (soap.c3)
 			S_StartSound(me,sfx_hahaha)
 			me.state = S_PLAY_SOAP_LAUGH
@@ -737,9 +735,6 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 	local squishme = true
 	
 	local lunge = soap.lunge
-	local was_crouching = soap.crouching
-	soap.crouch_removed = was_crouching
-	soap.crouching = false
 	
 	--c2 specials
 	if (soap.c2)
@@ -843,8 +838,6 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 			soap.canuppercut = false
 			soap.pounding = false
 		end
-	else
-		soap.crouch_cooldown = false
 	end
 	
 	if me.state == S_PLAY_SOAP_SLIP
@@ -873,29 +866,6 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 		elseif not soap.onGround
 			P_PitchRoll(me, FU/10)
 		end
-	end
-	
-	if not soap.crouching
-	and was_crouching
-		p.normalspeed = skins[p.skin].normalspeed
-		p.accelstart = skins[p.skin].accelstart
-		
-		soap.crouch_time = 0
-		Soap_RemoveSquash(p, "crouchdown_anim")
-		local ease_time = soap_crouchanimtime
-		local ease_func = "outback"
-		local end_val = -FU/2
-		Soap_AddSquash(p, {
-			ease_func = ease_func,
-			start_v = tofixed("0.6"),
-			end_v = 0,
-			time = ease_time
-		}, {
-			ease_func = ease_func,
-			start_v = end_val,
-			end_v = 0,
-			time = ease_time
-		}, "crouchup_anim")
 	end
 	
 	soap.topcooldown = max($-1, 0)
@@ -1030,7 +1000,6 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 		--not going backwards
 		and rightway
 		and soap.onGround
-		and not soap.crouching
 		and not (soap.noability & SNOABIL_RDASH)
 			local skin_t = skins[p.skin]
 			local maximumspeed = skin_t.normalspeed + soap._maxdash
@@ -3504,7 +3473,6 @@ addHook("JumpSpecial", function(p)
 	end
 end)
 
-local crouch_lerp = 0
 Takis_Hook.addHook("PostThinkFrame",function(p)
 	local me = p.realmo
 	local soap = p.soaptable
@@ -3567,23 +3535,6 @@ Takis_Hook.addHook("PostThinkFrame",function(p)
 	
 	if me.state == S_PLAY_DASH
 		p.drawangle = R_PointToAngle2(0,0,me.momx,me.momy) --soap.dashangle
-	end
-	
-	--crouching viewheight
-	--code shamelessly taken from ze2 lmao
-	if Soap_IsLocalPlayer(p)
-		if soap.crouching
-			crouch_lerp = min($ + FU/7, FU)
-		else
-			crouch_lerp = max($ - FU/4, 0)
-		end
-		if crouch_lerp
-			local eased = ease.inoutquad(crouch_lerp,
-				0, FixedMul(p.height - p.spinheight, me.scale)
-			)
-			local height = me.z + p.viewheight - eased
-			p.viewz = min($, height)
-		end
 	end
 	
 	--this is really cool

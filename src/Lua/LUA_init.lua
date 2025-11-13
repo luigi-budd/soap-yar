@@ -138,11 +138,6 @@ rawset(_G, "Soap_InitTable", function(p)
 		hurtframe = 0,
 		trydamageframe = 0, --ditto, but for ShouldDamage
 		
-		--if true, no crouching until c3 is let go
-		crouch_cooldown = false,
-		crouch_time = 0,
-		crouch_removed = false, --was_crouching
-		
 		pounding = false,
 		pound_cooldown = 0,
 		poundtime = 0,
