@@ -1037,6 +1037,7 @@ rawset(_G,"Takis_AbilityHelpers",{
 		p.powers[pw_strong] = $|(STR_SPRING|STR_HEAVY|STR_SPIKE)
 		takis.noability = $|NOABIL_SHOTGUN|NOABIL_HAMMER
 		--control better
+		takis.setrolltrol = true
 		p.thrustfactor = skins[TAKIS_SKIN].thrustfactor*3/2
 		p.drawangle = me.angle
 		
@@ -1139,12 +1140,6 @@ rawset(_G,"Takis_AbilityHelpers",{
 			Takis_ResetHammerTime(p)
 			return
 		end
-		
-		/*
-		if not (takis.shotgunned)
-			takis.dontlanddust = true
-		end
-		*/
 		
 		--hit ground
 		if (takis.onGround or P_CheckDeathPitCollide(me))

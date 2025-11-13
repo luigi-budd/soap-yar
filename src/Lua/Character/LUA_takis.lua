@@ -177,7 +177,7 @@ Takis_Hook.addHook("Takis_Thinker",function(p)
 		and not (soap.isSliding)
 			Takis_DoClutch(p)
 		end
-
+		
 		--hammer blast
 		if soap.use == (TR/5)
 		and not soap.onGround
@@ -253,6 +253,107 @@ Takis_Hook.addHook("Takis_Thinker",function(p)
 			Soap_ZLaunch(me,thrust)
 		end
 		
+	end
+	
+	-- c2 specials
+	if (soap.c2)
+		
+		--slide
+		-- soap's slide is just a better coded takis slide
+		-- so we'll be using his code
+		if soap.c2 == 1
+		and soap.c3 == 0
+		and soap.onGround
+		--and not (p.pflags & PF_SPINNING)
+		and soap.taunttime == 0
+		--and not takis.yeahed
+		and me.health
+		and (me.state ~= S_PLAY_SOAP_SLIP)
+		--and not ((takis.tauntmenu.open) and (takis.tossflag))
+		and not (soap.isSliding)
+		and not (soap.noability & NOABIL_SLIDE)
+		and soap.notCarried
+			--if you were spinning already, and WERENT sliding,
+			--you can flop on your belly so you can lunge later
+			local wasspinning = (p.pflags & PF_SPINNING)
+			
+			local ang, thrust
+			if not wasspinning
+				ang = Soap_ControlDir(p)
+				S_StartSound(me,sfx_tk_sld)
+				
+				thrust = 7*FU + (soap.accspeed)
+				if thrust > 22*FU
+					if (soap.accspeed < 22*FU)
+						thrust = (22*FU - soap.accspeed) + soap.accspeed
+					else
+						thrust = 0
+					end
+				end
+				
+				thrust = FixedMul($,me.scale)
+				if thrust > 0
+					P_InstaThrust(me,ang,thrust)
+				end
+			end
+			
+			me.state = S_PLAY_SOAP_SLIP
+			p.pflags = $|PF_SPINNING
+			if not wasspinning
+				P_MovePlayer(p)
+				if not ((p.cmd.forwardmove) and (p.cmd.sidemove))
+				and soap.accspeed + thrust < 14*FU
+					P_InstaThrust(me,ang,15*me.scale)
+				end
+			end
+			Soap_SquashMacro(p, {ease_func = "insine", ease_time = 12, strength = (FU/3), name = "soap_slide"})
+			Soap_RemoveSquash(p, "landeffect")
+			
+			local start = (R_PointToAngle2(0,0,me.momx,me.momy) + ANGLE_180) - ANGLE_45
+			local ang_frac = FixedDiv(90*FU, 12*FU)
+			local dist = FixedDiv(me.radius,me.scale)
+			for i = 0,8
+				local fa = start + FixedAngle((ang_frac*i) + Soap_RandomFixedRange(-5,5))
+				local dust = P_SpawnMobjFromMobj(me,
+					P_ReturnThrustX(nil,fa, dist),
+					P_ReturnThrustY(nil,fa, dist),
+					0, MT_SOAP_DUST
+				)
+				dust.angle = fa
+				P_Thrust(dust,fa, FixedMul(Soap_RandomFixedRange(1,15),me.scale))
+				P_SetObjectMomZ(dust, Soap_RandomFixedRange(3,15))
+				dust.scale = $ * 7/6
+				
+				Soap_WindLines(me,0,nil,nil, i < 4 and 1 or -1)
+			end
+		end
+
+	end
+	
+	if not (soap.noability & NOABIL_SLIDE)
+		local last = soap.last.anim.state
+		if (me.state == S_PLAY_SOAP_SLIP
+		and last ~= S_PLAY_SOAP_SLIP)
+		or (me.state == S_PLAY_ROLL
+		and last ~= S_PLAY_ROLL)
+			soap.setrolltrol = false
+		end
+		
+		if p.pflags & PF_JUMPED then p.pflags = $ &~PF_SPINNING end
+		if (p.pflags & PF_SPINNING)
+		and soap.onGround
+			if not soap.setrolltrol
+				p.thrustfactor = skins[p.skin].thrustfactor * (me.state == S_PLAY_SOAP_SLIP and 3 or 7)
+			end
+			soap.setrolltrol = true
+		else
+			if soap.setrolltrol
+				p.thrustfactor = skins[p.skin].thrustfactor
+			end
+			soap.setrolltrol = false
+		end
+	elseif soap.setrolltrol
+		p.thrustfactor = skins[p.skin].thrustfactor
 	end
 	
 	if (me.state == S_PLAY_GLIDE)
@@ -437,7 +538,6 @@ Takis_Hook.addHook("Takis_Thinker",function(p)
 	--hammerblast thinker
 	--hammerblast stuff
 	--this is a bad spot for this but eh fuck it
-	p.thrustfactor = skins[TAKIS_SKIN].thrustfactor
 	if hammer.down
 		Takis_AbilityHelpers.hammerthinker(p)
 	else
@@ -526,6 +626,7 @@ Takis_Hook.addHook("Takis_Thinker",function(p)
 	
 	Soap_VFX(p,me,soap, {
 		squishme = squishme,
+		was_pounding = soap.hammer.down,
 	})
 	Soap_DeathThinker(p,me,soap)
 end)
