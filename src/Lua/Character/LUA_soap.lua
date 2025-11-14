@@ -478,13 +478,13 @@ Takis_Hook.addHook("PreThinkFrame",function(p)
 	end
 	
 	soap.bm.damaging = false
-	soap.bm.dmg_props = {
-		att = 0,
-		def = 0,
-		s_att = 0,
-		s_def = 0,
-		name = ""
-	}
+	local dprp = soap.bm.dmg_props
+	dprp.att = 0
+	dprp.def = 0
+	dprp.s_att = 0
+	dprp.s_def = 0
+	dprp.name = ""
+	
 	--Okay
 	if soap.bm.lockmove
 		p.cmd.forwardmove = $/5

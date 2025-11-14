@@ -5,9 +5,12 @@
 if not rawget(_G,"Takis_Hook")
 	rawset(_G, "Takis_Hook", {})
 	Takis_Hook.events = {}
+	Takis_Hook.disabled = {}
 	
 	--Dont "expose" deprecated hooks
 end
+
+local debug = dofile("Vars/debugflag.lua")
 
 /*
 	return value: Boolean (override default behavior?)
@@ -118,8 +121,15 @@ Takis_Hook.addHook = function(hooktype, func, typefor)
 		table.insert(Takis_Hook.events[hooktype], {
 			func = func,
 			typedef = typefor,
+			
 			errored = false,
-			id = #Takis_Hook.events[hooktype]
+			
+			-- debugging
+			id = #Takis_Hook.events[hooktype],
+			src = takis_lumpname or "???",
+			us_taken = 0, -- microseconds
+			activity = 0,
+			tic_called = -1,
 		})
 	else
 		S_StartSound(nil,sfx_skid)
@@ -130,16 +140,33 @@ end
 Takis_Hook.tryRunHook = function(hooktype, v, ...)
 	local handler = Takis_Hook.events[hooktype].handler or handler_default
 	local override = handler.initial
-
+	local debugmode = (debug and (SOAP_DEBUG & DEBUG_HOOKS))
+	local starttime
+	
+	if (debugmode and Takis_Hook.disabled[hooktype] == true)
+		return
+	end
+	
 	local results = {pcall(v.func, ...)}
 	local status = results[1] or nil
 	table.remove(results,1)
 	
 	if status then
+		if debugmode then starttime = getTimeMicros(); end
 		override = {handler.func(
 			override,
 			unpack(results)
 		)}
+		if debugmode
+			local taken = (getTimeMicros() - starttime)
+			if v.tic_called == leveltime
+				v.us_taken = $ + taken
+			else
+				v.us_taken = taken
+			end
+			v.activity = min($ + taken, TR)
+			v.tic_called = leveltime
+		end
 	elseif (not v.errored) then
 		v.errored = true
 		S_StartSound(nil,sfx_lose)
@@ -154,8 +181,13 @@ end
 
 local notvalid = {}
 Takis_Hook.findEvent = function(hooktype)
+	local debugmode = (debug and (SOAP_DEBUG & DEBUG_HOOKS))
 	local name = hooktype
 	local events = Takis_Hook.events[name]
+	
+	if (debugmode and Takis_Hook.disabled[hooktype] == true)
+		return nil,nil
+	end
 	
 	if events == nil
 	and deprecated[hooktype] ~= nil

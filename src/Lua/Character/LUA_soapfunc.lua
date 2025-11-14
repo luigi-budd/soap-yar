@@ -2622,7 +2622,6 @@ local function VFX_CeilingHit(p,me,soap, props)
 		if not mariomode
 			S_StartSound(me, sfx_tk_ceh, p)
 		end
-		p.jt = -3
 		
 		local s = Soap_SpawnBumpSparks(me,nil,nil,nil, FU*3/4, true)
 		for i = 1,8
@@ -2633,7 +2632,9 @@ local function VFX_CeilingHit(p,me,soap, props)
 			end
 		end
 		Soap_SquashMacro(p, {ease_func = "insine", ease_time = 10, strength = (FU/3)})
-		Soap_StartQuake(5*FU,10)
+		if (Soap_IsLocalPlayer(p))
+			Soap_StartQuake(5*FU,10)
+		end
 	end
 	
 end

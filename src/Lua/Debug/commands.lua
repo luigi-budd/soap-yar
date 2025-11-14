@@ -22,10 +22,10 @@ end
 enumflags("DEBUG_",{
 	"BUTTONS",
 	"RDASH",
+	"HOOKS",
 }, function(k,enum,val)
 	DEBUGTOENUM[val] = enum
 end)
-
 
 local function NotInLevel()
 	return not (gamestate == GS_LEVEL or gamestate == GS_DEDICATEDSERVER)
@@ -565,4 +565,25 @@ CMDConstructor("editmyself", {prefix = SOAP_DEVPREFIX, func = function(p,...)
 		end
 		prn(p,"\x83Success!")
 	end
+end})
+
+CMDConstructor("toggle", {prefix = SOAP_DEVPREFIX, func = function(p,...)
+	local args = {...}
+	local typetoggle = args[1]
+	if typetoggle == nil
+		prn(p, "toggle <hook_type>: Toggles a TakisHook on or off. List of event names:")
+		for etype, event_t in pairs(Takis_Hook.events)
+			local clr = Takis_Hook.disabled[etype] == true and "\x85OFF" or "\x83ON"
+			prn(p, "\t"..clr.."\x82 - "..etype)
+		end
+		return
+	end
+	
+	if Takis_Hook.events[typetoggle] == nil
+		prn(p, "\x85Not a valid TakisHook event")
+		return
+	end
+
+	Takis_Hook.disabled[typetoggle] = not $
+	prn(p, '\x82Toggled event "'..typetoggle..'" '..(Takis_Hook.disabled[typetoggle] and "OFF" or "ON"))
 end})

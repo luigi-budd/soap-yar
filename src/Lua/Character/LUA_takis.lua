@@ -1153,7 +1153,6 @@ addHook("MobjDeath", function(me,inf,sor,dmgt)
 	end
 end)
 
-local crouch_lerp = 0
 Takis_Hook.addHook("PostThinkFrame",function(p)
 	local me = p.mo
 	local soap = p.soaptable

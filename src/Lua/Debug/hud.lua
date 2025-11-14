@@ -1,5 +1,11 @@
 local oldflags = 0
 local oldlives = hud.enabled("lives")
+local oldstr = {
+	score = hud.enabled("score"),
+	time = hud.enabled("time"),
+	rings = hud.enabled("rings"),
+}
+local STR_CAP = 30
 
 local function DrawButton(v, player, x, y, flags, color, color2, butt, release, symb, strngtype, w,h)
 	-- Buttons! Shows input controls.
@@ -251,6 +257,67 @@ addHook("HUD",function(v,p)
 			f|V_ALLOWLOWERCASE, "small-thin-fixed"
 		)
 		v.interpolate(false)
+	end
+	if (SOAP_DEBUG & DEBUG_HOOKS)
+		if not (oldflags & DEBUG_HOOKS)
+			oldstr = {
+				score = hud.enabled("score"),
+				time = hud.enabled("time"),
+				rings = hud.enabled("rings"),
+			}
+			hud.disable("score")
+			hud.disable("time")
+			hud.disable("rings")
+		end
+
+		local x = 2
+		local y = 2
+		local flags = V_SNAPTOLEFT|V_SNAPTOTOP|V_ALLOWLOWERCASE
+		local frametime = 0
+		for etype, event_t in pairs(Takis_Hook.events)
+			local starty = y
+			local totaltime = 0
+
+			x = $ + 4
+			y = $ + 4
+			for key,hook_t in pairs(event_t)
+				-- these are irrelevant
+				if (key == "typefor" or key == "handler")
+					continue
+				end
+				local path = hook_t.src
+				local strlen = path:len()
+				if strlen > STR_CAP - 1
+					path = path:sub(strlen - STR_CAP, strlen)
+				end
+				local clr = hook_t.activity and "\x80" or "\x86"
+
+				v.drawString(x,y, "\x82["..tostring(key)..","..tostring(hook_t.id).."] - \x86"..path.." = "..clr..tostring(hook_t.us_taken).."us", flags, "small")
+				if (hook_t.activity > 0)
+					hook_t.activity = max($ - 1, 0)
+					frametime = $ + hook_t.us_taken
+					totaltime = $ + hook_t.us_taken
+				elseif (hook_t.activity < 0)
+					hook_t.activity = 0
+				end
+
+				y = $ + 4
+			end
+			x = $ - 4
+			v.drawString(x,starty, etype..": "..(totaltime).."us",
+				flags|(Takis_Hook.disabled[etype] == true and V_GRAYMAP or V_YELLOWMAP),
+				"small"
+			)
+		end
+		y = $ + 4
+		v.drawString(x,y, "Frame time taken: "..(frametime).."us", flags|V_YELLOWMAP, "small")
+
+	elseif oldflags & DEBUG_HOOKS
+		for k,v in pairs(oldstr)
+			if v
+				hud.enable(k)
+			end
+		end
 	end
 	
 	oldflags = SOAP_DEBUG
