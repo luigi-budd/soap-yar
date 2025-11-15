@@ -10,6 +10,10 @@ if not rawget(_G,"Takis_Hook")
 	--Dont "expose" deprecated hooks
 end
 
+addHook("NetVars",function(n)
+	Takis_Hook.disabled = n($)
+end)
+
 local debug = dofile("Vars/debugflag.lua")
 
 /*
