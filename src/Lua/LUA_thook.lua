@@ -76,7 +76,8 @@ local MOBJ_LIST = {
 	--un-jostleable
 	[1] = {
 		mobjs = {
-			MT_STEAM
+			MT_STEAM,
+			MT_STARPOST
 		},
 		hook = "MobjSpawn",
 		func = function(mo)
@@ -121,6 +122,7 @@ local MOBJ_LIST = {
 			MT_DUSTDEVIL,
 			MT_DUSTLAYER,
 			MT_STARPOST,
+			MT_BLACKEGGMAN
 		},
 		hook = "MobjSpawn",
 		func = function(mo)
