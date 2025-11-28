@@ -90,18 +90,24 @@ addHook("MobjMoveCollide",function(f, mo)
 		P_ResetPlayer(play)
 		--P_DoPlayerPain(play,f,f)
 		mo.state = S_PLAY_PAIN
-		P_InstaThrust(mo, f.angle, 100*f.scale)
-		mo.z = $ + P_MobjFlip(mo)
 		play.drawangle = f.angle + ANGLE_180
 		
 		--just handles it all for us lollololo
 		local tumbled = false
-		if Orbit and (Orbit.TumblePlayer ~= nil)
-			Orbit.TumblePlayer(mo,f,true)
-			tumbled = true
+		if Orbit
+			if Orbit.TumblePlayer ~= nil
+				Orbit.TumblePlayer(mo,f,true)
+				tumbled = true
+			elseif Orbit.TumbleMobj ~= nil
+				Orbit.TumbleMobj(mo, f, f.angle, 100 * f.scale, true)
+				tumbled = true
+			end
 		end
-		P_SetObjectMomZ(mo, 60*FU)
+		
 		if not tumbled
+			P_InstaThrust(mo, f.angle, 100*f.scale)
+			mo.z = $ + P_MobjFlip(mo)
+			P_SetObjectMomZ(mo, 60*FU)
 			play.powers[pw_flashing] = flashingtics
 			Soap_Hitlag.addHitlag(mo, TR/2, true)
 		end
@@ -143,7 +149,6 @@ Takis_Hook.addHook("MoveBlocked", function(me, thing,line)
 	local soap = p.soaptable
 	
 	if me.orbitbonk
-	and (Orbit and Orbit.version == "0.4.37")
 		S_StartSound(me, sfx_s3k49)
 		Soap_SpawnBumpSparks(me, thing, line)
 		if (line and line.valid)
