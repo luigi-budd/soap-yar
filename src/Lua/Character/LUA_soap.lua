@@ -2445,7 +2445,7 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 			aura.boostaura = super
 			
 			if (p.powers[pw_shield] & SH_NOSTACK) == SH_FLAMEAURA
-				P_SetMobjStateNF(aura,SPR_NWF_WIND)
+				P_SetMobjStateNF(aura,S_SOAP_NWF_WIND)
 				if aura.sprite ~= SPR_FIRS
 					aura.frame = A
 					aura.sprite = SPR_FIRS
