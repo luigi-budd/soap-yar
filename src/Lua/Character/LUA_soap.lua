@@ -372,6 +372,8 @@ local function spawn_sweat_mobjs(p,me,soap)
 end
 
 local function accelerative_speedlines(p,me,soap, speed, threshold, color)
+	if p.spectator then return end
+	
 	local rmomz = soap.rmomz
 	if speed > (threshold*2)
 		for i = 1,10
