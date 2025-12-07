@@ -1,3 +1,17 @@
+local voices = {
+	-- sfx name		   sound flags		caption
+	sfx_tk_v00      = {0,               "Ehh!"},
+}
+
+for k, props in pairs(voices)
+	k = tostring($)
+	local sfx = SafeFreeslot(k)
+	sfxinfo[sfx] = {
+		flags = props[1],
+		caption = "\x8F"..(props[2]).."\x80"
+	}
+end
+
 SafeFreeslot("sfx_tk_djm")
 sfxinfo[sfx_tk_djm].caption = "Double jump"
 
@@ -24,3 +38,8 @@ SafeFreeslot("sfx_tk_lfh")
 sfxinfo[sfx_tk_lfh].caption = "Land"
 SafeFreeslot("sfx_tk_ceh")
 sfxinfo[sfx_tk_ceh].caption = "/"
+
+SafeFreeslot("sfx_tk_hmd")
+sfxinfo[sfx_tk_hmd].caption = "/"
+SafeFreeslot("sfx_tk_hml")
+sfxinfo[sfx_tk_hml].caption = "Clang"

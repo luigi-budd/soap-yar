@@ -179,8 +179,8 @@ states[S_SOAP_LUNGEVFX] = {
 		mo.rollangle = $ - ANGLE_45
 		local a = mo.adjust.ang
 		P_MoveOrigin(mo,
-			me.x + P_ReturnThrustX(nil,a,mo.adjust.x),
-			me.y + P_ReturnThrustY(nil,a,mo.adjust.y),
+			me.x + P_ReturnThrustX(nil,a, mo.adjust.push),
+			me.y + P_ReturnThrustY(nil,a, mo.adjust.push),
 			me.z
 		)
 		if me.eflags & MFE_VERTICALFLIP

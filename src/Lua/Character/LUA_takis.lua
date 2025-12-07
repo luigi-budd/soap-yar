@@ -31,6 +31,8 @@ local function P_PitchRoll(me, frac)
 	me.roll  = P_AngleLerp(frac, $, destroll)
 end
 
+local accelerative_speedlines = Soap_AccelerativeSpeedlines
+
 Takis_Hook.addHook("Takis_Thinker",function(p)
 	local me = p.realmo
 	local soap = p.soaptable
@@ -38,6 +40,7 @@ Takis_Hook.addHook("Takis_Thinker",function(p)
 	local squishme = true
 	local clutch = soap.clutch
 	local hammer = soap.hammer
+	local washammering = hammer.down
 	soap.afterimage = false
 	p.powers[pw_strong] = $ &~(STR_SPIKE)
 	
@@ -124,8 +127,10 @@ Takis_Hook.addHook("Takis_Thinker",function(p)
 			clutch.misfire = 0
 		end
 		if (p.pflags & PF_SPINNING)
-		--or (me.state == S_PLAY_TAKIS_SLIDE)
+		or (me.state == S_PLAY_SOAP_SLIP)
 			clutch.misfire = 0
+			clutch.tics = 0
+			clutch.time = 0
 		end
 		
 		if clutch.good > 0
@@ -139,10 +144,16 @@ Takis_Hook.addHook("Takis_Thinker",function(p)
 		if clutch.tics > 0
 			clutch.tics = $-1
 		elseif clutch.time == 0
-		--and not takis.hammerblastdown
+		and not hammer.down
 			clutch.combo = 0
 		end
 		clutch.time = max($,0)
+		
+		if clutch.spamtime
+			clutch.spamtime = $ - 1
+		else
+			clutch.spamcount = 0
+		end
 		
 		if clutch.misfire
 			if (soap.onGround)
@@ -261,7 +272,7 @@ Takis_Hook.addHook("Takis_Thinker",function(p)
 		--slide
 		-- soap's slide is just a better coded takis slide
 		-- so we'll be using his code
-		if soap.c2 == 1
+		if (soap.c2 == 1 or (me.eflags & MFE_JUSTHITFLOOR))
 		and soap.c3 == 0
 		and soap.onGround
 		--and not (p.pflags & PF_SPINNING)
@@ -281,6 +292,7 @@ Takis_Hook.addHook("Takis_Thinker",function(p)
 			if not wasspinning
 				ang = Soap_ControlDir(p)
 				S_StartSound(me,sfx_tk_sld)
+				S_StartSound(me,sfx_tk_v00)
 				
 				thrust = 7*FU + (soap.accspeed)
 				if thrust > 22*FU
@@ -313,15 +325,15 @@ Takis_Hook.addHook("Takis_Thinker",function(p)
 			local ang_frac = FixedDiv(90*FU, 12*FU)
 			local dist = FixedDiv(me.radius,me.scale)
 			for i = 0,8
-				local fa = start + FixedAngle((ang_frac*i) + Soap_RandomFixedRange(-5,5))
+				local fa = start + FixedAngle((ang_frac*i) + Soap_RandomFixedRange(-5*FU,5*FU))
 				local dust = P_SpawnMobjFromMobj(me,
 					P_ReturnThrustX(nil,fa, dist),
 					P_ReturnThrustY(nil,fa, dist),
 					0, MT_SOAP_DUST
 				)
 				dust.angle = fa
-				P_Thrust(dust,fa, FixedMul(Soap_RandomFixedRange(1,15),me.scale))
-				P_SetObjectMomZ(dust, Soap_RandomFixedRange(3,15))
+				P_Thrust(dust,fa, FixedMul(Soap_RandomFixedRange(1*FU,15*FU),me.scale))
+				P_SetObjectMomZ(dust, Soap_RandomFixedRange(3*FU,15*FU))
 				dust.scale = $ * 7/6
 				
 				Soap_WindLines(me,0,nil,nil, i < 4 and 1 or -1)
@@ -356,6 +368,62 @@ Takis_Hook.addHook("Takis_Thinker",function(p)
 		p.thrustfactor = skins[p.skin].thrustfactor
 	end
 	
+	if me.state == S_PLAY_SOAP_SLIP
+		local angle,thrust = Soap_SlopeInfluence(me,p, {
+			allowstand = true, allowmult = true
+		})
+		if angle ~= nil
+			P_Thrust(me,angle,thrust*3/4)
+		end
+		
+		if soap.accspeed >= 4*FU
+		and soap.onGround
+			local chance = P_RandomChance(FU/3)
+			if soap.accspeed >= 15*FU
+				chance = true
+			end
+			
+			--kick up dust
+			if chance
+				p.dashspeed = 100*FU
+				P_DoSpinDashDust(p)
+				if not (me.eflags & (MFE_UNDERWATER|MFE_TOUCHLAVA) == MFE_UNDERWATER)
+					S_StartSound(me,sfx_s3k7e)
+				end
+			end
+		elseif not soap.onGround
+			P_PitchRoll(me, FU/10)
+		end
+	end
+	
+	--stuff to do while carried
+	if (p.powers[pw_carry] == CR_NIGHTSMODE)
+		squishme = false
+		--wind effect
+		local spd = 23*FU
+		local accspeed = abs(FixedHypot(FixedHypot(me.momx,me.momy),me.momz))
+		accelerative_speedlines(p,me,soap, accspeed, spd)
+		
+		local drilling = (p.drilltimer
+							and p.drillmeter
+							and not p.drilldelay)
+							and (soap.jump)
+							and (me.state == S_PLAY_NIGHTS_DRILL)
+		
+		--if accspeed >= spd and drilling then spawn_aura = true; end
+		soap.accspeed = accspeed
+	elseif p.powers[pw_carry] == CR_MACESPIN
+		if me.state ~= S_PLAY_ROLL
+			me.state = S_PLAY_ROLL
+		end
+	elseif p.powers[pw_carry] == CR_NONE
+	and not (soap.pounding or (soap.rdashing and not soap.airdashed))
+		accelerative_speedlines(p,me,soap, FixedDiv(R_PointTo3DDist(0,0,0,me.momx,me.momy,me.momz),me.scale), 40*FU)
+	--kinda annoying how you cant pound when exiting a dust devil
+	elseif soap.last.carry == CR_DUSTDEVIL
+		soap.sprung = true
+	end
+	
 	if (me.state == S_PLAY_GLIDE)
 		P_PitchRoll(me, FU/5)
 		if soap.accspeed > FU
@@ -387,78 +455,33 @@ Takis_Hook.addHook("Takis_Thinker",function(p)
 			soap.afterimage = true
 			p.powers[pw_strong] = $|STR_SPIKE
 			
-			--[[
-			if not (takis.bashtime)
-				takis.dustspawnwait = $+FixedDiv(takis.accspeed,64*FU)
-				while takis.dustspawnwait > FU
-					takis.dustspawnwait = $-FU
-					--xmom code
+			if not (soap.bashspin)
+				clutch.dustspawn = $ + FixedDiv(soap.accspeed,64*FU) / 4
+				while clutch.dustspawn > FU
+					clutch.dustspawn = $-FU
 					if (soap.onGround)
-					and not (clutch.time % 10)
-					and (takis.accspeed >= 45*FU)
-						local d1 = P_SpawnMobjFromMobj(me, -20*cos(p.drawangle + ANGLE_45), -20*sin(p.drawangle + ANGLE_45), 0, MT_TAKIS_CLUTCHDUST)
-						local d2 = P_SpawnMobjFromMobj(me, -20*cos(p.drawangle - ANGLE_45), -20*sin(p.drawangle - ANGLE_45), 0, MT_TAKIS_CLUTCHDUST)
-						--d1.scale = $*2/3
-						d1.destscale = FU/10
-						d1.angle = R_PointToAngle2(me.x+me.momx, me.y+me.momy, d1.x, d1.y) --- ANG5
-						
-						--d2.scale = $*2/3
-						d2.destscale = FU/10
-						d2.angle = R_PointToAngle2(me.x+me.momx, me.y+me.momy, d2.x, d2.y) --+ ANG5
-						d1.momx,d1.momy = me.momx*3/4,me.momy*3/4
-						d2.momx,d2.momy = d1.momx,d1.momy
-						d1.momz,d2.momz = takis.rmomz,takis.rmomz
-						
-						for i = 3,P_RandomRange(5,7)
-							TakisSpawnDust(me,
-								p.drawangle+FixedAngle(P_RandomRange(-20,20)*FU+P_RandomFixed()),
-								P_RandomRange(0,-20),
-								P_RandomRange(-1,2)*me.scale,
-								{
-									xspread = (P_RandomFixed()*((P_RandomChance(FU/2)) and 1 or -1)),
-									yspread = (P_RandomFixed()*((P_RandomChance(FU/2)) and 1 or -1)),
-									zspread = (P_RandomFixed()/2*((P_RandomChance(FU/2)) and 1 or -1)),
-									
-									thrust = 0,
-									thrustspread = 0,
-									
-									momz = P_RandomRange(6,1)*me.scale,
-									momzspread = P_RandomFixed()*((P_RandomChance(FU/2)) and 1 or -1),
-									
-									scale = me.scale,
-									scalespread = (P_RandomFixed()/2*((P_RandomChance(FU/2)) and 1 or -1)),
-									
-									fuse = 23+P_RandomRange(-2,3),
-								}
+					and (soap.accspeed >= 12*FU)
+						local ang = p.drawangle
+						local aoff = ANGLE_45
+						local dist = 20*FU
+						local pushx = P_ReturnThrustX(nil, ang + ANGLE_90, 4*FU)
+						local pushy = P_ReturnThrustY(nil, ang + ANGLE_90, 4*FU)
+						for i = -1,1, 2
+							local fx = P_SpawnMobjFromMobj(me,
+								P_ReturnThrustX(nil, ang + aoff*i, dist) + pushx*i + FixedDiv(me.momx, me.scale),
+								P_ReturnThrustY(nil, ang + aoff*i, dist) + pushy*i + FixedDiv(me.momy, me.scale),
+								0, MT_SOAP_FREEZEGFX
 							)
+							fx.tracer = me
+							fx.destscale = me.scale / 10
+							fx.angle = (ang - ANGLE_180) - (aoff/2)*i
+							fx.momx,fx.momy = me.momx/4, me.momy/4
+							fx.momz = soap.rmomz
+							fx.state = S_TAKIS_CDUST1
 						end
-						/*
-						for i = 3,P_RandomRange(5,7)
-							local angle = p.drawangle+FixedAngle(P_RandomRange(-20,20)*FU+P_RandomFixed())
-							local dist = P_RandomRange(0,-20)
-							local x,y = ReturnTrigAngles(angle)
-							local steam = P_SpawnMobjFromMobj(me,
-								dist*x+P_RandomFixed(),
-								dist*y+P_RandomFixed(),
-								P_RandomRange(-1,2)*me.scale+P_RandomFixed(),
-								MT_TAKIS_STEAM
-							)
-							P_SetObjectMomZ(steam,
-								P_RandomRange(6,1)*me.scale+P_RandomFixed(),
-								false
-							)
-							steam.angle = angle
-							steam.scale = me.scale+(P_RandomFixed()/2*((P_RandomChance(FU/2)) and 1 or -1))
-							steam.timealive = 1
-							steam.tracer = me
-							steam.destscale = 1
-							steam.fuse = 20
-						end
-						*/
 					end
 				end
 			end
-			]]
 			
 			--p.charflags = $|SF_CANBUSTWALLS
 			--p.powers[pw_strong] = $|STR_WALL
@@ -549,7 +572,7 @@ Takis_Hook.addHook("Takis_Thinker",function(p)
 		*/
 		hammer.up = 0
 		S_StopSoundByID(me,sfx_tk_fst)
-		--S_StopSoundByID(me,sfx_takhmb)
+		S_StopSoundByID(me,sfx_tk_hmd)
 	end
 	if hammer.lockout
 		hammer.lockout = $ - 1
@@ -626,9 +649,34 @@ Takis_Hook.addHook("Takis_Thinker",function(p)
 	
 	Soap_VFX(p,me,soap, {
 		squishme = squishme,
-		was_pounding = soap.hammer.down,
+		was_pounding = washammering,
 	})
 	Soap_DeathThinker(p,me,soap)
+end)
+
+addHook("PlayerHeight",function(p)
+	if not (p and p.valid) then return end
+	if not p.soaptable then return end
+	if (skins[p.skin].name ~= TAKIS_SKIN) then return end
+	local me = p.realmo
+	if not (me and me.valid) then return end
+	
+	if me.state == S_PLAY_GLIDE
+	or me.state == S_PLAY_SPINDASH
+		return P_GetPlayerSpinHeight(p)
+	end
+end)
+addHook("PlayerCanEnterSpinGaps",function(p)
+	if not (p and p.valid) then return end
+	if not p.soaptable then return end
+	if (skins[p.skin].name ~= TAKIS_SKIN) then return end
+	local me = p.realmo
+	if not (me and me.valid) then return end
+
+	if me.state == S_PLAY_GLIDE
+	or me.state == S_PLAY_SPINDASH
+		return true
+	end
 end)
 
 --jump effect
@@ -663,7 +711,7 @@ addHook("JumpSpecial", function(p)
 		)
 		
 		Soap_SquashMacro(p, {ease_func = "outsine", ease_time = 8, x = -FU*7/10, y = -FU/2})
-		
+		Soap_RemoveSquash(p, "soap_slide")
 		Soap_RemoveSquash(p, "landeffect")
 		Soap_RemoveSquash(p, "Takis_Clutch")
 		me.soap_jumpdust = 4
@@ -693,7 +741,7 @@ addHook("AbilitySpecial", function(p)
 	S_StopSoundByID(me,skins[TAKIS_SKIN].soundsid[SKSJUMP])
 	
 	local jfactor = min(FixedDiv(p.jumpfactor,skins[TAKIS_SKIN].jumpfactor),FU)
-	Soap_ZLaunch(p.mo,FixedMul(15*FU,jfactor))
+	Soap_ZLaunch(p.mo,FixedMul(12*FU,jfactor))
 	
 	me.state = S_PLAY_ROLL
 	Soap_DustRing(me,

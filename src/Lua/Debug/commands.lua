@@ -567,11 +567,11 @@ CMDConstructor("editmyself", {prefix = SOAP_DEVPREFIX, func = function(p,...)
 	end
 end})
 
-CMDConstructor("toggle", {prefix = SOAP_DEVPREFIX, func = function(p,...)
+CMDConstructor("togglehook", {prefix = SOAP_DEVPREFIX, func = function(p,...)
 	local args = {...}
 	local typetoggle = args[1]
 	if typetoggle == nil
-		prn(p, "toggle <hook_type>: Toggles a TakisHook on or off. List of event names:")
+		prn(p, "togglehook <hook_type>: Toggles a TakisHook on or off. List of event names:")
 		for etype, event_t in pairs(Takis_Hook.events)
 			local clr = Takis_Hook.disabled[etype] == true and "\x85OFF" or "\x83ON"
 			prn(p, "\t"..clr.."\x82 - "..etype)

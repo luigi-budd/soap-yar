@@ -20,9 +20,16 @@ fakeenum("NOABIL_ALL",SNOABIL_ALL)
 
 rawset(_G, "TAKIS_HAMMERDISP", FixedMul(52*FU,9*FU/10))
 
+rawset(_G, "CLUTCH_MISFIRE", TR)
+rawset(_G, "CLUTCH_TICS", TR)
+-- wait this many tics for a good boost
+rawset(_G, "CLUTCH_OKAY", 12)
+rawset(_G, "CLUTCH_BAD", 7)
+
 local includes = {
 	"sounds.lua",
-	"player.lua"
+	"player.lua",
+	"mobjs.lua",
 }
 for k,file in ipairs(includes)
 	dofile("Character/TakisInclude/"..file)

@@ -139,8 +139,8 @@ local function soap_poundonland(p,me,soap)
 				)
 				rock.flags = $|MF_NOCLIPTHING &~(MF_PAIN|MF_SPECIAL)
 				rock.state = S_ROCKCRUMBLEA+P_RandomRange(0, 3)
-				P_SetObjectMomZ(rock, Soap_RandomFixedRange(10,20))
-				P_Thrust(rock, FixedAngle(ang * i), Soap_RandomFixedRange(3,7))
+				P_SetObjectMomZ(rock, Soap_RandomFixedRange(10*FU,20*FU))
+				P_Thrust(rock, FixedAngle(ang * i), Soap_RandomFixedRange(3*FU,7*FU))
 				rock.fuse = TR*3
 			end
 		end
@@ -356,13 +356,13 @@ local function spawn_sweat_mobjs(p,me,soap)
 		MT_SOAP_WALLBUMP
 	)
 	P_Thrust(sweat, 
-		R_PointToAngle2(0,0,me.momx,me.momy) + FixedAngle(Soap_RandomFixedRange(-45,45)),
-		-FixedMul(Soap_RandomFixedRange(2,5), me.scale)
+		R_PointToAngle2(0,0,me.momx,me.momy) + FixedAngle(Soap_RandomFixedRange(-45*FU,45*FU)),
+		-FixedMul(Soap_RandomFixedRange(2*FU,5*FU), me.scale)
 	)
 	sweat.momx = $ + me.momx/2
 	sweat.momy = $ + me.momy/2
 	sweat.momz = $ + soap.rmomz
-	P_SetObjectMomZ(sweat, Soap_RandomFixedRange(5,8))
+	P_SetObjectMomZ(sweat, Soap_RandomFixedRange(5*FU,8*FU))
 	sweat.fuse = TR*3/4
 	sweat.dontdrawforviewmobj = me
 	sweat.frame = B|FF_TRANS30
@@ -371,46 +371,7 @@ local function spawn_sweat_mobjs(p,me,soap)
 	return sweat
 end
 
-local function accelerative_speedlines(p,me,soap, speed, threshold, color)
-	if p.spectator then return end
-	
-	local rmomz = soap.rmomz
-	if speed > (threshold*2)
-		for i = 1,10
-			if speed > (threshold*2)*i
-				Soap_WindLines(me,rmomz,color)
-				for j = 1,i
-					Soap_WindLines(me,rmomz,color)
-				end
-			else
-				break
-			end
-		end
-	end
-	
-	local fang
-	/*
-	if (soap.pounding)
-		fang = FixedAngle(Soap_RandomFixedRange(0,360))
-	end
-	*/
-	
-	if speed >= 8*threshold/5
-		Soap_WindLines(me,rmomz,color,fang)
-		
-	elseif speed >= 7*threshold/5
-	and not (leveltime % 2)
-		Soap_WindLines(me,rmomz,color,fang)
-		
-	elseif speed >= 6*threshold/5
-	and not (leveltime % 5)
-		Soap_WindLines(me,rmomz,color,fang)
-		
-	elseif speed >= threshold
-	and not (leveltime % 7)
-		Soap_WindLines(me,rmomz,color,fang)
-	end
-end
+local accelerative_speedlines = Soap_AccelerativeSpeedlines
 
 local function do_jump_effect(p,me,soap)
 	Soap_DustRing(me,
@@ -425,7 +386,7 @@ local function do_jump_effect(p,me,soap)
 	)
 	
 	Soap_SquashMacro(p, {ease_func = "outsine", ease_time = 8, x = -FU*7/10, y = -FU/2})
-	
+	Soap_RemoveSquash(p, "soap_slide")
 	Soap_RemoveSquash(p, "landeffect")
 	me.soap_jumpdust = 4
 	me.soap_jumpeffect = nil
@@ -697,11 +658,12 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 				soap.boombox = boom
 				
 				local speed = 5*me.scale
+				local range = 15*FU
 				for i = 0,P_RandomRange(15,22)
 					local poof = P_SpawnMobjFromMobj(boom,
-						Soap_RandomFixedRange(-15,15),
-						Soap_RandomFixedRange(-15,15),
-						FixedDiv(boom.height,boom.scale)/2 + Soap_RandomFixedRange(-15,15),
+						Soap_RandomFixedRange(-range, range),
+						Soap_RandomFixedRange(-range, range),
+						FixedDiv(boom.height,boom.scale)/2 + Soap_RandomFixedRange(-range, range),
 						MT_THOK
 					)
 					poof.state = mobjinfo[MT_SOAP_DUST].spawnstate
@@ -711,7 +673,7 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 					)
 					P_3DThrust(poof, hang,vang, speed)
 					
-					poof.spritexscale = $ + Soap_RandomFixedRange(0,2)/3
+					poof.spritexscale = $ + Soap_RandomFixedRange(0,2*FU)/3
 					poof.spriteyscale = poof.spritexscale
 				end
 			end
@@ -791,15 +753,15 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 				local ang_frac = FixedDiv(90*FU, 12*FU)
 				local dist = FixedDiv(me.radius,me.scale)
 				for i = 0,8
-					local fa = start + FixedAngle((ang_frac*i) + Soap_RandomFixedRange(-5,5))
+					local fa = start + FixedAngle((ang_frac*i) + Soap_RandomFixedRange(-5*FU,5*FU))
 					local dust = P_SpawnMobjFromMobj(me,
 						P_ReturnThrustX(nil,fa, dist),
 						P_ReturnThrustY(nil,fa, dist),
 						0, MT_SOAP_DUST
 					)
 					dust.angle = fa
-					P_Thrust(dust,fa, FixedMul(Soap_RandomFixedRange(1,15),me.scale))
-					P_SetObjectMomZ(dust, Soap_RandomFixedRange(3,15))
+					P_Thrust(dust,fa, FixedMul(Soap_RandomFixedRange(1*FU,15*FU),me.scale))
+					P_SetObjectMomZ(dust, Soap_RandomFixedRange(3*FU,15*FU))
 					dust.scale = $ * 7/6
 					
 					Soap_WindLines(me,0,nil,nil, i < 4 and 1 or -1)
@@ -1743,8 +1705,8 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 						local sideangle = ANGLE_45
 						for i = -1,1,2
 							local kickup = P_SpawnMobjFromMobj(me,
-								Soap_RandomFixedRange(-4,4) + P_ReturnThrustX(nil, p.drawangle + sideangle * i, sidemove),
-								Soap_RandomFixedRange(-4,4) + P_ReturnThrustY(nil, p.drawangle + sideangle * i, sidemove),
+								Soap_RandomFixedRange(-4*FU,4*FU) + P_ReturnThrustX(nil, p.drawangle + sideangle * i, sidemove),
+								Soap_RandomFixedRange(-4*FU,4*FU) + P_ReturnThrustY(nil, p.drawangle + sideangle * i, sidemove),
 								0,
 								MT_SOAP_DUST
 							)
@@ -1761,8 +1723,8 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 							end
 							kickup.destscale = 1
 							kickup.scalespeed = FixedDiv($, kickup.scale)
-							P_SetObjectMomZ(kickup, Soap_RandomFixedRange(4,6))
-							kickup.spritexscale = FU + Soap_RandomFixedRange(0,1) / 5
+							P_SetObjectMomZ(kickup, Soap_RandomFixedRange(4*FU,6*FU))
+							kickup.spritexscale = FU + Soap_RandomFixedRange(0,1*FU) / 5
 							kickup.spriteyscale = kickup.spritexscale
 							
 							P_InstaThrust(kickup,
@@ -1945,7 +1907,7 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 				armasound(me)
 			end
 			soap.poundarma = true
-			local range = 22
+			local range = 22*FU
 			do
 				local color = armacolors[P_RandomRange(1,#armacolors)]
 				local spark = P_SpawnMobjFromMobj(me,
@@ -1968,13 +1930,13 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 				spark.momz = $ + soap.rmomz
 				
 				--top sparks
-				local angle = FixedAngle(Soap_RandomFixedRange(0,360))
+				local angle = FixedAngle(Soap_RandomFixedRange(0,360*FU))
 				local rad = FixedDiv(me.radius,me.scale)
 				local hei = FixedDiv(me.height,me.scale)
 				spark = P_SpawnMobjFromMobj(me,
 					P_ReturnThrustX(nil,angle,rad),
 					P_ReturnThrustY(nil,angle,rad),
-					(hei/2) + Soap_RandomFixedRange(-17,17), MT_SOAP_SPARK
+					(hei/2) + Soap_RandomFixedRange(-17*FU,17*FU), MT_SOAP_SPARK
 				)
 				spark.color = color
 				spark.adjust_angle = angle
@@ -2153,10 +2115,10 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 					local spark = P_SpawnMobjFromMobj(me,0,0,0,MT_SOAP_WALLBUMP)
 					local speed = 12*me.scale
 					local limit = 28
-					local my_ang = FixedAngle(Soap_RandomFixedRange(0,360))
+					local my_ang = FixedAngle(Soap_RandomFixedRange(0,360*FU))
 					
 					P_InstaThrust(spark, my_ang, speed)
-					P_SetObjectMomZ(spark, Soap_RandomFixedRange(3,8))
+					P_SetObjectMomZ(spark, Soap_RandomFixedRange(3*FU,8*FU))
 					
 					P_SetScale(spark,me.scale / 10, true)
 					spark.destscale = me.scale

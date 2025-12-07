@@ -7,15 +7,15 @@ local function dust_noviewmobj(dust)
 end
 
 local function spawnbubble(p,me,soap)
-	local h = FixedDiv(me.height, me.scale)/FU
+	local h = FixedDiv(me.height, me.scale)
 	local buble = P_SpawnMobjFromMobj(me,
-		Soap_RandomFixedRange(-16,16),
-		Soap_RandomFixedRange(-16,16),
+		Soap_RandomFixedRange(-16*FU,16*FU),
+		Soap_RandomFixedRange(-16*FU,16*FU),
 		Soap_RandomFixedRange(0,h),
 		MT_THOK
 	)
-	P_SetObjectMomZ(buble, Soap_RandomFixedRange(1,4))
-	P_Thrust(buble, R_PointToAngle2(buble.x,buble.y, me.x,me.y), Soap_RandomFixedRange(1,4))
+	P_SetObjectMomZ(buble, Soap_RandomFixedRange(1*FU,4*FU))
+	P_Thrust(buble, R_PointToAngle2(buble.x,buble.y, me.x,me.y), Soap_RandomFixedRange(1*FU,4*FU))
 	buble.fuse = P_RandomRange(TR/2, TR)
 	buble.color = me.color
 	buble.colorized = true
@@ -24,7 +24,7 @@ local function spawnbubble(p,me,soap)
 	buble.blendmode = AST_ADD
 	buble.renderflags = $|RF_SEMIBRIGHT
 	buble.mirrored = P_RandomChance(FU/2)
-	local scale = Soap_RandomFixedRange(0, 2)/3
+	local scale = Soap_RandomFixedRange(0, 2*FU)/3
 	buble.spritexscale = $ + scale
 	buble.spriteyscale = $ + scale
 	return buble
@@ -210,7 +210,7 @@ local AICOLOR_LENGTH = AICOLOR_END - AICOLOR_START
 local AI_MINALPHA = FU/4
 --came like 150% circle since this is old takis afterimages, used in an older Soap_CreateAfterimage, being used in this new Soap_CreateAfterimage
 local AICOLOR_RANDOM = {SKINCOLOR_FLAME, SKINCOLOR_SUNSET, SKINCOLOR_AQUA, SKINCOLOR_VAPOR, SKINCOLOR_PURPLE}
-local AI_OFFSET = 4
+local AI_OFFSET = 4*FU
 rawset(_G,"Soap_CreateAfterimage", function(p,me)
 	if not (me and me.valid) then return end
 	
@@ -600,9 +600,9 @@ rawset(_G,"Soap_DamageSfx", function(src, power, maxpow, props)
 end)
 
 --@src is the source of the vfx, not of the damage (thats @inf)
-rawset(_G,"Soap_ImpactVFX",function(src,inf, distmul, scalemul)
+rawset(_G,"Soap_ImpactVFX",function(src,inf, distmul, scalemul, forcesplat)
 	scalemul = $ or FU
-	local disp = 25
+	local disp = 25*FU
 	local off = {
 		x = Soap_RandomFixedRange(-disp,disp),
 		y = Soap_RandomFixedRange(-disp,disp),
@@ -625,6 +625,7 @@ rawset(_G,"Soap_ImpactVFX",function(src,inf, distmul, scalemul)
 	for i = -1,1
 		local adjust = 0
 		local angle = (i == 1) and ANGLE_90 or 0
+		if (forcesplat) and (i ~= 0) then continue end
 		
 		if (i == 0)
 			--50% of sprite's height - y offset
@@ -660,8 +661,9 @@ rawset(_G,"Soap_ImpactVFX",function(src,inf, distmul, scalemul)
 				src.z + FixedMul(34*src.scale, spr_scale) + off.z
 			)
 			local renderer = CV.FindVar("renderer")
-			if renderer
-			and renderer.string:lower() == "software"
+			if (renderer
+			and renderer.string:lower() == "software")
+			and not forcesplat
 				bam.flags2 = $|MF2_DONTDRAW
 			end
 		end
@@ -868,10 +870,10 @@ rawset(_G,"Soap_JostleThings",function(me, found, range)
 	return tumbled
 end)
 
-local WIND_PUSHMIN = (20)
-local WIND_PUSHMAX = (31)
-local WIND_PUSHANG_MIN = 29
-local WIND_PUSHANG_MAX = 35
+local WIND_PUSHMIN = (20*FU)
+local WIND_PUSHMAX = (31*FU)
+local WIND_PUSHANG_MIN = 29*FU
+local WIND_PUSHANG_MAX = 35*FU
 rawset(_G, "Soap_WindLines", function(me,rmomz,color,forceang,forceside)
 	if not (me and me.valid) then return end --?
 	if not me.health then return end
@@ -919,7 +921,7 @@ rawset(_G, "Soap_WindLines", function(me,rmomz,color,forceang,forceside)
 	local wind = P_SpawnMobj(
 		me.x,
 		me.y,
-		me.z + (height) + Soap_RandomFixedRange(-height/FU,height/FU),
+		me.z + (height) + Soap_RandomFixedRange(-height,height),
 		MT_SOAP_SPEEDLINE
 	)
 	
@@ -954,11 +956,11 @@ rawset(_G, "Soap_WindLines", function(me,rmomz,color,forceang,forceside)
 	--Painful
 	P_Thrust(wind,
 		wind.angle + (pushpush)*pushsign,
-		FixedMul(FixedMul(Soap_RandomFixedRange(2,7), cos(zangle)), me.scale)
+		FixedMul(FixedMul(Soap_RandomFixedRange(2*FU,7*FU), cos(zangle)), me.scale)
 	)
 	P_Thrust(wind,
 		wind.angle + ANGLE_90*pushsign,
-		FixedMul(abs(FixedMul(Soap_RandomFixedRange(2,7), sin(zangle))), me.scale)
+		FixedMul(abs(FixedMul(Soap_RandomFixedRange(2*FU,7*FU), sin(zangle))), me.scale)
 	)
 	wind.angle = $ - (pushpush/3)*pushsign
 	
@@ -1226,7 +1228,7 @@ rawset(_G,"Soap_SpawnBumpSparks",function(me, thing, line, followme, scale, floo
 	end
 	
 	local fa = FixedDiv(360*FU, 8*FU)
-	local random = Soap_RandomFixedRange(0,73)
+	local random = Soap_RandomFixedRange(0,73*FU)
 	local speed = 6*scale
 	local limit = 28
 	local list = {}
@@ -1394,7 +1396,7 @@ rawset(_G,"SoapST_Hitbox",function(p)
 	
 	--lets do the fx here too why not
 	local angle = me.angle - FixedAngle(soap.topspin) + ANGLE_90
-	local height = FixedDiv(me.height,me.scale)/FU
+	local height = FixedDiv(me.height,me.scale)
 	for i = -1, 1, 2
 		local offsetx = P_ReturnThrustX(nil,angle, FixedDiv(range,me.scale)* i)
 		local offsety = P_ReturnThrustY(nil,angle, FixedDiv(range,me.scale) * i)
@@ -1675,7 +1677,7 @@ rawset(_G,"Soap_DeathThinker",function(p,me,soap)
 			P_RandomRange(0, FixedDiv(me.height,me.scale)/FU)*FU,
 			MT_SOAP_DUST
 		)
-		sweat.spritexscale = $ + Soap_RandomFixedRange(0,1)/4
+		sweat.spritexscale = $ + Soap_RandomFixedRange(0,1*FU)/4
 		sweat.spriteyscale = sweat.spritexscale
 		
 		if (me.soap_inf and me.soap_inf.valid)
@@ -1726,7 +1728,7 @@ rawset(_G,"Soap_DeathThinker",function(p,me,soap)
 			)
 			P_SetObjectMomZ(sweat, P_RandomRange(1,4)*FU)
 			sweat.alpha = FU/2
-			sweat.spritexscale = ($ + Soap_RandomFixedRange(0,1)/4)/2
+			sweat.spritexscale = ($ + Soap_RandomFixedRange(0,1*FU)/4)/2
 			sweat.spriteyscale = sweat.spritexscale
 		end
 		
@@ -1879,11 +1881,12 @@ rawset(_G,"Soap_DeathThinker",function(p,me,soap)
 				ghs.color = SKINCOLOR_WHITE
 				
 				local speed = 5*me.scale
+				local range = 15*FU
 				for i = 0,P_RandomRange(20,29)
 					local poof = P_SpawnMobjFromMobj(me,
-						Soap_RandomFixedRange(-15,15),
-						Soap_RandomFixedRange(-15,15),
-						FixedDiv(me.height,me.scale)/2 + Soap_RandomFixedRange(-15,15),
+						Soap_RandomFixedRange(-range, range),
+						Soap_RandomFixedRange(-range, range),
+						FixedDiv(me.height,me.scale)/2 + Soap_RandomFixedRange(-range, range),
 						MT_THOK
 					)
 					poof.state = mobjinfo[MT_SOAP_DUST].spawnstate
@@ -1893,7 +1896,7 @@ rawset(_G,"Soap_DeathThinker",function(p,me,soap)
 					)
 					P_3DThrust(poof, hang,vang, speed)
 					
-					poof.spritexscale = $ + Soap_RandomFixedRange(0,2)/3
+					poof.spritexscale = $ + Soap_RandomFixedRange(0,2*FU)/3
 					poof.spriteyscale = poof.spritexscale
 				end
 				S_StartSound(me,sfx_s3k51)
@@ -1914,7 +1917,7 @@ rawset(_G,"Soap_DeathThinker",function(p,me,soap)
 					shoe.sprite = SPR_PLAY
 					shoe.sprite2 = SPR2_MSC3
 					shoe.angle = angle + adjust
-					P_SetObjectMomZ(shoe, Soap_RandomFixedRange(14,20))
+					P_SetObjectMomZ(shoe, Soap_RandomFixedRange(14*FU,20*FU))
 					P_Thrust(shoe, angle + adjust, 1*me.scale)
 					shoe.random = P_RandomRange(-28,28) * ANG1
 					shoe.fuse = 5*TR
@@ -2013,11 +2016,12 @@ rawset(_G,"Soap_DeathThinker",function(p,me,soap)
 			else
 				if me.soap_deadtimer == 21
 					local speed = 5*me.scale
+					local range = 15*FU
 					for i = 0,P_RandomRange(20,29)
 						local poof = P_SpawnMobjFromMobj(me,
-							Soap_RandomFixedRange(-15,15),
-							Soap_RandomFixedRange(-15,15),
-							FixedDiv(me.height,me.scale)/2 + Soap_RandomFixedRange(-15,15),
+							Soap_RandomFixedRange(-range, range),
+							Soap_RandomFixedRange(-range, range),
+							FixedDiv(me.height,me.scale)/2 + Soap_RandomFixedRange(-range, range),
 							MT_SMOKE
 						)
 						local hang,vang = R_PointTo3DAngles(
@@ -2027,7 +2031,7 @@ rawset(_G,"Soap_DeathThinker",function(p,me,soap)
 						P_3DThrust(poof, hang,vang, speed)
 						P_SetObjectMomZ(poof, FU)
 						
-						poof.spritexscale = $ + Soap_RandomFixedRange(0,2)/3
+						poof.spritexscale = $ + Soap_RandomFixedRange(0,2*FU)/3
 						poof.spriteyscale = poof.spritexscale
 					end
 					S_StopSound(me)
@@ -2044,11 +2048,12 @@ rawset(_G,"Soap_DeathThinker",function(p,me,soap)
 			
 			if (me.soap_deadtimer == 20)
 				local speed = 5 * me.scale
+				local range = 15*FU
 				for i = 0,P_RandomRange(20,25)
 					local poof = P_SpawnMobjFromMobj(me,
-						Soap_RandomFixedRange(-15,15),
-						Soap_RandomFixedRange(-15,15),
-						FixedDiv(me.height,me.scale)/2 + Soap_RandomFixedRange(-15,15),
+						Soap_RandomFixedRange(-range, range),
+						Soap_RandomFixedRange(-range, range),
+						FixedDiv(me.height,me.scale)/2 + Soap_RandomFixedRange(-range, range),
 						P_RandomRange(MT_SMALLBUBBLE, MT_MEDIUMBUBBLE)
 					)
 					poof.tics = -1
@@ -2059,7 +2064,7 @@ rawset(_G,"Soap_DeathThinker",function(p,me,soap)
 					)
 					P_3DThrust(poof, hang,vang, speed)
 					
-					poof.spritexscale = $ + Soap_RandomFixedRange(0,2)/3
+					poof.spritexscale = $ + Soap_RandomFixedRange(0,2*FU)/3
 					poof.spriteyscale = poof.spritexscale
 					poof.color = me.color
 					poof.colorized = true
@@ -2499,7 +2504,7 @@ local function VFX_LandDust(p,me,soap, props)
 		S_StartSoundAtVolume(me,sfx_s3k4c,255/2)
 		
 		local grav = -(FU + (FU - abs(FixedDiv(P_GetMobjGravity(me), me.scale/2)))/2 )
-		if soap.last.momz*soap.gravflip <= 18*grav
+		if FixedDiv(soap.last.momz, me.scale or 1)*soap.gravflip <= 18*grav
 			S_StartSoundAtVolume(me, sfx_tk_lfh, 255*3/4)
 			
 			local rich = 10*FU
@@ -2567,22 +2572,21 @@ local function VFX_Lunge(p,me,soap, props)
 	end
 	if doeffect
 		local ang = lunge.angle or R_PointToAngle2(0,0,me.momx,me.momy)
-		local rad = FixedDiv(me.radius + 4*me.scale,me.scale)/FU
-		local xoff = Soap_RandomFixedRange(-rad,rad)
-		local yoff = Soap_RandomFixedRange(-rad,rad)
+		local rad = FixedDiv(me.radius,me.scale)
+		local push = Soap_RandomFixedRange(-rad,rad)
 		local roll = P_SpawnMobjFromMobj(me,
-			P_ReturnThrustX(nil,ang - ANGLE_90, xoff),
-			P_ReturnThrustY(nil,ang - ANGLE_90, yoff),
+			P_ReturnThrustX(nil,ang - ANGLE_90, push),
+			P_ReturnThrustY(nil,ang - ANGLE_90, push),
 			0,MT_SOAP_FREEZEGFX
 		)
 		if (roll and roll.valid)
 			roll.tracer = me
-			roll.angle = ang + FixedAngle(Soap_RandomFixedRange(-15,15))
+			roll.angle = ang + FixedAngle(Soap_RandomFixedRange(-15*FU,15*FU))
 			roll.adjust = {
 				ang = ang - ANGLE_90,
-				x = FixedMul(xoff,me.scale), y = FixedMul(yoff,me.scale)
+				push = FixedMul(push,me.scale)
 			}
-			roll.rollangle = Soap_RandomFixedRange(0,360)*ANG1
+			roll.rollangle = FixedAngle(Soap_RandomFixedRange(0,360*FU))
 			roll.fuse = P_RandomRange(4,8)
 			roll.state = S_SOAP_LUNGEVFX
 		end
@@ -3055,9 +3059,9 @@ rawset(_G, "Soap_Grabbing",function(p,me,soap)
 				)
 				fling.flags = $|MF_NOCLIPTHING
 				fling.fuse = TR/2
-				fling.angle = angle + FixedAngle(Soap_RandomFixedRange(-90,90))
+				fling.angle = angle + FixedAngle(Soap_RandomFixedRange(-90*FU,90*FU))
 				P_SetObjectMomZ(fling,
-					Soap_RandomFixedRange(3, 6)
+					Soap_RandomFixedRange(3*FU, 6*FU)
 				)
 				P_Thrust(fling, fling.angle, 10*fling.scale)
 				P_GivePlayerRings(play, -1)
@@ -3324,4 +3328,48 @@ rawset(_G, "Soap_DoLunge",function(p, fromjump)
 	ghost.momz = me.momz
 	lunge.ghost = ghost
 	me.pitch,me.roll = 0,0
+end)
+
+rawset(_G, "Soap_AccelerativeSpeedlines", function(p,me,soap, speed, threshold, color)
+	if p.spectator then return end
+	
+	local rmomz = soap.rmomz
+	local highspeed = (threshold*2)
+	if speed > highspeed
+		for i = 1,10
+			if speed > highspeed*i
+				Soap_WindLines(me,rmomz,color)
+				for j = 1,i
+					Soap_WindLines(me,rmomz,color)
+				end
+			else
+				break
+			end
+			highspeed = $ + threshold*2
+		end
+	end
+	
+	-- angle, unused
+	local fang
+	/*
+	if (soap.pounding)
+		fang = FixedAngle(Soap_RandomFixedRange(0,360))
+	end
+	*/
+	
+	if speed >= 8*threshold/5
+		Soap_WindLines(me,rmomz,color,fang)
+		
+	elseif speed >= 7*threshold/5
+	and not (leveltime % 2)
+		Soap_WindLines(me,rmomz,color,fang)
+		
+	elseif speed >= 6*threshold/5
+	and not (leveltime % 5)
+		Soap_WindLines(me,rmomz,color,fang)
+		
+	elseif speed >= threshold
+	and not (leveltime % 7)
+		Soap_WindLines(me,rmomz,color,fang)
+	end
 end)

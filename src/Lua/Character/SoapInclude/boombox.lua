@@ -62,7 +62,7 @@ states[S_SOAP_BOOMBOX] = {
 			note.frame = P_RandomRange(1,7)
 			note.fuse = TR * 3/2
 			note.tics = note.fuse
-			P_SetObjectMomZ(note, Soap_RandomFixedRange(2,4))
+			P_SetObjectMomZ(note, Soap_RandomFixedRange(2*FU,4*FU))
 		end
 		mo.momz = $ + P_GetMobjGravity(mo)
 		
@@ -99,11 +99,12 @@ states[S_SOAP_BOOMBOX] = {
 		if not (me and me.valid and me.skin == SOAP_SKIN and me.health)
 		or killCond
 			local speed = 5*mo.scale
+			local range = 15*FU
 			for i = 0,P_RandomRange(20,29)
 				local poof = P_SpawnMobjFromMobj(mo,
-					Soap_RandomFixedRange(-15,15),
-					Soap_RandomFixedRange(-15,15),
-					FixedDiv(mo.height,mo.scale)/2 + Soap_RandomFixedRange(-15,15),
+					Soap_RandomFixedRange(-range, range),
+					Soap_RandomFixedRange(-range, range),
+					FixedDiv(mo.height,mo.scale)/2 + Soap_RandomFixedRange(-range, range),
 					MT_THOK
 				)
 				poof.state = mobjinfo[MT_SPINDUST].spawnstate
@@ -113,7 +114,7 @@ states[S_SOAP_BOOMBOX] = {
 				)
 				P_3DThrust(poof, hang,vang, speed)
 				
-				poof.spritexscale = $ + Soap_RandomFixedRange(0,2)/3
+				poof.spritexscale = $ + Soap_RandomFixedRange(0,2*FU)/3
 				poof.spriteyscale = poof.spritexscale
 			end
 			

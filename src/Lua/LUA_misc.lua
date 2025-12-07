@@ -206,8 +206,12 @@ local function FreezeInHitlag(mo)
 			end
 		end
 		
+		local ang = R_PointToAngle2(0,0,me.momx,me.momy)
+		if R_PointToDist2(0,0, me.momx,me.momy) < me.scale
+			ang = p.drawangle
+		end
 		mo.dispoffset = me.dispoffset - 1
-		mo.angle = R_PointToAngle2(0,0,me.momx,me.momy)
+		mo.angle = ang
 		mo.destscale = me.scale
 		mo.scalespeed = mo.destscale
 		mo.color = me.color

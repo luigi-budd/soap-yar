@@ -162,7 +162,7 @@ hl.iterateHitlagged = function()
 			
 			if P_IsObjectOnGround(mo)
 			and v.tics
-				P_SetObjectMomZ(mo, Soap_RandomFixedRange(3,6))
+				P_SetObjectMomZ(mo, Soap_RandomFixedRange(3*FU,6*FU))
 				S_StartSound(mo,sfx_s3k49)
 				Soap_DustRing(mo,
 					dust_type(mo),

@@ -12,8 +12,8 @@ ability = CA_DOUBLEJUMP
 ability2 = CA2_NONE
 
 actionspd = 45
-normalspeed = 28
-runspeed = 48
+normalspeed = 25
+runspeed = 44
 thrustfactor = 5
 accelstart = 96
 acceleration = 40
@@ -27,7 +27,7 @@ contangle = 0
 
 height = 52
 spinheight = 30
-jumpfactor = 1.2
+jumpfactor = 1.15
 
 dsjump = dstk_jmp
 dsskid = dstk_skd

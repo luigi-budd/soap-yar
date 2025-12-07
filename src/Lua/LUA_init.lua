@@ -300,6 +300,7 @@ rawset(_G, "Soap_InitTable", function(p)
 			
 			firefx = 0,
 			spin = 0, --for slingshots
+			dustspawn = 0,
 		},
 		
 		-- for momentuminos

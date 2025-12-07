@@ -56,6 +56,23 @@ SafeFreeslot("S_PLAY_SOAP_SLIP")
 states[S_PLAY_SOAP_SLIP] = {
 	sprite = SPR_PLAY,
 	frame = A|SPR2_SLID,
-	tics = 1,
+	tics = 8,
+	action = function(me)
+		local p = me.player
+		if not (p and p.valid) then return end
+		local soap = p.soaptable
+		if not soap then return end
+		
+		local speed = soap.accspeed
+		if speed >= 25*FU
+			me.tics = 1
+		elseif speed >= 20*FU
+			me.tics = 2
+		elseif speed >= 15*FU
+			me.tics = 4
+		elseif speed >= 10*FU
+			me.tics = 6
+		end
+	end,
 	nextstate = S_PLAY_SOAP_SLIP,
 }

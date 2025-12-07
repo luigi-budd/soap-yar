@@ -1,6 +1,7 @@
 local mbrelease = dofile("Vars/mbrelease.lua")
 
 addHook("PreThinkFrame",function()
+	local hook_event = Takis_Hook.events["PreThinkFrame"]
 	for p in players.iterate
 		if not (p and p.valid) then continue end
 		
@@ -23,7 +24,6 @@ addHook("PreThinkFrame",function()
 		end
 		
 		soap.noability = 0
-		local hook_event = Takis_Hook.events["PreThinkFrame"]
 		for i,v in ipairs(hook_event)
 			Takis_Hook.tryRunHook("PreThinkFrame", v, p)
 		end
@@ -121,6 +121,7 @@ addHook("PlayerThink",function(p)
 end)
 
 addHook("PostThinkFrame",function()
+	local hook_event = Takis_Hook.events["PostThinkFrame"]
 	for p in players.iterate
 		if not (p and p.valid) then continue end
 		
@@ -131,7 +132,6 @@ addHook("PostThinkFrame",function()
 		
 		if not (me and me.valid) then continue end
 		
-		local hook_event = Takis_Hook.events["PostThinkFrame"]
 		for i,v in ipairs(hook_event)
 			Takis_Hook.tryRunHook("PostThinkFrame", v, p)
 		end

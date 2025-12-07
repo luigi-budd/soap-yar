@@ -10,14 +10,13 @@ rawset(_G,"SphereToCartesian",function(alpha, beta)
     return t
 end)
 
-local function sign(a) return (a ~= 0) and (a < 0 and -1 or 1) or 0 end
-rawset(_G,"sign",sign)
+rawset(_G,"sign",function(a)
+	return (a ~= 0) and (a < 0 and -1 or 1) or 0
+end)
 
 rawset(_G,"clamp",function(minimum,value,maximum)
 	if maximum < minimum
-		local temp = minimum
-		minimum = maximum
-		maximum = temp
+		maximum, minimum = $2, $1
 	end
 	return max(minimum,min(maximum,value))
 end)
@@ -25,8 +24,12 @@ end)
 rawset(_G,"Soap_RandomFixedSigned",do
 	return P_RandomFixed() * sign(P_SignedRandom())
 end)
+-- Takes 2 fixed_ts and returns a fixed_t
 rawset(_G,"Soap_RandomFixedRange",function(a,b)
-	return clamp(a*FU, P_RandomRange(a,b)*FU + Soap_RandomFixedSigned(), b*FU)
+	if b < a
+		a,b = $2,$1
+	end
+	return a + FixedMul((b - a), P_RandomFixed())
 end)
 rawset(_G,"P_RandomSign",do
 	return sign(P_SignedRandom()) or -1 -- -1 if sign is 0
@@ -61,6 +64,15 @@ rawset(_G,"P_3DInstaThrust",function(mo, h_ang, v_ang, speed)
 	mo.momz = FixedMul(speed, t.z)
 end)
 
-rawset(_G,"P_AngleLerp",function(frac, from, to)
+rawset(_G,"P_Lerp",function(frac, from, to)
 	return from + FixedMul(to - from, frac)
+end)
+-- backwards compat
+local seen = false
+rawset(_G,"P_AngleLerp",function(frac, from, to)
+	if not seen
+		print("\x82WARNING\x80: 'P_AngleLerp' is deprecated and will be removed soon, please use 'P_Lerp' instead.")
+		seen = true
+	end
+	return P_Lerp(frac, from, to)
 end)

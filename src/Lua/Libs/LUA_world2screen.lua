@@ -15,6 +15,7 @@ rawset(_G, "K_GetScreenCoords",function(vid,p,cam, point, props)
 	local interpmobj = props.interpmobj or false -- (SRB2-edit only) (WIP) Interpolates mobj state for "uncapped game" HUDs
 	local noscalestart = props.noscalestart or false -- Returns positions for patches with V_NOSCALESTART
 	local anglecliponly = props.anglecliponly or false -- Only clips the result if angle checks fail. Does not clip to screen dimensions.
+	local viewoverride = props.viewoverride
 	
 	if not cv_glshearing
 		cv_glshearing = CV_FindVar("gr_shearing")
@@ -22,6 +23,8 @@ rawset(_G, "K_GetScreenCoords",function(vid,p,cam, point, props)
 	if not cv_fov
 		cv_fov = CV_FindVar("fov")
 	end
+	local my_fov = (cv_fov.value) + (p.fovadd)
+	
 	local x,y,scale
 	local targx,targy,targz
 	
@@ -67,10 +70,27 @@ rawset(_G, "K_GetScreenCoords",function(vid,p,cam, point, props)
 	if (p.awayviewmobj and p.awayviewmobj.valid and p.awayviewtics > 0)
 		local away = p.awayviewmobj
 		--not on our camera?
-		if not (away.x == camPos.x and away.y == camPos.y and away.z + 20*FU == camPos.z)
+		do --if not (away.x == camPos.x and away.y == camPos.y and away.z + 20*FU == camPos.z)
 			camPos = {x = away.x, y = away.y, z = away.z + 20*FU}
 			camAngle = away.angle
 			camAiming = p.awayviewaiming
+		end
+	end
+	if viewoverride ~= nil
+		if viewoverride.angle ~= nil
+			camAngle = viewoverride.angle
+		end
+		if viewoverride.aiming ~= nil
+			camAiming = viewoverride.aiming
+		end
+		if viewoverride.x ~= nil
+			camPos.x = viewoverride.x
+		end
+		if viewoverride.y ~= nil
+			camPos.y = viewoverride.y
+		end
+		if viewoverride.z ~= nil
+			camPos.z = viewoverride.z
 		end
 	end
 	
@@ -89,7 +109,7 @@ rawset(_G, "K_GetScreenCoords",function(vid,p,cam, point, props)
 		xres = (vid.width()/vid.dupx()) << (FRACBITS-1)
 		yres = (vid.height()/vid.dupy()) << (FRACBITS-1)
 	end
-	fov = FixedDiv(xres, tan(FixedAngle(cv_fov.value/2)))
+	fov = FixedDiv(xres, tan(FixedAngle(my_fov/2)))
 	viewroll = (p and p.valid) and p.viewrollangle or 0
 	
 	-- flipping
@@ -132,8 +152,8 @@ rawset(_G, "K_GetScreenCoords",function(vid,p,cam, point, props)
 		y = FixedMul(tan(-y), fov) + yres -- project the angle to get our final Y coordinate
 		dist = R_PointToDist2(0, 0, R_PointToDist2(targx,targy,camPos.x,camPos.y), targz - camPos.z)
 	else
-		local fovratio = FixedDiv(90*FU, 180*FU - FixedMul(cv_fov.value, 4*FU/3)-FU*-30)
-		y = FixedDiv(y, FixedMul(dist,distfact))
+		local fovratio = FixedDiv(90*FU, 180*FU - FixedMul(my_fov, 4*FU/3)-FU*-30)
+		y = FixedDiv(y, FixedMul(dist or 1,distfact))
 		if scrflip
 			y = -y
 		end
@@ -152,8 +172,8 @@ rawset(_G, "K_GetScreenCoords",function(vid,p,cam, point, props)
 		y = $ + offset
 	end
 	
-	dist = FixedMul($, FixedDiv(cv_fov.value, 90*FU))
-	scale = FixedDiv(yres, dist + 1)
+	dist = FixedMul($, FixedDiv(my_fov, 90*FU))
+	scale = FixedDiv(yres, dist + 1) * 3/2
 	
 	-- project the angle to get our final X coordinate
 	x = FixedMul(tan(x), fov)
@@ -183,7 +203,7 @@ rawset(_G, "K_GetScreenCoords",function(vid,p,cam, point, props)
 	end
 	-- now clip in screenspace
 	if not dontclip
-		if abs(camAngle - R_PointToAngle2(camPos.x,camPos.y, targx,targy)) > FixedAngle(cv_fov.value)
+		if abs(camAngle - R_PointToAngle2(camPos.x,camPos.y, targx,targy)) > FixedAngle(my_fov)
 			onscreen = false
 		end
 		if x < 0 or x > (2*xres) then
@@ -193,10 +213,14 @@ rawset(_G, "K_GetScreenCoords",function(vid,p,cam, point, props)
 			onscreen = false
 		end
 	elseif anglecliponly
-		if abs(camAngle - R_PointToAngle2(camPos.x,camPos.y, targx,targy)) > FixedAngle(cv_fov.value)
+		if abs(camAngle - R_PointToAngle2(camPos.x,camPos.y, targx,targy)) > FixedAngle(my_fov)
 			onscreen = false
 		end
 	end
 	
-	return {x = x, y = y, scale = scale, onscreen = onscreen}
+	return {x = x, y = y, scale = scale, onscreen = onscreen,
+		camAngle = camAngle,
+		camAiming = camAiming,
+		camPos = camPos,
+	}
 end)

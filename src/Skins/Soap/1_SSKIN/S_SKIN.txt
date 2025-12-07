@@ -11,7 +11,7 @@ ability2 = CA2_NONE
 prefcolor = Galaxy
 Supercolor = Purple
 
-height = 52
+height = 57
 highresscale = 0.25
 shieldscale = 1.2
 jumpfactor = 1.15
