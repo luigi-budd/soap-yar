@@ -124,7 +124,6 @@ rawset(_G,"Takis_DoClutch",function(p,riding)
 			ghost.blendmode = AST_ADD
 			ghost.state = S_PLAY_TAKIS_TORNADO
 			ghost.tics = -1
-			if not (G_RingSlingerGametype())
 			
 			ghost.momx,ghost.momy = me.momx,me.momy
 			ghost.momz = takis.rmomz
