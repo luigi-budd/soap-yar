@@ -74,15 +74,13 @@ Takis_Hook.addHook("Takis_Thinker",function(p)
 	do
 		local topspeed = p.normalspeed
 		if (me.state == S_PLAY_RUN)
-			topspeed = p.runspeed + 2*FU
+			topspeed = p.runspeed - 2*FU
 		end
 		
-		if (gametyperules & GTR_FRIENDLY)
-			if (p.cmd.forwardmove or p.cmd.sidemove)
-			and soap.accspeed >= topspeed
-			and me.friction < FU
-				me.friction = FU - FU/50
-			end
+		if (p.cmd.forwardmove or p.cmd.sidemove)
+		and soap.accspeed >= topspeed
+		and me.friction < FU
+			me.friction = FU - FU/50
 		end
 		
 		if me.friction > ORIG_FRICTION
@@ -102,7 +100,7 @@ Takis_Hook.addHook("Takis_Thinker",function(p)
 				
 			else
 				soap.frictionfreeze = $-1
-				if soap.accspeed >= 80*FU
+				if soap.accspeed >= 60*FU
 					soap.frictionfreeze = $/2
 				end
 				soap.frictionfreeze = max($,0)

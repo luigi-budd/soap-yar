@@ -79,7 +79,7 @@ rawset(_G,"Takis_DoClutch",function(p,riding)
 	if ccombo >= 3
 		if me.friction < FU
 			me.friction = FU + FU/10
-			takis.frictionfreeze = 10
+			takis.frictionfreeze = TR/2
 		end
 	end
 	
@@ -94,11 +94,15 @@ rawset(_G,"Takis_DoClutch",function(p,riding)
 	
 	clutch.time = 1
 	
-	local thrust = 4*FU + FixedMul( (2*FU), (ccombo*FU)/2 )
-	
-	--not too fast, now
-	if thrust >= 12*FU
-		thrust = 12*FU
+	local thrust = 7*FU + FixedMul( (2*FU), (ccombo*FU)/2 )
+	if p.powers[pw_sneakers]
+		if thrust >= 25*FU
+			thrust = 25*FU
+		end
+	else
+		if thrust >= 12*FU
+			thrust = 12*FU
+		end
 	end
 	
 	local clutchadjust = clutch.tics --max((takis.clutchtime - p.cmd.latency),0)
@@ -167,10 +171,12 @@ rawset(_G,"Takis_DoClutch",function(p,riding)
 		me.movefactor = $/2
 	end
 	
-	if (takis.accspeed > ((p.powers[pw_sneakers] or takis.isSuper) and 55*FU or 40*FU))
-		takis.frictionfreeze = 10
+	if (takis.accspeed > ((p.powers[pw_sneakers] or takis.isSuper) and 40*FU or 35*FU))
+		takis.frictionfreeze = TR/2
 		me.friction = FU + FU/10
-		thrust = FU
+		if not p.powers[pw_sneakers]
+			thrust = 5 * FU
+		end
 	end
 	
 	local mo = (riding and riding.valid) and riding or ((p.powers[pw_carry] == CR_ROLLOUT) and me.tracer or me)
@@ -258,16 +264,6 @@ rawset(_G,"Takis_DoClutch",function(p,riding)
 		time = ease_time
 	}, "Takis_Clutch", true)
 	
-	/*
-	if not combod
-		p.jp = 2
-		p.jt = -5
-	else
-		p.jp = 3
-		p.jt = -8
-	end
-	*/
-	
 	if takis.onGround
 		me.state = S_PLAY_DASH
 		P_MovePlayer(p)
@@ -287,9 +283,6 @@ rawset(_G,"Takis_DoClutch",function(p,riding)
 	
 	--takis.coyote = 0
 	takis.noability = $ &~NOABIL_AFTERIMAGE
-	
-	--save on effects?
-	if spammed then return end
 	
 	if takis.notCarried
 		local angoff = ANGLE_45
@@ -525,7 +518,7 @@ rawset(_G,"Takis_HammerBlastHitbox",function(p)
 		me,
 		P_ReturnThrustX(nil,ang,dist) + FixedDiv(me.momx, me.scale),
 		P_ReturnThrustY(nil,ang,dist) + FixedDiv(me.momy, me.scale),
-		-TAKIS_HAMMERDISP,
+		-TAKIS_HAMMERDISP + FixedDiv(me.momz * takis.gravflip, me.scale),
 		MT_THOK
 	)
 	P_SetOrigin(thok, thok.x,thok.y,thok.z)
@@ -618,6 +611,16 @@ rawset(_G,"Takis_HammerBlastHitbox",function(p)
 		and (found.takis_flingme ~= false)
 			found.alreadykilledthis = true
 			P_KillMobj(found,me,me)
+		elseif (found.flags & MF_SPRING)
+		and (found.info.painchance ~= 3)
+			local topheight = found.z + found.height
+			if takis.gravflip == -1
+				topheight = found.z
+			end
+			if (topheight > (takis.gravflip == 1 and me.floorz or me.ceilingz))
+				Soap_ImpactVFX(found, me, nil,nil, true)
+				P_DoSpring(found,me)
+			end
 		/*
 		elseif (found.player and found.player.valid)
 			if CanPlayerHurtPlayer(p,found.player)
@@ -638,13 +641,6 @@ rawset(_G,"Takis_HammerBlastHitbox",function(p)
 				didit = true
 			elseif peptoboxed(found)
 				didit = true
-			end
-		elseif (found.flags & MF_SPRING)
-		and (found.info.painchance ~= 3)
-			if (GetActorZ(found,me,2) > (takis.gravflip == 1 and me.floorz or me.ceilingz))
-				local bam1 = SpawnBam(ref)
-				bam1.renderflags = $|RF_FLOORSPRITE
-				P_DoSpring(found,me)
 			end
 		elseif not liteBuild
 		and (found.type == MT_HHTRIGGER)
