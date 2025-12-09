@@ -1115,7 +1115,7 @@ rawset(_G,"Takis_AbilityHelpers",{
 		
 		--hit ground
 		if (takis.onGround or P_CheckDeathPitCollide(me))
-		or (Soap_BouncyCheck(me,me.subsector.sector))
+		or (Soap_BouncyCheck(p))
 			Takis_DoHammerBlastLand(p,domoves)
 		end
 
