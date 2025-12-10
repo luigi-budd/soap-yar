@@ -207,8 +207,8 @@ addHook("TouchSpecial",function(f, mo)
 			end
 		end
 		
+		P_Thrust(mo, f.angle, FixedMul(100*FU + f.speed, f.scale))
 		if not tumbled
-			P_Thrust(mo, f.angle, FixedMul(100*FU + f.speed, f.scale))
 			if P_IsObjectOnGround(mo)
 				mo.z = $ + P_MobjFlip(mo)
 			end
