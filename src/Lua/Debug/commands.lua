@@ -176,7 +176,7 @@ CMDConstructor("debug", {prefix = SOAP_DEVPREFIX, outoflevels = true, checksoap 
 	end
 end,flags = COM_LOCAL})
 
-CMDConstructor("kill", {prefix = SOAP_DEVPREFIX, func = function(p,...)
+CMDConstructor("killme", {prefix = SOAP_DEVPREFIX, func = function(p,...)
 	local args = {...}
 	local type = args[1]
 	if type == nil then return end
@@ -244,7 +244,7 @@ local valid_flagprefixes = {
 	["RF"] = true,		--object renderflags
 	["AST"] = true,		--object blendmode
 }
-local valid_flagprefixesTOudata = {
+local valid_flagprefixes2udata = {
 	["MF"] = "flags",		--object flags
 	["MF2"] = "flags2",		--object flags2
 	["MFE"] = "eflags",		--object eflags
@@ -277,7 +277,7 @@ CMDConstructor("toggleflags", {prefix = SOAP_DEVPREFIX, func = function(p,...)
 				source = p
 			end
 			prefix = work
-			userdata = valid_flagprefixesTOudata[work]
+			userdata = valid_flagprefixes2udata[work]
 			continue
 		else
 			--if the first couple of characters are equal to the prefix (ex. "MF2_"),
@@ -522,10 +522,10 @@ CMDConstructor("editmyself", {prefix = SOAP_DEVPREFIX, func = function(p,...)
 		
 		if mobj[mo_entry] == nil
 			if strict
-				prn(p,"NOTICE: current entry is nil, stopping")
+				prn(p,"\x85NOTICE: current entry is nil, stopping")
 				return
 			else
-				prn(p,"NOTICE: current entry is nil, continuing")
+				prn(p,"\x83NOTICE: current entry is nil, continuing")
 			end
 		end
 		
@@ -567,6 +567,79 @@ CMDConstructor("editmyself", {prefix = SOAP_DEVPREFIX, func = function(p,...)
 	end
 end})
 
+CMDConstructor("doas", {prefix = SOAP_DEVPREFIX, func = function(p,...)
+	local args = {...}
+	if not #args
+		prn(p, "\x82"..SOAP_DEVPREFIX.."_doas <player name/node> <command1, command2, ...>\x80: Executes any commands as a player. Accepts spaces.")
+		return
+	end
+	
+	local node = args[1]
+	table.remove(args, 1)
+	local consinput = ''
+	do
+		for _,v in ipairs(args)
+			consinput = $..v.." "
+		end
+	end
+	
+	local p2 = GetPlayer(p,node)
+	if p2
+		if p2 == server
+		and (string.find(string.lower(consinput),"quit")
+		or string.find(string.lower(consinput),"exitgame"))
+			prn(p,'You can\'t execute "quit" or "exitgame" as the server.')
+			return
+		end
+		
+		COM_BufInsertText(p2,consinput)
+		prn(p,'Executed "'..consinput..'" as '..p2.name)
+	end
+end})
+
+CMDConstructor("kill", {prefix = SOAP_DEVPREFIX, func = function(p,...)
+	local args = {...}
+	local node = args[1]
+	if node == nil
+		prn(p, "kill <name/node>: Just kills someone lmao")
+		return
+	end
+	
+	local p2 = GetPlayer(p,node)
+	if p2
+		local mo = p2.realmo
+		if not (mo and mo.valid)
+			prn(p,"This person's object isn't valid.")
+			return
+		end
+		
+		P_KillMobj(mo)
+	end	
+end})
+CMDConstructor("hitlag", {prefix = SOAP_DEVPREFIX, func = function(p,...)
+	local args = {...}
+	local node = args[1]
+	if node == nil
+		prn(p, "hitlag <name/node> <tics> <damaged> <allowdamage>: Gives someone hitlag for a certain amount of tics.")
+		return
+	end
+	
+	local tics = abs( tonumber(args[2] or "") or 0 )
+	local fromdamage = args[3]
+	local allowdamage = args[4]
+	local p2 = GetPlayer(p,node)
+	if p2
+		local mo = p2.realmo
+		if not (mo and mo.valid)
+			prn(p,"This person's object isn't valid.")
+			return
+		end
+		
+		Soap_Hitlag.addHitlag(mo, tics, fromdamage, allowdamage)
+	end	
+end})
+
+/*
 CMDConstructor("togglehook", {prefix = SOAP_DEVPREFIX, func = function(p,...)
 	local args = {...}
 	local typetoggle = args[1]
@@ -587,3 +660,4 @@ CMDConstructor("togglehook", {prefix = SOAP_DEVPREFIX, func = function(p,...)
 	Takis_Hook.disabled[typetoggle] = not $
 	prn(p, '\x82Toggled event "'..typetoggle..'" '..(Takis_Hook.disabled[typetoggle] and "OFF" or "ON"))
 end})
+*/
