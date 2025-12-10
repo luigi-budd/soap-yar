@@ -151,8 +151,8 @@ addHook("MobjThinker",function(f)
 		P_3DInstaThrust(f, ha,va, speed)
 		f.angle = ha
 		
-		if not S_SoundPlaying(spb,sfx_kc64)
-			S_StartSound(spb,sfx_kc64)
+		if not S_SoundPlaying(f,sfx_kc64)
+			S_StartSound(f,sfx_kc64)
 		end
 		
 		return
