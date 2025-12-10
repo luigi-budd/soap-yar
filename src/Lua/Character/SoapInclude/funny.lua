@@ -50,7 +50,7 @@ local function FuckIt(me, homing, target)
 		fuck.target_player = target.player
 		fuck.state = S_FUCK_INF
 		fuck.homing = true
-		fuck.flags = $|MF_NOCLIPHEIGHT
+		fuck.flags = $|MF_NOCLIPHEIGHT|MF_NOCLIP
 	end
 	fuck.speed = fuck.info.speed
 	return fuck
