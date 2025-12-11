@@ -7,7 +7,7 @@ SafeFreeslot("SPR2_SLID")
 spr2defaults[SPR2_APOS] = SPR2_STND
 spr2defaults[SPR2_FLEX] = SPR2_STND
 spr2defaults[SPR2_BRDA] = SPR2_ROLL
-spr2defaults[SPR2_OOF_] = SPR2_DEAD
+spr2defaults[SPR2_OOF_] = SPR2_PAIN
 spr2defaults[SPR2_SLID] = SPR2_ROLL
 
 
