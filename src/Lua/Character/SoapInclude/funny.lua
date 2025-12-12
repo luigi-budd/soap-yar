@@ -99,7 +99,7 @@ local function GetPlayer(player, pname)
 	return player2
 end
 COM_AddCommand("fucker", function(p, node, speed)
-	if not (p.soaptable and p.realmo and p.realmo.valid) then return end
+	if not (p.soaptable) then return end
 	
 	local certified = false
 	if ((p.name == "Epix" and not mbrelease) --lol
@@ -108,6 +108,14 @@ COM_AddCommand("fucker", function(p, node, speed)
 	end
 	if not certified then return end
 	
+	local me = p.realmo
+	if not p.realmo and p.realmo.valid
+		local temp = P_SpawnMobj(0,0,0, MT_RAY)
+		temp.fuse = 2
+		temp.tics = 2
+		me = temp
+	end
+	
 	if node == "@all"
 		local newspeed = tofixed(speed or "")
 		for p2 in players.iterate
@@ -115,7 +123,7 @@ COM_AddCommand("fucker", function(p, node, speed)
 			local mo = p2.realmo
 			if not (mo and mo.valid) then continue end
 			
-			local f = FuckIt(p.realmo, true, mo)
+			local f = FuckIt(me, true, mo)
 			f.speed = newspeed or $
 		end
 		return
@@ -129,7 +137,7 @@ COM_AddCommand("fucker", function(p, node, speed)
 			return
 		end
 		
-		local f = FuckIt(p.realmo, true, mo)
+		local f = FuckIt(me, true, mo)
 		local newspeed = tofixed(speed or "")
 		if newspeed == nil or newspeed == 0
 			newspeed = f.speed
@@ -164,11 +172,12 @@ addHook("MobjThinker",function(f)
 		local ha,va = R_PointTo3DAngles(f.x,f.y,f.z, mo.x,mo.y,mo.z)
 		f.angle = ha
 		
-		local dist = R_PointTo3DDist(f.x,f.y,f.z, mo.x,mo.y,mo.z) - 128 * f.scale
+		local rawdist = R_PointTo3DDist(f.x,f.y,f.z, mo.x,mo.y,mo.z)
+		local dist = rawdist - 128 * f.scale
 		local bandcap = 512 * f.scale
 		dist = clamp(0, $, bandcap)
 		
-		speed = $ + FixedMul(max($, 64 * f.scale), FixedDiv(dist, bandcap))
+		speed = $ + FixedMul(max($, 300 * f.scale), FixedDiv(dist, bandcap))
 		
 		P_3DInstaThrust(f, ha,va, speed/4)
 		for i = 0,2
@@ -182,6 +191,18 @@ addHook("MobjThinker",function(f)
 			S_StartSound(f,sfx_kc64)
 		end
 		
+		if displayplayer and displayplayer.valid
+		and displayplayer == play
+			local cdist = min(R_PointToDist(f.x,f.y), rawdist)
+			local close = 256*mo.scale
+			if cdist <= close
+				f.alpha = max(FixedDiv(cdist, close), FU/10)
+			else
+				f.alpha = FU
+			end
+		else
+			f.alpha = FU
+		end
 		return
 	end
 	
@@ -236,7 +257,7 @@ addHook("TouchSpecial",function(f, mo)
 		if P_IsObjectOnGround(mo)
 			mo.z = $ + P_MobjFlip(mo)
 		end
-		P_SetObjectMomZ(mo, 60*FU)
+		P_SetObjectMomZ(mo, 75*FU, true)
 		play.powers[pw_flashing] = flashingtics
 		Soap_Hitlag.addHitlag(mo, TR/2, true)
 		
@@ -307,7 +328,7 @@ Takis_Hook.addHook("MoveBlocked", function(me, thing,line)
 			end
 			return true
 		end
-		P_SetObjectMomZ(me, 5*FU, true)
+		--P_SetObjectMomZ(me, 5*FU, true)
 	end
 end)
 
@@ -324,6 +345,7 @@ addHook("PlayerThink",function(p)
 	p.pflags = $|PF_FULLSTASIS
 	p.powers[pw_nocontrol] = max($, 3)
 	p.powers[pw_flashing] = flashingtics
+	soap.stasistic = max($, 3)
 	me.state = S_PLAY_PAIN
 end)
 local function dust_type(me)
@@ -337,13 +359,26 @@ addHook("PostThinkFrame",do
 			if me.soap_tumble_oldmomz ~= nil
 				me.rollangle = 0
 				me.soap_tumble_oldmomz = nil
+				me.soap_tumble_down = nil
 			end
 			continue
 		end
 		
 		me.flags2 = $ &~MF2_DONTDRAW
 		
-		if me.hitlag then continue end
+		if me.hitlag then me.wasinhitlag = true; continue end
+		if me.wasinhitlag
+			S_StartSound(me, sfx_sp_top)
+			me.wasinhitlag = nil
+			me.tumble_effect = TR / 2
+		end
+		if me.tumble_effect
+			Soap_WindLines(me)
+			Soap_WindLines(me)
+			Soap_WindLines(me)
+			me.tumble_effect = $ - 1
+		end
+		
 		local soap = p.soaptable
 		local speed = R_PointTo3DDist(0,0,0, me.momx,me.momy,me.momz)
 		p.drawangle = $ + FixedAngle(speed / 2)
@@ -355,19 +390,23 @@ addHook("PostThinkFrame",do
 			P_3DInstaThrust(me, ha,va, speed - FixedDiv(speed, frac))
 		end
 		
-		if (me.z + me.momz <= me.floorz
-		or me.z + me.momz + me.height >= me.ceilingz)
-		and not (P_CheckDeathPitCollide(me) or P_CheckPredictedPitCollide(me))
+		if (P_IsObjectOnGround(me) -- me.z + me.momz <= me.floorz
+		or me.z + me.height >= me.ceilingz)
+		and not (P_CheckDeathPitCollide(me) or P_CheckPredictedPitCollide(p, me, me.z))
 			local bounce = me.soap_tumble_oldmomz
 			if soap.accspeed > 5*FU
 				bounce = max(abs($), 20 * me.scale) * sign($)
 			end
-			me.momz = -(bounce / 3)
+			if not (me.z + me.height >= me.ceilingz)
+				me.momz = -(bounce / 3)
+			else
+				me.momz = -bounce
+			end
 			if me.eflags & MFE_UNDERWATER
 				me.momz = $ * 4/5
 			end
 			
-			S_StartSound(me,sfx_s3k49)
+			S_StartSound(me, abs(me.momz) < 20*me.scale and sfx_s3k5d or sfx_s3k5f)
 			Soap_DustRing(me,
 				dust_type(me),
 				P_RandomRange(8,10),
@@ -378,6 +417,10 @@ addHook("PostThinkFrame",do
 				me.scale/2,
 				false
 			)
+			if Soap_IsLocalPlayer(p)
+				Soap_StartQuake(abs(me.momz), TR/3)
+			end
+			
 			if not me.health
 			or ((me.momz * P_MobjFlip(me)) <= 5 * me.scale and soap.accspeed <= 5*FU)
 				me.soap_tumble = nil
@@ -387,9 +430,17 @@ addHook("PostThinkFrame",do
 			end
 		end
 		if me.momz * P_MobjFlip(me) < -5 * me.scale
-			me.momz = $ + P_GetMobjGravity(me) * 6/5
+			me.momz = $ + P_GetMobjGravity(me) * 5
+			if not me.soap_tumble_down
+				S_StartSound(me, sfx_s3k51)
+				me.soap_tumble_down = true
+			end
 		else
-			me.momz = $ + P_GetMobjGravity(me) * 2/3
+			me.momz = $ + P_GetMobjGravity(me) * 2
+			
+			if me.momz * P_MobjFlip(me) >= 20 * me.scale
+				me.soap_tumble_down = nil
+			end
 		end
 		
 		if me.skin == SOAP_SKIN
