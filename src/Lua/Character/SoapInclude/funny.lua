@@ -357,7 +357,7 @@ addHook("PostThinkFrame",do
 		
 		if (me.z + me.momz <= me.floorz
 		or me.z + me.momz + me.height >= me.ceilingz)
-		and not P_CheckDeathPitCollide(me)
+		and not (P_CheckDeathPitCollide(me) or P_CheckPredictedPitCollide(me))
 			local bounce = me.soap_tumble_oldmomz
 			if soap.accspeed > 5*FU
 				bounce = max(abs($), 20 * me.scale) * sign($)
