@@ -1589,6 +1589,7 @@ rawset(_G,"Soap_HandleNoAbils", function(p)
 	if p.powers[pw_carry] == CR_MACESPIN
 	or p.powers[pw_carry] == CR_ROPEHANG
 	or p.powers[pw_carry] == CR_ROLLOUT
+	or p.powers[pw_carry] == CR_PLAYER
 		na = $|SNOABIL_AIRDASH|SNOABIL_CROUCH|SNOABIL_POUND|SNOABIL_UPPERCUT
 	end
 	
@@ -2520,10 +2521,15 @@ end
 
 local function VFX_Squish(p,me,soap, props)
 	--momentum based squash and stretch
+	local momz = soap.rmomz
+	if props.halfsquish
+		momz = $ / 2
+	end
+	
 	if props.squishme
 	and not soap.onGround
-	and abs(soap.rmomz) >= 18*me.scale
-		local mom = FixedDiv(abs(soap.rmomz),me.scale)-18*FU
+	and abs(momz) >= 18*me.scale
+		local mom = FixedDiv(abs(momz),me.scale)-18*FU
 		mom = $/50
 		mom = -min($,FU*4/5)
 		soap.spritexscale,

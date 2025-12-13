@@ -1,4 +1,10 @@
 local CV = SOAP_CV
+local function dust_type(me)
+	return (me.eflags & (MFE_UNDERWATER|MFE_TOUCHWATER)) and P_RandomRange(MT_SMALLBUBBLE,MT_MEDIUMBUBBLE) or MT_SOAP_DUST
+end
+local function dust_noviewmobj(dust)
+	dust.dontdrawforviewmobj = me
+end
 
 rawset(_G,"Takis_DoClutch",function(p,riding)
 	local me = p.mo
@@ -680,146 +686,99 @@ rawset(_G,"Takis_DoHammerBlastLand",function(p,domoves)
 	local me = p.realmo
 	local takis = p.soaptable
 	local hammer = takis.hammer
-
-	--dust effect
-	--if not (me.eflags & MFE_TOUCHWATER)
-	/*
-	local maxi = 16+abs(takis.lastmomz*takis.gravflip/me.scale/5)
-	for i = 0, maxi
-		local radius = FU*16
-		local fa = FixedAngle(i*(FixedDiv(360*FU,maxi*FU)))
-		local mz = takis.lastmomz/7
-		local dust = TakisSpawnDust(me,
-			fa,
-			0,
-			P_RandomRange(-1,2)*me.scale,
-			{
-				xspread = 0,
-				yspread = 0,
-				zspread = (P_RandomFixed()/2*((P_RandomChance(FU/2)) and 1 or -1)),
-				
-				thrust = 0,
-				thrustspread = 0,
-				
-				momz = P_RandomRange(0,1)*me.scale,
-				momzspread = P_RandomFixed()*((P_RandomChance(FU/2)) and 1 or -1),
-				
-				scale = me.scale,
-				scalespread = (P_RandomFixed()/2*((P_RandomChance(FU/2)) and 1 or -1)),
-				
-				fuse = 23+P_RandomRange(-2,3),
-			}
-		)
-		dust.momx = FixedMul(FixedMul(sin(fa),radius),mz)/2
-		dust.momy = FixedMul(FixedMul(cos(fa),radius),mz)/2
-		
-	end
-	*/
 	
-	/*
-	if takis.inBattle
-		for play in players.iterate
-			if play.spectator then continue end
-			if play == p then continue end
-			if not CanPlayerHurtPlayer(p,play) then continue end
-			
-			local found = play.mo
-			
-			if not (found and found.valid) then continue end
-			if not (found.health) then continue end
-			if (play.tumble) then continue end
-			
-			local dist = FixedHypot(FixedHypot(found.x - me.x, found.y - me.y),found.z - me.z)
-			local maxdist = abs(takis.lastmomz)*11/2
-			
-			if dist > maxdist then continue end
-			
-			local tics = abs(takis.lastmomz)/me.scale
-			
-			CBW_Battle.DoPlayerTumble(play,tics,
-				R_PointToAngle2(found.x,found.y,
-					me.x,me.y
-				),
-				abs(takis.lastmomz)
+	local battle_tumble = false
+	local br = 64*me.scale
+	if abs(takis.last.momz) >= 20*me.scale
+		br = $ + (abs(takis.last.momz)-20*me.scale) * 3/4
+	end
+	
+	Soap_SquashMacro(p, {ease_func = "insine", ease_time = TR/3, strength = FU*3/4})
+	Soap_DustRing(me,
+		dust_type(me),
+		16 + max(
+			abs(FixedDiv(takis.last.momz, me.scale) - 5*FU)/FU / 4,
+			0
+		),
+		{me.x,me.y,me.z},
+		me.radius * 3/2,
+		br/3, --soap.last.momz,
+		me.scale / 2,
+		me.scale * 3/2,
+		false, dust_noviewmobj
+	)
+	do
+		local px = me.x
+		local py = me.y
+		searchBlockmap("objects", function(me,fnd)
+			battle_tumble = Soap_JostleThings(me,fnd,
+				br + me.radius * 3
 			)
+			if not (fnd.player and fnd.player.valid)
+				battle_tumble = false
+			end
 			
-		end
-		p.lockmove = false
-		p.melee_state = 0
+		end, me, px-br, px+br, py-br, py+br)
+		/*
+		P_SpawnMobj(px-br, py-br, me.z, MT_PINETREE).fuse = 6*TR
+		P_SpawnMobj(px-br, py+br, me.z, MT_PINETREE).fuse = 6*TR
+		P_SpawnMobj(px+br, py-br, me.z, MT_PINETREE).fuse = 6*TR
+		P_SpawnMobj(px+br, py+br, me.z, MT_PINETREE).fuse = 6*TR
+		*/
 	end
-	*/
 	
-	/*
-	--impact sparks
-	local superspeed = -60*me.scale
-	if ((takis.lastmomz*takis.gravflip) <= superspeed)
-		S_StartSound(me,sfx_s3k9b)
-		local radius = abs(takis.lastmomz)
-		if (p.powers[pw_shield] == SH_ARMAGEDDON)
-			radius = $*2
-		end
+	if abs(takis.last.momz) >= 60*me.scale
+		S_StartSound(me, sfx_s3k9b)
+		S_StartSoundAtVolume(me, sfx_s3k5f, 255/2)
+		S_StartSound(me, sfx_pstop)
 		
-		for i = 0, 16
-			local fa = (i*ANGLE_22h)
-			local spark = P_SpawnMobjFromMobj(me,0,0,0,MT_SUPERSPARK)
-			spark.momx = FixedMul(sin(fa),radius)
-			spark.momy = FixedMul(cos(fa),radius)
-			local spark2 = P_SpawnMobjFromMobj(me,0,0,0,MT_SUPERSPARK)
-			spark2.color = me.color
-			spark2.momx = FixedMul(sin(fa),radius/20)
-			spark2.momy = FixedMul(cos(fa),radius/20)
+		local iterations = 16
+		local ang = FixedDiv(360*FU, iterations*FU)
+		local limit = 28
+		for i = 0, iterations
+			local rock = P_SpawnMobjFromMobj(me,
+				0,0, 4*FU,
+				MT_LAVAFALLROCK
+			)
+			rock.flags = $|MF_NOCLIPTHING &~(MF_PAIN|MF_SPECIAL)
+			rock.state = S_ROCKCRUMBLEA+P_RandomRange(0, 3)
+			P_SetObjectMomZ(rock, Soap_RandomFixedRange(10*FU,20*FU))
+			P_Thrust(rock, FixedAngle(ang * i), Soap_RandomFixedRange(3*FU,7*FU))
+			rock.fuse = TR*3
 		end
-		DoQuake(p,FU*37,20)
-		
-		if not (G_RingSlingerGametype() or TAKIS_NET.hammerquakes == false)
-			--KILL!
-			local rad = takis.lastmomz
-			local px = me.x
-			local py = me.y
-			local br = abs(rad*10)
-			
-			searchBlockmap("objects", function(me, found)
-				if not (found and found.valid) then return end
-				if not (found.health) then return end
-				if (found.takis_nocollateral == true) then return end
-				if (found.alreadykilledthis) then return end
+		Soap_DustRing(me,
+			MT_SOAP_WALLBUMP,
+			16 + max(
+				abs(FixedDiv(takis.last.momz, me.scale) - 5*FU)/FU / 4,
+				0
+			),
+			{me.x,me.y,me.z},
+			me.radius * 3/2,
+			br/3, --soap.last.momz,
+			me.scale / 10,
+			me.scale * 3/2,
+			false, function(spark)
+				--5 tics
+				spark.scalespeed = FixedDiv(spark.destscale - (spark.scale / 10), 5*FU)
 				
-				local dist = FixedHypot(FixedHypot(found.x - me.x, found.y - me.y),found.z - me.z)
-				if dist > br then return end
+				spark.fuse = 5 * TR
+				spark.startfuse = spark.fuse
 				
-				if CanFlingThing(p, found,nil,true)
-					if not (found.flags & MF_BOSS)
-						found.alreadykilledthis = true
-					end
-					local rag = SpawnRagThing(found,me)
-					if (rag and rag.valid)
-						S_StartSound(rag,sfx_sdmkil)
-					end
-				elseif (found.type == MT_PLAYER)
-					if CanPlayerHurtPlayer(p,found.player)
-						TakisAddHurtMsg(found.player,p,HURTMSG_HAMMERQUAKE)
-						P_DamageMobj(found,me,me,abs(me.momz/FU/4))
-					end
-					DoQuake(found.player,
-						FixedMul(
-							75*FU, FixedDiv( br-FixedHypot(found.x-me.x,found.y-me.y),br )
-						),
-						15
-					)
-				elseif (SPIKE_LIST[found.type] == true)
-				and (found.takis_nocollateral ~= true)
-					found.alreadykilledthis = true
-					P_KillMobj(found,me,me)
-				end
-			end, me, px-br, px+br, py-br, py+br)		
-		end
+				spark.random = P_RandomRange(-limit,limit) * ANG1
+				spark.momz = Soap_RandomFixedRange(15*me.scale, 30*me.scale) * takis.gravflip
+				dust_noviewmobj(spark)
+			end
+		)
 	end
-	*/
 	
-	S_StartSoundAtVolume(me, sfx_pstop,4*255/5)
+	S_StartSoundAtVolume(me, sfx_pstop,2*255/5)
 	S_StartSound(me,sfx_tk_hml)
 	
-	Soap_StartQuake(25*FU, 17, me, 512*FU)
+	local quake_tics = 16 + (FixedDiv(br,me.scale)/FU / 25)
+	Soap_StartQuake(20*FU + br/40, quake_tics,
+		{me.x,me.y,me.z},
+		512*me.scale
+	)
 	P_MovePlayer(p)
 	if Soap_BreakFloors(p,me)
 		forcehambounce(p)
@@ -855,138 +814,12 @@ rawset(_G,"Takis_DoHammerBlastLand",function(p,domoves)
 			p.pflags = $|PF_JUMPED &~(PF_THOKKED|PF_SHIELDABILITY)
 			
 			takis.noability = $|NOABIL_SLIDE
-			
 		--holding spin while landing? boost us forward!
-		--[[
 		elseif (takis.use > 0)
 		and me.health
 		and not (takis.noability & NOABIL_CLUTCH)
-			local spammed = false
-			if not takis.dropdashstale
-				S_StartSoundAtVolume(me,sfx_cltch2,255*3/5)
-				S_StartSoundAtVolume(me,sfx_cltch3,133)
-				if not takis.inWater
-					S_StartSoundAtVolume(me,sfx_cltch4,179)
-				else
-					S_StartSoundAtVolume(me,sfx_cltch5,220)
-				end
-				takis.clutchtime = 23
-				takis.clutchspamtime = 23
-				takis.clutchmisfire = TR
-				
-				if takis.clutchcombotime
-					takis.clutchcombotime = 2*TR
-				end
-			else
-				--dont even bother doing the rest
-				if takis.dropdashstale > 2 then takis.hammerblastdown = 0; return end
-				
-				S_StartSound(me,sfx_didbad)
-				spammed = true
-			end
-			
-			me.state = S_PLAY_DASH
-			
-			takis.clutchingtime = 1
-			takis.glowyeffects = takis.hammerblastdown/3
-			
-			local ang = GetControlAngle(p)
-			
-			if ((me.flags2 & MF2_TWOD)
-			or (twodlevel))
-				if (p.cmd.sidemove > 0)
-					ang = p.drawangle
-				elseif (p.cmd.sidemove < 0)
-					ang = InvAngle(p.drawangle)
-				end
-			end
-			
-			local boostpower = FixedDiv(
-				FixedMul(
-					15*FU + FixedDiv(me.momz, me.scale)*3/4,
-					p.powers[pw_sneakers] and FU*7/5 or FU
-				),
-				max(FU,takis.dropdashstale*3/2*me.scale)
-			)
-			if spammed then boostpower = (-5*FU - $) end
-			--print(string.format("%f,	%f", boostpower, takis.accspeed))
-			
-			if takis.accspeed+boostpower <= 80*FU
-				P_InstaThrust(me,ang,
-					FixedMul(takis.accspeed + boostpower,me.scale)
-				)
-			--okay, so the boost is too strong but we're not even as fast
-			elseif takis.accspeed <= 80*FU
-				P_InstaThrust(me, ang,
-					FixedMul(80*FU - takis.accspeed,me.scale)
-				)
-			elseif not spammed
-				takis.frictionfreeze = 15
-				me.friction = FU
-			end
-			P_MovePlayer(p)
-			
-			takis.bashspin = max($,TR/2)
-			
-			--effect
-			local ghost = P_SpawnGhostMobj(me)
-			ghost.scale = 3*me.scale/2
-			ghost.destscale = FixedMul(me.scale,2)
-			ghost.colorized = true
-			ghost.frame = $|TR_TRANS10
-			ghost.blendmode = AST_ADD
-			ghost.angle = p.drawangle
-			ghost.state = S_PLAY_TAKIS_TORNADO
-			ghost.momx,ghost.momy = me.momx*3/4,me.momy*3/4
-			for j = -1,1,2
-				for i = 3,P_RandomRange(4,7)
-					TakisKart_SpawnSpark(me,
-						ang+FixedAngle(45*FU*j+(P_RandomFixed()*((P_RandomChance(FU/2)) and 1 or -1))),
-						SKINCOLOR_ORANGE,
-						true,
-						true
-					)
-					TakisSpawnDust(me,
-						ang+FixedAngle(45*FU*j+(P_RandomFixed()*((P_RandomChance(FU/2)) and 1 or -1))),
-						P_RandomRange(0,-50),
-						P_RandomRange(-1,2)*me.scale,
-						{
-							xspread = 0,--(P_RandomFixed()/2*((P_RandomChance(FU/2)) and 1 or -1)),
-							yspread = 0,--(P_RandomFixed()/2*((P_RandomChance(FU/2)) and 1 or -1)),
-							zspread = (P_RandomFixed()*((P_RandomChance(FU/2)) and 1 or -1)),
-							
-							thrust = P_RandomRange(0,-10)*me.scale,
-							thrustspread = (P_RandomFixed()*((P_RandomChance(FU/2)) and 1 or -1)),
-							
-							momz = (P_RandomRange(4,0)*i)*(me.scale/2),
-							momzspread = ((P_RandomChance(FU/2)) and 1 or -1),
-							
-							scale = me.scale,
-							scalespread = (P_RandomFixed()*((P_RandomChance(FU/2)) and 1 or -1)),
-							
-							fuse = 15+P_RandomRange(-5,5),
-						}
-					)
-				end
-			end
-			
-			do
-				local d1 = P_SpawnMobjFromMobj(me, -20*cos(ang + ANGLE_45), -20*sin(ang + ANGLE_45), 0, MT_TAKIS_CLUTCHDUST)
-				local d2 = P_SpawnMobjFromMobj(me, -20*cos(ang - ANGLE_45), -20*sin(ang - ANGLE_45), 0, MT_TAKIS_CLUTCHDUST)
-				d1.angle = R_PointToAngle2(me.x+me.momx, me.y+me.momy, d1.x, d1.y) --- ANG5
-				d2.angle = R_PointToAngle2(me.x+me.momx, me.y+me.momy, d2.x, d2.y) --+ ANG5
-				
-				d1.momx,d1.momy = me.momx/2,me.momy/2
-				d2.momx,d2.momy = me.momx/2,me.momy/2
-				d1.momz = takis.rmomz
-				d2.momz = takis.rmomz
-			end
-			
-			takis.dropdashstale = $+1
-			takis.dropdashstaletime = 3*TR
-		]]
+			Takis_DoClutch(p)
 		end
-		
 	end
 	hammer.down = 0
 end)

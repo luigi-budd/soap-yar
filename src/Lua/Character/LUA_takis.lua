@@ -648,6 +648,7 @@ Takis_Hook.addHook("Takis_Thinker",function(p)
 	Soap_VFX(p,me,soap, {
 		squishme = squishme,
 		was_pounding = washammering,
+		halfsquish = washammering or hammer.down
 	})
 	Soap_DeathThinker(p,me,soap)
 end)
