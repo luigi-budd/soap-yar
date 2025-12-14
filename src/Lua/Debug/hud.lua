@@ -194,15 +194,36 @@ local function WRAP_buttons(v,p,c, me,soap)
 	"BREAKDANCE",
 	*/
 	
+	/*
+	"CLUTCH",
+	"HAMMER",
+	"DIVE",
+	"SLIDE",
+	"SHIELD",
+	"THOK",
+	--TODO: delete this one too?
+	"AFTERIMAGE",	--i wouldnt really call afterimages an ability
+	*/
+	
 	v.drawString(x,y-58,"noability",flags|V_GREENMAP,"thin")
-	drawflag(v,x+00,y-50,"RD",flags,V_GREENMAP,V_REDMAP,"thin",(soap.noability & SNOABIL_RDASH))
-	drawflag(v,x+15,y-50,"AD",flags,V_GREENMAP,V_REDMAP,"thin",(soap.noability & SNOABIL_AIRDASH))
-	drawflag(v,x+30,y-50,"UC",flags,V_GREENMAP,V_REDMAP,"thin",(soap.noability & SNOABIL_UPPERCUT))
-	drawflag(v,x+45,y-50,"PD",flags,V_GREENMAP,V_REDMAP,"thin",(soap.noability & SNOABIL_POUND))
-	drawflag(v,x+60,y-50,"ST",flags,V_GREENMAP,V_REDMAP,"thin",(soap.noability & SNOABIL_TOP))
-	drawflag(v,x+75,y-50,"TT",flags,V_GREENMAP,V_REDMAP,"thin",(soap.noability & SNOABIL_TAUNTS))
-	drawflag(v,x+90,y-50,"CR",flags,V_GREENMAP,V_REDMAP,"thin",(soap.noability & SNOABIL_CROUCH))
-	drawflag(v,x+105,y-50,"BD",flags,V_GREENMAP,V_REDMAP,"thin",(soap.noability & SNOABIL_BREAKDANCE))
+	if skins[p.skin].name == TAKIS_SKIN
+		drawflag(v,x+00,y-50,"CL",flags,V_GREENMAP,V_REDMAP,"thin",(soap.noability & NOABIL_CLUTCH))
+		drawflag(v,x+15,y-50,"HM",flags,V_GREENMAP,V_REDMAP,"thin",(soap.noability & NOABIL_HAMMER))
+		drawflag(v,x+30,y-50,"DI",flags,V_GREENMAP,V_REDMAP,"thin",(soap.noability & NOABIL_DIVE))
+		drawflag(v,x+45,y-50,"SL",flags,V_GREENMAP,V_REDMAP,"thin",(soap.noability & NOABIL_SLIDE))
+		drawflag(v,x+60,y-50,"SH",flags,V_GREENMAP,V_REDMAP,"thin",(soap.noability & NOABIL_SHIELD))
+		drawflag(v,x+75,y-50,"TH",flags,V_GREENMAP,V_REDMAP,"thin",(soap.noability & NOABIL_THOK))
+		drawflag(v,x+90,y-50,"AI",flags,V_GREENMAP,V_REDMAP,"thin",(soap.noability & NOABIL_AFTERIMAGE))
+	else
+		drawflag(v,x+00,y-50,"RD",flags,V_GREENMAP,V_REDMAP,"thin",(soap.noability & SNOABIL_RDASH))
+		drawflag(v,x+15,y-50,"AD",flags,V_GREENMAP,V_REDMAP,"thin",(soap.noability & SNOABIL_AIRDASH))
+		drawflag(v,x+30,y-50,"UC",flags,V_GREENMAP,V_REDMAP,"thin",(soap.noability & SNOABIL_UPPERCUT))
+		drawflag(v,x+45,y-50,"PD",flags,V_GREENMAP,V_REDMAP,"thin",(soap.noability & SNOABIL_POUND))
+		drawflag(v,x+60,y-50,"ST",flags,V_GREENMAP,V_REDMAP,"thin",(soap.noability & SNOABIL_TOP))
+		drawflag(v,x+75,y-50,"TT",flags,V_GREENMAP,V_REDMAP,"thin",(soap.noability & SNOABIL_TAUNTS))
+		drawflag(v,x+90,y-50,"CR",flags,V_GREENMAP,V_REDMAP,"thin",(soap.noability & SNOABIL_CROUCH))
+		drawflag(v,x+105,y-50,"BD",flags,V_GREENMAP,V_REDMAP,"thin",(soap.noability & SNOABIL_BREAKDANCE))
+	end
 	
 	v.drawString(x,y-38,"STASIS TIC",flags|V_GREENMAP,"thin")
 	v.drawString(x,y-30,soap.stasistic,flags,"thin")

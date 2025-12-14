@@ -575,6 +575,7 @@ rawset(_G,"Takis_HammerBlastHitbox",function(p)
 	
 	local fakerange = 250*FU
 	local range = thok.radius*3/2
+	local enemyhit = false
 	searchBlockmap("objects", function(ref, found)
 		if found == me then return end
 		if R_PointToDist2(found.x, found.y, thok.x, thok.y) > range + found.radius
@@ -611,6 +612,7 @@ rawset(_G,"Takis_HammerBlastHitbox",function(p)
 			Soap_SpawnBumpSparks(found, me, nil,false, found.scale * 3/2, true)
 			Soap_DamageSfx(found, abs(me.momz), 30*me.scale, {ultimate = true})
 			P_DamageMobj(found,me,me, 2)
+			enemyhit = true
 			didit = true
 		--Most likely a spike thing
 		elseif (found.info.mass == DMG_SPIKE)
@@ -678,6 +680,9 @@ rawset(_G,"Takis_HammerBlastHitbox",function(p)
 	
 	if didit
 		forcehambounce(p)
+	end
+	if enemyhit
+		Soap_Hitlag.addHitlag(me, 2, false)
 	end
 	return didit
 end)
@@ -840,7 +845,7 @@ rawset(_G,"Takis_AbilityHelpers",{
 		
 		p.charflags = $ &~SF_RUNONWATER
 		p.powers[pw_strong] = $|(STR_SPRING|STR_HEAVY|STR_SPIKE)
-		takis.noability = $|NOABIL_SHOTGUN|NOABIL_HAMMER
+		takis.noability = $|NOABIL_HAMMER
 		--control better
 		takis.setrolltrol = true
 		p.thrustfactor = skins[TAKIS_SKIN].thrustfactor*3/2

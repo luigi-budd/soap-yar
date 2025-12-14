@@ -31,6 +31,10 @@ local function P_PitchRoll(me, frac)
 	me.roll  = P_AngleLerp(frac, $, destroll)
 end
 
+local function dolunge(p,me,soap, fromjump)
+	Soap_DoLunge(p, fromjump)
+end
+
 local accelerative_speedlines = Soap_AccelerativeSpeedlines
 
 Takis_Hook.addHook("Takis_Thinker",function(p)
@@ -272,92 +276,124 @@ Takis_Hook.addHook("Takis_Thinker",function(p)
 		-- so we'll be using his code
 		if (soap.c2 == 1 or (me.eflags & MFE_JUSTHITFLOOR))
 		and soap.c3 == 0
-		and soap.onGround
-		--and not (p.pflags & PF_SPINNING)
 		and soap.taunttime == 0
-		--and not takis.yeahed
 		and me.health
-		and (me.state ~= S_PLAY_SOAP_SLIP)
-		--and not ((takis.tauntmenu.open) and (takis.tossflag))
-		and not (soap.isSliding)
-		and not (soap.noability & NOABIL_SLIDE)
-		and soap.notCarried
-			--if you were spinning already, and WERENT sliding,
-			--you can flop on your belly so you can lunge later
-			local wasspinning = (p.pflags & PF_SPINNING)
-			
-			local ang, thrust
-			if not wasspinning
-				ang = Soap_ControlDir(p)
-				S_StartSound(me,sfx_tk_sld)
-				S_StartSound(me,sfx_tk_v00)
+		
+			if soap.onGround
+			and (me.state ~= S_PLAY_SOAP_SLIP)
+			--and not ((takis.tauntmenu.open) and (takis.tossflag))
+			and not (soap.isSliding)
+			and not (soap.noability & NOABIL_SLIDE)
+			and soap.notCarried
+				--if you were spinning already, and WERENT sliding,
+				--you can flop on your belly so you can lunge later
+				local wasspinning = (p.pflags & PF_SPINNING)
 				
-				thrust = 7*FU + (soap.accspeed)
-				if thrust > 22*FU
-					if (soap.accspeed < 22*FU)
-						thrust = (22*FU - soap.accspeed) + soap.accspeed
-					else
-						thrust = 0
+				local ang, thrust
+				if not wasspinning
+					ang = Soap_ControlDir(p)
+					S_StartSound(me,sfx_tk_sld)
+					S_StartSound(me,sfx_tk_v00)
+					
+					thrust = 7*FU + (soap.accspeed)
+					if thrust > 22*FU
+						if (soap.accspeed < 22*FU)
+							thrust = (22*FU - soap.accspeed) + soap.accspeed
+						else
+							thrust = 0
+						end
+					end
+					
+					thrust = FixedMul($,me.scale)
+					if thrust > 0
+						P_InstaThrust(me,ang,thrust)
 					end
 				end
 				
-				thrust = FixedMul($,me.scale)
-				if thrust > 0
-					P_InstaThrust(me,ang,thrust)
+				me.state = S_PLAY_SOAP_SLIP
+				p.pflags = $|PF_SPINNING
+				if not wasspinning
+					P_MovePlayer(p)
+					if not ((p.cmd.forwardmove) and (p.cmd.sidemove))
+					and soap.accspeed + thrust < 14*FU
+						P_InstaThrust(me,ang,15*me.scale)
+					end
 				end
-			end
-			
-			me.state = S_PLAY_SOAP_SLIP
-			p.pflags = $|PF_SPINNING
-			if not wasspinning
-				P_MovePlayer(p)
-				if not ((p.cmd.forwardmove) and (p.cmd.sidemove))
-				and soap.accspeed + thrust < 14*FU
-					P_InstaThrust(me,ang,15*me.scale)
-				end
-			end
-			Soap_SquashMacro(p, {ease_func = "insine", ease_time = 12, strength = (FU/3), name = "soap_slide"})
-			Soap_RemoveSquash(p, "landeffect")
-			
-			local start = (R_PointToAngle2(0,0,me.momx,me.momy) + ANGLE_180) - ANGLE_45
-			local ang_frac = FixedDiv(90*FU, 12*FU)
-			local dist = FixedDiv(me.radius,me.scale)
-			for i = 0,8
-				local fa = start + FixedAngle((ang_frac*i) + Soap_RandomFixedRange(-5*FU,5*FU))
-				local dust = P_SpawnMobjFromMobj(me,
-					P_ReturnThrustX(nil,fa, dist),
-					P_ReturnThrustY(nil,fa, dist),
-					0, MT_SOAP_DUST
-				)
-				dust.angle = fa
-				P_Thrust(dust,fa, FixedMul(Soap_RandomFixedRange(1*FU,15*FU),me.scale))
-				P_SetObjectMomZ(dust, Soap_RandomFixedRange(3*FU,15*FU))
-				dust.scale = $ * 7/6
+				Soap_SquashMacro(p, {ease_func = "insine", ease_time = 12, strength = (FU/3), name = "soap_slide"})
+				Soap_RemoveSquash(p, "landeffect")
 				
-				Soap_WindLines(me,0,nil,nil, i < 4 and 1 or -1)
+				local start = (R_PointToAngle2(0,0,me.momx,me.momy) + ANGLE_180) - ANGLE_45
+				local ang_frac = FixedDiv(90*FU, 12*FU)
+				local dist = FixedDiv(me.radius,me.scale)
+				for i = 0,8
+					local fa = start + FixedAngle((ang_frac*i) + Soap_RandomFixedRange(-5*FU,5*FU))
+					local dust = P_SpawnMobjFromMobj(me,
+						P_ReturnThrustX(nil,fa, dist),
+						P_ReturnThrustY(nil,fa, dist),
+						0, MT_SOAP_DUST
+					)
+					dust.angle = fa
+					P_Thrust(dust,fa, FixedMul(Soap_RandomFixedRange(1*FU,15*FU),me.scale))
+					P_SetObjectMomZ(dust, Soap_RandomFixedRange(3*FU,15*FU))
+					dust.scale = $ * 7/6
+					
+					Soap_WindLines(me,0,nil,nil, i < 4 and 1 or -1)
+				end
+			--auto-lunge / auto lunge
+			elseif me.state == S_PLAY_SOAP_SLIP
+			--and soap.onGround
+				dolunge(p,me,soap)
+				me.state = S_PLAY_ROLL
 			end
 		end
-
 	end
 	
-	if not (soap.noability & NOABIL_SLIDE)
+	--jump specials
+	if (soap.jump)
+		-- auto lunge part 2
+		if (soap.jump == 1)
+		and me.state == S_PLAY_SOAP_SLIP
+		and not soap.onGround
+			dolunge(p,me,soap)
+		end
+	end
+	
+	local waslunging = soap.lunge.lunged
+	if soap.lunge.lunged
+		if not (me.state == S_PLAY_JUMP or me.state == S_PLAY_ROLL)
+			soap.lunge.lunged = false
+		elseif me.state == S_PLAY_JUMP
+			me.state = S_PLAY_ROLL
+		end
+	end
+	
+	if not (soap.noability & SNOABIL_CROUCH)
+		if p.pflags & PF_JUMPED then p.pflags = $ &~PF_SPINNING end
+		
+		local reset = false
 		local last = soap.last.anim.state
-		if (me.state == S_PLAY_SOAP_SLIP
-		and last ~= S_PLAY_SOAP_SLIP)
-		or (me.state == S_PLAY_ROLL
-		and last ~= S_PLAY_ROLL)
+		if (me.state == S_PLAY_SOAP_SLIP and last ~= S_PLAY_SOAP_SLIP)
+		or (me.state == S_PLAY_ROLL and last ~= S_PLAY_ROLL)
+		or (soap.lunge.lunged ~= waslunging)
+		or (soap.last.pflags & PF_SPINNING ~= p.pflags & PF_SPINNING)
 			soap.setrolltrol = false
+			reset = true
 		end
 		
-		if p.pflags & PF_JUMPED then p.pflags = $ &~PF_SPINNING end
-		if (p.pflags & PF_SPINNING)
-		and soap.onGround
+		if ((p.pflags & PF_SPINNING)
+		or soap.lunge.lunged)
 			if not soap.setrolltrol
-				p.thrustfactor = skins[p.skin].thrustfactor * (me.state == S_PLAY_SOAP_SLIP and 3 or 7)
+				if soap.onGround
+				and (p.pflags & PF_SPINNING)
+					p.thrustfactor = skins[p.skin].thrustfactor * (me.state == S_PLAY_SOAP_SLIP and 3 or 7)
+				end
+				if soap.lunge.lunged
+					p.thrustfactor = 10
+				end
 			end
 			soap.setrolltrol = true
 		else
-			if soap.setrolltrol
+			if soap.setrolltrol or reset
 				p.thrustfactor = skins[p.skin].thrustfactor
 			end
 			soap.setrolltrol = false
@@ -618,7 +654,9 @@ Takis_Hook.addHook("Takis_Thinker",function(p)
 	if soap.bashspin
 	and not ((p.pflags & PF_SPINNING)
 	or p.skidtime and me.state == S_PLAY_SKID
+	or me.state == S_PLAY_SPRING
 	or (soap.inPain))
+	and me.health
 		if me.state ~= S_PLAY_TAKIS_TORNADO
 			me.state = S_PLAY_TAKIS_TORNADO
 		end
@@ -626,16 +664,14 @@ Takis_Hook.addHook("Takis_Thinker",function(p)
 		p.drawangle = me.angle - (soap.bashspin*ANG30)
 		soap.bashspin = $-1
 	else
-		if (p.skidtime and me.state == S_PLAY_SKID)
-		or (p.pflags & PF_SPINNING)
-		or (soap.inPain)
-			soap.bashspin = 0
-		end
+		soap.bashspin = 0
 		
 		if (p.powers[pw_carry] == CR_NONE or p.powers[pw_carry] == CR_ROLLOUT)
 		and me.state == S_PLAY_TAKIS_TORNADO
-			me.state = S_PLAY_WALK
-			Soap_ResetState(p)
+			if me.health
+				me.state = S_PLAY_WALK
+				Soap_ResetState(p)
+			end
 			
 			if hammer.jumped
 				me.state = S_PLAY_SPIN
@@ -644,6 +680,11 @@ Takis_Hook.addHook("Takis_Thinker",function(p)
 	end
 	if not soap.bashspin then soap.bashendangle = nil end
 	if soap.bashspin < 0 then soap.bashspin = 0 end
+	
+	if (soap.fx.uppercut_aura and soap.fx.uppercut_aura.valid)
+		P_RemoveMobj(soap.fx.uppercut_aura)
+		soap.fx.uppercut_aura = nil
+	end
 	
 	Soap_VFX(p,me,soap, {
 		squishme = squishme,
@@ -716,6 +757,11 @@ addHook("JumpSpecial", function(p)
 		me.soap_jumpdust = 4
 		me.soap_jumpeffect = nil
 		soap.dived = false
+		
+		dolunge(p,me,soap, true)
+		if soap.lunge.lunged
+			me.state = S_PLAY_ROLL
+		end
 	end
 end)
 
@@ -906,6 +952,54 @@ local function handleBump(p,me,thing)
 	end
 end
 
+local function canslingshot(p, takis)
+	local lenient = 8 + p.cmd.latency
+	
+	--clutch spin
+	if ( ((takis.clutch.combo >= 1)
+	and (takis.clutch.good >= TR - lenient))
+	--or we just clutched but didnt spam
+	or (takis.clutch.tics >= (23 - lenient) and takis.clutch.good >= 0 and takis.clutch.time >= (lenient - p.cmd.latency)) )
+	--feels nice
+	or takis.clutch.spin
+		return true
+	end
+	return false
+end
+
+local function generic_slingshot(p,me,takis, stop_ang)
+	local didit = false
+	if canslingshot(p, takis)
+		P_Thrust(me,R_PointToAngle2(0,0,me.momx,me.momy),10*me.scale)
+		
+		for i = 0,9
+			Soap_WindLines(me)
+		end
+		
+		if not (p.pflags & PF_SPINNING or p.inkart)
+			takis.bashspin = TR/2
+			takis.clutch.spin = TR*3/4 + p.cmd.latency
+		end
+		
+		S_StartSound(me,sfx_sp_top)
+		
+		--reset clutch timer
+		takis.clutch.time = 23
+		takis.clutch.spamtime = 23
+		takis.clutch.misfire = TR
+		takis.frictionfreeze = $ + TR/2
+		
+		didit = true
+	else
+		takis.afterimaging = false
+		/*
+		stopmom(takis,me,
+			stop_ang ~= nil and stop_ang or TakisMomAngle(me)
+		)
+		*/
+	end
+	return didit
+end
 local function try_pvp_collide(me,thing)
 	if not (me and me.valid) then return end
 	if not (thing and thing.valid) then return end
@@ -949,8 +1043,10 @@ local function try_pvp_collide(me,thing)
 				--P_Thrust(me, R_PointToAngle2(0,0,me.momx,me.momy), me.scale*8)
 				
 				DealDamage(thing, me,me)
+				if generic_slingshot(p,me,soap)
+					Soap_Hitlag.addHitlag(me, hitlag_tics, false)
+				end
 				
-				Soap_Hitlag.addHitlag(me, hitlag_tics, false)
 				if (thing and thing.valid)
 				and (thing.health)
 				and not (thing.flags & MF_MONITOR)

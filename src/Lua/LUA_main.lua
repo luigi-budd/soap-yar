@@ -33,7 +33,11 @@ addHook("PreThinkFrame",function()
 		soap.isSliding = p.pflags & PF_SLIDING == PF_SLIDING
 		Soap_ButtonStuff(p)
 		
-		Soap_HandleNoAbils(p)
+		if (me.skin == SOAP_SKIN)
+			Soap_HandleNoAbils(p)
+		elseif (me.skin == TAKIS_SKIN)
+			Takis_HandleNoAbils(p)
+		end
 		
 		--PostPreThinkFrame takishook ooma
 	end
@@ -117,6 +121,7 @@ addHook("PlayerThink",function(p)
 		
 		soap.last.skin = me.skin
 		soap.last.carry = p.powers[pw_carry]
+		soap.last.pflags = p.pflags
 	end
 end)
 

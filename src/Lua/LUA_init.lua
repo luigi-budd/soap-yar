@@ -200,6 +200,8 @@ rawset(_G, "Soap_InitTable", function(p)
 			adjusted = false, --late adjustment for input latency
 			ghost = nil, --reference to ghost vfx
 			lockout = 0, --lockout for airdash
+			
+			lunged = false,
 		},
 		
 		fx = {
@@ -258,7 +260,8 @@ rawset(_G, "Soap_InitTable", function(p)
 			z = (p.realmo and p.realmo.valid) and p.realmo.z or 0,
 			
 			carry = CR_NONE,
-			skin = skins[p.skin].name
+			skin = skins[p.skin].name,
+			pflags = p.pflags,
 		},
 		fakeskidtime = 0,
 		

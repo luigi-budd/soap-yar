@@ -861,24 +861,39 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 		end
 	end
 	
+	local waslunging = soap.lunge.lunged
+	if soap.lunge.lunged
+	and not (me.state == S_PLAY_JUMP or me.state == S_PLAY_ROLL)
+		soap.lunge.lunged = false
+	end
+	
 	if not (soap.noability & SNOABIL_CROUCH)
+		if p.pflags & PF_JUMPED then p.pflags = $ &~PF_SPINNING end
+		
+		local reset = false
 		local last = soap.last.anim.state
-		if (me.state == S_PLAY_SOAP_SLIP
-		and last ~= S_PLAY_SOAP_SLIP)
-		or (me.state == S_PLAY_ROLL
-		and last ~= S_PLAY_ROLL)
+		if (me.state == S_PLAY_SOAP_SLIP and last ~= S_PLAY_SOAP_SLIP)
+		or (me.state == S_PLAY_ROLL and last ~= S_PLAY_ROLL)
+		or (soap.lunge.lunged ~= waslunging)
+		or (soap.last.pflags & PF_SPINNING ~= p.pflags & PF_SPINNING)
 			soap.setrolltrol = false
+			reset = true
 		end
 		
-		if p.pflags & PF_JUMPED then p.pflags = $ &~PF_SPINNING end
-		if (p.pflags & PF_SPINNING)
-		and soap.onGround
+		if ((p.pflags & PF_SPINNING)
+		or soap.lunge.lunged)
 			if not soap.setrolltrol
-				p.thrustfactor = skins[p.skin].thrustfactor * (me.state == S_PLAY_SOAP_SLIP and 3 or 7)
+				if soap.onGround
+				and (p.pflags & PF_SPINNING)
+					p.thrustfactor = skins[p.skin].thrustfactor * (me.state == S_PLAY_SOAP_SLIP and 3 or 7)
+				end
+				if soap.lunge.lunged
+					p.thrustfactor = 10
+				end
 			end
 			soap.setrolltrol = true
 		else
-			if soap.setrolltrol
+			if soap.setrolltrol or reset
 				p.thrustfactor = skins[p.skin].thrustfactor
 			end
 			soap.setrolltrol = false
@@ -3235,6 +3250,7 @@ addHook("AbilitySpecial",function(p)
 	
 	if me.skin ~= SOAP_SKIN then return end
 	if (me.eflags & MFE_SPRUNG) or p.powers[pw_justsprung] >= 4 then return end
+	if (p.soaptable.inPain) then return end
 	
 	p.soaptable.doublejumped = true
 end)

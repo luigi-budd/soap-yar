@@ -3319,6 +3319,7 @@ rawset(_G, "Soap_DoLunge",function(p, fromjump)
 	lunge.effect = 12
 	lunge.angle = ang
 	lunge.lockout = lunge.effect + 6
+	lunge.lunged = true
 	
 	local ghost = P_SpawnGhostMobj(me)
 	ghost.scale = 3*me.scale/2
@@ -3334,6 +3335,7 @@ rawset(_G, "Soap_DoLunge",function(p, fromjump)
 	ghost.momz = me.momz
 	lunge.ghost = ghost
 	me.pitch,me.roll = 0,0
+	me.state = S_PLAY_ROLL
 end)
 
 rawset(_G, "Soap_AccelerativeSpeedlines", function(p,me,soap, speed, threshold, color)
