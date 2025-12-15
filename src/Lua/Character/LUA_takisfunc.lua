@@ -235,12 +235,12 @@ rawset(_G,"Takis_DoClutch",function(p,riding)
 			p.drawangle = ang + ANGLE_180
 		else
 			if (p.powers[pw_carry] == CR_MINECART)
-				if takis.accspeed >= 90*mo.scale
+				if takis.accspeed >= 50*mo.scale
 					mo.momx = $*8/10
 					mo.momy = $*8/10
 					thrust = 0
 				else
-					thrust = $/2
+					thrust = $/4
 				end
 			end
 			P_Thrust(mo,ang,thrust)
@@ -290,25 +290,24 @@ rawset(_G,"Takis_DoClutch",function(p,riding)
 	--takis.coyote = 0
 	takis.noability = $ &~NOABIL_AFTERIMAGE
 	
-	if takis.notCarried
-		local angoff = ANGLE_45
-		local dist = 20*FU
-		local pushx = P_ReturnThrustX(nil, ang + ANGLE_90, 8*FU)
-		local pushy = P_ReturnThrustY(nil, ang + ANGLE_90, 8*FU)
-		for i = -1,1, 2
-			local fx = P_SpawnMobjFromMobj(me,
-				P_ReturnThrustX(nil, ang + angoff*i, dist) + pushx*i,
-				P_ReturnThrustY(nil, ang + angoff*i, dist) + pushy*i,
-				0, MT_SOAP_FREEZEGFX
-			)
-			fx.angle = (ang - ANGLE_180) - (angoff/2)*i
-			fx.tracer = me
-			
-			-- original code used mo so it should probably stay that way
-			fx.momx,fx.momy = me.momx/2,mo.momy/2
-			fx.momz = takis.rmomz
-			fx.state = combod and S_TAKIS_CDUST2 or S_TAKIS_CDUST1
-		end
+	local angoff = ANGLE_45
+	local dist = 20*FU
+	local pushx = P_ReturnThrustX(nil, ang + ANGLE_90, 8*FU)
+	local pushy = P_ReturnThrustY(nil, ang + ANGLE_90, 8*FU)
+	for i = -1,1, 2
+		local fx = P_SpawnMobjFromMobj(me,
+			P_ReturnThrustX(nil, ang + angoff*i, dist) + pushx*i,
+			P_ReturnThrustY(nil, ang + angoff*i, dist) + pushy*i,
+			0, MT_SOAP_FREEZEGFX
+		)
+		fx.angle = (ang - ANGLE_180) - (angoff/2)*i
+		fx.tracer = me
+		
+		-- original code used mo so it should probably stay that way
+		fx.momx,fx.momy = mo.momx/2,mo.momy/2
+		fx.momz = takis.rmomz
+		fx.state = combod and S_TAKIS_CDUST2 or S_TAKIS_CDUST1
+		fx.flags = $ &~MF_NOCLIPHEIGHT
 	end
 end)
 
@@ -618,6 +617,35 @@ rawset(_G,"Takis_HammerBlastHitbox",function(p)
 		elseif (found.info.mass == DMG_SPIKE)
 		and (found.takis_flingme ~= false)
 			found.alreadykilledthis = true
+			
+			-- probably a cactus in acz
+			if found.flags & MF_SCENERY
+				local speed = 15*found.scale
+				local range = 15*FU
+				for i = 0,P_RandomRange(15,20)
+					local poof = P_SpawnMobjFromMobj(found,
+						Soap_RandomFixedRange(-range, range),
+						Soap_RandomFixedRange(-range, range),
+						FixedDiv(found.height,found.scale)/2 + Soap_RandomFixedRange(-range, range),
+						MT_SOAP_DUST
+					)
+					local hang,vang = R_PointTo3DAngles(
+						poof.x,poof.y,poof.z,
+						found.x,found.y,found.z + found.height/2
+					)
+					P_3DThrust(poof, hang,vang, speed)
+					
+					poof.spritexscale = $ + Soap_RandomFixedRange(0,2*FU)/3
+					poof.spriteyscale = poof.spritexscale
+				end
+				
+				P_SpawnMobjFromMobj(found,0,0,0,MT_THOK).state = S_XPLD1
+				local sfx = P_SpawnGhostMobj(found)
+				sfx.flags2 = $|MF2_DONTDRAW
+				sfx.fuse = TR
+				sfx.tics = TR
+				S_StartSound(sfx, sfx_pop)
+			end
 			P_KillMobj(found,me,me)
 		elseif (found.flags & MF_SPRING)
 		and (found.info.painchance ~= 3)

@@ -98,16 +98,16 @@ states[S_SOAP_BOOMBOX] = {
 		
 		if not (me and me.valid and me.skin == SOAP_SKIN and me.health)
 		or killCond
-			local speed = 5*mo.scale
+			local speed = 15*mo.scale
 			local range = 15*FU
 			for i = 0,P_RandomRange(20,29)
 				local poof = P_SpawnMobjFromMobj(mo,
 					Soap_RandomFixedRange(-range, range),
 					Soap_RandomFixedRange(-range, range),
 					FixedDiv(mo.height,mo.scale)/2 + Soap_RandomFixedRange(-range, range),
-					MT_THOK
+					MT_SOAP_DUST
 				)
-				poof.state = mobjinfo[MT_SPINDUST].spawnstate
+				--poof.state = mobjinfo[MT_SPINDUST].spawnstate
 				local hang,vang = R_PointTo3DAngles(
 					poof.x,poof.y,poof.z,
 					mo.x,mo.y,mo.z + mo.height/2

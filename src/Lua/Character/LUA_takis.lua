@@ -174,6 +174,11 @@ Takis_Hook.addHook("Takis_Thinker",function(p)
 				clutch.misfire = TR
 			end
 		end
+		
+		if clutch.slinglag
+			S_StartSound(me, sfx_sp_top)
+			clutch.slinglag = false
+		end
 	end
 	
 	--spin specials
@@ -181,7 +186,7 @@ Takis_Hook.addHook("Takis_Thinker",function(p)
 		
 		--clutch
 		if (soap.use == 1)
-		and (soap.onGround)
+		and (soap.onGround or p.powers[pw_carry] == CR_ROLLOUT)
 		and not soap.taunttime
 		and me.health
 		and (me.state ~= S_PLAY_GASP)
@@ -339,6 +344,23 @@ Takis_Hook.addHook("Takis_Thinker",function(p)
 					
 					Soap_WindLines(me,0,nil,nil, i < 4 and 1 or -1)
 				end
+				local angoff = ANGLE_45
+				local dist = 20*FU
+				local pushx = P_ReturnThrustX(nil, ang + ANGLE_90, 8*FU)
+				local pushy = P_ReturnThrustY(nil, ang + ANGLE_90, 8*FU)
+				for i = -1,1, 2
+					local fx = P_SpawnMobjFromMobj(me,
+						P_ReturnThrustX(nil, ang + angoff*i, dist) + pushx*i,
+						P_ReturnThrustY(nil, ang + angoff*i, dist) + pushy*i,
+						0, MT_SOAP_FREEZEGFX
+					)
+					fx.angle = (ang - ANGLE_180) - (angoff/2)*i
+					fx.tracer = me
+					
+					fx.momx,fx.momy = me.momx/2,me.momy/2
+					fx.momz = soap.rmomz
+					fx.state = S_TAKIS_CDUST1
+				end
 			--auto-lunge / auto lunge
 			elseif me.state == S_PLAY_SOAP_SLIP
 			--and soap.onGround
@@ -456,6 +478,90 @@ Takis_Hook.addHook("Takis_Thinker",function(p)
 	--kinda annoying how you cant pound when exiting a dust devil
 	elseif soap.last.carry == CR_DUSTDEVIL
 		soap.sprung = true
+	elseif p.powers[pw_carry] == CR_PTERABYTE
+		if (soap.use == 1)
+			Takis_DoClutch(p)
+		end
+		Takis_ResetHammerTime(p)
+	elseif p.powers[pw_carry] == CR_MINECART	
+		local cart = me.tracer
+		
+		local momx,momy = me.x - soap.last.x, me.y - soap.last.y
+		soap.accspeed = FixedDiv(abs(FixedHypot(momx,momy)), me.scale)
+		soap.rmomz = -(me.z - soap.last.z)
+		if soap.use == 1
+		and not (soap.inPain)
+			Takis_DoClutch(p,cart)
+		end
+		if (soap.inPain)
+		and soap.accspeed >= 15*cart.scale
+			cart.momx = $*9/10
+			cart.momy = $*9/10
+		end
+		
+		--Moved here to remove a mobjthinker
+		if (cart and cart.valid)
+		and (cart.health and me.health)
+		and (soap.c1)
+			p.powers[pw_carry] = CR_NONE
+			
+			p.mo.momx,p.mo.momy = cart.momx,cart.momy
+			
+			p.pflags = $|PF_JUMPED &~PF_THOKKED
+			soap.dived = false
+			
+			P_SetObjectMomZ(me,8*FU)
+			P_DoJump(p,true)
+			p.mo.state = S_PLAY_ROLL
+			
+			--TakisGiveCombo(p,takis,true)
+			cart.target = nil
+		end
+	elseif (p.powers[pw_carry] == CR_ROLLOUT)
+		local rock = me.tracer
+		
+		if (rock and rock.valid)
+			if me.state == S_PLAY_FALL
+			or me.state == S_PLAY_MELEE
+				me.state = S_PLAY_STND
+				P_MovePlayer(p)
+			end
+			
+			if P_GetPlayerControlDirection(p) == 2
+			and soap.accspeed >= 5*FU
+				local skidsound = skins[TAKIS_SKIN].soundsid[SKSSKID]
+				if not S_SoundPlaying(rock,skidsound)
+				and not S_SoundPlaying(me,skidsound)
+					S_StartSound(rock,skidsound)
+				end
+				
+				rock.spriteyoffset = (2*FU)*((leveltime % 2) and 1 or -1)
+				/*
+				if P_RandomChance(FU/2)
+					local ang = TakisMomAngle(rock)
+					for i = 0,1
+						local spark = TakisKart_SpawnSpark(rock,
+							ang+FixedAngle(P_RandomRange(-25,25)*FU+(P_RandomFixed()*((P_RandomChance(FU/2)) and 1 or -1))),
+							SKINCOLOR_ORANGE,
+							true,
+							true
+						)
+						spark.tracer = me
+					end
+				end
+				*/
+				
+				local friction = FU*21/22
+				rock.momx,rock.momy = FixedMul($1,friction),FixedMul($2,friction)
+			else
+				S_StopSoundByID(rock,sfx_tk_skd)
+				rock.spriteyoffset = 0
+			end
+		end
+	end
+	
+	if not soap.notCarried
+		Takis_ResetHammerTime(p)
 	end
 	
 	if (me.state == S_PLAY_GLIDE)
@@ -467,6 +573,7 @@ Takis_Hook.addHook("Takis_Thinker",function(p)
 		end
 	end
 	
+	p.charflags = $ &~(SF_RUNONWATER|SF_NOSKID)|(soap.lunge.effect and SF_NOSKID or 0)
 	if not (soap.noability & NOABIL_AFTERIMAGE)
 		if clutch.time
 		/*
@@ -522,7 +629,7 @@ Takis_Hook.addHook("Takis_Thinker",function(p)
 			
 			if Soap_DirBreak(p,me, p.drawangle)
 			and not (p.pflags & PF_SPINNING)
-				--generic_slingshot(p,me,takis)
+				generic_slingshot(p,me,takis)
 				--S_StartSound(me,sfx_takmcn)
 				Soap_StartQuake(20*FU, 19,
 					{me.x,me.y,me.z},
@@ -846,7 +953,7 @@ Takis_Hook.addHook("MoveBlocked",function(me,thing,line, goingup)
 	
 	if me.skin ~= TAKIS_SKIN then return end
 	
-	if not (me.state == S_PLAY_DASH or me.state == S_PLAY_FLOAT_RUN) then return end
+	if not (me.state == S_PLAY_DASH or me.state == S_PLAY_TAKIS_TORNADO) then return end
 	if goingup then return end
 	
 	if (soap.afterimage)
@@ -981,16 +1088,45 @@ local function generic_slingshot(p,me,takis, stop_ang)
 			takis.clutch.spin = TR*3/4 + p.cmd.latency
 		end
 		
-		S_StartSound(me,sfx_sp_top)
+		--S_StartSound(me,sfx_sp_top)
+		me.state = S_PLAY_TAKIS_TORNADO
 		
 		--reset clutch timer
-		takis.clutch.time = 23
-		takis.clutch.spamtime = 23
-		takis.clutch.misfire = TR
+		takis.clutch.time = CLUTCH_TICS
+		takis.clutch.spamtime = CLUTCH_TICS
+		takis.clutch.misfire = CLUTCH_MISFIRE
 		takis.frictionfreeze = $ + TR/2
+		takis.clutch.slinglag = true
 		
+		Soap_SquashMacro(p, {
+			ease_func = "inexpo",
+			ease_time = 6,
+			x = -FU * 3/5,
+			y = -FU/3,
+			singular = true
+		})
+		
+		if not (takis.fx.dash_aura and takis.fx.dash_aura.valid)
+			local follow = P_SpawnMobjFromMobj(me,0,0,0,MT_SOAP_FREEZEGFX)
+			follow.tics = -1
+			follow.fuse = -1
+			follow.tracer = me
+			follow.bigwind = true
+			follow.state = S_TAKIS_SLINGFX
+			follow.dontdrawforviewmobj = me
+			follow.zcorrect = true
+			follow.angle = me.angle - ANGLE_90
+			follow.spritexscale = $ * 3/2
+			follow.spriteyscale = follow.spritexscale
+			takis.fx.dash_aura = follow
+		else
+			takis.fx.dash_aura.state = S_TAKIS_SLINGFX
+		end
+		local aura = takis.fx.dash_aura
+		
+		aura.dist = 20*me.scale
 		didit = true
-	else
+	else 
 		takis.afterimaging = false
 		/*
 		stopmom(takis,me,
@@ -1033,18 +1169,28 @@ local function try_pvp_collide(me,thing)
 				Soap_ImpactVFX(thing,me)
 				
 				local power = FixedMul(10*FU + max(soap.accspeed - 20*FU,0), me.scale)
-				Soap_DamageSfx(thing, power, 60*FU)
 				
-				local hitlag_tics = 4 + (power/FU / 10)
-				P_StartQuake(power/2, hitlag_tics,
-					{me.x, me.y, me.z},
-					512*me.scale + power
-				)
+				local hitlag_tics = 5
 				--P_Thrust(me, R_PointToAngle2(0,0,me.momx,me.momy), me.scale*8)
 				
 				DealDamage(thing, me,me)
 				if generic_slingshot(p,me,soap)
 					Soap_Hitlag.addHitlag(me, hitlag_tics, false)
+					--Soap_DamageSfx(thing, FU*3/4,FU, {ultimate = false})
+					S_StartSoundAtVolume(me, sfx_tk_hml, 255*3/4)
+					S_StartSound(src, sfx_sp_kil)
+					S_StartSound(src, sfx_sp_smk)
+					
+					P_StartQuake(power, hitlag_tics + 3,
+						{me.x, me.y, me.z},
+						512*me.scale + power
+					)
+				else
+					Soap_DamageSfx(thing, power, 60*FU, {ultimate = true})
+					P_StartQuake(power/2, hitlag_tics,
+						{me.x, me.y, me.z},
+						512*me.scale + power
+					)
 				end
 				
 				if (thing and thing.valid)

@@ -739,7 +739,8 @@ rawset(_G,"Soap_DustRing",function(src,
 	radius, speed,
 	initscale, scale,
 	threeaxis, --TODO: implement this
-	callback
+	callback,
+	angle,aim -- for threeaxis
 )
 	radius = $ or 0
 	speed = $ or 0
@@ -1128,19 +1129,22 @@ rawset(_G,"Soap_SquashMacro",function(p, props)
 	local ystr		= parse(props.y, squish)
 	local endx		= parse(props.endx, 0)
 	local endy		= parse(props.endy, 0)
+	local backparam = parse(props.back, 0)
 	local name		= props.name
 	
 	Soap_AddSquash(p, {
 		ease_func = ease_func,
 		start_v = xstr,
 		end_v = endx,
+		back_v = backparam,
 		time = ease_time
 	}, {
 		ease_func = ease_func,
 		start_v = -ystr,
 		end_v = endy,
+		back_v = backparam,
 		time = ease_time
-	}, name)
+	}, name, props.singular)
 end)
 
 rawset(_G, "Soap_TickSquashes",function(p,me,soap, donttick)

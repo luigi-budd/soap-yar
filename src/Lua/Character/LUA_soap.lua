@@ -657,16 +657,15 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 				end
 				soap.boombox = boom
 				
-				local speed = 5*me.scale
+				local speed = 15*me.scale
 				local range = 15*FU
 				for i = 0,P_RandomRange(15,22)
 					local poof = P_SpawnMobjFromMobj(boom,
 						Soap_RandomFixedRange(-range, range),
 						Soap_RandomFixedRange(-range, range),
 						FixedDiv(boom.height,boom.scale)/2 + Soap_RandomFixedRange(-range, range),
-						MT_THOK
+						MT_SOAP_DUST
 					)
-					poof.state = mobjinfo[MT_SOAP_DUST].spawnstate
 					local hang,vang = R_PointTo3DAngles(
 						poof.x,poof.y,poof.z,
 						boom.x,boom.y,boom.z + boom.height/2
@@ -2407,7 +2406,7 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 		aura.dist = dist
 		aura.boostaura = super
 		
-		aura.alpha = FixedCeil(ease.linear(FU/5, $, FU) * 100)/100		
+		aura.alpha = FixedCeil(ease.linear(FU/5, $, FU) * 100)/100
 	else
 		if (soap.fx.dash_aura and soap.fx.dash_aura.valid)
 			local super = (soap.doSuperBuffs or (p.powers[pw_sneakers] > 0)) --sneakers too lol

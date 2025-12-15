@@ -18,3 +18,12 @@ states[S_TAKIS_CDUST2] = {
 	var2 = 2,
 	tics = 6*2,
 }
+
+SafeFreeslot("S_TAKIS_SLINGFX")
+states[S_TAKIS_SLINGFX] = {
+	sprite = SPR_SOAP_GFX,
+	frame = 46|FF_PAPERSPRITE|FF_ANIMATE|FF_FULLBRIGHT,
+	var1 = 6,
+	var2 = 1,
+	tics = 7,
+}

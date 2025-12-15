@@ -200,6 +200,7 @@ local function FreezeInHitlag(mo)
 	
 	if (mo.state == S_SOAP_NWF_WIND)
 	or (mo.state == S_SOAP_NWF_WIND_FAST)
+	or (mo.state == S_TAKIS_SLINGFX)
 		if mo.boostaura
 			if (mo.frame & FF_FRAMEMASK) >= D
 				mo.frame = A|($ &~FF_FRAMEMASK)
@@ -210,16 +211,24 @@ local function FreezeInHitlag(mo)
 		if R_PointToDist2(0,0, me.momx,me.momy) < me.scale
 			ang = p.drawangle
 		end
+		if (mo.state == S_TAKIS_SLINGFX)
+			ang = me.angle
+		end
+		
 		mo.dispoffset = me.dispoffset - 1
 		mo.angle = ang
+		if (mo.frame & FF_PAPERSPRITE)
+		or (mo.renderflags & RF_PAPERSPRITE)
+			mo.angle = $ - ANGLE_90
+		end
 		mo.destscale = me.scale
 		mo.scalespeed = mo.destscale
 		mo.color = me.color
 		mo.pitch,mo.roll = me.pitch,me.roll
 		
 		P_MoveOrigin(mo,
-			me.x + P_ReturnThrustX(nil,mo.angle,mo.dist),
-			me.y + P_ReturnThrustY(nil,mo.angle,mo.dist),
+			me.x + P_ReturnThrustX(nil,ang,mo.dist),
+			me.y + P_ReturnThrustY(nil,ang,mo.dist),
 			me.z + (mo.zoffset or 0)
 		)
 		

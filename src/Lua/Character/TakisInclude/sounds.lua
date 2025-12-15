@@ -43,3 +43,6 @@ SafeFreeslot("sfx_tk_hmd")
 sfxinfo[sfx_tk_hmd].caption = "/"
 SafeFreeslot("sfx_tk_hml")
 sfxinfo[sfx_tk_hml].caption = "Clang"
+
+SafeFreeslot("sfx_tk_skd")
+sfxinfo[sfx_tk_skd].caption = "Skid"
