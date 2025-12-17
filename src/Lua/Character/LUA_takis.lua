@@ -159,6 +159,7 @@ Takis_Hook.addHook("Takis_Thinker",function(p)
 		
 		if clutch.misfire
 			if (soap.onGround)
+			or p.powers[pw_carry] == CR_ROLLOUT
 				if (p.panim == PA_DASH)
 					clutch.misfire = $-1
 					if clutch.misfire <= 0
@@ -536,25 +537,44 @@ Takis_Hook.addHook("Takis_Thinker",function(p)
 				end
 				
 				rock.spriteyoffset = (2*FU)*((leveltime % 2) and 1 or -1)
-				/*
-				if P_RandomChance(FU/2)
-					local ang = TakisMomAngle(rock)
-					for i = 0,1
-						local spark = TakisKart_SpawnSpark(rock,
-							ang+FixedAngle(P_RandomRange(-25,25)*FU+(P_RandomFixed()*((P_RandomChance(FU/2)) and 1 or -1))),
-							SKINCOLOR_ORANGE,
-							true,
-							true
-						)
-						spark.tracer = me
-					end
+				
+				local sp = P_SpawnMobjFromMobj(rock,0,0,0,MT_SOAP_SPARK)
+				sp.color = SKINCOLOR_GOLDENROD
+				sp.adjust_angle = R_PointToAngle2(0,0, rock.momx, rock.momy) + FixedAngle(Soap_RandomFixedRange(-45*FU,45*FU))
+				sp.adjust_angle = $ + ANGLE_180
+				sp.angle = sp.adjust_angle
+				sp.target = rock
+				sp.dontdelete = true
+				sp.spritexscale = FU
+				sp.spriteyscale = FU * 3/4
+				
+				do --if (leveltime & 1)
+					local spark = P_SpawnMobjFromMobj(rock,0,0,0,MT_SOAP_WALLBUMP)
+					local speed = 12*rock.scale
+					local limit = 28
+					local my_ang = FixedAngle(Soap_RandomFixedRange(0,360*FU))
+					
+					P_InstaThrust(spark, my_ang, speed)
+					P_SetObjectMomZ(spark, Soap_RandomFixedRange(3*FU,8*FU))
+					
+					P_SetScale(spark,rock.scale / 10, true)
+					spark.destscale = rock.scale
+					--5 tics
+					spark.scalespeed = FixedDiv(rock.scale - rock.scale / 10, 5*FU)
+					spark.color = SKINCOLOR_GOLDENROD
+					spark.colorized = true
+					spark.fuse = TR
+					
+					spark.spritexscale = FU * 3/2
+					spark.spriteyscale = spark.spritexscale
+					
+					spark.random = P_RandomRange(-limit,limit) * ANG1
 				end
-				*/
 				
 				local friction = FU*21/22
 				rock.momx,rock.momy = FixedMul($1,friction),FixedMul($2,friction)
 			else
-				S_StopSoundByID(rock,sfx_tk_skd)
+				S_StopSoundByID(rock, skins[TAKIS_SKIN].soundsid[SKSSKID])
 				rock.spriteyoffset = 0
 			end
 		end

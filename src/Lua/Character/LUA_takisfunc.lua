@@ -620,6 +620,7 @@ rawset(_G,"Takis_HammerBlastHitbox",function(p)
 			
 			-- probably a cactus in acz
 			if found.flags & MF_SCENERY
+			and not (found.type == MT_SPIKE or found.type == MT_WALLSPIKE)
 				local speed = 15*found.scale
 				local range = 15*FU
 				for i = 0,P_RandomRange(15,20)

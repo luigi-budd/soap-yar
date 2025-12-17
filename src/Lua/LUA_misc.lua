@@ -147,6 +147,7 @@ addHook("MobjThinker",function(spark)
 	if not (me and me.valid) then return end
 	
 	if not P_IsObjectOnGround(me)
+	and not (spark.dontdelete)
 		spark.target = nil
 		return
 	end

@@ -71,6 +71,9 @@ mobjinfo[MT_ROSY].stunstate = S_PLAY_PAIN
 mobjinfo[MT_FANG].stunstate = S_PLAY_PAIN
 --mobjinfo[MT_METALSONIC_BATTLE].stunstate = S_METALSONIC_PAIN
 
+--EASYYYYYYYYY
+mobjinfo[MT_ROLLOUTROCK].speed = 60*FU
+
 -- also make things stuff
 local MOBJ_LIST = {
 	--un-jostleable
