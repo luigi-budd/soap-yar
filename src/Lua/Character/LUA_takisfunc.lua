@@ -839,7 +839,7 @@ rawset(_G,"Takis_DoHammerBlastLand",function(p,domoves)
 			
 			P_DoJump(p,false)
 			me.state = S_PLAY_SPINDASH
-			Soap_ZLaunch(me, basemomz+(time*FU/8) * takis.gravflip)
+			Soap_ZLaunch(me, basemomz + (time*FU/8) )
 			
 			S_StartSoundAtVolume(me,sfx_kc52,180)
 			--p.jp = 1
