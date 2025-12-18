@@ -37,6 +37,84 @@ end
 
 local accelerative_speedlines = Soap_AccelerativeSpeedlines
 
+local function canslingshot(p, takis)
+	local lenient = 8 + p.cmd.latency
+	
+	--clutch spin
+	if ( ((takis.clutch.combo >= 1)
+	and (takis.clutch.good >= TR - lenient))
+	--or we just clutched but didnt spam
+	or (takis.clutch.tics >= (23 - lenient) and takis.clutch.good >= 0 and takis.clutch.time >= (lenient - p.cmd.latency)) )
+	--feels nice
+	or takis.clutch.spin
+		return true
+	end
+	return false
+end
+
+local function generic_slingshot(p,me,takis, stop_ang)
+	local didit = false
+	if canslingshot(p, takis)
+		P_Thrust(me,R_PointToAngle2(0,0,me.momx,me.momy),10*me.scale)
+		
+		for i = 0,9
+			Soap_WindLines(me)
+		end
+		
+		if not (p.pflags & PF_SPINNING or p.inkart)
+			takis.bashspin = TR/2
+			takis.clutch.spin = TR*3/4 + p.cmd.latency
+		end
+		
+		--S_StartSound(me,sfx_sp_top)
+		me.state = S_PLAY_TAKIS_TORNADO
+		
+		--reset clutch timer
+		takis.clutch.time = CLUTCH_TICS
+		takis.clutch.spamtime = CLUTCH_TICS
+		takis.clutch.misfire = CLUTCH_MISFIRE
+		takis.frictionfreeze = $ + TR/2
+		takis.clutch.slinglag = true
+		
+		Soap_SquashMacro(p, {
+			ease_func = "inexpo",
+			ease_time = 6,
+			x = -FU * 3/5,
+			y = -FU/3,
+			singular = true
+		})
+		
+		if not (takis.fx.dash_aura and takis.fx.dash_aura.valid)
+			local follow = P_SpawnMobjFromMobj(me,0,0,0,MT_SOAP_FREEZEGFX)
+			follow.tics = -1
+			follow.fuse = -1
+			follow.tracer = me
+			follow.bigwind = true
+			follow.state = S_TAKIS_SLINGFX
+			follow.dontdrawforviewmobj = me
+			follow.zcorrect = true
+			follow.angle = me.angle - ANGLE_90
+			follow.spritexscale = $ * 3/2
+			follow.spriteyscale = follow.spritexscale
+			takis.fx.dash_aura = follow
+		else
+			takis.fx.dash_aura.state = S_TAKIS_SLINGFX
+		end
+		local aura = takis.fx.dash_aura
+		
+		aura.dist = 20*me.scale
+		didit = true
+	else 
+		takis.afterimaging = false
+		/*
+		stopmom(takis,me,
+			stop_ang ~= nil and stop_ang or TakisMomAngle(me)
+		)
+		*/
+	end
+	return didit
+end
+
 Takis_Hook.addHook("Takis_Thinker",function(p)
 	local me = p.realmo
 	local soap = p.soaptable
@@ -188,7 +266,7 @@ Takis_Hook.addHook("Takis_Thinker",function(p)
 		--clutch
 		if (soap.use == 1)
 		and (soap.onGround or p.powers[pw_carry] == CR_ROLLOUT)
-		and not soap.taunttime
+		--and not soap.taunttime
 		and me.health
 		and (me.state ~= S_PLAY_GASP)
 		and (me.sprite2 ~= SPR2_PAIN)
@@ -282,7 +360,7 @@ Takis_Hook.addHook("Takis_Thinker",function(p)
 		-- so we'll be using his code
 		if (soap.c2 == 1 or (me.eflags & MFE_JUSTHITFLOOR))
 		and soap.c3 == 0
-		and soap.taunttime == 0
+		--and soap.taunttime == 0
 		and me.health
 		
 			if soap.onGround
@@ -295,7 +373,8 @@ Takis_Hook.addHook("Takis_Thinker",function(p)
 				--you can flop on your belly so you can lunge later
 				local wasspinning = (p.pflags & PF_SPINNING)
 				
-				local ang, thrust
+				local ang = R_PointToAngle2(0,0, me.momx,me.momy)
+				local thrust
 				if not wasspinning
 					ang = Soap_ControlDir(p)
 					S_StartSound(me,sfx_tk_sld)
@@ -476,6 +555,14 @@ Takis_Hook.addHook("Takis_Thinker",function(p)
 	elseif p.powers[pw_carry] == CR_NONE
 	and not (soap.pounding or (soap.rdashing and not soap.airdashed))
 		accelerative_speedlines(p,me,soap, FixedDiv(R_PointTo3DDist(0,0,0,me.momx,me.momy,me.momz),me.scale), 40*FU)
+		
+		-- i think the wind lines here make you feel really aerodynamic and fast
+		-- and cool
+		if me.state == S_PLAY_RUN
+		and not (leveltime % 12)
+		and P_RandomChance(FU*3/4)
+			Soap_WindLines(me)
+		end
 	--kinda annoying how you cant pound when exiting a dust devil
 	elseif soap.last.carry == CR_DUSTDEVIL
 		soap.sprung = true
@@ -647,9 +734,9 @@ Takis_Hook.addHook("Takis_Thinker",function(p)
 			--p.charflags = $|SF_CANBUSTWALLS
 			--p.powers[pw_strong] = $|STR_WALL
 			
-			if Soap_DirBreak(p,me, p.drawangle)
+			if Soap_DirBreak(p,me, R_PointToAngle2(0,0,me.momx,me.momy))
 			and not (p.pflags & PF_SPINNING)
-				generic_slingshot(p,me,takis)
+				generic_slingshot(p,me,soap)
 				--S_StartSound(me,sfx_takmcn)
 				Soap_StartQuake(20*FU, 19,
 					{me.x,me.y,me.z},
@@ -1079,83 +1166,6 @@ local function handleBump(p,me,thing)
 	end
 end
 
-local function canslingshot(p, takis)
-	local lenient = 8 + p.cmd.latency
-	
-	--clutch spin
-	if ( ((takis.clutch.combo >= 1)
-	and (takis.clutch.good >= TR - lenient))
-	--or we just clutched but didnt spam
-	or (takis.clutch.tics >= (23 - lenient) and takis.clutch.good >= 0 and takis.clutch.time >= (lenient - p.cmd.latency)) )
-	--feels nice
-	or takis.clutch.spin
-		return true
-	end
-	return false
-end
-
-local function generic_slingshot(p,me,takis, stop_ang)
-	local didit = false
-	if canslingshot(p, takis)
-		P_Thrust(me,R_PointToAngle2(0,0,me.momx,me.momy),10*me.scale)
-		
-		for i = 0,9
-			Soap_WindLines(me)
-		end
-		
-		if not (p.pflags & PF_SPINNING or p.inkart)
-			takis.bashspin = TR/2
-			takis.clutch.spin = TR*3/4 + p.cmd.latency
-		end
-		
-		--S_StartSound(me,sfx_sp_top)
-		me.state = S_PLAY_TAKIS_TORNADO
-		
-		--reset clutch timer
-		takis.clutch.time = CLUTCH_TICS
-		takis.clutch.spamtime = CLUTCH_TICS
-		takis.clutch.misfire = CLUTCH_MISFIRE
-		takis.frictionfreeze = $ + TR/2
-		takis.clutch.slinglag = true
-		
-		Soap_SquashMacro(p, {
-			ease_func = "inexpo",
-			ease_time = 6,
-			x = -FU * 3/5,
-			y = -FU/3,
-			singular = true
-		})
-		
-		if not (takis.fx.dash_aura and takis.fx.dash_aura.valid)
-			local follow = P_SpawnMobjFromMobj(me,0,0,0,MT_SOAP_FREEZEGFX)
-			follow.tics = -1
-			follow.fuse = -1
-			follow.tracer = me
-			follow.bigwind = true
-			follow.state = S_TAKIS_SLINGFX
-			follow.dontdrawforviewmobj = me
-			follow.zcorrect = true
-			follow.angle = me.angle - ANGLE_90
-			follow.spritexscale = $ * 3/2
-			follow.spriteyscale = follow.spritexscale
-			takis.fx.dash_aura = follow
-		else
-			takis.fx.dash_aura.state = S_TAKIS_SLINGFX
-		end
-		local aura = takis.fx.dash_aura
-		
-		aura.dist = 20*me.scale
-		didit = true
-	else 
-		takis.afterimaging = false
-		/*
-		stopmom(takis,me,
-			stop_ang ~= nil and stop_ang or TakisMomAngle(me)
-		)
-		*/
-	end
-	return didit
-end
 local function try_pvp_collide(me,thing)
 	if not (me and me.valid) then return end
 	if not (thing and thing.valid) then return end

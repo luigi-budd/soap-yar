@@ -822,21 +822,21 @@ local function SetCompat()
 		printf("Added MRCE stuff.")
 	end
 	
-	if ZE2 and (ZE2.AddCharacterConfig ~= nil)
+	if ZE2 and (ZE2.AddSurvivor ~= nil)
 	and not compat.ze2config
-		ZE2:AddCharacterConfig(SOAP_SKIN, {
-            health = 125,
-			charflags = SF_FASTEDGE,
-			speed = "normal",
-            desc1 = "Kick some zombie ass!",
-            desc2 = "And also survive!",
-			desc3 = "Hefty and reliable!",
+		ZE2.AddSurvivor(SOAP_SKIN, {
+            weight = 7,
+			description = {
+				"Kick some zombie ass!",
+				"Hefty and reliable!",
+			}
 		})
-		ZE2:AddCharacterConfig(TAKIS_SKIN, {
-			speed = "normal",
-			health = 80,
-			desc1 = "Ready to blast zombies.",
-			desc2 = "Average speed, nothin' special."
+		ZE2.AddSurvivor(TAKIS_SKIN, {
+            weight = 3,
+			description = {
+				"Ready to blast!",
+				"On the lighter side.",
+			}
 		})
 		
 		compat.ze2config = true
