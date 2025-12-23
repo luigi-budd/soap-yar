@@ -1208,8 +1208,8 @@ local function try_pvp_collide(me,thing)
 					Soap_Hitlag.addHitlag(me, hitlag_tics, false)
 					--Soap_DamageSfx(thing, FU*3/4,FU, {ultimate = false})
 					S_StartSoundAtVolume(me, sfx_tk_hml, 255*3/4)
-					S_StartSound(src, sfx_sp_kil)
-					S_StartSound(src, sfx_sp_smk)
+					S_StartSound(me, sfx_sp_kil)
+					S_StartSound(me, sfx_sp_smk)
 					
 					P_StartQuake(power, hitlag_tics + 3,
 						{me.x, me.y, me.z},
