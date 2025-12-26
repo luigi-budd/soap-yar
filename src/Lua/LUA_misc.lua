@@ -3,34 +3,8 @@ addHook("MobjThinker",function(ai)
 	if (ai.target and ai.target.valid
 	and ai.target.hitlag)
 	and ai.checkedit
-		/*
-		if (ai.savescale == nil)
-			ai.savescale = ai.scalespeed
-			ai.savedest = ai.destscale
-		end
-		ai.scalespeed = 0
-		ai.destscale = ai.scale
-		*/
 		return true
 	end
-	/*
-	if (ai.savescale ~= nil)
-		ai.scalespeed = ai.savescale
-		ai.destscale = ai.savedest
-		
-		ai.savescale = nil
-		ai.savedest = nil
-	end
-	*/
-	/*
-	ai.spritexoffset = ai.takis_spritexoffset or 0
-	ai.spriteyoffset = ai.takis_spriteyoffset or 0
-	ai.spritexscale = ai.takis_spritexscale or FU
-	ai.spriteyscale = ai.takis_spriteyscale or FU
-	ai.rollangle = ai.takis_rollangle or 0
-	ai.pitch = ai.takis_pitch or 0
-	ai.roll = ai.takis_roll or 0
-	*/
 	
 	ai.frame = ai.takis_frame
 	
@@ -59,16 +33,6 @@ addHook("MobjThinker",function(wind)
 	
 	if wind.tics <= halftics
 		local factor = FixedDiv(wind.tics*FU,halftics*FU) --* (halftics - wind.tics)
-		/*
-		wind.spritexscale = FU + FixedMul(factor, (cos(wind.rollangle)))
-		wind.spriteyscale = FU - FixedMul(factor, (sin(wind.rollangle + ANGLE_90)))
-		
-		wind.spritexscale = $ + factor
-		wind.spriteyscale = $ - factor
-		
-		wind.spritexscale = max($,1)
-		wind.spriteyscale = max($,1)
-		*/
 		
 		--worse effect but i cant get the squishing
 		--to look good

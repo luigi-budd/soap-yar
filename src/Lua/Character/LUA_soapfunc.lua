@@ -309,7 +309,7 @@ rawset(_G,"Soap_CreateAfterimage", function(p,me)
 		if m_peel.outs
 			for i = -m_peel.max_outs,m_peel.max_outs
 				if i == 0 then continue end
-				if (i % 1) then continue end
+				if (i % 4) then continue end
 				
 				local peel = m_peel.outs[i]
 				if not (peel and peel.valid) then continue end

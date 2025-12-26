@@ -2486,6 +2486,7 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 	end
 	
 	if Cosmetics
+	and (Cosmetics.SkinOffsets ~= nil)
 		Cosmetics.SkinOffsets[SOAP_SKIN] = cos_height
 	end
 	
@@ -2584,7 +2585,8 @@ end)
 --use an extremely obscure mt_* so the mobjthinker destructor
 --doesnt use more resources than necessary
 local peelout_mobj = MT_TFOG
-local peels = 9
+local peels = 10
+local peelout_off = FixedAngle(17*FU)
 
 addHook("FollowMobj",function(p, m_peel) --master peel
 	if m_peel.outs == nil then m_peel.outs = {} end
@@ -2612,9 +2614,8 @@ addHook("FollowMobj",function(p, m_peel) --master peel
 	end
 	
 	local angle = soap.dashangle - FixedAngle(soap.uppercut_spin)
-	local off = ANG20
 	
-	local radius = -FixedMul(me.radius*3/2, me.spritexscale)
+	local radius = -FixedMul(me.radius + 13*me.scale, me.spritexscale)
 	local forward = {
 		x = P_ReturnThrustX(nil,angle, -radius*3/2),
 		y = P_ReturnThrustY(nil,angle, -radius*3/2),
@@ -2658,8 +2659,8 @@ addHook("FollowMobj",function(p, m_peel) --master peel
 		local side_y = P_ReturnThrustY(nil,angle + ANGLE_90*sign, side)
 		
 		func(peel,
-			me.x + P_ReturnThrustX(nil,angle + off*sign, radius) + forward.x + side_x,
-			me.y + P_ReturnThrustY(nil,angle + off*sign, radius) + forward.y + side_y,
+			me.x + P_ReturnThrustX(nil,angle + peelout_off*sign, radius) + forward.x + side_x,
+			me.y + P_ReturnThrustY(nil,angle + peelout_off*sign, radius) + forward.y + side_y,
 			me.z
 		)
 		local this_z = me.z
@@ -2693,7 +2694,7 @@ addHook("FollowMobj",function(p, m_peel) --master peel
 			end
 		end
 		
-		peel.angle = angle + off*sign
+		peel.angle = angle + peelout_off*sign
 		peel.frame = ($ &~FF_FRAMEMASK)|frame
 		peel.renderflags = $|RF_PAPERSPRITE
 		peel.destscale = me.scale
