@@ -3,6 +3,10 @@
 local CV = SOAP_CV
 
 local cam_still = CV.FindVar("cam_still")
+local cv_3rdmlook = CV.FindVar("chasemlook")
+local cv_1stmlook = CV.FindVar("alwaysmlook")
+local cv_invertmouse = CV.FindVar("invertmouse")
+local cv_chasecam = CV.FindVar("chasecam")
 
 local scroll_fact = 400
 local wheel_radius = 60*FU
@@ -149,6 +153,26 @@ SOAP_TAUNTS[SOAP_SKIN] = {
 	}
 }
 
+-- workaround for mouse aiming for the taunt menu
+addHook("PlayerCmd",function(p,cmd)
+	if not (p.soaptable and p.soaptable.taunt.active) then return end
+	local mouseaiming = 0
+	if (cv_chasecam.value and not p.spectator)
+		mouseaiming = cv_3rdmlook.value
+	else
+		mouseaiming = cv_1stmlook.value
+	end
+	if mouseaiming then return end
+	
+	local me = p.realmo
+	local player_invert = (cv_invertmouse.value) and -1 or 1
+	local screen_invert = (me and (me.eflags & MFE_VERTICALFLIP)
+		and (not camera.chase or (p.pflags & PF_FLIPCAM)))
+		and -1 or 1
+	
+	cmd.aiming = $ - ((mouse.dy<<19) * player_invert * screen_invert)>>16
+end)
+
 rawset(_G, "Soap_TauntWheelThink", function(p)
 	local soap = p.soaptable
 	local me = p.realmo
@@ -187,7 +211,7 @@ rawset(_G, "Soap_TauntWheelThink", function(p)
 		end
 		
 		if (cmd.buttons & BT_SPIN)
-		or cancelConds(p)
+		or cancelConds(p, true)
 			taunt.active = false
 			if cam_still and (p == consoleplayer)
 				CV_Set(cam_still, 1 - cam_still.value)
