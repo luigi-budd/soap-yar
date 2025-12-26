@@ -73,6 +73,14 @@ addHook("PlayerThink",function(p)
 		Soap_Booleans(p)
 		
 		soap.rmomz = me.z - soap.last.z
+		if (me.skin == SOAP_SKIN or me.skin == TAKIS_SKIN)
+		and (soap.taunt.tics > 0)
+			local taunt_t = SOAP_TAUNTS[me.skin][soap.taunt.num]
+			if taunt_t.postthink
+				taunt_t.postthink(p, me, soap, soap.taunt)
+			end
+		end
+		
 		if me.skin == SOAP_SKIN
 			local hook_event = Takis_Hook.events["Soap_Thinker"]
 			for i,v in ipairs(hook_event)

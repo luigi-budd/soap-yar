@@ -60,7 +60,7 @@ SOAP_TAUNTS[SOAP_SKIN] = {
 			
 			me.momx,me.momy = p.cmomx,p.cmomy
 		end,
-		think = function(p, me, soap, taunt)
+		postthink = function(p, me, soap, taunt)
 			local angle = (p.cmd.angleturn << 16)
 			if soap.in2D then angle = ANGLE_90 end
 			
@@ -85,7 +85,7 @@ SOAP_TAUNTS[SOAP_SKIN] = {
 			
 			me.momx,me.momy = p.cmomx,p.cmomy
 		end,
-		think = function(p, me, soap, taunt)
+		postthink = function(p, me, soap, taunt)
 			local angle = (p.cmd.angleturn << 16)
 			if soap.in2D then angle = ANGLE_90 end
 			
@@ -142,6 +142,10 @@ SOAP_TAUNTS[SOAP_SKIN] = {
 				p.drawangle = me.tempangle
 				soap.noability = SNOABIL_ALL
 			end
+		end,
+		postthink = function(p, me, soap, taunt)
+			if me.tempangle == nil then return end
+			p.drawangle = me.tempangle
 		end,
 		drawer = function(v,i, x,y, selected)
 			chardrawer(v,i, x,y, {
