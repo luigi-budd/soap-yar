@@ -19,6 +19,7 @@ local filetree = {
 	"libs/LUA_world2screen.lua",
 	"libs/LUA_customhud.lua",
 	
+	"character/LUA_tauntwheel.lua",
 	--character inits MUST be run before any of their thinkers/funcs!
 	"character/LUA_soapinit.lua",
 	"character/LUA_soapfunc.lua",

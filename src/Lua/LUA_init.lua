@@ -81,9 +81,14 @@ rawset(_G, "Soap_InitTable", function(p)
 		weaponnext_R = 0,
 		weaponprev_R = 0,
 		
+		-- sum stupid bullshit for the taunt menu
+		jumplockout = 0,
+		
 		--forwardmove/sidemove dupes for when stasis is active
 		forwardmove = 0,
 		sidemove = 0,
+		angleturn = 0,
+		aiming = 0,
 		
 		stasistic = 0,
 		allowjump = false, -- &~PF_JUMPSTASIS
@@ -112,7 +117,20 @@ rawset(_G, "Soap_InitTable", function(p)
 		accspeed = 0,
 		gravflip = 1,
 		
-		taunttime = 0,
+		--taunttime = 0,
+		taunt = {
+			active = false,
+			-- for selection
+			x = 0,
+			y = 0,
+			freeze_ang = 0,
+			freeze_aim = 0,
+			
+			pointing = -1,
+			tics = 0,
+			num = 0,
+		},
+		
 		breakdance = 0,
 		true_breakdance = 0,
 		boombox = nil,

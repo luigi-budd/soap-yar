@@ -14,6 +14,7 @@
 	- MSC1: spinning top
 	- MSC2: battlemod knockout
 	- MSC3: death pit shoes
+	- MSC4: death taunt
 */
 
 --max speed increase
@@ -549,6 +550,7 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 	end
 	
 	--taunts
+	/*
 	if (soap.tossflag and (soap.c2 or soap.c3))
 	and (p.panim == PA_IDLE or p.panim == PA_RUN or soap.accspeed <= 5*FU)
 	and (P_IsObjectOnGround(me))
@@ -587,6 +589,7 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 		end
 		soap.noability = $|SNOABIL_TOP
 	end
+	*/
 	
 	if ((soap.weaponnext and soap.weaponprev)
 	or (p.exiting and p.pflags & PF_FINISHED
@@ -598,7 +601,7 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 		and discoranges[Soap_CheckFloorPic(me,true)] == true
 	))
 	and (me.health)
-	and not soap.taunttime
+	-- and not soap.taunttime
 	and not (p.powers[pw_carry] or soap.isSliding)
 	and not P_PlayerInPain(p)
 	and not (soap.noability & SNOABIL_BREAKDANCE)
@@ -707,7 +710,7 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 			if me.state ~= S_PLAY_SOAP_SLIP
 			and soap.onGround
 			-- and not (p.pflags & PF_SPINNING)
-			and soap.taunttime == 0
+			-- and soap.taunttime == 0
 			and me.health
 			and not (soap.noability & SNOABIL_CROUCH)
 			and soap.notCarried
@@ -833,6 +836,7 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 	
 	soap.topcooldown = max($-1, 0)
 	--c3 specials
+	/*
 	if (soap.c3)
 		
 		local candotop = false
@@ -859,6 +863,7 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 			setstate = true
 		end
 	end
+	*/
 	
 	local waslunging = soap.lunge.lunged
 	if soap.lunge.lunged
@@ -949,6 +954,7 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 		and (soap.onGround)
 		and not (p.pflags & PF_SPINNING)
 		and not (me.soap_grabcooldown)
+		and not (soap.stasistic)
 			if not Soap_GrabHitbox(p)
 				if (me.health)
 					p.skidtime = TR/2
@@ -1259,7 +1265,7 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 		and soap.canuppercut
 		and not soap.inPain
 		and me.health
-		and not soap.taunttime
+		-- and not soap.taunttime
 		and not soap.pounding
 		and not soap.uppercut_cooldown
 		and (p.powers[pw_carry] == CR_NONE)
@@ -2225,7 +2231,7 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 			me.translation = nil
 			soap.setpaintrans = false
 		end
-		soap.taunttime = 0
+		--soap.taunttime = 0
 		
 		--recovery jump
 		if soap.paintime >= TR/2

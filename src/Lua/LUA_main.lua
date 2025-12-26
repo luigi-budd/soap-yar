@@ -12,6 +12,8 @@ addHook("PreThinkFrame",function()
 		
 		soap.forwardmove = p.cmd.forwardmove
 		soap.sidemove = p.cmd.sidemove
+		soap.angleturn = p.cmd.angleturn
+		soap.aiming = p.cmd.aiming
 		
 		if soap.stasistic
 			p.pflags = $|PF_FULLSTASIS
@@ -26,6 +28,10 @@ addHook("PreThinkFrame",function()
 		soap.noability = 0
 		for i,v in ipairs(hook_event)
 			Takis_Hook.tryRunHook("PreThinkFrame", v, p)
+		end
+		
+		if (me.skin == SOAP_SKIN or me.skin == TAKIS_SKIN)
+			Soap_TauntWheelThink(p)
 		end
 		
 		--Cool.
@@ -163,6 +169,18 @@ addHook("PostThinkFrame",function()
 				soap.last.squash_head = 0
 			end
 		end
+		
+		/*
+		if (me.skin == SOAP_SKIN or me.skin == TAKIS_SKIN)
+		and (soap.taunt.active)
+			if P_IsLocalPlayer(p)
+				camera.momx = 0
+				camera.momy = 0
+				camera.angle = me.angle
+				camera.aiming = p.aiming
+			end
+		end
+		*/
 	end
 end)
 

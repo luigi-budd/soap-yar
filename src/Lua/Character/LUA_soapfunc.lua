@@ -95,6 +95,18 @@ rawset(_G,"Soap_ButtonStuff", function(p)
 		soap.c3 = 0		
 	end
 	
+	if (soap.jumplockout)
+		if not (p.cmd.buttons & BT_JUMP)
+			if soap.jumplockout == 1
+				soap.jumplockout = 0
+			else
+				soap.jumplockout = 1
+			end
+		else
+			soap.jump = 0
+		end
+	end
+	
 	/*
 	if (p.pflags & PF_STASIS)
 	or (p.powers[pw_nocontrol])
@@ -1597,7 +1609,7 @@ rawset(_G,"Soap_HandleNoAbils", function(p)
 		na = $|SNOABIL_AIRDASH|SNOABIL_CROUCH|SNOABIL_POUND|SNOABIL_UPPERCUT
 	end
 	
-	if soap.taunttime
+	if soap.taunt.tics
 		na = $|SNOABIL_CROUCH|SNOABIL_TOP
 	end
 	
@@ -1907,28 +1919,30 @@ rawset(_G,"Soap_DeathThinker",function(p,me,soap)
 				S_StartSound(me,sfx_s3k51)
 				
 				--shoes
-				local angle = soap.last.anim.angle
-				local radius = FixedDiv(me.radius, me.scale)
-				for i = -1,1,2
-					local adjust = ANGLE_90*i
-					local shoe = P_SpawnMobjFromMobj(me,
-						P_ReturnThrustX(nil,angle + adjust, radius),
-						P_ReturnThrustY(nil,angle + adjust, radius),
-						FixedDiv(me.height, me.scale)/2,
-						MT_SOAP_WALLBUMP
-					)
-					shoe.skin = me.skin
-					shoe.state = S_INVISIBLE
-					shoe.sprite = SPR_PLAY
-					shoe.sprite2 = SPR2_MSC3
-					shoe.angle = angle + adjust
-					P_SetObjectMomZ(shoe, Soap_RandomFixedRange(14*FU,20*FU))
-					P_Thrust(shoe, angle + adjust, 1*me.scale)
-					shoe.random = P_RandomRange(-28,28) * ANG1
-					shoe.fuse = 5*TR
-					
-					shoe.mirrored = (i == 1 and true or false)
-					shoe.shoemode = true
+				if me.skin == SOAP_SKIN
+					local angle = soap.last.anim.angle
+					local radius = FixedDiv(me.radius, me.scale)
+					for i = -1,1,2
+						local adjust = ANGLE_90*i
+						local shoe = P_SpawnMobjFromMobj(me,
+							P_ReturnThrustX(nil,angle + adjust, radius),
+							P_ReturnThrustY(nil,angle + adjust, radius),
+							FixedDiv(me.height, me.scale)/2,
+							MT_SOAP_WALLBUMP
+						)
+						shoe.skin = me.skin
+						shoe.state = S_INVISIBLE
+						shoe.sprite = SPR_PLAY
+						shoe.sprite2 = SPR2_MSC3
+						shoe.angle = angle + adjust
+						P_SetObjectMomZ(shoe, Soap_RandomFixedRange(14*FU,20*FU))
+						P_Thrust(shoe, angle + adjust, 1*me.scale)
+						shoe.random = P_RandomRange(-28,28) * ANG1
+						shoe.fuse = 5*TR
+						
+						shoe.mirrored = (i == 1 and true or false)
+						shoe.shoemode = true
+					end
 				end
 				
 				local momz = soap.last.momz

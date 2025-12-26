@@ -10,15 +10,15 @@ rawset(_G,"SphereToCartesian",function(alpha, beta)
     return t
 end)
 
-rawset(_G,"sign",function(a)
-	return (a ~= 0) and (a < 0 and -1 or 1) or 0
-end)
-
 rawset(_G,"clamp",function(minimum,value,maximum)
 	if maximum < minimum
 		maximum, minimum = $2, $1
 	end
 	return max(minimum,min(maximum,value))
+end)
+
+rawset(_G,"sign",function(a)
+	return (a ~= 0) and (a < 0 and -1 or 1) or 0
 end)
 
 rawset(_G,"Soap_RandomFixedSigned",do

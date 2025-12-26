@@ -883,7 +883,7 @@ Takis_Hook.addHook("Takis_Thinker",function(p)
 		if (p.powers[pw_carry] == CR_NONE or p.powers[pw_carry] == CR_ROLLOUT)
 		and me.state == S_PLAY_TAKIS_TORNADO
 			if me.health
-				me.state = S_PLAY_WALK
+				me.state = S_PLAY_DASH
 				Soap_ResetState(p)
 			end
 			
