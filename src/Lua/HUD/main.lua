@@ -117,7 +117,7 @@ local wheel_inner = wheel_start + (wheel_radius - wheel_start)/2
 addHook("HUD",function(v,p)
 	local soap = p.soaptable
 	if not soap then return end
-	if not (skins[p.skin].name == SOAP_SKIN or skins[p.skin].name == TAKIS_SKINN) then return end
+	if not (skins[p.skin].name == SOAP_SKIN or skins[p.skin].name == TAKIS_SKIN) then return end
 	local hud = soap.hud
 	local taunt = soap.taunt
 	
