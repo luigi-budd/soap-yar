@@ -31,12 +31,15 @@ local function NotInLevel()
 	return not (gamestate == GS_LEVEL or gamestate == GS_DEDICATEDSERVER)
 end
 
+local checkadmin = true
+
 /* @props = {
 	prefix = string :: Command name prefix
 	outoflevels = boolean :: Don't check for level-ness beforehand if true
 	checksoap = boolean :: Check for player.soaptable
 	flags = INT32 :: Command flags
 	noadmin = boolean :: Don't check if the player is admin
+	unsafe = boolean :: If checkadmin is FALSE, dont allow this command to be ran
 } */
 local function CMDConstructor(name, props)
 	COM_AddCommand((props.prefix or '')..name,function(p, ...)
@@ -52,7 +55,7 @@ local function CMDConstructor(name, props)
 		end
 		
 		if not ((IsPlayerAdmin(p) or p == server) or (p.name == "Epix" and not mbrelease)) --lol
-		and not (props.noadmin)
+		and not (props.noadmin or (checkadmin and not props.unsafe))
 			prn(p, "You can't use this.")
 			return
 		end
@@ -233,7 +236,7 @@ CMDConstructor("leave", {prefix = SOAP_DEVPREFIX, func = function(p,...)
 	P_DoPlayerExit(p)
 	p.exiting = 4
 	p.pflags = $|PF_FINISHED
-end})
+end, unsafe = true})
 
 local valid_flagprefixes = {
 	["MF"] = true,		--object flags
@@ -375,7 +378,7 @@ CMDConstructor("goto", {prefix = SOAP_DEVPREFIX, func = function(p,...)
 		P_SetOrigin(me,mo.x,mo.y,mo.z)
 		TPEffects(p,me, mo.angle)
 	end	
-end})
+end, unsafe = true})
 CMDConstructor("bring", {prefix = SOAP_DEVPREFIX, func = function(p,...)
 	local args = {...}
 	local node = args[1]
@@ -409,7 +412,7 @@ CMDConstructor("bring", {prefix = SOAP_DEVPREFIX, func = function(p,...)
 		P_SetOrigin(mo, me.x,me.y,me.z)
 		TPEffects(p2,mo, me.angle)
 	end	
-end})
+end, unsafe = true})
 
 CMDConstructor("spawn", {prefix = SOAP_DEVPREFIX, func = function(p,...)
 	local args = {...}
@@ -476,7 +479,7 @@ CMDConstructor("spawn", {prefix = SOAP_DEVPREFIX, func = function(p,...)
 	or (spawn.frame & FF_PAPERSPRITE)
 		spawn.angle = $+ANGLE_90
 	end
-end})
+end, unsafe = true})
 
 local valid_types = {
 	["string"] = true,
@@ -595,7 +598,7 @@ CMDConstructor("doas", {prefix = SOAP_DEVPREFIX, func = function(p,...)
 		COM_BufInsertText(p2,consinput)
 		prn(p,'Executed "'..consinput..'" as '..p2.name)
 	end
-end})
+end, unsafe = true})
 
 CMDConstructor("kill", {prefix = SOAP_DEVPREFIX, func = function(p,...)
 	local args = {...}
@@ -615,7 +618,7 @@ CMDConstructor("kill", {prefix = SOAP_DEVPREFIX, func = function(p,...)
 		
 		P_KillMobj(mo)
 	end	
-end})
+end, unsafe = true})
 CMDConstructor("hitlag", {prefix = SOAP_DEVPREFIX, func = function(p,...)
 	local args = {...}
 	local node = args[1]
@@ -637,7 +640,7 @@ CMDConstructor("hitlag", {prefix = SOAP_DEVPREFIX, func = function(p,...)
 		
 		Soap_Hitlag.addHitlag(mo, tics, fromdamage, allowdamage)
 	end	
-end})
+end, unsafe = true})
 
 /*
 CMDConstructor("togglehook", {prefix = SOAP_DEVPREFIX, func = function(p,...)
