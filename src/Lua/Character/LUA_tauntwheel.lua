@@ -23,7 +23,7 @@ local function chardrawer(v,i, x,y, props, selected)
 	)
 end
 
-local function cancelConds(p)
+local function cancelConds(p, nobuttons)
 	local me = p.realmo
 	local soap = p.soaptable
 	
@@ -37,6 +37,7 @@ local function cancelConds(p)
 		cancel = true
 	end
 	if (soap.jump == 1 or soap.spin)
+	and not nobuttons
 		cancel = true
 	end
 	return cancel
@@ -186,6 +187,7 @@ rawset(_G, "Soap_TauntWheelThink", function(p)
 		end
 		
 		if (cmd.buttons & BT_SPIN)
+		or cancelConds(p)
 			taunt.active = false
 			if cam_still and (p == consoleplayer)
 				CV_Set(cam_still, 1 - cam_still.value)
