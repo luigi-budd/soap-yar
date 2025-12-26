@@ -65,8 +65,8 @@ local function P_PitchRoll(me, frac)
 	
 	local destpitch = FixedMul(mang, cos(angle))
 	local destroll = FixedMul(mang, sin(angle))
-	me.pitch = P_AngleLerp(frac, $, destpitch)
-	me.roll  = P_AngleLerp(frac, $, destroll)
+	me.pitch = P_Lerp(frac, $, destpitch)
+	me.roll  = P_Lerp(frac, $, destroll)
 end
 
 local function Soap_SuperReady(player)
@@ -1712,7 +1712,7 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 					end
 				end
 				if soap.accspeed >= 3*FU
-					soap.dashangle = P_AngleLerp(FU/4, $, R_PointToAngle2(0,0,me.momx,me.momy))
+					soap.dashangle = P_Lerp(FU/4, $, R_PointToAngle2(0,0,me.momx,me.momy))
 					p.drawangle = soap.dashangle
 					--TODO: drifting vfx
 					setangle = true
@@ -3588,7 +3588,7 @@ Takis_Hook.addHook("PostThinkFrame",function(p)
 			p.drawangle = (p.cmd.angleturn << 16) - FixedAngle(soap.uppercut_spin)
 			
 			local grav_mul = abs(FixedDiv(P_GetMobjGravity(me),(me.scale/2) or 1))
-			soap.uppercut_spin = P_AngleLerp(
+			soap.uppercut_spin = P_Lerp(
 				FixedMul(FU/7, grav_mul),
 				$, 0
 			)

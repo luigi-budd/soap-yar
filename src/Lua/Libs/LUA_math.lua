@@ -67,12 +67,3 @@ end)
 rawset(_G,"P_Lerp",function(frac, from, to)
 	return from + FixedMul(to - from, frac)
 end)
--- backwards compat
-local seen = false
-rawset(_G,"P_AngleLerp",function(frac, from, to)
-	if not seen
-		print("\x82WARNING\x80: 'P_AngleLerp' is deprecated and will be removed soon, please use 'P_Lerp' instead.")
-		seen = true
-	end
-	return P_Lerp(frac, from, to)
-end)

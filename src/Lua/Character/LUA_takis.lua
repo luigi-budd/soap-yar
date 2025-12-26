@@ -27,8 +27,8 @@ local function P_PitchRoll(me, frac)
 	
 	local destpitch = FixedMul(mang, cos(angle))
 	local destroll = FixedMul(mang, sin(angle))
-	me.pitch = P_AngleLerp(frac, $, destpitch)
-	me.roll  = P_AngleLerp(frac, $, destroll)
+	me.pitch = P_Lerp(frac, $, destpitch)
+	me.roll  = P_Lerp(frac, $, destroll)
 end
 
 local function dolunge(p,me,soap, fromjump)
