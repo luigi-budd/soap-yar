@@ -305,7 +305,10 @@ rawset(_G,"Soap_CreateAfterimage", function(p,me)
 	and (p.followmobj and p.followmobj.valid)
 	and p.followmobj.outs ~= nil
 		local m_peel = p.followmobj
-		
+		local sine = abs(sin(FixedAngle(leveltime*FU*10)))
+		local ghostalpha = AI_MINALPHA + (sine - AI_MINALPHA)
+		local aistyle = (soap.aiswap) and "Soap_AI1" or "Soap_AI2"
+		local cvstyle = SOAP_CV.ai_style.value == 3
 		if m_peel.outs
 			for i = -m_peel.max_outs,m_peel.max_outs
 				if i == 0 then continue end
@@ -328,11 +331,10 @@ rawset(_G,"Soap_CreateAfterimage", function(p,me)
 				ghost2.fuse = 4
 				ghost2.renderflags = $|rflags|RF_PAPERSPRITE
 				ghost2.blendmode = blendmode
-				if SOAP_CV.ai_style.value == 3
-					ghost2.translation = (soap.aiswap) and "Soap_AI1" or "Soap_AI2"
+				if cvstyle
+					ghost2.translation = aistyle
 				else
-					local sine = abs(sin(FixedAngle(leveltime*FU*10)))
-					ghost2.alpha = AI_MINALPHA + max(sine - AI_MINALPHA, 0)
+					ghost2.alpha = ghostalpha
 				end
 				ghost2.angle = peel.angle
 				
@@ -356,9 +358,7 @@ rawset(_G,"Soap_CreateAfterimage", function(p,me)
 			end
 		end
 	end
-
 	soap.aiswap = leveltime/2 & 1
-	
 	return ghost
 end)
 
@@ -890,7 +890,6 @@ local WIND_PUSHANG_MAX = 35*FU
 rawset(_G, "Soap_WindLines", function(me,rmomz,color,forceang,forceside)
 	if not (me and me.valid) then return end --?
 	if not me.health then return end
-	
 	local p = me.player
 	
 	if (p and p.valid)
@@ -907,20 +906,6 @@ rawset(_G, "Soap_WindLines", function(me,rmomz,color,forceang,forceside)
 		end
     end
 	
-	/*
-	local offx,offy = 0,0
-	if R_PointToDist2(0,0,me.momx,me.momy) > me.radius*2
-		local timesx = FixedDiv(me.momx,me.radius*2)
-		local timesy = FixedDiv(me.momy,me.radius*2)
-		
-		if timesx ~= 0
-			offx = FixedDiv(me.momx,timesx) * P_RandomRange(0,timesx/me.scale)
-		end
-		if timesy ~= 0
-			offy = FixedDiv(me.momy,timesy) * P_RandomRange(0,timesy/me.scale)
-		end
-	end
-	*/
 	local offx = me.momx
 	local offy = me.momy
 	do

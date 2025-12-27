@@ -339,7 +339,7 @@ end
 local function destroy_uppercut_aura(p,me,soap)
 	local aura = soap.fx.uppercut_aura
 	
-	aura.alpha = FixedFloor(ease.linear(FU/3, $, 0) * 100)/100
+	aura.alpha = FixedFloor(P_Lerp(FU/3, $, 0) * 100)/100
 	aura.dispoffset = me.dispoffset + 3
 	
 	if aura.alpha == 0
@@ -1116,7 +1116,7 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 					else
 						soap.dashcharge = $ + frac + extracharge/2
 						if soap.dashcharge >= 100*FU
-							soap.dashcharge = ease.linear(FU/3, $, 100*FU)
+							soap.dashcharge = P_Lerp(FU/3, $, 100*FU)
 						end
 					end
 					
@@ -1469,7 +1469,7 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 				end
 				local aura = soap.fx.uppercut_aura
 				
-				aura.alpha = FixedCeil(ease.linear(FU/3, $, FU) * 100)/100		
+				aura.alpha = FixedCeil(P_Lerp(FU/3, $, FU) * 100)/100		
 				aura.dispoffset = me.dispoffset + 3
 				
 				aura.zoffset = FixedMul(skins[p.skin].height, me.scale)
@@ -1520,12 +1520,9 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 	--r-dash thinker
 	--r dash thinker
 	--rdash thinker
-	--idk why this lags
-	
-	--just take it off when we dont need it
+	--just take it off when we dont need it`
 	p.charflags = $ &~(SF_RUNONWATER|SF_NOSKID)|(lunge.effect and SF_NOSKID or 0)
 	if soap.rdashing and not soap.resetdash
-		--local micros = getTimeMicros()
 		local skin_t = skins[p.skin]
 		local dashspeed = skin_t.normalspeed + soap._maxdash
 		local setangle = false
@@ -1559,15 +1556,6 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 		momentums = min($, ORIG_FRICTION + max_mentums)
 		if me.friction < momentums
 			me.friction = momentums
-		end
-		
-		if not Soap_IsCompGamemode()
-			local angle,thrust = Soap_SlopeInfluence(me,p, {
-				allowstand = true, allowmult = true
-			})
-			if angle ~= nil
-				P_Thrust(me,angle, thrust/3)
-			end
 		end
 		
 		local slow_speed = (p.normalspeed - 7*FU)
@@ -1619,12 +1607,12 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 			end
 		end
 		
+		p.runspeed = max(soap.accspeed - 5*FU, FU)
 		if p.normalspeed < dashspeed
 			if uncurled
 				me.momx = FixedMul($, FU*5/6)
 				me.momy = FixedMul($, FU*5/6)
 			end
-			p.runspeed = max(soap.accspeed - 5*FU, FU)
 			
 			local eased = 0
 			if soap._maxdash ~= 0
@@ -1653,12 +1641,11 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 				
 				local color = soap_rdashwind_base
 				if (soap.dashcharge)
-					local speed_frac = clamp(0,ease.incubic(FU/2,
-						FixedDiv(
-							p.normalspeed - dashspeed,
-							SOAP_EXTRADASH
-						), FU
-					), FU)
+					local speed_frac = FixedDiv(
+						p.normalspeed - dashspeed,
+						SOAP_EXTRADASH
+					)
+					if (speed_frac > FU) then speed_frac = FU; end
 					
 					color = $ + (FixedMul(
 						soap_rdashwind_inc*FU,
@@ -1667,14 +1654,13 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 				end
 				color = max(0, min($, #skincolors - 1))
 				Soap_WindLines(me,nil,color)
-				accelerative_speedlines(p,me,soap, FixedDiv(R_PointTo3DDist(0,0,0,me.momx,me.momy,me.momz),me.scale), 65*FU, color)
+				-- accelerative_speedlines(p,me,soap, FixedDiv(R_PointTo3DDist(0,0,0,me.momx,me.momy,me.momz),me.scale), 65*FU, color)
 				
 				if Soap_DirBreak(p,me, R_PointToAngle2(0,0,me.momx,me.momy))
 					Soap_Hitlag.addHitlag(me, 7, false)
 				end
 				
 				p.powers[pw_strong] = $|STR_SPIKE|STR_ANIM|STR_HEAVY
-				p.runspeed = 4*FU
 			end
 			
 			if not Soap_IsCompGamemode()
@@ -1719,40 +1705,6 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 				end
 				if (leveltime & 1)
 					spawn_sweat_mobjs(p,me,soap)
-					if soap.onGround
-					and not soap.onWater
-						local sidemove = FixedDiv(me.radius,me.scale)
-						local sideangle = ANGLE_45
-						for i = -1,1,2
-							local kickup = P_SpawnMobjFromMobj(me,
-								Soap_RandomFixedRange(-4*FU,4*FU) + P_ReturnThrustX(nil, p.drawangle + sideangle * i, sidemove),
-								Soap_RandomFixedRange(-4*FU,4*FU) + P_ReturnThrustY(nil, p.drawangle + sideangle * i, sidemove),
-								0,
-								MT_SOAP_DUST
-							)
-							if me.eflags & (MFE_TOUCHWATER|MFE_UNDERWATER)
-								kickup.state = mobjinfo[MT_SMALLBUBBLE].spawnstate
-								kickup.tics = -1
-								kickup.fuse = 10
-								if (me.eflags & MFE_TOUCHLAVA)
-									kickup.colorized = true
-									kickup.color = SKINCOLOR_KETCHUP
-								end
-							elseif (p.powers[pw_shield] == SH_ELEMENTAL)
-								kickup.state = S_SPINDUST_FIRE1
-							end
-							kickup.destscale = 1
-							kickup.scalespeed = FixedDiv($, kickup.scale)
-							P_SetObjectMomZ(kickup, Soap_RandomFixedRange(4*FU,6*FU))
-							kickup.spritexscale = FU + Soap_RandomFixedRange(0,1*FU) / 5
-							kickup.spriteyscale = kickup.spritexscale
-							
-							P_InstaThrust(kickup,
-								R_PointToAngle2(kickup.x,kickup.y, me.x,me.y),
-								-10*me.scale
-							)
-						end
-					end
 				end
 				
 				spawn_aura = true
@@ -1776,7 +1728,6 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 			end
 		end
 		
-		--print("case1: "..(getTimeMicros() - micros))
 	elseif soap.lastrdash or soap.resetdash
 		--local micros = getTimeMicros()
 		me.friction = ORIG_FRICTION
@@ -2049,7 +2000,7 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 			aura.state = S_SOAP_NWF_WIND_FAST
 		end
 		
-		aura.alpha = FixedCeil(ease.linear(FU/5, $, FU) * 100)/100		
+		aura.alpha = FixedCeil(P_Lerp(FU/5, $, FU) * 100)/100		
 		aura.spritexscale = spritemul
 		aura.spriteyscale = spritemul
 		
@@ -2412,7 +2363,7 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 		aura.dist = dist
 		aura.boostaura = super
 		
-		aura.alpha = FixedCeil(ease.linear(FU/5, $, FU) * 100)/100
+		aura.alpha = FixedCeil(P_Lerp(FU/5, $, FU) * 100)/100
 	else
 		if (soap.fx.dash_aura and soap.fx.dash_aura.valid)
 			local super = (soap.doSuperBuffs or (p.powers[pw_sneakers] > 0)) --sneakers too lol
@@ -2444,7 +2395,7 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 				aura.flags2 = $ &~MF2_DONTDRAW
 			end
 			
-			aura.alpha = FixedFloor(ease.linear(FU/5, $, 0) * 100)/100
+			aura.alpha = FixedFloor(P_Lerp(FU/5, $, 0) * 100)/100
 			if soap.fx.dash_aura.alpha == 0
 				P_RemoveMobj(soap.fx.dash_aura)
 				soap.fx.dash_aura = nil
@@ -2588,6 +2539,7 @@ local peelout_mobj = MT_TFOG
 local peels = 10
 local peelout_off = FixedAngle(17*FU)
 
+local cv_pitchroll = CV.FindVar("pitchroll-tation")
 addHook("FollowMobj",function(p, m_peel) --master peel
 	if m_peel.outs == nil then m_peel.outs = {} end
 	
@@ -2616,11 +2568,34 @@ addHook("FollowMobj",function(p, m_peel) --master peel
 	local angle = soap.dashangle - FixedAngle(soap.uppercut_spin)
 	
 	local radius = -FixedMul(me.radius + 13*me.scale, me.spritexscale)
-	local forward = {
-		x = P_ReturnThrustX(nil,angle, -radius*3/2),
-		y = P_ReturnThrustY(nil,angle, -radius*3/2),
-	}
+	local forwardx = P_ReturnThrustX(nil,angle, -radius*3/2)
+	local forwardy = P_ReturnThrustY(nil,angle, -radius*3/2)
 	local side = 0
+	local sidemove = me.scale/2
+	
+	local sprxsc = me.spritexscale / 2
+	local sprysc = me.spriteyscale / 2
+	local r_angle = p.drawangle + ANGLE_90
+	local r_sin = -sin(r_angle)
+	local r_cos = cos(r_angle)
+	
+	local frame_L = (me.frame & FF_FRAMEMASK) % E
+	if frame_L == A
+		frame_L = C
+	elseif frame_L == B
+		frame_L = D
+	elseif frame_L == C
+		frame_L = A
+	elseif frame_L == D
+		frame_L = B
+	end
+	local frame_R = (me.frame & FF_FRAMEMASK) % E
+	
+	local mytrans = me.translation
+	local myslope = me.standingslope
+	local myflip = P_MobjFlip(me)
+	local mycolor = me.color
+	local mycolorized = me.colorized
 	
 	for i = -peels, peels
 		if i == 0
@@ -2657,69 +2632,59 @@ addHook("FollowMobj",function(p, m_peel) --master peel
 		
 		local side_x = P_ReturnThrustX(nil,angle + ANGLE_90*sign, side)
 		local side_y = P_ReturnThrustY(nil,angle + ANGLE_90*sign, side)
+		local aoff = peelout_off*sign
 		
 		func(peel,
-			me.x + P_ReturnThrustX(nil,angle + peelout_off*sign, radius) + forward.x + side_x,
-			me.y + P_ReturnThrustY(nil,angle + peelout_off*sign, radius) + forward.y + side_y,
+			me.x + P_ReturnThrustX(nil,angle + aoff, radius) + forwardx + side_x,
+			me.y + P_ReturnThrustY(nil,angle + aoff, radius) + forwardy + side_y,
 			me.z
 		)
 		local this_z = me.z
 		if P_IsObjectOnGround(me)
-		and (me.standingslope)
-			this_z = P_GetZAt(me.standingslope, peel.x,peel.y,me.z)
-			if P_MobjFlip(me) == -1
+		and (myslope)
+			this_z = P_GetZAt(myslope, peel.x,peel.y,me.z)
+			if myflip == -1
 				this_z = $ - peel.height - me.height
 			end
 		end
 		peel.z = this_z
 		
-		if (P_MobjFlip(me) == -1)
+		if (myflip == -1)
 			peel.z = ($ + me.height) - peel.height
 			peel.eflags = $|MFE_VERTICALFLIP
 		else
 			peel.eflags = $ &~MFE_VERTICALFLIP
 		end
 		
-		local frame = (me.frame & FF_FRAMEMASK) % E
-		if sign == -1
-			--this is Cool.
-			if frame == A
-				frame = C
-			elseif frame == B
-				frame = D
-			elseif frame == C
-				frame = A
-			elseif frame == D
-				frame = B
-			end
+		peel.angle = angle + aoff
+		peel.frame = ($ &~FF_FRAMEMASK)
+		if (sign == -1)
+			peel.frame = $|frame_L
+		else
+			peel.frame = $|frame_R
 		end
-		
-		peel.angle = angle + peelout_off*sign
-		peel.frame = ($ &~FF_FRAMEMASK)|frame
 		peel.renderflags = $|RF_PAPERSPRITE
 		peel.destscale = me.scale
 		peel.scalespeed = peel.destscale + 1
 		peel.flags2 = ($ &~MF2_DONTDRAW)|(me.flags2 & MF2_DONTDRAW)
-		peel.color = me.color
-		peel.colorized = me.colorized
-		peel.spritexscale = FixedDiv(me.spritexscale, 2*FU)
-		peel.spriteyscale = FixedDiv(me.spriteyscale, 2*FU)
+		peel.color = mycolor
+		peel.colorized = mycolorized
+		peel.spritexscale = sprxsc
+		peel.spriteyscale = sprysc
 		peel.pitch,peel.roll = 0,0
-		peel.translation = me.translation
+		peel.translation = mytrans
 		
 		local pitchroll = 0
 		local pitch = me.pitch
 		local roll = me.roll
 		--we're awesome and have pitch/roll-tation
 		if takis_custombuild
-		and (CV.FindVar("pitchroll-tation") and CV.FindVar("pitchroll-tation").value)
-			local r_angle = p.drawangle + ANGLE_90
-			pitchroll = FixedMul(pitch,-sin(r_angle)) + FixedMul(roll,cos(r_angle))
+		and (cv_pitchroll and cv_pitchroll.value)
+			pitchroll = FixedMul(pitch,r_sin) + FixedMul(roll,r_cos)
 		end
 		
 		peel.rollangle = me.rollangle + pitchroll
-		
-		side = $ - me.scale/2
+		side = $ - sidemove
 	end
 end,MT_SOAP_PEELOUT)
 
