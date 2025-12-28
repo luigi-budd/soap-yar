@@ -130,6 +130,7 @@ SOAP_TAUNTS[SOAP_SKIN] = {
 		end,
 		think = function(p, me, soap, taunt)
 			if cancelConds(p)
+			or me.tempangle == nil
 				me.tempangle = nil
 				me.state = S_PLAY_WALK
 				P_MovePlayer(p)
