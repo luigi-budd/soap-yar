@@ -14,6 +14,17 @@ SOAP_MENUS.drawRounded = function(v, x,y, w, size, clr)
 	v.draw(x+w,y, v.cachePatch("SMENU_CIRC_"..size), V_FLIP, clr)
 end
 
+SOAP_MENUS.tauntrebind = {
+	rebinding = false,
+	tobind = ""
+}
+local trb = SOAP_MENUS.tauntrebind
+
+local function trb_reset()
+	trb.rebinding = false
+	trb.tobind = ""
+end
+
 local menu_buf = ""
 local menu_bufid = MenuLib.newBufferID()
 
@@ -80,6 +91,7 @@ SOAP_MENUS.buttontoggle = function(v, x,y, width, props)
 		SOAP_MENUS.drawRounded(v, left + 1 + (bhalf*cv.value), y + 2, 10, "SMALL", v.getColormap(TC_DEFAULT,cv.value and SKINCOLOR_GREEN or SKINCOLOR_RED))
 		v.drawString(left+3 + ((bhalf+7)*(1-cv.value)),y+3, cv.value and "On" or "Off", V_ALLOWLOWERCASE,cv.value and "thin" or "thin-right")
 	elseif cv_type == "custom"
+	and CV.PossibleValues[cv_name] ~= nil
 		local options = CV.PossibleValues[cv_name].values
 		local items = CV.PossibleValues[cv_name].length
 		local wid = (items * widths["SMALL"]) + 2
@@ -252,24 +264,84 @@ SOAP_MENUS.buttontoggle = function(v, x,y, width, props)
 		v.drawScaled((right - slider_w - 2)*FU + slider_move, y*FU, FU,v.cachePatch("SMENU_SLIDER"),0)
 		ML.interpolate(v, false)
 		v.drawString(right - slider_w - 2, y+1, str, V_YELLOWMAP,"thin-right")
+	elseif cv_type == "customfunc"
+		props.func(x,y,width)
 	end
 end
 
 local compver,compdate = (loadfile("Vars/compver.lua"))(), (loadfile("Vars/compdate.lua"))()
 local mbrelease = (loadfile("Vars/mbrelease.lua"))()
 local debug = (loadfile("Vars/debugflag.lua"))()
+local popup_id = MenuLib.addMenu({
+	stringId = "soap_tauntkeyprompt",
+	
+	x = 160 - 60,
+	y = 100 - 30,
+	
+	width = 120,
+	height = 60,
+	color = 27,
+	outline = 30,
+	lifetime = 0,
+	
+	title = "",
+	ps_flags = PS_NOXBUTTON|PS_NOSLIDEIN,
+	
+	init = function()
+		trb_reset()
+		trb.rebinding = true
+	end,
+	drawer = function(v, ML, menu, props)
+		local x,y = props.corner_x, props.corner_y
+		menu.lifetime = $ + 1
+		
+		x = x + menu.width/2
+		y = y + 3
+		v.drawString(x,y,
+			"Press any key to rebind",
+			V_ALLOWLOWERCASE,
+			"thin-center"
+		)
+		v.drawString(x,y+8,
+			"Taunt Key",
+			V_YELLOWMAP|V_ALLOWLOWERCASE,
+			"thin-center"
+		)
+		
+		v.drawString(x,y+40,
+			"Wait "..(5 - (menu.lifetime/TR)).." seconds",
+			V_ALLOWLOWERCASE,
+			"thin-center"
+		)
+		v.drawString(x,y+48,
+			"to dismiss",
+			V_ALLOWLOWERCASE,
+			"thin-center"
+		)
+		
+		if (menu.lifetime >= (5*TR) - 1)
+		or trb.tobind ~= ""
+			ML.initPopup(-1,true)
+		end
+	end,
+	exit = function(_,_, menu)
+		trb_reset()
+		menu.lifetime = 0
+	end
+})
+
 ML.addMenu({
 	stringId = "soap_options",
 	title = "Soap Options",
 	width = 290,
-	height = 110,
+	height = 130,
 	ms_flags = MS_NOANIM,
 	drawer = function(v,ML,menu, props)
 		local cx = props.corner_x + 2
 		local cy = props.corner_y + 16
 		sld_id = 0
 		
-		v.drawString(cx, cy, "Local", V_ALLOWLOWERCASE|V_YELLOWMAP,"left")
+		v.drawString(cx, cy, "Client", V_ALLOWLOWERCASE|V_YELLOWMAP,"left")
 		v.drawFill(cx, cy+9, menu.width - 4, 2, 26)
 		v.drawFill(cx, cy+9, menu.width - 5, 1, 73)
 		cy = $ + 13
@@ -282,7 +354,50 @@ ML.addMenu({
 			cv_name = "soap_quakes", name = "Earthquakes",
 			cv_type = "custom",
 		})
-		cy = $ + 26
+		SOAP_MENUS.buttontoggle(v, cx,cy+26, menu.width - 4, {
+			cv_name = "soap_tauntkey", name = "Taunt Key",
+			cv_type = "customfunc", func = function(x,y,wd)
+				local right = (x + wd) - 4
+				local hover = false
+				local slider_w = 40
+				local slider_h = 10
+				
+				y = $ + 1
+				do
+					local w = 36
+					hover = ML.mouseInZone(right-w, y, w,10)
+					local c = 0
+					if hover
+						c = (ML.client.mouseHeld > 0) and 4 or 2
+						ML.client.canPressSomething = true
+						if (ML.client.mouseHeld == -1)
+							S_StartSound(nil,sfx_menu1)
+							ML.initPopup(popup_id)
+						end
+					end
+					v.drawFill((right - w),		y,   w,   10, 68 - c)
+					v.drawFill((right - w)+1,	y+1, w-2, 1,  70 - c)
+					v.drawFill((right - w)+1,	y+8, w-2, 1,  70 - c)
+					v.drawFill((right - w+1),	y+1, 1,   8,  70 - c)
+					v.drawFill((right - 2),		y+1, 1,   8,  70 - c)
+					v.drawString(right - w/2, y+1, "Change",V_ALLOWLOWERCASE,"thin-center")
+					right = $ - w
+				end
+				local cwid = widths["MEDIUM"]/2
+				v.draw(right - slider_w - 1 - cwid, y, v.cachePatch("SMENU_CIRC_MEDIUM"), 0, v.getColormap(TC_DEFAULT,SKINCOLOR_BLACK))
+				v.drawFill(right - slider_w - 1, y, slider_w + 1, slider_h, 28)
+				v.drawString(
+					(right - slider_w - 1 - cwid) + (slider_w)/2 + cwid, y + 1,
+					'"'..CV.taunt_key.string..'"', 0,
+					"center"
+				)
+			end
+		})
+		SOAP_MENUS.buttontoggle(v, cx,cy+39, menu.width - 4, {
+			cv_name = "soap_b-rushmode", name = "B-Rush Mode",
+			cv_type = "custom",
+		})
+		cy = $ + 52
 		
 		v.drawString(cx, cy, "Netvars", V_ALLOWLOWERCASE|V_YELLOWMAP,"left")
 		v.drawFill(cx, cy+9, menu.width - 4, 2, 26)
@@ -315,6 +430,16 @@ ML.addMenu({
 		sld_display.tics = max($ - 1, 0)
 	end
 })
+
+addHook("KeyDown", function(key)
+	if isdedicatedserver then return end
+	if key.repeated then return end
+	if not trb.rebinding then return end
+	if not input.keyNumPrintable(key.num) then return end
+	
+	trb.tobind = key.name
+	CV_Set(CV.taunt_key, key.name)
+end)
 
 COM_AddCommand("soap_menu", function(p)
 	if gamestate ~= GS_LEVEL then return end

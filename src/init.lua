@@ -65,7 +65,7 @@ end
 
 if not filesrangood
 	S_StartSound(nil,sfx_skid)
-	print("\x85One or more files were not loaded properly")
+	print("\x85WARNING: One or more files were not loaded properly")
 end
 for k,info in ipairs(badfiles)
 	local filename = info.filename

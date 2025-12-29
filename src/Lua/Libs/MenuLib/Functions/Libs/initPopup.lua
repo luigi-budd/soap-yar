@@ -11,7 +11,7 @@ return function(id,instant)
 		local this_menu = ML.menus[popupitem_t.id]
 		
 		if this_menu.exit ~= nil
-			this_menu.exit(CR_POPUPCLOSED, instant)
+			this_menu.exit(CR_POPUPCLOSED, instant, this_menu)
 		end
 		
 		if this_menu.ps_flags & PS_NOSLIDEIN

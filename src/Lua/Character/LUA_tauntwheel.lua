@@ -40,7 +40,7 @@ local function cancelConds(p, nobuttons)
 	or soap.accspeed >= 4*FU
 		cancel = true
 	end
-	if (soap.jump == 1 or soap.spin)
+	if (soap.jump == 1 or soap.use)
 	and not nobuttons
 		cancel = true
 	end
@@ -158,6 +158,16 @@ SOAP_TAUNTS[SOAP_SKIN] = {
 	}
 }
 
+addHook("KeyDown", function(key)
+	if isdedicatedserver then return end
+	if key.repeated then return end
+	if gamestate ~= GS_LEVEL then return end
+	
+	if key.name == CV.taunt_key.string
+		COM_BufInsertText(consoleplayer, "soap_tauntwheel")
+	end
+end)
+
 -- workaround for mouse aiming for the taunt menu
 addHook("PlayerCmd",function(p,cmd)
 	if not (p.soaptable and p.soaptable.taunt.active) then return end
@@ -178,15 +188,20 @@ addHook("PlayerCmd",function(p,cmd)
 	cmd.aiming = $ - ((mouse.dy<<19) * player_invert * screen_invert)>>16
 end)
 
-rawset(_G, "Soap_TauntWheelThink", function(p)
+COM_AddCommand("soap_tauntwheel",function(p)
+	if gamestate ~= GS_LEVEL then return end
+	if not (p and p.valid) then return end
+	if p.spectator then return end
 	local soap = p.soaptable
-	local me = p.realmo
-	local cmd = p.cmd
+	if not soap then return end
 	local taunt = soap.taunt
+	if not (skins[p.skin].name == SOAP_SKIN or skins[p.skin].name == TAKIS_SKIN) then return end
+	local me = p.realmo
+	if not (me and me.valid) then return end
+	local cmd = p.cmd
 	
 	-- init
-	if (cmd.buttons & (BT_CUSTOM3) == (BT_CUSTOM3))
-	and (p.panim == PA_IDLE or p.panim == PA_RUN or soap.accspeed <= 5*FU)
+	if (p.panim == PA_IDLE or p.panim == PA_RUN or soap.accspeed <= 5*FU)
 	and (P_IsObjectOnGround(me))
 	and not (taunt.active or taunt.tics)
 	and me.health
@@ -202,6 +217,14 @@ rawset(_G, "Soap_TauntWheelThink", function(p)
 			CV_Set(cam_still, 1 - cam_still.value)
 		end
 	end
+
+end)
+
+rawset(_G, "Soap_TauntWheelThink", function(p)
+	local soap = p.soaptable
+	local me = p.realmo
+	local cmd = p.cmd
+	local taunt = soap.taunt
 	
 	if taunt.active
 		-- nice one asshole

@@ -6,7 +6,14 @@ local filepath = "client/soapyar/clientcvars.dat"
 local cv_save = {
 	CV.ai_style.name,
 	CV.quake_mul.name,
+	CV.taunt_key.name,
+	
+	CV.SYNC_airdashmode.name,
 }
+local cv_synched = {
+	[CV.SYNC_airdashmode.name] = true,
+}
+
 local function printf(...)
 	for k,str in ipairs({...})
 		print("\x83SOAP (I/O)\x80: "..str)
@@ -14,7 +21,7 @@ local function printf(...)
 end
 
 --load
-do
+local function loadfromfile(localonly)
 	local file = io.openlocal(filepath, "r")
 	if file
 		-- while this is meant to load client-side cvars,
@@ -23,7 +30,14 @@ do
 		printf("Loading preferences from '"..filepath.."'...")
 		local count = 1
 		local cvarname = ''
+		local skip = false
 		for line in file:lines()
+			if skip
+				skip = false
+				count = $ + 1
+				continue
+			end
+			
 			--Load values every other line
 			if count % 2 == 0
 				local cvar = CV.FindVar(cvarname)
@@ -34,6 +48,14 @@ do
 				end
 				count = $ + 1
 				continue
+			else
+				local cvar_local = cv_synched[line] ~= true
+				if (cvar_local and not localonly)
+				or (not cvar_local and localonly)
+					skip = true
+					count = $ + 1
+					continue
+				end
 			end
 			cvarname = line
 			count = $ + 1
@@ -42,6 +64,14 @@ do
 		printf("Done.")
 	end
 end
+loadfromfile(true)
+
+addHook("PlayerThink",function(p)
+	if p.jointime == TR * 3/4
+	and (p == consoleplayer)
+		loadfromfile(false)
+	end
+end)
 
 --save
 addHook("GameQuit",do

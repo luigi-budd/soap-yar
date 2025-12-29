@@ -2,6 +2,21 @@ rawset(_G, "SOAP_CV",{})
 local CV = SOAP_CV
 CV.PossibleValues = {}
 
+local CV_Lookup = {}
+setmetatable(CV_Lookup, {
+	__mode = "kv"
+})
+
+CV.FindVar = function(cv_name)
+	if CV_Lookup[cv_name]
+		return CV_Lookup[cv_name]
+	end
+	local cvar = CV_FindVar(cv_name)
+	CV_Lookup[cv_name] = cvar
+	return cvar
+end
+
+
 local iAmLua = "iAmLua"..P_RandomFixed()
 addHook("NetVars",function(n) iAmLua = n($); end)
 
@@ -24,7 +39,10 @@ end
 
 local CMD_BOOLEAN = 1
 local CMD_STRING = 2
+CV.commandtypes = {}
+
 local function CMD_Constructor(cv_name, tablename, type)
+	CV.commandtypes["_soap_"..cv_name] = type
 	COM_AddCommand("_soap_"..cv_name, function(p, ...)
 		if gamestate ~= GS_LEVEL then return end
 		local args = {...}
@@ -33,7 +51,7 @@ local function CMD_Constructor(cv_name, tablename, type)
 		local value = args[2]
 		
 		local soap = p.soaptable
-		
+		local type = CV.commandtypes["_soap_"..cv_name]
 		if type == CMD_BOOLEAN
 			soap.io[tablename] = (tonumber(value) == 1)
 		elseif type == CMD_STRING
@@ -62,29 +80,28 @@ CV.quake_mul = CV_RegisterVar({
 })
 CV.PossibleValues["soap_quakes"] = {values = quake_pv, length = 4}
 
---these will need to be synched
-CV.crouch_toggle = CV_RegisterVar({
-	name = "soap_airdashmode",
+CV.taunt_key = CV_RegisterVar({
+	name = "soap_tauntkey",
+	defaultvalue = "B",
+	flags = CV_SHOWMODIF,
+})
+
+-- cvars below here will need to be synched
+-- as of 2.2.15, because these all have a `can_change` field,
+-- we cant get the consvar_t directly from the CV_RegisterVar call
+-- see also: https://git.do.srb2.org/STJr/SRB2/-/merge_requests/2753
+
+CMD_Constructor("b-rushmode", "airdashmode", CMD_STRING)
+local brush_pv = {Inputs = 0, Camera = 1}
+CV.SYNC_airdashmode = CV_RegisterVar({
+	name = "soap_b-rushmode",
 	defaultvalue = "Inputs", --MUST have matching init values in soaptable
 	flags = CV_CALL,
-	PossibleValue = {Inputs = 0, Camera = 1},
-	can_change = CVSynched_CanChange,
+	PossibleValue = brush_pv,
 	func = function(cv)
-		COM_BufInsertText(consoleplayer, "_soap_airdashmode "..iAmLua.." "..cv.value)
+		COM_BufInsertText(consoleplayer, "_soap_b-rushmode "..iAmLua.." "..cv.string)
 	end,
+	can_change = CVSynched_CanChange,
 })
-CMD_Constructor("airdashmode", "airdashmode", CMD_STRING)
-
-local CV_Lookup = {}
-setmetatable(CV_Lookup, {
-	__mode = "kv"
-})
-
-CV.FindVar = function(cv_name)
-	if CV_Lookup[cv_name]
-		return CV_Lookup[cv_name]
-	end
-	local cvar = CV_FindVar(cv_name)
-	CV_Lookup[cv_name] = cvar
-	return cvar
-end
+CV.SYNC_airdashmode = CV.FindVar("soap_b-rushmode")
+CV.PossibleValues["soap_b-rushmode"] = {values = brush_pv, length = 2}
