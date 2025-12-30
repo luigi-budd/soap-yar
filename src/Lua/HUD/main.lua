@@ -7,14 +7,13 @@ addHook("HUD",function(v,p)
 	local hud = soap.hud
 	
 	if hud.painsurge
-		local frame = hud.painsurge
+		local frame = (7 - hud.painsurge)
 		local patch = v.cachePatch("SOAP_PS_"..frame)
 		local wid = (v.width() / v.dupx()) + 1
 		local hei = (v.height() / v.dupy()) + 1
 		local p_w = patch.width
 		local p_h = patch.height
-		local nudge = FU/2
-		v.drawStretched(nudge,nudge,
+		v.drawStretched(0,0,
 			FixedDiv(wid * FU, p_w * FU),
 			FixedDiv(hei * FU, p_h * FU),
 			patch,

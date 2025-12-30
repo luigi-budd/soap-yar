@@ -1824,7 +1824,7 @@ rawset(_G,"Soap_DeathThinker",function(p,me,soap)
 	and (CBW_Battle.Exiting or CBW_Battle.Timeout))
 	or (me.soap_knockout))
 	and not me.health
-	and soap.deathtype ~= DMG_DEATHPIT
+	and not (soap.deathtype == DMG_DEATHPIT or P_CheckDeathPitCollide(me))
 	--and (me.soap_deadtimer <= TR/3)
 		if me.sprite2 ~= SPR2_MSC2
 		and not (soap.onGround and me.soap_deadtimer > 3)
@@ -1834,7 +1834,7 @@ rawset(_G,"Soap_DeathThinker",function(p,me,soap)
 			me.tics = -1
 			me.soap_landondeath = true
 			if me.soap_deadtimer < 3
-				S_StartSound(me,sfx_sp_oww)
+				S_StartSound(me,sfx_sp_ow0)
 				S_StartSound(me,sfx_sp_kco)
 			end
 			

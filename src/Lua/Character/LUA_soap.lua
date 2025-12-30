@@ -38,6 +38,15 @@ local soap_rdashwind_base = SKINCOLOR_SAPPHIRE
 local soap_rdashwind_dest = SKINCOLOR_YELLOW
 local soap_rdashwind_inc = (soap_rdashwind_dest - soap_rdashwind_base)
 
+local function playknockoutsfx(p,me,soap)
+	local sound = P_RandomChance(FU/50) and sfx_sp_em1 or P_RandomRange(sfx_sp_ow0,sfx_sp_ow1)
+	if R_PointToDist(me.x,me.y) >= 1024*FU
+	and (p ~= displayplayer)
+		sound = sfx_sp_ow2
+	end
+	S_StartSound(me,sound)
+end
+
 local sfx_armacharge = sfx_s3k84
 local sfx_armacharge2 = sfx_s3ka3
 local function armasound(me, stop)
@@ -2218,7 +2227,7 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 				me.sprite2 = SPR2_MSC2
 				me.tics = -1
 				
-				S_StartSound(me,P_RandomChance(FU/50) and sfx_sp_em1 or sfx_sp_oww)
+				playknockoutsfx(p,me,soap)
 			end
 			me.soap_damagevar = nil
 		end
@@ -2235,9 +2244,9 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 			me.sprite2 = SPR2_MSC2
 			me.tics = -1
 			
-			S_StartSound(me,P_RandomChance(FU/50) and sfx_sp_em1 or sfx_sp_oww)
+			playknockoutsfx(p,me,soap)
 			S_StartSound(me,sfx_sp_db0)
-			soap.hud.painsurge = 4
+			soap.hud.painsurge = 6
 		end
 	else
 		soap.paintime = 0
@@ -3318,7 +3327,7 @@ addHook("MobjDamage", function(me,inf,sor,dmg,dmgt)
 			}
 			S_StartSound(me,sfx_sp_db0)
 			if inf_speed >= 30*me.scale
-				soap.hud.painsurge = 4
+				soap.hud.painsurge = 6
 			end
 		end
 		
@@ -3398,7 +3407,7 @@ addHook("MobjDeath", function(me,inf,sor,dmgt)
 				me.momx,me.momy,me.momz
 			}
 			soap.deathtype = 0
-			soap.hud.painsurge = 4
+			soap.hud.painsurge = 6
 		end
 	end
 end)

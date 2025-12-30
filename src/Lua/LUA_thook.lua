@@ -34,6 +34,10 @@ end, MT_RING_BLUEBOX)
 
 -- fuck it
 Takis_Hook.addHook("Soap_OnStunEnemy",function(mo)
+	mo.flags = $ &~(MF_NOCLIP|MF_NOCLIPHEIGHT|MF_NOCLIPTHING)
+end, MT_FANG)
+
+Takis_Hook.addHook("Soap_OnStunEnemy",function(mo)
 	P_KillMobj(mo)
 	return true
 end, MT_BUGGLE)

@@ -24,11 +24,23 @@ SafeFreeslot("sfx_sp_tch")
 sfxinfo[sfx_sp_tch].caption = "\x82SPINNING TOP\x80"
 SafeFreeslot("sfx_sp_jm2")
 sfxinfo[sfx_sp_jm2].caption = "/"
-SafeFreeslot("sfx_sp_oww")
-sfxinfo[sfx_sp_oww] = {
+
+SafeFreeslot("sfx_sp_ow0")
+sfxinfo[sfx_sp_ow0] = {
 	flags = SF_X4AWAYSOUND,
 	caption = "\x85".."EUROOOOWWWW!!!\x80"
 }
+SafeFreeslot("sfx_sp_ow1")
+sfxinfo[sfx_sp_ow1] = {
+	flags = SF_X4AWAYSOUND,
+	caption = "\x85".."Ough!\x80"
+}
+SafeFreeslot("sfx_sp_ow2")
+sfxinfo[sfx_sp_ow2] = {
+	flags = SF_X4AWAYSOUND|SF_X2AWAYSOUND,
+	caption = "\x85".."Auughhhh!\x80"
+}
+
 SafeFreeslot("sfx_sp_grb")
 sfxinfo[sfx_sp_grb].caption = "Grab"
 SafeFreeslot("sfx_sp_pry")
