@@ -780,7 +780,7 @@ rawset(_G,"Soap_DustRing",function(src,
 		P_SetScale(dust, initscale, true)
 		dust.destscale = scale + P_RandomFixed()
 		dust.scalespeed = scale / 24
-		P_Thrust(dust, fa, speed + FixedMul(P_RandomFixed(), scale))
+		P_ThrustEvenIn2D(dust, fa, speed + FixedMul(P_RandomFixed(), scale))
 		dust.momz = P_SignedRandom() * scale / 64
 		
 		if flip

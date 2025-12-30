@@ -163,7 +163,7 @@ addHook("KeyDown", function(key)
 	if key.repeated then return end
 	if gamestate ~= GS_LEVEL then return end
 	
-	if key.name == CV.taunt_key.string
+	if key.name:lower() == CV.taunt_key.string:lower()
 		COM_BufInsertText(consoleplayer, "soap_tauntwheel")
 	end
 end)
