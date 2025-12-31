@@ -33,6 +33,7 @@ local includes = {
 	"sounds.lua",
 	"player.lua",
 	"boombox.lua",
+	"spiderman.lua",
 }
 for k,file in ipairs(includes)
 	dofile("Character/SoapInclude/"..file)

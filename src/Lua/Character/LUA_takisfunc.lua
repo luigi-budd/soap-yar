@@ -610,7 +610,13 @@ rawset(_G,"Takis_HammerBlastHitbox",function(p)
 			Soap_ImpactVFX(found, me, nil,nil, true)
 			Soap_SpawnBumpSparks(found, me, nil,false, found.scale * 3/2, true)
 			Soap_DamageSfx(found, abs(me.momz), 30*me.scale, {ultimate = true})
-			P_DamageMobj(found,me,me, 2)
+			local damage = 1
+			if abs(takis.last.momz) >= 60*me.scale
+				damage = 2
+				S_StartSound(me,sfx_sp_db4)
+			end
+			
+			P_DamageMobj(found,me,me, damage)
 			enemyhit = true
 			didit = true
 		--Most likely a spike thing
