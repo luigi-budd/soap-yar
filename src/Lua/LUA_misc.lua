@@ -230,6 +230,7 @@ addHook("PostThinkFrame",do
 		end
 	end
 	for k,mace in ipairs(maces)
+		if not (mace and mace.valid) then continue end
 		mace.last_x = mace.x
 		mace.last_y = mace.y
 		mace.last_z = mace.z

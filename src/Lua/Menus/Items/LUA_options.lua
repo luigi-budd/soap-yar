@@ -290,6 +290,7 @@ local popup_id = MenuLib.addMenu({
 	init = function()
 		trb_reset()
 		trb.rebinding = true
+		ML.menus[ML.findMenu("soap_tauntkeyprompt")].lifetime = 0
 	end,
 	drawer = function(v, ML, menu, props)
 		local x,y = props.corner_x, props.corner_y
