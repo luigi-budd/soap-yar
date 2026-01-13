@@ -342,6 +342,7 @@ Takis_Hook.addHook("Takis_Thinker",function(p)
 			p.pflags = $|PF_THOKKED &~(PF_JUMPED|PF_SPINNING)
 			soap.dived = true
 			soap.sprung = false
+			soap.noability = $|NOABIL_SLIDE
 			--takis.thokked = true
 			
 			me.state = S_PLAY_GLIDE
@@ -677,6 +678,14 @@ Takis_Hook.addHook("Takis_Thinker",function(p)
 			p.drawangle = R_PointToAngle2(0,0,me.momx,me.momy)
 		else
 			p.drawangle = me.angle
+		end
+		
+		-- jump out of a dive
+		if (soap.jump == 1 or soap.c1 == 1)
+		and not (soap.noability & NOABIL_SLIDE)
+			me.state = S_PLAY_SOAP_SLIP
+			Soap_DoLunge(p, false)
+			soap.noability = $|NOABIL_DIVE
 		end
 	end
 	
@@ -1060,11 +1069,10 @@ Takis_Hook.addHook("MoveBlocked",function(me,thing,line, goingup)
 	
 	if me.skin ~= TAKIS_SKIN then return end
 	
-	if not (me.state == S_PLAY_DASH or me.state == S_PLAY_TAKIS_TORNADO) then return end
+	if not (me.state == S_PLAY_DASH or me.state == S_PLAY_TAKIS_TORNADO or me.state == S_PLAY_GLIDE) then return end
 	if goingup then return end
 	
-	if (soap.afterimage)
-	and ((thing and thing.valid) or (line and line.valid and P_LineIsBlocking(me,line)))
+	if ((thing and thing.valid) or (line and line.valid and P_LineIsBlocking(me,line)))
 		soap.rdashing = false
 		if soap.airdashed
 			soap.noairdashforme = true
