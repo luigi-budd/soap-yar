@@ -340,6 +340,7 @@ rawset(_G, "Soap_InitTable", function(p)
 		},
 		
 		dived = false,
+		canceltime = 0,
 	}
 	
 	CONS_Printf(p,"\x82Soap_InitTable(): Success!")

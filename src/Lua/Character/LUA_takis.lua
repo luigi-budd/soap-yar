@@ -672,6 +672,14 @@ Takis_Hook.addHook("Takis_Thinker",function(p)
 		Takis_ResetHammerTime(p)
 	end
 	
+	if soap.canceltime
+		soap.canceltime = $ - 1
+		if soap.canceltime == 0
+			soap.lunge.lunged = false
+			soap.lunge.angle = nil
+		end
+	end
+	
 	if (me.state == S_PLAY_GLIDE)
 		P_PitchRoll(me, FU/5)
 		if soap.accspeed > FU
@@ -679,13 +687,18 @@ Takis_Hook.addHook("Takis_Thinker",function(p)
 		else
 			p.drawangle = me.angle
 		end
+		p.thrustfactor = 2
+		soap.setrolltrol = true
 		
-		-- jump out of a dive
+		-- jump out of a dive / cancel a dive
 		if (soap.jump == 1 or soap.c1 == 1)
 		and not (soap.noability & NOABIL_SLIDE)
+		and not (soap.use)
 			me.state = S_PLAY_SOAP_SLIP
 			Soap_DoLunge(p, false)
 			soap.noability = $|NOABIL_DIVE
+			soap.setrolltrol = false
+			soap.canceltime = TR/2
 		end
 	end
 	
