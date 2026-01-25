@@ -1,5 +1,5 @@
 local function dust_type(me)
-	return (me.eflags & (MFE_UNDERWATER|MFE_TOUCHWATER)) and P_RandomRange(MT_SMALLBUBBLE,MT_MEDIUMBUBBLE) or MT_SPINDUST
+	return (me.eflags & (MFE_UNDERWATER|MFE_TOUCHWATER)) and P_RandomRange(MT_SMALLBUBBLE,MT_MEDIUMBUBBLE) or MT_SOAP_DUST
 end
 local function dust_noviewmobj(dust)
 	dust.dontdrawforviewmobj = me
@@ -335,9 +335,45 @@ Takis_Hook.addHook("Takis_Thinker",function(p)
 			end
 			P_InstaThrust(me,ang,FixedMul(speed,me.scale))
 			
+			local momz = FixedDiv(me.momz,me.scale)*soap.gravflip
+			local thrust = min((momz/2)+7*FU,18*FU)
+			Soap_ZLaunch(me,thrust)
+			
 			p.drawangle = ang
-			--CreateWindRing(p,me)
-			--TakisSpawnDustRing(me,16*me.scale,0)
+			local vertang = R_PointToAngle2(0, 0, FixedHypot(me.momx, me.momy), me.momz)
+			Soap_DustRing(me, dust_type(me), 16, {me.x,me.y,me.z + me.height/2},
+				100*me.scale, 16*me.scale,
+				me.scale/2, me.scale,
+				true, function(s)
+					s.momx = $ + me.momx * 3/4
+					s.momy = $ + me.momy * 3/4
+					s.momz = $ + me.momz * 3/4
+					dust_noviewmobj(s)
+				end,
+				ang, vertang
+			)
+			local sidepush = FixedDiv(me.radius,me.scale) * 3/2
+			local toppush = FixedDiv(FixedDiv(me.radius,me.scale) * 3/2, 8*FU)
+			local angstep = FixedDiv(45*FU, 8*FU)
+			for i = -8, 8, 2
+				if not i then continue end
+				local s = P_SpawnMobjFromMobj(me,
+					P_ReturnThrustX(nil, ang + ANGLE_90, sidepush * sign(i)),
+					P_ReturnThrustY(nil, ang + ANGLE_90, sidepush * sign(i)),
+					toppush * abs(i), MT_PARTICLE
+				)
+				s.scale = $ / 2
+				s.state = S_SOAP_IMPACT_LINE
+				s.angle = ang - ANG15 * sign(i) + ANGLE_180
+				s.rollangle = InvAngle(vertang) + FixedAngle(angstep * abs(i)) - ANGLE_22h
+				s.translation = "AllWhite"
+				s.tracer = inf
+				s.renderflags = $|RF_ALWAYSONTOP
+				s.momx = $ + me.momx / 2
+				s.momy = $ + me.momy / 2
+				s.momz = $ + me.momz / 2
+			end
+			Soap_SquashMacro(p, {ease_func = "outsine", ease_time = 12, x = -FU*7/10, y = -FU*3/10})
 			
 			p.pflags = $|PF_THOKKED &~(PF_JUMPED|PF_SPINNING)
 			soap.dived = true
@@ -346,9 +382,6 @@ Takis_Hook.addHook("Takis_Thinker",function(p)
 			--takis.thokked = true
 			
 			me.state = S_PLAY_GLIDE
-			local momz = FixedDiv(me.momz,me.scale)*soap.gravflip
-			local thrust = min((momz/2)+7*FU,18*FU)
-			Soap_ZLaunch(me,thrust)
 		end
 		
 	end

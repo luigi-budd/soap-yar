@@ -290,6 +290,7 @@ rawset(_G,"Takis_DoClutch",function(p,riding)
 	--takis.coyote = 0
 	takis.noability = $ &~NOABIL_AFTERIMAGE
 	
+	local angrot = FixedDiv(P_RandomRange(40,80)*FU, 5*FU)
 	local angoff = ANGLE_45
 	local dist = 20*FU
 	local pushx = P_ReturnThrustX(nil, ang + ANGLE_90, 8*FU)
@@ -308,6 +309,21 @@ rawset(_G,"Takis_DoClutch",function(p,riding)
 		fx.momz = takis.rmomz
 		fx.state = combod and S_TAKIS_CDUST2 or S_TAKIS_CDUST1
 		fx.flags = $ &~MF_NOCLIPHEIGHT
+		
+		if not combod then continue end
+		for j = 0,4
+			local s = P_SpawnMobjFromMobj(me,
+				P_ReturnThrustX(nil, ang + angoff*i, dist) + pushx*i,
+				P_ReturnThrustY(nil, ang + angoff*i, dist) + pushy*i,
+				0, MT_PARTICLE
+			)
+			s.state = S_SOAP_IMPACT_LINE
+			s.angle = fx.angle
+			s.rollangle = FixedAngle(angrot * j)
+			s.tracer = inf
+			s.renderflags = $|RF_ALWAYSONTOP
+			s.momx,s.momy = mo.momx/2,mo.momy/2
+		end
 	end
 end)
 

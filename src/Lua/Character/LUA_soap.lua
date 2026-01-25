@@ -1241,6 +1241,40 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 				end
 			end
 			
+			local vertang = R_PointToAngle2(0, 0, FixedHypot(me.momx, me.momy), me.momz)
+			Soap_DustRing(me, dust_type(me), 16, {me.x,me.y,me.z + me.height/2},
+				126*me.scale, 20*me.scale,
+				me.scale/2, me.scale,
+				true, function(s)
+					s.momx = $ + me.momx * 3/4
+					s.momy = $ + me.momy * 3/4
+					s.momz = $ + me.momz * 3/4
+					dust_noviewmobj(s)
+				end,
+				angle, vertang
+			)
+			local sidepush = FixedDiv(me.radius,me.scale) * 3/2
+			local toppush = FixedDiv(FixedDiv(me.radius,me.scale) * 3/2, 8*FU)
+			local angstep = FixedDiv(45*FU, 8*FU)
+			for i = -8, 8, 2
+				if not i then continue end
+				local s = P_SpawnMobjFromMobj(me,
+					P_ReturnThrustX(nil, angle + ANGLE_90, sidepush * sign(i)),
+					P_ReturnThrustY(nil, angle + ANGLE_90, sidepush * sign(i)),
+					toppush * abs(i), MT_PARTICLE
+				)
+				s.scale = $ / 2
+				s.state = S_SOAP_IMPACT_LINE
+				s.angle = angle - ANG15 * sign(i) + ANGLE_180
+				s.rollangle = vertang + FixedAngle(angstep * abs(i)) - ANGLE_22h
+				s.translation = "AllWhite"
+				s.tracer = inf
+				s.renderflags = $|RF_ALWAYSONTOP
+				s.momx = $ + me.momx / 2
+				s.momy = $ + me.momy / 2
+				s.momz = $ + me.momz / 2
+			end
+			
 			if soap.airdashcharge == 0
 				S_StartSound(me,sfx_sp_dss)
 			else
@@ -1315,6 +1349,7 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 				thrust = $ + 5*FU
 			end
 			
+			Soap_SquashMacro(p, {ease_func = "outsine", ease_time = 12, x = -FU*7/10, y = -FU*3/10})
 			Soap_ZLaunch(me, thrust)
 			p.pflags = $|PF_JUMPED &~(PF_STARTJUMP|PF_SPINNING)
 			me.state = S_PLAY_MELEE
@@ -3304,7 +3339,7 @@ addHook("MobjDamage", function(me,inf,sor,dmg,dmgt)
 	S_StartSoundAtVolume(me,sfx_sp_smk,255*3/4)
 	S_StartSound(me,sfx_sp_dmg)
 	if Soap_IsLocalPlayer(p)
-		Soap_StartQuake((20 + p.timeshit*3/2)*FU, 16 + 16*(p.losstime / (10*TR)),
+		Soap_StartQuake((20 + p.timeshit*3/2)*FU, 16 + 4*(p.losstime / (10*TR)),
 			nil,
 			512*me.scale
 		)
@@ -3344,6 +3379,8 @@ addHook("MobjDamage", function(me,inf,sor,dmg,dmgt)
 		end
 	end
 	Soap_ImpactVFX(me, inf, nil, power)
+	me.state = S_PLAY_PAIN
+	Soap_Hitlag.addHitlag(me, 10, true, false)
 end,MT_PLAYER)
 
 --soap death hook

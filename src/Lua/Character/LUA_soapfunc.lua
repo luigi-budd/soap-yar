@@ -612,6 +612,12 @@ rawset(_G,"Soap_DamageSfx", function(src, power, maxpow, props)
 end)
 
 --@src is the source of the vfx, not of the damage (thats @inf)
+local damagecolors = {
+	SKINCOLOR_WHITE,
+	SKINCOLOR_PEPPER,
+	SKINCOLOR_MAGENTA,
+	SKINCOLOR_YELLOW
+}
 rawset(_G,"Soap_ImpactVFX",function(src,inf, distmul, scalemul, forcesplat)
 	scalemul = $ or FU
 	local disp = 25*FU
@@ -679,7 +685,28 @@ rawset(_G,"Soap_ImpactVFX",function(src,inf, distmul, scalemul, forcesplat)
 				bam.flags2 = $|MF2_DONTDRAW
 			end
 		end
-		
+	end
+	
+	if forcesplat then return end
+	
+	local damagecolor = damagecolors[P_RandomRange(1, #damagecolors)]
+	local irad = 34*src.scale
+	for i = 1,16
+		local ha = FixedAngle(Soap_RandomFixedRange(0,360*FU))
+		local va = FixedAngle(Soap_RandomFixedRange(0,360*FU))
+		local v = SphereToCartesian(ha,va)
+		local s = P_SpawnMobjFromMobj(src,
+			FixedMul(irad, v.x),
+			FixedMul(irad, v.y),
+			FixedMul(irad, v.z),
+			MT_PARTICLE --MT_SOAP_FREEZEGFX
+		)
+		s.state = S_SOAP_IMPACT_LINE2
+		s.angle = ha
+		s.rollangle = va
+		s.color = damagecolor
+		s.tracer = inf
+		s.renderflags = $|RF_ALWAYSONTOP
 	end
 end)
 
@@ -750,7 +777,7 @@ rawset(_G,"Soap_DustRing",function(src,
 	pos,
 	radius, speed,
 	initscale, scale,
-	threeaxis, --TODO: implement this
+	threeaxis,
 	callback,
 	angle,aim -- for threeaxis
 )
@@ -758,6 +785,69 @@ rawset(_G,"Soap_DustRing",function(src,
 	speed = $ or 0
 	initscale = $ or FU/2
 	scale = $ or FU
+	
+	-- this block is chrispychars code
+	if threeaxis
+		local momz = src.momz
+		if alwaysabove
+			momz = -P_MobjFlip(src)*abs($)
+		end
+		if abs(momz) < src.scale
+			momz = $ < 0 and -src.scale or src.scale
+		end
+		
+		local forwardangle = angle
+		local sideangle = forwardangle + ANGLE_90
+		local vangle = aim
+		
+		local cosine = cos(vangle)
+		local sine = sin(vangle)
+		
+		local radius = FixedDiv(src.height, src.scale) >> 1
+		local xspawn = -FixedMul(FixedMul(cos(forwardangle), cosine), radius)
+		local yspawn = -FixedMul(FixedMul(sin(forwardangle), cosine), radius)
+		local zspawn = -FixedMul(sine, radius)
+		
+		local hthrust = 0
+		local vthrust = 0
+		if thrust
+			hthrust = FixedMul(thrust, cosine)
+			vthrust = FixedMul(thrust, sine)
+		end
+		
+		cosine = FixedMul($, speed)
+		sine = FixedMul($, speed)
+		
+		local angstep = FixedDiv(360*FU, amount*FU)
+		for i = 0, amount
+			local dust = P_SpawnMobjFromMobj(src, xspawn, yspawn, radius, type)
+			local a = FixedAngle(i*angstep) + forwardangle
+			local forwardthrust = FixedMul(cos(a), sine)
+			local sidethrust = FixedMul(sin(a), speed)
+			local zthrust = FixedMul(cosine, cos(a))
+			
+			dust.z = $ + zspawn
+			
+			P_ThrustEvenIn2D(dust, forwardangle, forwardthrust - hthrust)
+			P_ThrustEvenIn2D(dust, sideangle, sidethrust)
+			dust.momz = -zthrust - vthrust
+			
+			dust.angle = a + ANGLE_90
+			P_SetScale(dust, initscale, true)
+			dust.destscale = scale + P_RandomFixed()
+			dust.scalespeed = scale / 24
+			
+			--remove interp
+			P_SetOrigin(dust, dust.x,dust.y,dust.z)
+			--Sure
+			dust.alpha = src.alpha
+			
+			if callback ~= nil
+				callback(dust)
+			end
+		end
+		return
+	end
 	
 	local flip = P_MobjFlip(src) == -1
 	if flip
