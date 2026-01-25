@@ -101,7 +101,6 @@ rawset(_G, "Soap_InitTable", function(p)
 		
 		onGround = false,
 		inPain = false,
-		inFangsHeist = false,
 		inWater = false,
 		in2D = false,
 		inBattle = false,

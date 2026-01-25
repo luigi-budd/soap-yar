@@ -484,11 +484,6 @@ end)
 Takis_Hook.addHook("Soap_DashSpeeds", function(p, dash, time, noadjust)
 	local soap = p.soaptable
 	
-	if (soap.inFangsHeist)
-		dash = $ / 2
-		time = $ * 3/2
-		soap.nerfed = true
-	end
 	if soap.inBattle
 	or Soap_IsCompGamemode()
 		if not soap.inBattle

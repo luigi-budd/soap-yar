@@ -1248,7 +1248,7 @@ local function try_pvp_collide(me,thing)
 		if Soap_CanDamageEnemy(p, thing)
 			if not Soap_ZCollide(me,thing, true) then return end
 			
-			--hit by r-dash / b-rush
+			--hit by clutch
 			if (soap.afterimage)
 				Soap_ImpactVFX(thing,me)
 				
@@ -1292,8 +1292,6 @@ local function try_pvp_collide(me,thing)
 		return
 	end
 	
-	if not Soap_ZCollide(me,thing) then return end
-	
 	--now for the other guy
 	local p2 = thing.player
 	local soap2 = p2.soaptable
@@ -1301,104 +1299,43 @@ local function try_pvp_collide(me,thing)
 	
 	if not Soap_CanHurtPlayer(p, p2, battlepass) then return end
 	
-	--hit by pound
-	if (soap.pounding)
+	--hit by clutch
+	if (soap.afterimage)
 		Soap_ImpactVFX(thing,me)
-		local damage = 25
 		
-		local power = 5*FU + FixedDiv(abs(me.momz),me.scale)
-		Soap_DamageSfx(thing, power, 35*FU)
-		if (FixedDiv(power, 35*FU) >= FU/2)
-			S_StartSound(me,sfx_sp_db4)
-			local work = FixedDiv(power, 35*FU) - FU/2
-			repeat
-				Soap_ImpactVFX(thing,me, FU + work*7)
-				work = $ - FU/4
-				damage = $ + 5
-			until (work <= 0)
+		local power = FixedMul(10*FU + max(soap.accspeed - 20*FU,0), me.scale)
+		
+		local hitlag_tics = 5
+		--P_Thrust(me, R_PointToAngle2(0,0,me.momx,me.momy), me.scale*8)
+		
+		P_DamageMobj(thing, me,me)
+		if generic_slingshot(p,me,soap)
+			Soap_Hitlag.addHitlag(me, hitlag_tics, false)
+			--Soap_DamageSfx(thing, FU*3/4,FU, {ultimate = false})
+			S_StartSoundAtVolume(me, sfx_tk_hml, 255*3/4)
+			S_StartSound(me, sfx_sp_kil)
+			S_StartSound(me, sfx_sp_smk)
+			
+			P_StartQuake(power, hitlag_tics + 3,
+				{me.x, me.y, me.z},
+				512*me.scale + power
+			)
+		else
+			Soap_DamageSfx(thing, power, 60*FU, {ultimate = true})
+			P_StartQuake(power/2, hitlag_tics,
+				{me.x, me.y, me.z},
+				512*me.scale + power
+			)
 		end
 		
-		local hitlag_tics = 10 + (power/FU / 5)
-		P_StartQuake(power*2, hitlag_tics,
-			{me.x, me.y, me.z},
-			512*me.scale + power
-		)
-		
-		P_DamageMobj(thing, me,me, damage)
-		me.momz = $ - (3 * me.scale * soap.gravflip)
-		
-		Soap_Hitlag.addHitlag(me, 7, false)
 		if (thing and thing.valid)
+		and (thing.health)
+		and not (thing.flags & MF_MONITOR)
 			Soap_Hitlag.addHitlag(thing, hitlag_tics, true)
 			if not (thing.flags & MF_NOGRAVITY)
 				Soap_ZLaunch(thing, 5*FU)
 			end
 		end
-		
-		Soap_ZLaunch(me, 3*FU, true)
-		return
-	end
-	
-	--hit by uppercut
-	if soap.uppercutted
-	and (me.momz*soap.gravflip > 0)
-	and (me.momz*soap.gravflip) > (thing.momz * P_MobjFlip(thing))
-	and (me.sprite2 == SPR2_MLEE)
-		P_DamageMobj(thing, me,me, 40)
-		soap.uppercut_spin = 360*FU
-		soap.canuppercut = true
-		
-		local power = 5*FU + FixedDiv(me.momz,me.scale)
-		Soap_ZLaunch(thing, power)
-		Soap_DamageSfx(thing, power, 35*FU)
-		
-		local hitlag_tics = 15 + (power/FU / 3)
-		P_StartQuake(power*2, hitlag_tics,
-			{me.x, me.y, me.z},
-			512*me.scale + power
-		)
-		
-		Soap_Hitlag.addHitlag(me, hitlag_tics, false)
-		Soap_Hitlag.addHitlag(thing, hitlag_tics, true)
-		
-		Soap_ImpactVFX(thing,me)
-		Soap_ZLaunch(me, 3*FU, true)
-		return
-	end
-	
-	--r-dashing but too slow to deal damage
-	if (soap.rdashing)
-	and min(soap.accspeed, p.normalspeed) < skins[p.skin].normalspeed + soap._maxdash
-	and (me.state == S_PLAY_RUN)
-		handleBump(p,me,thing)
-		return false
-	end
-	
-	--hit by r-dash / b-rush
-	if (soap.rdashing and p.normalspeed >= skins[p.skin].normalspeed + soap._maxdash)
-	or (soap.airdashed and me.state == S_PLAY_FLOAT_RUN and soap.airdashcharge == 0)
-	and (soap.accspeed > soap2.accspeed)
-		
-		Soap_ZLaunch(thing, 5*FU)
-		local power = FixedMul(10*FU + soap.accspeed, me.scale)
-		P_InstaThrust(thing,
-			R_PointToAngle2(0,0,me.momx,me.momy),
-			power
-		)
-		Soap_DamageSfx(thing, power, 85*FU)
-		
-		P_DamageMobj(thing, me,me, 30 + (power/2)/FU)
-		
-		local hitlag_tics = 15 + (power/FU / 7)
-		P_StartQuake(power/2, hitlag_tics,
-			{me.x, me.y, me.z},
-			512*me.scale + power
-		)
-		P_Thrust(me, R_PointToAngle2(0,0,me.momx,me.momy), me.scale*8)
-		
-		Soap_ImpactVFX(thing,me)
-		Soap_Hitlag.addHitlag(me, hitlag_tics, false)
-		Soap_Hitlag.addHitlag(thing, hitlag_tics, true)
 		Soap_SpawnBumpSparks(me, thing, nil, true)
 		return
 	end

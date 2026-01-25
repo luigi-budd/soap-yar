@@ -583,7 +583,6 @@ rawset(_G,"Takis_HammerBlastHitbox",function(p)
 	
 	local nerfed = false
 	if takis.inBattle
-	or (FangsHeist and FangsHeist.isMode())
 	or G_RingSlingerGametype()
 		nerfed = true
 	end
@@ -680,45 +679,22 @@ rawset(_G,"Takis_HammerBlastHitbox",function(p)
 				Soap_ImpactVFX(found, me, nil,nil, true)
 				P_DoSpring(found,me)
 			end
-		/*
 		elseif (found.player and found.player.valid)
-			if CanPlayerHurtPlayer(p,found.player)
-				local bam1 = SpawnBam(ref)
-				bam1.renderflags = $|RF_FLOORSPRITE
-				SpawnEnemyGibs(thok,found)
-				S_StartSound(found,sfx_smack)
-				S_StartSound(me,sfx_sdmkil)
-				if not nerfed
-					P_KillMobj(found,me,me,DMG_CRUSHED)
-				else
-					P_DamageMobj(found,me,me,2)
-				end
-				TakisAddHurtMsg(found.player,p,HURTMSG_HAMMERBOX)
+			local p2 = found.player
+			
+			if Soap_CanHurtPlayer(p, p2)
+				Soap_ImpactVFX(found, me, nil,nil, true)
+				
+				Soap_ImpactVFX(found, me, nil,nil, true)
+				Soap_SpawnBumpSparks(found, me, nil,false, found.scale * 3/2, true)
+				Soap_DamageSfx(found, abs(me.momz), 30*me.scale, {ultimate = true})
+				P_DamageMobj(found,me,me)
+				
 				if not found.health
 					found.alreadykilledthis = true
 				end
 				didit = true
-			elseif peptoboxed(found)
-				didit = true
 			end
-		elseif not liteBuild
-		and (found.type == MT_HHTRIGGER)
-			local bam1 = SpawnBam(ref)
-			bam1.renderflags = $|RF_FLOORSPRITE
-			local tl = tonumber(mapheaderinfo[gamemap].takis_hh_timelimit or 3*60)*TR
-			if mapheaderinfo[gamemap].takis_hh_timelimit ~= nil
-			and string.lower(tostring(mapheaderinfo[gamemap].takis_hh_timelimit)) == "none"
-				tl = 0
-			end
-			HH_Trigger(found,p,tl)
-			
-			S_StartSound(found,found.info.deathsound)
-			found.state = found.info.deathstate
-			
-			found.spritexscaleadd = 2*FU
-			found.spriteyscaleadd = -FU*3/2
-			didit = true
-		*/
 		end
 	end, 
 	thok,

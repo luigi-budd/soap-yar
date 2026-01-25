@@ -187,7 +187,6 @@ rawset(_G,"Soap_Booleans", function(p)
 	end
 	
 	--lol
-	soap.inFangsHeist = FangsHeist and FangsHeist.playerHasSign(p)
 	soap.inWater = (me.eflags & (MFE_UNDERWATER|MFE_TOUCHLAVA) == MFE_UNDERWATER)
 	soap.in2D = (me.flags2 & MF2_TWOD or twodlevel)
 	soap.inBattle = (CBW_Battle and CBW_Battle.BattleGametype())
