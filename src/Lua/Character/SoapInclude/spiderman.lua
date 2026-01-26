@@ -53,6 +53,11 @@ local function blockedfunc(bomb, line)
 end
 
 addHook("MobjThinker",function(bomb)
+	if not (bomb.tracer_player and bomb.tracer_player.valid)
+		P_RemoveMobj(bomb)
+		return
+	end
+	
 	if not bomb.extravalue2
 		bomb.base_momx = bomb.momx
 		bomb.base_momy = bomb.momy

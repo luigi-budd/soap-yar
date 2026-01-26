@@ -6,7 +6,7 @@ addHook("MobjThinker",function(ai)
 		return true
 	end
 	
-	ai.frame = ai.takis_frame
+	ai.frame = (ai.takis_frame or A)
 	
 	if SOAP_CV.ai_style.value == 3 then
 		if (leveltime/4) & 1 then
