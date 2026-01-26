@@ -76,3 +76,11 @@ states[S_PLAY_SOAP_SLIP] = {
 	end,
 	nextstate = S_PLAY_SOAP_SLIP,
 }
+
+SafeFreeslot("S_PLAY_SOAP_RAM")
+states[S_PLAY_SOAP_RAM] = {
+	sprite = SPR_PLAY,
+	frame = SPR2_MSC5,
+	tics = 8,
+	nextstate = S_PLAY_DASH
+}

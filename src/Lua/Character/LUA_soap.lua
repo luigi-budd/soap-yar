@@ -15,6 +15,7 @@
 	- MSC2: battlemod knockout
 	- MSC3: death pit shoes
 	- MSC4: death taunt
+	- MSC5: r-dash ram
 */
 
 --max speed increase
@@ -155,20 +156,6 @@ local function soap_poundonland(p,me,soap)
 			end
 		end
 		
-		/*
-		if me.health
-		and not soap.inPain
-			Soap_ZLaunch(me,4*FU)
-		end
-		*/
-		local quake_tics = 16 + (FixedDiv(br,me.scale)/FU / 25)
-		Soap_StartQuake(20*FU + br/40, quake_tics,
-			{me.x,me.y,me.z},
-			512*me.scale
-		)
-		Soap_DirBreak(p,me, R_PointToAngle2(0,0,me.momx,me.momy), true)
-		S_StartSound(me,sfx_pstop)
-		
 		if me.health
 			P_MovePlayer(p)
 			
@@ -233,8 +220,9 @@ local function soap_poundonland(p,me,soap)
 		end
 		
 		--You need to be holding jump to activate the shield abilities
+		local noquake = false
 		if (soap.jump)
-			if shield == SH_BUBBLEWRAP
+			if (shield == SH_BUBBLEWRAP or shield == SH_ELEMENTAL)
 			--dont bother if endlag's gonna kill our speed
 			and not Soap_IsCompGamemode()
 				P_DoBubbleBounce(p)
@@ -252,11 +240,30 @@ local function soap_poundonland(p,me,soap)
 				)
 				me.state = S_PLAY_ROLL
 				p.drawangle = me.angle
+				noquake = true
 			elseif shield == SH_ARMAGEDDON
 			and not soap.inBattle
 			and (poundtime >= 10)
 				P_BlackOw(p)
 			end
+		end
+		
+		Soap_DirBreak(p,me, R_PointToAngle2(0,0,me.momx,me.momy), true)
+		if not noquake
+			local quake_tics = 16 + (FixedDiv(br,me.scale)/FU / 25)
+			if Soap_IsCompGamemode()
+				quake_tics = $ * 3/4
+			end
+			local intensity = 20*FU + br/40
+			if Soap_IsCompGamemode()
+				intensity = $ / 2
+			end
+			
+			Soap_StartQuake(intensity, quake_tics,
+				{me.x,me.y,me.z},
+				512*me.scale
+			)
+			S_StartSound(me,sfx_pstop)
 		end
 		
 		if Soap_IsCompGamemode()
@@ -1729,7 +1736,7 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 				end
 			end
 			
-			if me.state == S_PLAY_DASH
+			if me.state == S_PLAY_DASH or me.state == S_PLAY_SOAP_RAM
 				if not soap.onGround
 					S_StopSoundByID(me, sfx_sp_mc2)
 					if not S_SoundPlaying(me,sfx_sp_mac)
@@ -2595,7 +2602,8 @@ addHook("FollowMobj",function(p, m_peel) --master peel
 	
 	m_peel.max_outs = peels
 	
-	if me.state ~= S_PLAY_DASH
+	if not (me.state == S_PLAY_DASH
+	or me.state == S_PLAY_SOAP_RAM)
 	--and false
 		if #m_peel.outs
 			for i = -m_peel.max_outs, m_peel.max_outs
@@ -3003,9 +3011,11 @@ local function try_pvp_collide(me,thing)
 			and (thing.health)
 				Soap_ImpactVFX(thing, me)
 				local damage = 1
-				
 				local power = 5*FU + FixedDiv(abs(me.momz),me.scale*3)
+				local hitlag_tics = 10 + ((power/FU) / 5)
 				Soap_DamageSfx(thing, power, 35*FU)
+				
+				local halftic = hitlag_tics/2
 				if (FixedDiv(power, 35*FU) >= FU/2)
 					S_StartSound(me,sfx_sp_db4)
 					local work = FixedDiv(power, 35*FU) - FU/2
@@ -3014,9 +3024,32 @@ local function try_pvp_collide(me,thing)
 						work = $ - FU/4
 						damage = $ + 2
 					until (work <= 0)
+					
+					local rad = FixedDiv(me.radius, me.scale)
+					local hei = FixedDiv(me.height, me.scale)
+					for i = 0, 32
+						local s = P_SpawnMobjFromMobj(me,
+							Soap_RandomFixedRange(-rad, rad),
+							Soap_RandomFixedRange(-rad, rad),
+							Soap_RandomFixedRange(0, hei) + 256*FU,
+							MT_PARTICLE
+						)
+						s.state = S_SOAP_IMPACT_LINE2
+						s.angle = me.angle - ANGLE_90
+						s.color = armacolors[P_RandomRange(1, #armacolors)]
+						s.rollangle = -ANGLE_90
+						s.renderflags = $|RF_ALWAYSONTOP
+						s.spriteyscale = $ * 3/2
+						s.flags = $|MF_NOCLIPTHING|MF_NOCLIP|MF_NOCLIPHEIGHT|MF_NOBLOCKMAP
+						s.takis_flingme = false
+						local offset = P_RandomRange(-4, 8)
+						s.tics = $ + halftic + offset
+						s.anim_duration = $ + halftic + offset
+						-- stuff breaks if too many things have hitlag so watch out
+						--Soap_Hitlag.addHitlag(s, hitlag_tics / 2, false)
+					end
 				end
 				
-				local hitlag_tics = 10 + ((power/FU) / 5)
 				Soap_StartQuake(power*2, hitlag_tics,
 					{me.x, me.y, me.z},
 					512*me.scale + power
@@ -3025,7 +3058,7 @@ local function try_pvp_collide(me,thing)
 				DealDamage(thing, me,me, damage)
 				me.momz = $ - (3 * me.scale * soap.gravflip)
 				
-				Soap_Hitlag.addHitlag(me, hitlag_tics - 3, false)
+				Soap_Hitlag.addHitlag(me, hitlag_tics, false)
 				if (thing and thing.valid)
 				and not (thing.flags & MF_MONITOR)
 					Soap_Hitlag.addHitlag(thing, hitlag_tics, true)
@@ -3093,7 +3126,27 @@ local function try_pvp_collide(me,thing)
 					{me.x, me.y, me.z},
 					512*me.scale + power
 				)
-				--P_Thrust(me, R_PointToAngle2(0,0,me.momx,me.momy), me.scale*8)
+				P_Thrust(me, R_PointToAngle2(0,0,me.momx,me.momy), me.scale*8)
+				if (me.state == S_PLAY_DASH or me.state == S_PLAY_SOAP_RAM)
+					me.state = S_PLAY_SOAP_RAM
+					local follow = P_SpawnMobjFromMobj(me,0,0,0,MT_SOAP_FREEZEGFX)
+					follow.tics = -1
+					follow.fuse = -1
+					follow.tracer = me
+					follow.bigwind = true
+					follow.state = S_TAKIS_SLINGFX
+					follow.dontdrawforviewmobj = me
+					follow.zcorrect = true
+					follow.angle = me.angle - ANGLE_90
+					follow.dist = 20*FU
+					Soap_SquashMacro(p, {
+						ease_func = "inexpo",
+						ease_time = 6,
+						x = FU * 1/5,
+						y = FU/4,
+						singular = true
+					})
+				end
 				
 				DealDamage(thing, me,me)
 				
@@ -3131,7 +3184,10 @@ local function try_pvp_collide(me,thing)
 		local damage = 25
 		
 		local power = 5*FU + FixedDiv(abs(me.momz),me.scale)
+		local hitlag_tics = 10 + (power/FU / 5)
+		local halftic = hitlag_tics/2
 		Soap_DamageSfx(thing, power, 35*FU)
+		
 		if (FixedDiv(power, 35*FU) >= FU/2)
 			S_StartSound(me,sfx_sp_db4)
 			local work = FixedDiv(power, 35*FU) - FU/2
@@ -3140,9 +3196,30 @@ local function try_pvp_collide(me,thing)
 				work = $ - FU/4
 				damage = $ + 5
 			until (work <= 0)
+			
+			local rad = FixedDiv(me.radius, me.scale)
+			local hei = FixedDiv(me.height, me.scale)
+			for i = 0, 32
+				local s = P_SpawnMobjFromMobj(me,
+					Soap_RandomFixedRange(-rad, rad),
+					Soap_RandomFixedRange(-rad, rad),
+					Soap_RandomFixedRange(0, hei) + 256*FU,
+					MT_PARTICLE
+				)
+				s.state = S_SOAP_IMPACT_LINE2
+				s.angle = me.angle - ANGLE_90
+				s.color = armacolors[P_RandomRange(1, #armacolors)]
+				s.rollangle = -ANGLE_90
+				s.renderflags = $|RF_ALWAYSONTOP
+				s.spriteyscale = $ * 3/2
+				s.flags = $|MF_NOCLIPTHING|MF_NOCLIP|MF_NOCLIPHEIGHT|MF_NOBLOCKMAP
+				s.takis_flingme = false
+				local offset = P_RandomRange(-4, 8)
+				s.tics = $ + halftic + offset
+				s.anim_duration = $ + halftic + offset
+			end
 		end
 		
-		local hitlag_tics = 10 + (power/FU / 5)
 		Soap_StartQuake(power*2, hitlag_tics,
 			{me.x, me.y, me.z},
 			512*me.scale + power
@@ -3151,7 +3228,7 @@ local function try_pvp_collide(me,thing)
 		P_DamageMobj(thing, me,me, damage)
 		me.momz = $ - (3 * me.scale * soap.gravflip)
 		
-		Soap_Hitlag.addHitlag(me, 7, false)
+		Soap_Hitlag.addHitlag(me, hitlag_tics, false)
 		if (thing and thing.valid)
 			Soap_Hitlag.addHitlag(thing, hitlag_tics, true)
 			if not (thing.flags & MF_NOGRAVITY)
@@ -3220,6 +3297,19 @@ local function try_pvp_collide(me,thing)
 			512*me.scale + power
 		)
 		P_Thrust(me, R_PointToAngle2(0,0,me.momx,me.momy), me.scale*8)
+		if (me.state == S_PLAY_DASH or me.state == S_PLAY_SOAP_RAM)
+			me.state = S_PLAY_SOAP_RAM
+			local follow = P_SpawnMobjFromMobj(me,0,0,0,MT_SOAP_FREEZEGFX)
+			follow.tics = -1
+			follow.fuse = -1
+			follow.tracer = me
+			follow.bigwind = true
+			follow.state = S_TAKIS_SLINGFX
+			follow.dontdrawforviewmobj = me
+			follow.zcorrect = true
+			follow.angle = me.angle - ANGLE_90
+			follow.dist = 20*FU
+		end
 		
 		Soap_ImpactVFX(thing,me)
 		Soap_Hitlag.addHitlag(me, hitlag_tics, false)
@@ -3511,7 +3601,7 @@ Takis_Hook.addHook("PostThinkFrame",function(p)
 		return
 	elseif me.oldhitlag
 		--jump after ramming midair
-		if (soap.rdashing and me.state == S_PLAY_DASH)
+		if (soap.rdashing and (me.state == S_PLAY_DASH or me.state == S_PLAY_SOAP_RAM))
 		and soap.jump
 		and not soap.onGround
 			p.pflags = $ &~(PF_JUMPED)
@@ -3531,7 +3621,7 @@ Takis_Hook.addHook("PostThinkFrame",function(p)
 	
 	if (me.flags & MF_NOTHINK and not me.hitlag) then return end
 	
-	if me.state == S_PLAY_DASH
+	if me.state == S_PLAY_DASH or me.state == S_PLAY_SOAP_RAM
 		p.drawangle = R_PointToAngle2(0,0,me.momx,me.momy) --soap.dashangle
 	end
 	
