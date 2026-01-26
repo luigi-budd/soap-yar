@@ -3398,10 +3398,15 @@ rawset(_G, "Soap_DoLunge",function(p, fromjump)
 	end
 	Soap_RemoveSquash(p, "soap_slide")
 	
+	-- takis gets a little less speed from lunges
+	local minspeed = (me.skin == TAKIS_SKIN) and 30 or 35
+	local speedboost = (me.skin == TAKIS_SKIN) and 7 or 12
+	local wspeedboost = (me.skin == TAKIS_SKIN) and 3 or 5
+	
 	lunge.adjusted = false --(p.cmd.forwardmove ~= 0 or p.cmd.sidemove ~= 0)
 	local ang = Soap_ControlDir(p)
-	if soap.accspeed < 35*FU
-		P_InstaThrust(me, ang, FixedHypot(me.momx,me.momy) + (soap.inWater and 5 or 12)*me.scale)
+	if soap.accspeed < minspeed*FU
+		P_InstaThrust(me, ang, FixedHypot(me.momx,me.momy) + (soap.inWater and wspeedboost or speedboost)*me.scale)
 	end
 	S_StartSound(me, sfx_sp_cln)
 	
@@ -3428,6 +3433,10 @@ rawset(_G, "Soap_DoLunge",function(p, fromjump)
 	lunge.ghost = ghost
 	me.pitch,me.roll = 0,0
 	me.state = S_PLAY_ROLL
+	
+	if (me.skin == TAKIS_SKIN)
+		soap.noairdrag = max($, 10)
+	end
 end)
 
 rawset(_G, "Soap_AccelerativeSpeedlines", function(p,me,soap, speed, threshold, color)

@@ -193,6 +193,17 @@ Takis_Hook.addHook("Takis_Thinker",function(p)
 			soap.frictionfreeze = 0
 			soap.frictionremove = 0
 		end
+		
+		if not soap.noairdrag
+			if not soap.onGround
+			and soap.accspeed >= 35*FU
+				local newspeed = soap.accspeed - FixedMul(soap.accspeed - 35*FU, TAKIS_AIRDRAGFRAC)
+				me.momx = FixedMul(FixedDiv(me.momx,soap.accspeed), newspeed)
+				me.momy = FixedMul(FixedDiv(me.momy,soap.accspeed), newspeed)
+			end
+		else
+			soap.noairdrag = $ - 1
+		end
 	end
 	
 	--clutch timers

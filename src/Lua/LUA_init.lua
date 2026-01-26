@@ -327,6 +327,8 @@ rawset(_G, "Soap_InitTable", function(p)
 		-- for momentuminos
 		frictionfreeze = 0,
 		frictionremove = 0,
+		-- no takis airdrag for this many tics
+		noairdrag = 0,
 		
 		-- hammer blast
 		hammer = {
