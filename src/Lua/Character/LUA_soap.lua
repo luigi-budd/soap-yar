@@ -3532,6 +3532,8 @@ addHook("MobjDeath", function(me,inf,sor,dmgt)
 			soap.hud.painsurge = 6
 		end
 	end
+	-- Intentional!
+	Soap_Hitlag.addHitlag(me, 10, true, false)
 end)
 
 --jump effect

@@ -133,6 +133,9 @@ hl.iterateHitlagged = function()
 				if (p.pflags & PF_SPINNING)
 					mo.state = v[5]
 				end
+				if not (mo.health)
+					mo.state = S_PLAY_DEAD
+				end
 			end
 			S_StopSoundByID(mo, sfx_kc38)
 			table.insert(toremove_hitlag,{key = k})
