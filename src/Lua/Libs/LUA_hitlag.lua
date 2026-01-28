@@ -40,14 +40,11 @@ local function dust_type(me)
 end
 
 hl.iterateHitlagged = function()
-	local toremove_hitlag = {}
-	local toremove_stunned = {}
-	
 	for k,v in ipairs(hl.hitlagged)
 		local mo = v[1]
 		local lastflags = v[2]
 		if not (mo and mo.valid)
-			table.insert(toremove_hitlag,{key = k})
+			table.remove(hl.hitlagged,k)
 			continue
 		end
 		
@@ -138,7 +135,7 @@ hl.iterateHitlagged = function()
 				end
 			end
 			S_StopSoundByID(mo, sfx_kc38)
-			table.insert(toremove_hitlag,{key = k})
+			table.remove(hl.hitlagged,k)
 			continue
 		end
 	end
@@ -147,7 +144,7 @@ hl.iterateHitlagged = function()
 		local mo = v[1]
 		local lastflags = v[2]
 		if not (mo and mo.valid)
-			table.insert(toremove_stunned,{key = k})
+			table.remove(hl.stunned,k)
 			continue
 		end
 		
@@ -212,11 +209,11 @@ hl.iterateHitlagged = function()
 			P_XYMovement(mo)
 			if (mo and mo.valid)
 				if not P_ZMovement(mo)
-					table.insert(toremove_stunned,{key = k})
+					table.remove(hl.stunned,k)
 					continue
 				end
 			else
-				table.insert(toremove_stunned,{key = k})
+				table.remove(hl.stunned,k)
 				continue
 			end
 			P_ButteredSlope(mo)
@@ -300,16 +297,9 @@ hl.iterateHitlagged = function()
 			end
 			mo.soap_setvfx = nil
 			S_StopSoundByID(mo, sfx_kc38)
-			table.insert(toremove_stunned,{key = k})
+			table.remove(hl.stunned,k)
 			continue
 		end
-	end
-	
-	for k, v in ipairs(toremove_hitlag)
-		table.remove(hl.hitlagged, v.key)
-	end
-	for k, v in ipairs(toremove_stunned)
-		table.remove(hl.stunned, v.key)
 	end
 end
 
@@ -317,8 +307,7 @@ end
 hl.iterateHitlaggedPostThink = function()
 	for k,v in ipairs(hl.hitlagged)
 		local mo = v[1]
-		-- this will get removed next tic
-		if not (mo and mo.valid) then continue end
+		if not (mo and mo.valid) then table.remove(hl.hitlagged,k); continue end
 		
 		if mo.hitlag
 			
