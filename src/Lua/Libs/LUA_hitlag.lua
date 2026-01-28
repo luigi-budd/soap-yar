@@ -25,7 +25,7 @@ CV.hitlag_tics = hl.cv_hitlagtics
 CV.PossibleValues["soap_maxhitlagtics"] = {values = hlt_pv, min = 0, max = 10*TR} -- probably cap it in the menu
 
 --lol
-local hlm_pv = {MIN = FU, MAX = 20*FU}
+local hlm_pv = {MIN = FU, MAX = 60*FU}
 hl.cv_hitlagmulti = CV_RegisterVar({
 	name = "soap_hitlagmul",
 	defaultvalue = "1.0",

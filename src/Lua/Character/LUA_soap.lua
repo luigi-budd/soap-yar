@@ -1415,6 +1415,7 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 		and not P_IsObjectInGoop(me)
 		and (soap.pound_cooldown == 0)
 		and not (soap.noability & SNOABIL_POUND)
+		and not (soap.inPain)
 			soap.pounding = true
 			soap.sprung = false
 			
@@ -3465,7 +3466,9 @@ addHook("MobjDamage", function(me,inf,sor,dmg,dmgt)
 	end
 	Soap_ImpactVFX(me, inf, nil, power)
 	me.state = S_PLAY_PAIN
-	Soap_Hitlag.addHitlag(me, 10, true, false)
+	if not G_IsSpecialStage()
+		Soap_Hitlag.addHitlag(me, 10, true, false)
+	end
 end,MT_PLAYER)
 
 --soap death hook
@@ -3533,7 +3536,9 @@ addHook("MobjDeath", function(me,inf,sor,dmgt)
 		end
 	end
 	-- Intentional!
-	Soap_Hitlag.addHitlag(me, 10, true, false)
+	if (sor and sor.valid or inf and inf.valid)
+		Soap_Hitlag.addHitlag(me, 10, true, false)
+	end
 end)
 
 --jump effect

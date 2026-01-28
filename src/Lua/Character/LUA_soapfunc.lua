@@ -705,7 +705,7 @@ rawset(_G,"Soap_ImpactVFX",function(src,inf, distmul, scalemul, forcesplat)
 		s.rollangle = va
 		s.color = damagecolor
 		s.tracer = inf
-		s.renderflags = $|RF_ALWAYSONTOP
+		s.renderflags = $|RF_ALWAYSONTOP|rflags
 	end
 end)
 
@@ -1913,7 +1913,7 @@ rawset(_G,"Soap_DeathThinker",function(p,me,soap)
 	and (CBW_Battle.Exiting or CBW_Battle.Timeout))
 	or (me.soap_knockout))
 	and not me.health
-	and not (soap.deathtype == DMG_DEATHPIT or P_CheckDeathPitCollide(me))
+	and not (soap.deathtype == DMG_DEATHPIT or P_CheckDeathPitCollide(me) or P_CheckPredictedPitCollide(p, me, me.z + me.momz))
 	--and (me.soap_deadtimer <= TR/3)
 		if me.sprite2 ~= SPR2_MSC2
 		and not (soap.onGround and me.soap_deadtimer > 3)
@@ -2025,6 +2025,7 @@ rawset(_G,"Soap_DeathThinker",function(p,me,soap)
 				end
 				me.momz = momz
 				me.state = S_PLAY_DEAD
+				me.flags = $|MF_NOCLIPHEIGHT
 			end
 			me.momx,me.momy = 0,0
 			me.soap_landondeath = false
@@ -2218,6 +2219,7 @@ rawset(_G,"Soap_DeathThinker",function(p,me,soap)
 			me.state = S_PLAY_DEAD
 		end
 	elseif (me.state == S_PLAY_SOAP_KNOCKOUT)
+	and not (soap.deathtype == DMG_DEATHPIT or P_CheckPredictedPitCollide(p,me,me.z + me.momz))
 		if not (soap.onGround)
 		and not (me.flags & MF_NOCLIPHEIGHT)
 			me.soap_landondeath = true
