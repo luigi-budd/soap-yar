@@ -589,12 +589,15 @@ rawset(_G,"Soap_DamageSfx", function(src, power, maxpow, props)
 	
 	local sfx = secondary and sfx_sp_dm0 or sfx_sp_db0
 	local vol = secondary and 255 or 255/3
+	if props.vol ~= nil
+		vol = props.vol
+	end
 	
 	sfx = $ + ease.linear(
 		min(FU, FixedDiv(power, maxpow)),
 		0,
-		3
-	)
+		3*FU
+	)/FU
 	
 	if not (src and src.valid and src.health)
 	or (src.health == 1)

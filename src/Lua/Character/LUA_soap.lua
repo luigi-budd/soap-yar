@@ -3437,7 +3437,8 @@ addHook("MobjDamage", function(me,inf,sor,dmg,dmgt)
 	p.pflags = $ &~(PF_THOKKED|PF_JUMPED|PF_SHIELDABILITY)
 	
 	local power = 0
-	S_StartSoundAtVolume(me,sfx_sp_smk,255*3/4)
+	local inf_speed = 0
+	--S_StartSoundAtVolume(me,sfx_sp_smk,255*3/4)
 	S_StartSound(me,sfx_sp_dmg)
 	if Soap_IsLocalPlayer(p)
 		Soap_StartQuake((20 + p.timeshit*3/2)*FU, 16 + 4*(p.losstime / (10*TR)),
@@ -3446,27 +3447,22 @@ addHook("MobjDamage", function(me,inf,sor,dmg,dmgt)
 		)
 	end
 	
-	if me.health
-		if (inf and inf.valid)
-			--default speeds
-			local inf_speed = get_inf_speed(me,inf,sor)
-			
-			power = FU + FixedDiv(inf_speed, 40*me.scale)
-			Soap_DamageSfx(me, inf_speed, 40*me.scale, {
-				ultimate = (not soap.inBattle) and true or false,
-				nosfx = true
-			})
-			
-			me.soap_damagevar = {
-				ang = R_PointToAngle2(inf.x,inf.y, me.x,me.y),
-				speed = inf_speed
-			}
-			S_StartSound(me,sfx_sp_db0)
-			if inf_speed >= 30*me.scale
-				soap.hud.painsurge = 6
-			end
-		end
+	if (inf and inf.valid)
+		--default speeds
+		inf_speed = get_inf_speed(me,inf,sor)
+		power = FU + FixedDiv(inf_speed, 30*me.scale)
 		
+		me.soap_damagevar = {
+			ang = R_PointToAngle2(inf.x,inf.y, me.x,me.y),
+			speed = inf_speed
+		}
+		--S_StartSound(me,sfx_sp_db0)
+		if inf_speed >= 30*me.scale
+			soap.hud.painsurge = 6
+		end
+	end
+	
+	if me.health
 		if (dmgt == DMG_FIRE)
 			soap.firepain = TR * 2
 			S_StartSound(me, sfx_s3kc2s)
@@ -3479,10 +3475,18 @@ addHook("MobjDamage", function(me,inf,sor,dmg,dmgt)
 			S_StartSound(me, sfx_s250)
 		end
 	end
+	
+	--printf("damage:\n%f\n%f", power, inf_speed)
+	Soap_DamageSfx(me, inf_speed, 30*me.scale, {
+		ultimate = (not soap.inBattle) and true or false,
+		nosfx = true,
+		vol = 255
+	})
 	Soap_ImpactVFX(me, inf, nil, power)
+	
 	me.state = S_PLAY_PAIN
 	if not G_IsSpecialStage()
-		Soap_Hitlag.addHitlag(me, 10, true, false)
+		Soap_Hitlag.addHitlag(me, 10 + (inf_speed/FU/2), true, false)
 	end
 end,MT_PLAYER)
 
