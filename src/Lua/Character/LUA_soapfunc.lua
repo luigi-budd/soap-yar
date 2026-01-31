@@ -691,8 +691,9 @@ rawset(_G,"Soap_ImpactVFX",function(src,inf, distmul, scalemul, forcesplat)
 	local damagecolor = damagecolors[P_RandomRange(1, #damagecolors)]
 	local irad = 34*src.scale
 	for i = 1,16
-		local ha = FixedAngle(Soap_RandomFixedRange(0,360*FU))
-		local va = FixedAngle(Soap_RandomFixedRange(0,360*FU))
+		-- caches less angles
+		local ha = FixedAngle(P_RandomRange(0,36) * 10*FU)
+		local va = FixedAngle(P_RandomRange(0,36) * 10*FU)
 		local v = SphereToCartesian(ha,va)
 		local s = P_SpawnMobjFromMobj(src,
 			FixedMul(irad, v.x),

@@ -2409,7 +2409,22 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 		local dist = 20*me.scale
 		if (p.powers[pw_carry] == CR_NIGHTSMODE)
 			dist = 0
-			aura.rollangle = me.rollangle
+			local visangle = p.flyangle % 360
+			local a = AngleFixed(R_PointToAngle(me.x,me.y) - me.angle)
+			if (p.flyangle >= 90 and p.flyangle <= 270)
+				if (p.flyangle == 270 and (a < 180*FU)) -- a < ANGLE_180
+					-- do nothing
+				elseif (p.flyangle == 90 and (a < 180*FU)) -- a < ANGLE_180
+					-- do nothing
+				else
+					visangle = $ + 180
+				end
+			end
+			if me.eflags & MFE_VERTICALFLIP
+				visangle = -$
+			end
+			
+			aura.rollangle = FixedAngle(visangle*FU)
 		else
 			aura.rollangle = 0
 		end
@@ -3579,6 +3594,40 @@ Takis_Hook.addHook("PostThinkFrame",function(p)
 	local usejumpspin = (not (p.charflags & SF_NOJUMPSPIN)) or (lunge.angle ~= nil)
 	if (mariomode)
 		p.charflags = $|SF_NOJUMPSPIN
+	end
+	
+	if me.sprite2 == SPR2_NFLY
+		me.pitch,me.roll = 0,0
+		
+		local ang = (p.anotherflyangle) % 360
+		-- srb2 doesnt automatically set the state with SF_NONIGHTSROTATION anymore...
+		-- ...for some reason...
+		local frame = A
+		if ang <= 0 frame = A;
+		elseif ang <= 30 frame = B;
+		elseif ang <= 45 frame = C;
+		elseif ang <= 60 frame = D;
+		elseif ang <= 90 frame = E;
+		elseif ang <= 120 frame = F;
+		elseif ang <= 135 frame = G;
+		elseif ang <= 150 frame = H;
+		elseif ang <= 180 frame = I;
+		elseif ang <= 210 frame = J;
+		elseif ang <= 225 frame = K;
+		elseif ang <= 240 frame = L;
+		elseif ang <= 270 frame = M;
+		elseif ang <= 300 frame = N;
+		elseif ang <= 315 frame = O;
+		elseif ang <= 330 frame = P;
+		end
+		
+		local flip = (ang > 90 and ang <= 270)
+		me.renderflags = ($ &~RF_HORIZONTALFLIP)|(flip and RF_HORIZONTALFLIP or 0)
+		me.frame = ($ &~FF_FRAMEMASK)|frame
+		me.wasnfly = true
+	elseif me.wasnfly
+		me.renderflags = $ &~RF_HORIZONTALFLIP
+		me.wasnfly = nil
 	end
 	
 	if me.hitlag
