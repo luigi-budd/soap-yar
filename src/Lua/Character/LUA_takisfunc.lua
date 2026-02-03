@@ -599,28 +599,18 @@ rawset(_G,"Takis_HammerBlastHitbox",function(p)
 		if not (found.health) then return end
 		if not P_CheckSight(me,found) then return end
 		if (found.alreadykilledthis) then return end
+		local topheight = found.z + found.height
+		if takis.gravflip == -1
+			topheight = found.z
+		end
+		if (topheight < (takis.gravflip == 1 and me.floorz or me.ceilingz)) then return end
 		
 		if (found.type == MT_TNTBARREL)
 			found.alreadykilledthis = true
 			
-			/*
-			local bam1 = SpawnBam(ref)
-			bam1.renderflags = $|RF_FLOORSPRITE
-			S_StartSound(found,sfx_smack)
-			*/
 			P_KillMobj(found,me,me)
 			didit = true
 		elseif Soap_CanDamageEnemy(p, found,MF_ENEMY|MF_BOSS|MF_MONITOR|MF_SHOOTABLE)
-			/*
-			if not (found.flags & MF_BOSS)
-				found.alreadykilledthis = true
-			end
-			
-			local bam1 = SpawnBam(ref)
-			bam1.renderflags = $|RF_FLOORSPRITE
-			SpawnEnemyGibs(thok,found)
-			SpawnRagThing(found,me,me)
-			*/
 			
 			Soap_ImpactVFX(found, me, nil,nil, true)
 			Soap_SpawnBumpSparks(found, me, nil,false, found.scale * 3/2, true)
@@ -671,20 +661,12 @@ rawset(_G,"Takis_HammerBlastHitbox",function(p)
 			P_KillMobj(found,me,me)
 		elseif (found.flags & MF_SPRING)
 		and (found.info.painchance ~= 3)
-			local topheight = found.z + found.height
-			if takis.gravflip == -1
-				topheight = found.z
-			end
-			if (topheight > (takis.gravflip == 1 and me.floorz or me.ceilingz))
-				Soap_ImpactVFX(found, me, nil,nil, true)
-				P_DoSpring(found,me)
-			end
+			Soap_ImpactVFX(found, me, nil,nil, true)
+			P_DoSpring(found,me)
 		elseif (found.player and found.player.valid)
 			local p2 = found.player
 			
 			if Soap_CanHurtPlayer(p, p2)
-				Soap_ImpactVFX(found, me, nil,nil, true)
-				
 				Soap_ImpactVFX(found, me, nil,nil, true)
 				Soap_SpawnBumpSparks(found, me, nil,false, found.scale * 3/2, true)
 				Soap_DamageSfx(found, abs(me.momz), 30*me.scale, {ultimate = true})
@@ -693,6 +675,7 @@ rawset(_G,"Takis_HammerBlastHitbox",function(p)
 				if not found.health
 					found.alreadykilledthis = true
 				end
+				enemyhit = true
 				didit = true
 			end
 		end

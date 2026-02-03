@@ -1250,6 +1250,7 @@ local function try_pvp_collide(me,thing)
 	if (soap.damagedealtthistic > SOAP_MAXDAMAGETICS) then return end
 	soap.damagedealtthistic = $ + 1
 	if me.skin ~= TAKIS_SKIN then return end
+	if not Soap_ZCollide(me,thing, true) then return end
 	
 	local DealDamage = (p.powers[pw_super] or soap.isSolForm or p.powers[pw_invulnerability]) and P_KillMobj or P_DamageMobj
 	
@@ -1257,7 +1258,6 @@ local function try_pvp_collide(me,thing)
 	if thing.type ~= MT_PLAYER
 	or not (thing.player and thing.player.valid)
 		if Soap_CanDamageEnemy(p, thing)
-			if not Soap_ZCollide(me,thing, true) then return end
 			
 			--hit by clutch
 			if (soap.afterimage)
