@@ -118,16 +118,9 @@ rawset(_G, "Soap_InitTable", function(p)
 		
 		--taunttime = 0,
 		taunt = {
-			active = false,
-			-- for selection
-			x = 0,
-			y = 0,
-			freeze_ang = 0,
-			freeze_aim = 0,
-			
-			pointing = -1,
 			tics = 0,
 			num = 0,
+			prev = 0,
 		},
 		
 		breakdance = 0,

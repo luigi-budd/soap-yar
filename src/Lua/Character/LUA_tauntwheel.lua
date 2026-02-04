@@ -2,11 +2,53 @@
 -- so it gets its own file.
 local CV = SOAP_CV
 
-local cam_still = CV.FindVar("cam_still")
-local cv_3rdmlook = CV.FindVar("chasemlook")
-local cv_1stmlook = CV.FindVar("alwaysmlook")
-local cv_invertmouse = CV.FindVar("invertmouse")
-local cv_chasecam = CV.FindVar("chasecam")
+local taunt_cmd = {
+	active = false,
+	x = 0,
+	y = 0,
+	pointing = -1,
+	buttons = 0,
+}
+
+local function CheckTauntAvail(p)
+	if gamestate ~= GS_LEVEL then return false; end
+	if not (p and p.valid) then return false; end
+	if p.spectator then return false; end
+	local soap = p.soaptable
+	if not soap then return false; end
+	local taunt = soap.taunt
+	if not (skins[p.skin].name == SOAP_SKIN or skins[p.skin].name == TAKIS_SKIN) then return false; end
+	local me = p.realmo
+	if not (me and me.valid) then return false; end
+
+	if (p.panim == PA_IDLE or p.panim == PA_RUN or soap.accspeed <= 5*FU)
+	and (P_IsObjectOnGround(me))
+	and not (taunt.active or taunt.tics)
+	and me.health
+	and (soap.notCarried)
+	and not (soap.noability & SNOABIL_TAUNTS)
+	and (SOAP_TAUNTS[me.skin] ~= nil and #SOAP_TAUNTS[me.skin])
+		return true
+	end
+	return false
+end
+
+local function StartMenu()
+	if taunt_cmd.active then return end
+	taunt_cmd.active = true
+	taunt_cmd.x = 0
+	taunt_cmd.y = 0
+	taunt_cmd.selected = -1
+	input.ignoregameinputs = true
+end
+local function StopMenu()
+	if not taunt_cmd.active then return end
+	taunt_cmd.active = false
+	taunt_cmd.x = 0
+	taunt_cmd.y = 0
+	taunt_cmd.selected = -1
+	input.ignoregameinputs = false
+end
 
 local scroll_fact = 400
 local wheel_radius = 60*FU
@@ -142,6 +184,14 @@ SOAP_TAUNTS[SOAP_SKIN] = {
 				
 				p.drawangle = me.tempangle
 				soap.noability = SNOABIL_ALL
+				
+				if me.state ~= S_PLAY_DEAD
+					me.state = S_PLAY_DEAD
+					me.tics = -1
+				elseif me.sprite2 ~= SPR2_MSC4
+					me.frame = $ &~FF_FRAMEMASK
+					me.sprite2 = SPR2_MSC4
+				end
 			end
 		end,
 		postthink = function(p, me, soap, taunt)
@@ -150,12 +200,44 @@ SOAP_TAUNTS[SOAP_SKIN] = {
 		end,
 		drawer = function(v,i, x,y, selected)
 			chardrawer(v,i, x,y, {
-				skin = SOAP_SKIN,
+				skin = skins[consoleplayer.skin].name,
 				spr2 = SPR2_MSC4,
 				frame = A, angle = 2
 			}, selected)
 		end,
 	}
+}
+SOAP_TAUNTS[TAKIS_SKIN] = {
+	[1] = SOAP_TAUNTS[SOAP_SKIN][3]
+}
+
+local cmd_sig = "iAmLua"..P_RandomFixed()
+addHook("NetVars",function(n) cmd_sig = n($); end)
+
+COM_AddCommand("_soap_dotaunt",function(p, sig, selected)
+	if sig ~= cmd_sig then return end
+	if not CheckTauntAvail(p) then return end
+	selected = tonumber($)
+	
+	local soap = p.soaptable
+	local me = p.realmo
+	local taunt = soap.taunt
+	
+	taunt.num = selected + 1
+	taunt.prev = taunt.num
+	local taunt_t = SOAP_TAUNTS[me.skin][selected + 1]
+	if not taunt_t then return end
+	taunt_t.run(p, me, soap, taunt)
+	
+	soap.jumplockout = 2
+end)
+
+local gc2bt = {
+	[GC_FIRE]		= BT_ATTACK,
+	[GC_FIRENORMAL]	= BT_FIRENORMAL,
+	[GC_TOSSFLAG]	= BT_TOSSFLAG,
+	[GC_SPIN]		= BT_SPIN,
+	[GC_JUMP]		= BT_JUMP,
 }
 
 addHook("KeyDown", function(key)
@@ -165,62 +247,107 @@ addHook("KeyDown", function(key)
 	-- this is what ChatGPT told me to do
 	if chatactive then return end
 	
-	if key.name:lower() == CV.taunt_key.string:lower()
-		COM_BufInsertText(consoleplayer, "soap_tauntwheel")
+	local kname = key.name:lower()
+	
+	if kname == CV.taunt_key.string:lower()
+		if taunt_cmd.active
+		and (consoleplayer.soaptable and consoleplayer.soaptable.taunt.prev > 0)
+			COM_BufInsertText(consoleplayer, "_soap_dotaunt "..cmd_sig.." "..(consoleplayer.soaptable.taunt.prev - 1))
+			StopMenu()
+		else
+			StartMenu()
+		end
+	elseif kname == "escape"
+	and taunt_cmd.active
+		StopMenu()
+		return true
 	end
-end)
-
--- workaround for mouse aiming for the taunt menu
-addHook("PlayerCmd",function(p,cmd)
-	if not (p.soaptable and p.soaptable.taunt.active) then return end
-	local mouseaiming = 0
-	if (cv_chasecam.value and not p.spectator)
-		mouseaiming = cv_3rdmlook.value
-	else
-		mouseaiming = cv_1stmlook.value
-	end
-	if mouseaiming then return end
 	
-	local me = p.realmo
-	local player_invert = (cv_invertmouse.value) and -1 or 1
-	local screen_invert = (me and (me.eflags & MFE_VERTICALFLIP)
-		and (not camera.chase or (p.pflags & PF_FLIPCAM)))
-		and -1 or 1
-	
-	cmd.aiming = $ - ((mouse.dy<<19) * player_invert * screen_invert)>>16
-end)
-
-COM_AddCommand("soap_tauntwheel",function(p)
-	if gamestate ~= GS_LEVEL then return end
-	if not (p and p.valid) then return end
-	if p.spectator then return end
-	local soap = p.soaptable
-	if not soap then return end
-	local taunt = soap.taunt
-	if not (skins[p.skin].name == SOAP_SKIN or skins[p.skin].name == TAKIS_SKIN) then return end
-	local me = p.realmo
-	if not (me and me.valid) then return end
-	local cmd = p.cmd
-	
-	-- init
-	if (p.panim == PA_IDLE or p.panim == PA_RUN or soap.accspeed <= 5*FU)
-	and (P_IsObjectOnGround(me))
-	and not (taunt.active or taunt.tics)
-	and me.health
-	and (soap.notCarried)
-	and not (soap.noability & SNOABIL_TAUNTS)
-	and (SOAP_TAUNTS[me.skin] ~= nil and #SOAP_TAUNTS[me.skin])
-		taunt.active = true
-		taunt.freeze_ang = cmd.angleturn
-		taunt.freeze_aim = cmd.aiming
-		
-		-- um, sure...
-		if cam_still and (p == consoleplayer)
-			CV_Set(cam_still, 1 - cam_still.value)
+	-- game controls
+	for gc, bt in pairs(gc2bt)
+		local k1, k2 = input.gameControlToKeyNum(gc)
+		if key.num == k1 or key.num == k2
+			taunt_cmd.buttons = $|bt
 		end
 	end
-
 end)
+
+addHook("KeyUp", function(key)
+	if isdedicatedserver then return end
+	if key.repeated then return end
+	if gamestate ~= GS_LEVEL then return end
+	-- this is what ChatGPT told me to do
+	if chatactive then return end
+	
+	-- game controls
+	for gc, bt in pairs(gc2bt)
+		local k1, k2 = input.gameControlToKeyNum(gc)
+		if key.num == k1 or key.num == k2
+			taunt_cmd.buttons = $ &~bt
+		end
+	end
+end)
+
+local function ClientTauntHandle(p)
+	local soap = p.soaptable
+	local me = p.realmo
+	local cmd = p.cmd
+	
+	if not taunt_cmd.active then return end
+	
+	-- nice one asshole
+	if SOAP_TAUNTS[me.skin] == nil
+		StopMenu()
+		return
+	end
+	
+	if MenuLib.client.currentMenu.id ~= -1
+		MenuLib.initMenu(-2)
+		input.ignoregameinputs = true
+	end
+	
+	if (taunt_cmd.buttons & BT_SPIN)
+	--or cancelConds(p, true)
+		StopMenu()
+	end
+	
+	-- negative angleturn is rightwards
+	-- positive aiming is upwards
+	local workx = -(mouse.dx*8) * scroll_fact
+	local worky = -(mouse.dy*8) * scroll_fact
+	taunt_cmd.x = $ - workx
+	taunt_cmd.y = $ + worky
+	local ang = R_PointToAngle2(0,0, taunt_cmd.x,taunt_cmd.y)
+	local dist = R_PointToDist2(0,0, taunt_cmd.x,taunt_cmd.y)
+	if (dist > wheel_radius)
+		taunt_cmd.x = P_ReturnThrustX(nil,ang, wheel_radius)
+		taunt_cmd.y = P_ReturnThrustY(nil,ang, wheel_radius)
+		dist = R_PointToDist2(0,0, taunt_cmd.x,taunt_cmd.y)
+	end
+	
+	local oldhover = taunt_cmd.pointing
+	local selected = -1
+	if (dist >= wheel_start)
+		local avail = #SOAP_TAUNTS[me.skin]
+		local angstep = FixedDiv(360*FU, avail*FU)
+		ang = AngleFixed(InvAngle($ - ANGLE_90))
+		selected = FixedTrunc(FixedDiv(ang, angstep)) / FU
+		taunt_cmd.pointing = selected
+	else
+		taunt_cmd.pointing = -1
+	end
+	if (oldhover ~= taunt_cmd.pointing)
+	and (dist >= wheel_start)
+		S_StartSound(nil,sfx_menu1,p)
+	end
+	
+	if (taunt_cmd.buttons & (BT_ATTACK|BT_JUMP))
+	or (mouse.buttons & MB_BUTTON1)
+	and (dist >= wheel_start)
+		COM_BufInsertText(consoleplayer, "_soap_dotaunt "..cmd_sig.." "..selected)
+		StopMenu()
+	end
+end
 
 rawset(_G, "Soap_TauntWheelThink", function(p)
 	local soap = p.soaptable
@@ -228,106 +355,102 @@ rawset(_G, "Soap_TauntWheelThink", function(p)
 	local cmd = p.cmd
 	local taunt = soap.taunt
 	
-	if taunt.active
+	-- lets also handle the client stuff in here
+	if p == consoleplayer
+		ClientTauntHandle(p)
+	end
+	
+	if taunt.tics > 0
 		-- nice one asshole
 		if SOAP_TAUNTS[me.skin] == nil
-			taunt.active = false
-			if cam_still and (p == consoleplayer)
-				CV_Set(cam_still, 1 - cam_still.value)
-			end
+		or (me.skin ~= soap.last.skin)
+			taunt.tics = 0
+			me.state = S_PLAY_WALK
 			P_MovePlayer(p)
 			Soap_ResetState(p)
 			return
 		end
 		
-		if (cmd.buttons & BT_SPIN)
-		or cancelConds(p, true)
-			taunt.active = false
-			if cam_still and (p == consoleplayer)
-				CV_Set(cam_still, 1 - cam_still.value)
-			end
+		local taunt_t = SOAP_TAUNTS[me.skin][taunt.num]
+		if taunt_t.think
+			taunt_t.think(p, me, soap, taunt)
 		end
 		
-		-- negative angleturn is rightwards
-		-- positive aiming is upwards
-		local workx = scroll_fact * (soap.angleturn - taunt.freeze_ang)
-		local worky = scroll_fact * (soap.aiming - taunt.freeze_aim)
-		taunt.x = $ - workx
-		taunt.y = $ + worky
-		local ang = R_PointToAngle2(0,0, taunt.x,taunt.y)
-		local dist = R_PointToDist2(0,0, taunt.x,taunt.y)
-		if (dist > wheel_radius)
-			taunt.x = P_ReturnThrustX(nil,ang, wheel_radius)
-			taunt.y = P_ReturnThrustY(nil,ang, wheel_radius)
-			dist = R_PointToDist2(0,0, taunt.x,taunt.y)
-		end
-		
-		cmd.angleturn = taunt.freeze_ang
-		cmd.aiming = taunt.freeze_aim
-		
-		me.angle = cmd.angleturn << 16
-		--p.drawangle = me.angle
-		p.aiming = cmd.aiming << 16
-		
-		cmd.forwardmove = 0
-		cmd.sidemove = 0
-		soap.noability = $|SNOABIL_ALL
-		p.powers[pw_nocontrol] = 2
-		p.pflags = $|PF_FULLSTASIS
-		
-		local oldhover = taunt.pointing
-		local selected = -1
-		if (dist >= wheel_start)
-			local avail = #SOAP_TAUNTS[me.skin]
-			local angstep = FixedDiv(360*FU, avail*FU)
-			ang = AngleFixed(InvAngle($ - ANGLE_90))
-			selected = FixedTrunc(FixedDiv(ang, angstep)) / FU
-			taunt.pointing = selected
-		else
-			taunt.pointing = -1
-		end
-		if (oldhover ~= taunt.pointing)
-		and (dist >= wheel_start)
-			S_StartSound(nil,sfx_menu1,p)
-		end
-		
-		if (cmd.buttons & (BT_ATTACK|BT_JUMP)) and taunt.active
-		and (dist >= wheel_start)
-			taunt.num = selected + 1
-			local taunt_t = SOAP_TAUNTS[me.skin][selected + 1]
-			taunt_t.run(p, me, soap, taunt)
-			
-			taunt.active = false
-			if cam_still and (p == consoleplayer)
-				CV_Set(cam_still, 1 - cam_still.value)
-			end
-			soap.jumplockout = 2
-		end
-		cmd.buttons = 0
+		taunt.tics = $ - 1
 	else
-		taunt.x = 0
-		taunt.y = 0
-		taunt.pointing = -1
-		
-		if taunt.tics > 0
-			-- nice one asshole
-			if SOAP_TAUNTS[me.skin] == nil
-				taunt.tics = 0
-				me.state = S_PLAY_WALK
-				P_MovePlayer(p)
-				Soap_ResetState(p)
-				return
-			end
-			
-			local taunt_t = SOAP_TAUNTS[me.skin][taunt.num]
-			if taunt_t.think
-				taunt_t.think(p, me, soap, taunt)
-			end
-			
-			taunt.tics = $ - 1
-		else
-			taunt.tics = 0
-			taunt.num = 0
-		end
+		taunt.tics = 0
+		taunt.num = 0
 	end
 end)
+
+-- its just easier to handle the hud here
+local wheel_inner = wheel_start + (wheel_radius - wheel_start)/2
+addHook("HUD",function(v,p)
+	local soap = p.soaptable
+	if not soap then return end
+	if not (skins[p.skin].name == SOAP_SKIN or skins[p.skin].name == TAKIS_SKIN) then return end
+	local hud = soap.hud
+	local taunt = taunt_cmd
+	
+	if not taunt.active then return end
+	
+	v.drawScaled(160*FU,100*FU, FU/2, v.cachePatch("STAUNT_BG"), V_30TRANS)
+	local dist = R_PointToDist2(0,0, taunt.x,taunt.y)
+	local TAUNTS = SOAP_TAUNTS[skins[p.skin].name]
+	local avail = #TAUNTS
+	local angstep = FixedDiv(360*FU, avail*FU)
+	for i = 0, avail - 1
+		local ang = ANGLE_MAX - FixedAngle(angstep * i)
+		v.drawScaled(160*FU,100*FU, FU/2,
+			v.getSpritePatch(SPR_SOAP_GFX, 53, 0, ang),
+			0
+		)
+		ang = ($ - ANGLE_90) + ANGLE_180 - FixedAngle(angstep / 2)
+		
+		if (TAUNTS[i + 1].drawer ~= nil)
+			TAUNTS[i + 1].drawer(v, i,
+				160*FU + P_ReturnThrustX(nil, ang, wheel_inner),
+				100*FU - P_ReturnThrustY(nil, ang, wheel_inner),
+				(dist >= wheel_start) and (taunt.pointing == i)
+			)
+		else
+			v.drawScaled(
+				160*FU + P_ReturnThrustX(nil, ang, wheel_inner),
+				100*FU - P_ReturnThrustY(nil, ang, wheel_inner),
+				FU/4,
+				v.cachePatch("MISSING"),
+				0
+			)
+		end
+	end
+	
+	v.dointerp(1000)
+	v.drawScaled(
+		(160*FU) + taunt.x, --P_ReturnThrustX(nil,taunt.angle<<16, radius),
+		(100*FU) - taunt.y, --P_ReturnThrustY(nil,taunt.aim<<16, radius),
+		FU/4, v.cachePatch((dist >= wheel_start) and "ML_RBLX_POINT" or "ML_RBLX_CURS"),
+		0
+	)
+	v.dointerp(false)
+	
+	if (dist >= wheel_start)
+		local taunt_t = TAUNTS[taunt.pointing + 1]
+		v.drawString(160*FU, 100*FU + (wheel_radius + 5*FU),
+			taunt_t.name, V_ALLOWLOWERCASE|V_YELLOWMAP,
+			"thin-fixed-center"
+		)
+	end
+	
+	v.drawString(160*FU, 100*FU - (wheel_radius + 10*FU),
+		"Pick a taunt!", V_ALLOWLOWERCASE,
+		"thin-fixed-center"
+	)
+	v.drawString(160*FU, 100*FU + (wheel_radius + 20*FU),
+		"[JUMP/FIRE] - Select", V_ALLOWLOWERCASE,
+		"thin-fixed-center"
+	)
+	v.drawString(160*FU, 100*FU + (wheel_radius + 28*FU),
+		"[SPIN] - Cancel", V_ALLOWLOWERCASE,
+		"thin-fixed-center"
+	)
+end,"game")
