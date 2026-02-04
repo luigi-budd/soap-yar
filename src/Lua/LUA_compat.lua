@@ -829,14 +829,22 @@ local function SetCompat()
 			description = {
 				"Kick some zombie ass!",
 				"Hefty and reliable!",
-			}
+			};
+			items = {
+				"red_ring",
+				"auto_ring"
+			};
 		})
 		ZE2.AddSurvivor(TAKIS_SKIN, {
             weight = 3,
 			description = {
 				"Ready to blast!",
 				"On the lighter side.",
-			}
+			}l
+			items = {
+				"scatter_ring",
+				"red_ring"
+			};
 		})
 		
 		compat.ze2config = true
