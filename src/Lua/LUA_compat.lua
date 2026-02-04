@@ -840,7 +840,7 @@ local function SetCompat()
 			description = {
 				"Ready to blast!",
 				"On the lighter side.",
-			}l
+			};
 			items = {
 				"scatter_ring",
 				"red_ring"
