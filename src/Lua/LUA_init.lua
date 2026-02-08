@@ -174,6 +174,7 @@ rawset(_G, "Soap_InitTable", function(p)
 		topairborne = false,
 		
 		airdashed = false,
+		extraairdash = false,
 		--if non-zero, delay airdash until this tics to 0
 		airdashcharge = 0,
 		noairdashforme = false,

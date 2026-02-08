@@ -205,7 +205,37 @@ SOAP_TAUNTS[SOAP_SKIN] = {
 				frame = A, angle = 2
 			}, selected)
 		end,
-	}
+	},
+	[4] = {
+		name = "Breakdance",
+		
+		run = function(p, me, soap, taunt)
+			soap.stasistic = max($, 2)
+			taunt.tics = 2
+			
+			me.momx,me.momy = p.cmomx,p.cmomy
+		end,
+		think = function(p, me, soap, taunt)
+			if cancelConds(p)
+				me.state = S_PLAY_WALK
+				P_MovePlayer(p)
+				Soap_ResetState(p)
+				soap.stasistic, taunt.tics = 0,0
+			else
+				soap.stasistic = max($, 2)
+				taunt.tics = 2
+				
+				soap.noability = SNOABIL_ALL &~SNOABIL_BREAKDANCE
+			end
+		end,
+		drawer = function(v,i, x,y, selected)
+			chardrawer(v,i, x,y, {
+				skin = skins[consoleplayer.skin].name,
+				spr2 = SPR2_BRDA,
+				frame = F, angle = 2
+			}, selected)
+		end,
+	},
 }
 SOAP_TAUNTS[TAKIS_SKIN] = {
 	[1] = SOAP_TAUNTS[SOAP_SKIN][3]

@@ -96,6 +96,10 @@ local function Soap_SuperReady(player)
 	return false
 end
 
+local function Soap_AirdashState(me)
+	return (me.state == S_PLAY_FLOAT_RUN or me.state == S_PLAY_SOAP_PUNCH1 or me.state == S_PLAY_SOAP_PUNCH2)
+end
+
 local function soap_poundonland(p,me,soap)
 	local poundtime = soap.poundtime
 	soap.pounding = false
@@ -602,7 +606,7 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 	end
 	*/
 	
-	if ((soap.weaponnext and soap.weaponprev)
+	if (((soap.weaponnext and soap.weaponprev)
 	or (p.exiting and p.pflags & PF_FINISHED
 		and soap.accspeed < FU/5
 		and soap.onGround
@@ -610,7 +614,8 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 		soap.onGround
 		and (soap.accspeed <= FU)
 		and discoranges[Soap_CheckFloorPic(me,true)] == true
-	))
+	)) and not soap.taunt.tics)
+	or (soap.taunt.num == 4)
 	and (me.health)
 	-- and not soap.taunttime
 	and not (p.powers[pw_carry] or soap.isSliding)
@@ -1159,7 +1164,7 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 		--airdash
 		if (soap.use == 1)
 		and not soap.onGround
-		and not soap.airdashed
+		and ((not soap.airdashed) or soap.extraairdash)
 		and not soap.inPain
 		and not soap.pounding
 		and me.health
@@ -1292,6 +1297,7 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 			soap.uppercut_spin = 0
 			soap.uppercutted = false
 			soap.airdashed = true
+			soap.extraairdash = false
 			soap.rdashing = true
 			soap.sprung = false
 			setstate = true
@@ -1456,7 +1462,7 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 	
 	if soap.airdashed
 		
-		if (me.state == S_PLAY_FLOAT_RUN)
+		if Soap_AirdashState(me)
 			if Soap_DirBreak(p,me, R_PointToAngle2(0,0,me.momx,me.momy))
 				Soap_Hitlag.addHitlag(me, 7, false)
 			end
@@ -1776,7 +1782,7 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 				p.panim = PA_DASH
 			end
 			p.runspeed = soap.accspeed - 10*FU
-			if me.state == S_PLAY_FLOAT_RUN
+			if Soap_AirdashState(me)
 				P_PitchRoll(me, FU/6)
 			end
 		end
@@ -2784,7 +2790,7 @@ addHook("PlayerCanDamage",function(p)
 	end
 
 	if (soap.rdashing and p.normalspeed >= skins[p.skin].normalspeed + soap._maxdash)
-	or (soap.airdashed and me.state == S_PLAY_FLOAT_RUN)
+	or (soap.airdashed and Soap_AirdashState(me))
 		return true
 	end
 end)
@@ -2889,7 +2895,7 @@ Takis_Hook.addHook("MoveBlocked",function(me,thing,line, goingup)
 		return
 	end
 	
-	if not (me.state == S_PLAY_DASH or me.state == S_PLAY_FLOAT_RUN) then return end
+	if not (me.state == S_PLAY_DASH or me.state == S_PLAY_SOAP_RAM or Soap_AirdashState(me)) then return end
 	
 	if ( (soap.rdashing
 	and (p.normalspeed >= skins[p.skin].normalspeed + soap._maxdash))
@@ -3131,13 +3137,37 @@ local function try_pvp_collide(me,thing)
 			
 			--hit by r-dash / b-rush
 			if (soap.rdashing and p.normalspeed >= skins[p.skin].normalspeed + soap._maxdash)
-			or (soap.airdashed and me.state == S_PLAY_FLOAT_RUN)
+			or (soap.airdashed and Soap_AirdashState(me))
 				Soap_ImpactVFX(thing,me)
 				
 				local power = FixedMul(10*FU + max(soap.accspeed - 20*FU,0), me.scale)
 				Soap_DamageSfx(thing, power, 60*FU)
 				
 				local hitlag_tics = 4 + (power/FU / 10)
+				if (me.state == S_PLAY_FLOAT_RUN)
+					soap.extraairdash = true
+					me.state = S_PLAY_SOAP_PUNCH1
+					local follow = P_SpawnMobjFromMobj(me,0,0,0,MT_SOAP_FREEZEGFX)
+					follow.tics = -1
+					follow.fuse = -1
+					follow.tracer = me
+					follow.bigwind = true
+					follow.state = S_TAKIS_SLINGFX
+					follow.dontdrawforviewmobj = me
+					follow.zcorrect = true
+					follow.angle = me.angle - ANGLE_90
+					follow.dist = 20*FU
+					Soap_SquashMacro(p, {
+						ease_func = "inexpo",
+						ease_time = 6,
+						x = -FU * 1/5,
+						y = -FU/4,
+						singular = true
+					})
+					Soap_ZLaunch(me, 7*FU)
+					hitlag_tics = $ * 3/2
+				end
+				
 				Soap_StartQuake(power/2, hitlag_tics,
 					{me.x, me.y, me.z},
 					512*me.scale + power
@@ -3294,10 +3324,8 @@ local function try_pvp_collide(me,thing)
 	
 	--hit by r-dash / b-rush
 	if (soap.rdashing and p.normalspeed >= skins[p.skin].normalspeed + soap._maxdash)
-	or (soap.airdashed and me.state == S_PLAY_FLOAT_RUN and soap.airdashcharge == 0)
+	or (soap.airdashed and Soap_AirdashState(me) and soap.airdashcharge == 0)
 	and (soap.accspeed > soap2.accspeed)
-		
-		Soap_ZLaunch(thing, 5*FU)
 		local power = FixedMul(10*FU + soap.accspeed, me.scale)
 		P_InstaThrust(thing,
 			R_PointToAngle2(0,0,me.momx,me.momy),
@@ -3308,6 +3336,29 @@ local function try_pvp_collide(me,thing)
 		P_DamageMobj(thing, me,me, 30 + (power/2)/FU)
 		
 		local hitlag_tics = 15 + (power/FU / 7)
+		if (me.state == S_PLAY_FLOAT_RUN)
+			soap.extraairdash = true
+			me.state = S_PLAY_SOAP_PUNCH1
+			local follow = P_SpawnMobjFromMobj(me,0,0,0,MT_SOAP_FREEZEGFX)
+			follow.tics = -1
+			follow.fuse = -1
+			follow.tracer = me
+			follow.bigwind = true
+			follow.state = S_TAKIS_SLINGFX
+			follow.dontdrawforviewmobj = me
+			follow.zcorrect = true
+			follow.angle = me.angle - ANGLE_90
+			follow.dist = 20*FU
+			Soap_SquashMacro(p, {
+				ease_func = "inexpo",
+				ease_time = 6,
+				x = -FU * 1/5,
+				y = -FU/4,
+				singular = true
+			})
+			Soap_ZLaunch(me, 7*FU)
+			hitlag_tics = $ * 3/2
+		end
 		Soap_StartQuake(power/2, hitlag_tics,
 			{me.x, me.y, me.z},
 			512*me.scale + power
@@ -3325,6 +3376,13 @@ local function try_pvp_collide(me,thing)
 			follow.zcorrect = true
 			follow.angle = me.angle - ANGLE_90
 			follow.dist = 20*FU
+			Soap_SquashMacro(p, {
+				ease_func = "inexpo",
+				ease_time = 6,
+				x = FU * 1/5,
+				y = FU/4,
+				singular = true
+			})
 		end
 		
 		Soap_ImpactVFX(thing,me)
@@ -3682,7 +3740,10 @@ Takis_Hook.addHook("PostThinkFrame",function(p)
 	if (me.flags & MF_NOTHINK and not me.hitlag) then return end
 	
 	if me.state == S_PLAY_DASH or me.state == S_PLAY_SOAP_RAM
+	or (me.state == S_PLAY_SOAP_PUNCH1 or me.state == S_PLAY_SOAP_PUNCH2)
 		p.drawangle = R_PointToAngle2(0,0,me.momx,me.momy) --soap.dashangle
+	elseif (soap.last.anim.state == S_PLAY_SOAP_PUNCH1 or soap.last.anim.state == S_PLAY_SOAP_PUNCH2)
+		me.mirrored = false
 	end
 	
 	--this is really cool

@@ -84,3 +84,21 @@ states[S_PLAY_SOAP_RAM] = {
 	tics = 8,
 	nextstate = S_PLAY_DASH
 }
+
+SafeFreeslot("S_PLAY_SOAP_PUNCH1")
+SafeFreeslot("S_PLAY_SOAP_PUNCH2")
+states[S_PLAY_SOAP_PUNCH1] = {
+	sprite = SPR_PLAY,
+	frame = SPR2_MSC6|A,
+	tics = 2,
+	nextstate = S_PLAY_SOAP_PUNCH2,
+	action = function(mo)
+		mo.mirrored = P_RandomChance(FU/2)
+	end,
+}
+states[S_PLAY_SOAP_PUNCH2] = {
+	sprite = SPR_PLAY,
+	frame = SPR2_MSC6|B,
+	tics = 12,
+	nextstate = S_PLAY_FALL
+}
