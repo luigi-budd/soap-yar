@@ -243,3 +243,17 @@ local function macethinker(mace)
 end
 addHook("MobjSpawn",macethinker,MT_SMALLMACE)
 addHook("MobjSpawn",macethinker,MT_BIGMACE)
+
+addHook("MobjThinker",function(rock)
+	if not (rock and rock.valid) then return end
+	if rock.soap_flingcooldown == nil
+		rock.soap_flingcooldown = 0
+	end
+	
+	if rock.soap_flingcooldown
+		rock.takis_flingme = false
+		rock.soap_flingcooldown = $ - 1
+	else
+		rock.takis_flingme = true
+	end
+end,MT_ROLLOUTROCK)

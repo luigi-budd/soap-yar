@@ -1242,6 +1242,7 @@ local function try_pvp_collide(me,thing)
 	--players only
 	if (me.type ~= MT_PLAYER) then return end
 	if not (me.player and me.player.valid) then return end
+	if (me.tracer == thing) then return end
 	
 	local p = me.player
 	local soap = p.soaptable

@@ -3028,9 +3028,12 @@ local function try_pvp_collide(me,thing)
 		if Soap_CanDamageEnemy(p, thing)
 			if not Soap_ZCollide(me,thing, true) then return end
 			
+			local thinghit = false
+			
 			--hit by pound
 			if (soap.pounding)
 			and (thing.health)
+			and (thing.type ~= MT_ROLLOUTROCK)
 				Soap_ImpactVFX(thing, me)
 				local damage = 1
 				local power = 5*FU + FixedDiv(abs(me.momz),me.scale*3)
@@ -3078,6 +3081,7 @@ local function try_pvp_collide(me,thing)
 				)
 				
 				DealDamage(thing, me,me, damage)
+				thinghit = true
 				me.momz = $ - (3 * me.scale * soap.gravflip)
 				
 				Soap_Hitlag.addHitlag(me, hitlag_tics, false)
@@ -3098,6 +3102,7 @@ local function try_pvp_collide(me,thing)
 			if soap.uppercutted
 			and (me.momz*soap.gravflip > 0)
 			and (me.sprite2 == SPR2_MLEE)
+			and (thing.type ~= MT_ROLLOUTROCK)
 				Soap_ImpactVFX(thing,me)
 				soap.uppercut_spin = soap_baseuppercutturn
 				soap.canuppercut = true
@@ -3112,6 +3117,7 @@ local function try_pvp_collide(me,thing)
 				)
 				
 				DealDamage(thing, me,me)
+				thinghit = true
 				
 				Soap_Hitlag.addHitlag(me, hitlag_tics - 3, false)
 				if (thing and thing.valid)
@@ -3195,6 +3201,7 @@ local function try_pvp_collide(me,thing)
 				end
 				
 				DealDamage(thing, me,me)
+				thinghit = true
 				
 				Soap_Hitlag.addHitlag(me, hitlag_tics, false)
 				if (thing and thing.valid)
@@ -3207,6 +3214,11 @@ local function try_pvp_collide(me,thing)
 				end
 				Soap_SpawnBumpSparks(me, thing, nil, true)
 				return
+			end
+			
+			if thinghit and thing.type == MT_ROLLOUTROCK
+				thing.soap_flingcooldown = max((thing.hitlag or 0)* 2, 10)
+				thing.takis_flingme = false
 			end
 		end
 		return

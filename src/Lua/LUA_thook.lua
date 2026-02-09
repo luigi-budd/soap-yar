@@ -103,6 +103,7 @@ local MOBJ_LIST = {
 			MT_DRAGONMINE,
 			--just kills you
 			MT_BUGGLE,
+			MT_ROLLOUTROCK,
 		},
 		hook = "MobjSpawn",
 		func = function(mo)
@@ -139,6 +140,24 @@ local MOBJ_LIST = {
 			end
 			
 			mo.takis_flingme = false
+		end
+	},
+	--flingables
+	[3] = {
+		mobjs = {
+			MT_ROLLOUTROCK,
+		},
+		hook = "MobjSpawn",
+		func = function(mo)
+			if not mo
+			or not mo.valid
+				return
+			end
+			
+			mo.takis_flingme = true
+			if mo.type == MT_ROLLOUTROCK
+				mo.soap_flingcooldown = 0
+			end
 		end
 	},
 }	

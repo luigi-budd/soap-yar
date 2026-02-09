@@ -71,6 +71,7 @@ rawset(_G,"Takis_DoClutch",function(p,riding)
 	
 	--but wait! first thing we needa do is check if we're
 	--allowed to clutch on a rollout rock
+	/*
 	if (p.powers[pw_carry] == CR_ROLLOUT)
 		local rock = me.tracer
 		local inwater = rock.eflags & (MFE_TOUCHWATER|MFE_UNDERWATER)
@@ -79,6 +80,7 @@ rawset(_G,"Takis_DoClutch",function(p,riding)
 			return
 		end
 	end
+	*/
 	
 	local ccombo = min(clutch.combo,3)
 	
