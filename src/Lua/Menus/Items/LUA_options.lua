@@ -327,7 +327,7 @@ local popup_id = MenuLib.addMenu({
 	end,
 	exit = function(_,_, menu)
 		trb_reset()
-		menu.lifetime = 0
+		ML.menus[ML.findMenu("soap_tauntkeyprompt")].lifetime = 0
 	end
 })
 
