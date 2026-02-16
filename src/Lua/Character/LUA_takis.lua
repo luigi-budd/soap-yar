@@ -1487,4 +1487,7 @@ Takis_Hook.addHook("PostThinkFrame",function(p)
 		p.drawangle = $ - ANG15
 	end
 	
+	if (soap.isSliding)
+		me.state = S_PLAY_SOAP_SLIP
+	end
 end)

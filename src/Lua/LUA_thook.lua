@@ -134,8 +134,7 @@ local MOBJ_LIST = {
 		},
 		hook = "MobjSpawn",
 		func = function(mo)
-			if not mo
-			or not mo.valid
+			if not (mo and mo.valid)
 				return
 			end
 			
@@ -143,7 +142,7 @@ local MOBJ_LIST = {
 		end
 	},
 	--flingables
-	[3] = {
+	[4] = {
 		mobjs = {
 			MT_ROLLOUTROCK,
 		},

@@ -16,6 +16,7 @@
 	- MSC3: death pit shoes
 	- MSC4: death taunt
 	- MSC5: r-dash ram
+	- MSC6: b-rush punch
 */
 
 --max speed increase
@@ -3747,6 +3748,10 @@ Takis_Hook.addHook("PostThinkFrame",function(p)
 		or me.sprite2 == SPR2_JUMP
 			me.state = S_PLAY_ROLL
 		end
+	end
+	
+	if (soap.isSliding)
+		me.state = S_PLAY_SOAP_SLIP
 	end
 	
 	if (me.flags & MF_NOTHINK and not me.hitlag) then return end
