@@ -416,6 +416,9 @@ end)
 -- its just easier to handle the hud here
 local wheel_inner = wheel_start + (wheel_radius - wheel_start)/2
 addHook("HUD",function(v,p)
+	-- bruh
+	p = consoleplayer
+	
 	local soap = p.soaptable
 	if not soap then return end
 	if not (skins[p.skin].name == SOAP_SKIN or skins[p.skin].name == TAKIS_SKIN) then return end
