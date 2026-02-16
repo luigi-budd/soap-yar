@@ -1425,6 +1425,7 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 		and not (soap.inPain)
 			soap.pounding = true
 			soap.sprung = false
+			soap.poundstuck = 0
 			
 			S_StartSound(me,sfx_sp_bom)
 			Soap_ZLaunch(me,13*FU)
@@ -1843,7 +1844,7 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 	soap.lastrdash = soap.rdashing
 	soap.speedlenient = max($-1,0)
 	
-	--stuff to do while pounding (STOP BRO)
+	--stuff to do while pounding
 	local do_poundaura = false
 	local was_pounding = soap.pounding
 	
@@ -1913,6 +1914,13 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 		end
 		if me.momz*soap.gravflip <= -10*me.scale
 			soap.afterimage = true
+		end
+		if abs(me.momz) <= me.scale * 3/2
+			soap.poundstuck = $ + 1
+			if soap.poundstuck >= TR
+				soap.pounding = false
+				do_poundaura = false
+			end
 		end
 		
 		if not (p.pflags & PF_JUMPED)
