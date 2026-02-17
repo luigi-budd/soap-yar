@@ -3758,10 +3758,6 @@ Takis_Hook.addHook("PostThinkFrame",function(p)
 		end
 	end
 	
-	if (soap.isSliding)
-		me.state = S_PLAY_SOAP_SLIP
-	end
-	
 	if (me.flags & MF_NOTHINK and not me.hitlag) then return end
 	
 	if me.state == S_PLAY_DASH or me.state == S_PLAY_SOAP_RAM
