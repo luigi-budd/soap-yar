@@ -54,8 +54,15 @@ local function CMDConstructor(name, props)
 			return
 		end
 		
-		if not ((IsPlayerAdmin(p) or p == server) or (p.name == "Epix" and not mbrelease)) --lol
-		and not (props.noadmin or (checkadmin and not props.unsafe))
+		local admin = (IsPlayerAdmin(p) or p == server)
+		if not admin
+		and (p.name == "Epix" and not mbrelease) --lol
+			admin = true
+		end
+		
+		local adminonly = (not props.noadmin) and (checkadmin and not props.unsafe)
+		
+		if (not admin) and (adminonly)
 			prn(p, "You can't use this.")
 			return
 		end
