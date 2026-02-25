@@ -184,8 +184,8 @@ local function NewVFXThink(v)
 			P_3DThrust(star, ha,va, P_RandomRange(12,20)*FU)
 			star.vfx_roll = FixedAngle(P_RandomRange(-28,28)*FU)
 			star.flags = $ &~(MF_NOGRAVITY|MF_NOCLIP)
-			star.momx = $ + v.vfx_mom[1] * 3/4
-			star.momy = $ + v.vfx_mom[2] * 3/4
+			star.momx = $ + v.vfx_mom[1]
+			star.momy = $ + v.vfx_mom[2]
 			star.momz = $ + v.vfx_mom[3] * 3/4
 		end
 		local wave = P_SpawnMobjFromMobj(v,0,0,0,MT_PARTICLE)
@@ -194,8 +194,8 @@ local function NewVFXThink(v)
 	if (v.state == S_SOAP_HITM_STAR)
 		v.rollangle = $ + v.vfx_roll
 
-		v.momx = FixedMul($, STAR_DRAG)
-		v.momy = FixedMul($, STAR_DRAG)
+		--v.momx = FixedMul($, STAR_DRAG)
+		--v.momy = FixedMul($, STAR_DRAG)
 		v.momz = FixedMul($, STAR_DRAG)
 
 		if not P_TryMove(v, v.x + v.momx, v.y + v.momy, true)
