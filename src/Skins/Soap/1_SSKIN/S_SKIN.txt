@@ -5,8 +5,9 @@ HudName = SOAP
 
 flags = SF_HIRES|SF_FASTEDGE|SF_NOSHIELDABILITY|SF_SUPER|SF_NONIGHTSROTATION
 
-ability = CA_SOAPMOVE
-ability2 = CA2_SOAPMOVE
+# These are magic numbers because otherwise SRB2 can't parse them...
+ability = 100
+ability2 = 100
 
 prefcolor = Galaxy
 Supercolor = Purple

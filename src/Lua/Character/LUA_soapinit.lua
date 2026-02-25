@@ -29,8 +29,8 @@ fakeenum("SNOABIL_BOTHTAUNTS",
 
 -- if either characters charabilities arent set to
 -- CA_SOAPMOVE or CA2_SOAPMOVE, then all NOABIL_*s will be applied
-rawset(_G,"CA_SOAPMOVE", 140)
-rawset(_G,"CA2_SOAPMOVE", 140)
+rawset(_G,"CA_SOAPMOVE", 100)
+rawset(_G,"CA2_SOAPMOVE", 100)
 
 local includes = {
 	"mobjs.lua",
