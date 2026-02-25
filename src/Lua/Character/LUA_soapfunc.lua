@@ -657,7 +657,7 @@ rawset(_G,"Soap_ImpactVFX",function(src,inf, distmul, scalemul, forcesplat)
 
 	if inf and inf.valid
 		top_layer.vfx_mom = {inf.momx, inf.momy, inf.momz}
-
+		
 		if applycolor
 			top_layer.color = inf.color
 			if (top_layer.color ~= nil and top_layer.color ~= SKINCOLOR_NONE)
@@ -672,7 +672,7 @@ rawset(_G,"Soap_ImpactVFX",function(src,inf, distmul, scalemul, forcesplat)
 		shck.state = (P_RandomChance(FU/6) and S_SOAP_HITM_FSHK0 or S_SOAP_HITM_SHK0) + i
 		shck.spritexscale = top_layer.spritexscale + Soap_RandomFixedSigned() / 4
 		shck.spriteyscale = shck.spritexscale
-		shck.renderflags = $|rflags
+		shck.renderflags = $|rflags|RF_ALWAYSONTOP
 		shck.color = top_layer.color
 		shck.colorized = top_layer.colorized
 		if P_RandomChance(FU/2)
@@ -683,6 +683,7 @@ rawset(_G,"Soap_ImpactVFX",function(src,inf, distmul, scalemul, forcesplat)
 			shock.rollangle = ANGLE_90
 			shock.color = top_layer.color
 			shock.colorized = top_layer.colorized
+			shock.renderflags = shck.renderflags
 		end
 	end
 
@@ -1750,6 +1751,15 @@ rawset(_G,"Soap_HandleNoAbils", function(p)
 	
 	if (PSO)
 		na = $|SNOABIL_ALL &~SNOABIL_BOTHTAUNTS
+	end
+	
+	-- jump moves
+	if (p.charability ~= CA_SOAPMOVE)
+		na = $|SNOABIL_POUND|SNOABIL_UPPERCUT|SNOABIL_CROUCH
+	end
+	-- spin moves
+	if (p.charability ~= CA2_SOAPMOVE)
+		na = $|SNOABIL_RDASH|SNOABIL_AIRDASH
 	end
 	
 	--return value: new noabilities field (absolute)

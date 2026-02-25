@@ -449,6 +449,15 @@ rawset(_G,"Takis_HandleNoAbils", function(p)
 		na = $|SNOABIL_ALL &~SNOABIL_BOTHTAUNTS
 	end
 	
+	-- jump moves
+	if (p.charability ~= CA_DOUBLEJUMP)
+		na = $|NOABIL_THOK|NOABIL_DIVE
+	end
+	-- spin moves
+	if (p.charability ~= CA2_SOAPMOVE)
+		na = $|NOABIL_CLUTCH|NOABIL_HAMMER|NOABIL_SLIDE
+	end
+	
 	--return value: new noabilities field (absolute)
 	local hook_event,hook_name = Takis_Hook.findEvent("Char_NoAbility")
 	if hook_event

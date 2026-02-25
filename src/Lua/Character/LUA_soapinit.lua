@@ -7,7 +7,7 @@ Soap_EnumFlags("SNOABIL_", {
 	--maybe?
 	"TOP",
 	"TAUNTS",
-	"CROUCH",
+	"CROUCH", -- used for sliding now
 	"BREAKDANCE",
 })
 local function fakeenum(name,val)
@@ -26,6 +26,11 @@ fakeenum("SNOABIL_TAUNTSONLY",
 fakeenum("SNOABIL_BOTHTAUNTS",
 	SNOABIL_TAUNTS|SNOABIL_BREAKDANCE
 )
+
+-- if either characters charabilities arent set to
+-- CA_SOAPMOVE or CA2_SOAPMOVE, then all NOABIL_*s will be applied
+rawset(_G,"CA_SOAPMOVE", 140)
+rawset(_G,"CA2_SOAPMOVE", 140)
 
 local includes = {
 	"mobjs.lua",
