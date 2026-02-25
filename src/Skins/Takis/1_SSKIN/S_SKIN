@@ -9,7 +9,7 @@ prefcolor = Forest
 supercolor = Purple
 
 ability = CA_DOUBLEJUMP
-ability2 = CA2_NONE
+ability2 = CA2_SOAPMOVE
 
 actionspd = 45
 normalspeed = 25

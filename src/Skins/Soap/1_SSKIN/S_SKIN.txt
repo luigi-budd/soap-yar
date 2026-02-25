@@ -5,8 +5,8 @@ HudName = SOAP
 
 flags = SF_HIRES|SF_FASTEDGE|SF_NOSHIELDABILITY|SF_SUPER|SF_NONIGHTSROTATION
 
-ability = CA_NONE
-ability2 = CA2_NONE
+ability = CA_SOAPMOVE
+ability2 = CA2_SOAPMOVE
 
 prefcolor = Galaxy
 Supercolor = Purple
