@@ -3,7 +3,7 @@ local mbrelease = dofile("Vars/mbrelease.lua")
 local not_in_mb = {
 	--["character/LUA_takisinit.lua"] = true,
 	--["character/LUA_takisfunc.lua"] = true,
-	["character/LUA_takis.lua"] = true,
+	--["character/LUA_takis.lua"] = true,
 }
 
 rawset(_G,"MENULIB_ROOT","Libs/Menulib/")
