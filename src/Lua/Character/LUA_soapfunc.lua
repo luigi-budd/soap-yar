@@ -1758,7 +1758,7 @@ rawset(_G,"Soap_HandleNoAbils", function(p)
 		na = $|SNOABIL_POUND|SNOABIL_UPPERCUT|SNOABIL_CROUCH
 	end
 	-- spin moves
-	if (p.charability ~= CA2_SOAPMOVE)
+	if (p.charability2 ~= CA2_SOAPMOVE)
 		na = $|SNOABIL_RDASH|SNOABIL_AIRDASH
 	end
 	

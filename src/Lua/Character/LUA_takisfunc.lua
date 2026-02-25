@@ -454,7 +454,7 @@ rawset(_G,"Takis_HandleNoAbils", function(p)
 		na = $|NOABIL_THOK|NOABIL_DIVE
 	end
 	-- spin moves
-	if (p.charability ~= CA2_SOAPMOVE)
+	if (p.charability2 ~= CA2_SOAPMOVE)
 		na = $|NOABIL_CLUTCH|NOABIL_HAMMER|NOABIL_SLIDE
 	end
 	
