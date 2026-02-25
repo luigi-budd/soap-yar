@@ -196,33 +196,6 @@ states[S_SOAP_LUNGEVFX] = {
 	nextstate = S_SOAP_LUNGEVFX
 }
 
-local soap_impactvfx = {}
-rawset(_G, "SOAP_IMPACTVFX_OFFSET", 4)
-rawset(_G, "SOAP_IMPACTVFX_LENGTH", 6) -- `(SOAP_IMPACTVFX_LENGTH + 1) * offset` to get the next set of vfx
-rawset(_G, "SOAP_IMPACTVFX_SETS",   3) -- 4 sets - 1
-rawset(_G, "SOAP_IMPACTVFX_HEIGHT", 171*FU)
-local soap_impactscale = FU*3/2
-SafeFreeslot("S_SOAP_IMPACT")
-states[S_SOAP_IMPACT] = {
-    sprite = SPR_SOAP_GFX,
-    frame = SOAP_IMPACTVFX_OFFSET|FF_ANIMATE|FF_PAPERSPRITE|FF_FULLBRIGHT,
-	var1 = SOAP_IMPACTVFX_LENGTH,
-	var2 = 2,
-	tics = (SOAP_IMPACTVFX_LENGTH*2)+2,
-	action = function(mo)
-		--mo.fuse = states[mo.state].tics
-		mo.destscale = mo.scale*2
-		mo.dispoffset = 5
-		
-		--mo.spriteyoffset = 5*FU
-		mo.renderflags = $|RF_NOCOLORMAPS|RF_ALWAYSONTOP
-		mo.spritexscale = FixedMul($, soap_impactscale)
-		mo.spriteyscale = FixedMul($, soap_impactscale)
-		
-		table.insert(soap_impactvfx, mo)
-	end
-}
-
 -- impact complement
 SafeFreeslot("S_SOAP_IMPACT_LINE")
 states[S_SOAP_IMPACT_LINE] = {
@@ -241,35 +214,57 @@ states[S_SOAP_IMPACT_LINE2] = {
 	tics = (4*2),
 }
 
-local function trim_impactvfx()
-	for k,mo in ipairs(soap_impactvfx)
-		if not (mo and mo.valid and mo.frameoffset ~= nil)
-			table.remove(soap_impactvfx, k)
-			continue
-		end
-	end
-end
+-- these are for the new impact vfx
+SafeFreeslot("SPR_SOAP_HITMARK")
 
-addHook("PreThinkFrame",do
-	if (#soap_impactvfx == 0) then return end
-	trim_impactvfx()
-	
-	for k,mo in ipairs(soap_impactvfx)
-		if not (mo and mo.valid) then continue end -- FUCK YOU!!! FUCK YOU FUCK YOU FUCK YOU!!!!
-		if not mo.extravalue1 then continue end
-		mo.frame = $ - mo.frameoffset
-	end
-end)
-addHook("PostThinkFrame",do
-	if (#soap_impactvfx == 0) then return end
-	trim_impactvfx()
-	
-	for k,mo in ipairs(soap_impactvfx)
-		if not (mo and mo.valid) then continue end -- FUCK YOU!!! FUCK YOU FUCK YOU FUCK YOU!!!!
-		mo.frame = $ + mo.frameoffset
-		mo.extravalue1 = 1
-	end
-end)
-addHook("NetVars",function(n)
-	soap_impactvfx = n($)
-end)
+SafeFreeslot("S_SOAP_HITM_RSPRK")
+states[S_SOAP_HITM_RSPRK] = {
+    sprite = SPR_SOAP_HITMARK,
+    frame = 0|FF_ANIMATE|FF_FULLBRIGHT,
+	var1 = 8,
+	var2 = 1,
+	tics = (8),
+	nextstate = S_INVISIBLE
+}
+SafeFreeslot("S_SOAP_HITM_BSPRK")
+states[S_SOAP_HITM_BSPRK] = {
+    sprite = SPR_SOAP_HITMARK,
+    frame = 8|FF_ANIMATE|FF_FULLBRIGHT,
+	var1 = 9,
+	var2 = 1,
+	tics = (10),
+}
+SafeFreeslot("S_SOAP_HITM_STAR")
+states[S_SOAP_HITM_STAR] = {
+    sprite = SPR_SOAP_HITMARK,
+    frame = 18|FF_FULLBRIGHT,
+	var1 = 0,
+	var2 = 0,
+	tics = TR,
+}
+-- shock effects
+for i = 0,2
+	states[SafeFreeslot("S_SOAP_HITM_SHK"..i)] = {
+	    sprite = SPR_SOAP_HITMARK,
+	    frame = (19 + (6*i))|FF_FULLBRIGHT|FF_ANIMATE,
+		var1 = 5,
+		var2 = 2,
+		tics = (6*2),
+	}
+	-- fast variant
+	states[SafeFreeslot("S_SOAP_HITM_FSHK"..i)] = {
+	    sprite = SPR_SOAP_HITMARK,
+	    frame = (19 + (6*i))|FF_FULLBRIGHT|FF_ANIMATE,
+		var1 = 5,
+		var2 = 1,
+		tics = (6*1),
+	}
+end
+SafeFreeslot("S_SOAP_HITM_SHCKW")
+states[S_SOAP_HITM_SHCKW] = {
+    sprite = SPR_SOAP_HITMARK,
+    frame = 37|FF_FULLBRIGHT|FF_ANIMATE|FF_ADD,
+	var1 = 6,
+	var2 = 1,
+	tics = 7,
+}

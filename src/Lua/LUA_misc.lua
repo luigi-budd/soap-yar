@@ -153,8 +153,104 @@ addHook("MobjThinker",function(mo)
 	end
 end,MT_SOAP_STUNNED)
 
+local damagecolors = {
+	SKINCOLOR_WHITE,
+	SKINCOLOR_RED,
+	SKINCOLOR_MAGENTA,
+	SKINCOLOR_YELLOW,
+	SKINCOLOR_SAPPHIRE
+}
+
+local RED_OFFSET = 16*FU
+local RED_STAROFFSET = 8*FU
+local STAR_DRAG = FU*99/100
+local function NewVFXThink(v)
+	if (v.state == S_SOAP_HITM_RSPRK)
+	and (v.tics == 1)
+		for i = 0, 5
+			local star = P_SpawnMobjFromMobj(v,
+				Soap_RandomFixedRange(-RED_STAROFFSET, RED_STAROFFSET),
+				Soap_RandomFixedRange(-RED_STAROFFSET, RED_STAROFFSET),
+				Soap_RandomFixedRange(-RED_STAROFFSET, RED_STAROFFSET) + 40*FU,
+				MT_SOAP_FREEZEGFX
+			)
+			star.state = S_SOAP_HITM_STAR
+			star.soap_newvfx = true
+			star.color = damagecolors[P_RandomRange(1, #damagecolors)]
+			star.scale = $ * 2
+			star.spritexscale = $ / 4
+			star.spriteyscale = star.spritexscale
+			local ha,va = R_PointTo3DAngles(v.x,v.y,v.z, star.x,star.y,star.z)
+			P_3DThrust(star, ha,va, P_RandomRange(12,20)*FU)
+			star.vfx_roll = FixedAngle(P_RandomRange(-28,28)*FU)
+			star.flags = $ &~(MF_NOGRAVITY|MF_NOCLIP)
+			star.momx = $ + v.vfx_mom[1] * 3/4
+			star.momy = $ + v.vfx_mom[2] * 3/4
+			star.momz = $ + v.vfx_mom[3] * 3/4
+		end
+		local wave = P_SpawnMobjFromMobj(v,0,0,0,MT_PARTICLE)
+		wave.state = S_SOAP_HITM_SHCKW
+	end
+	if (v.state == S_SOAP_HITM_STAR)
+		v.rollangle = $ + v.vfx_roll
+
+		v.momx = FixedMul($, STAR_DRAG)
+		v.momy = FixedMul($, STAR_DRAG)
+		v.momz = FixedMul($, STAR_DRAG)
+
+		if not P_TryMove(v, v.x + v.momx, v.y + v.momy, true)
+			P_BounceMove(v)
+		end
+		if ((v.z + v.momz <= v.floorz)
+		or (v.z + 16*v.spritexscale + v.momx >= v.ceilingz))
+		and not (v.extravalue1)
+			v.momz = -$
+			v.extravalue1 = 1
+			v.flags = $|MF_NOCLIPHEIGHT
+		end
+
+		P_ZMovement(v)
+		v.momz = $ + P_GetMobjGravity(v)
+
+		v.tics = $ - 1
+		if v.tics == 0
+			P_RemoveMobj(v)
+		elseif v.tics == TR/4
+			v.destscale = 0
+			v.scalespeed = FixedDiv(v.scale, v.tics*FU)
+		end
+		return true
+	end
+
+	if v.vfx_tospawn
+		if v.vfx_delays[v.vfx_tospawn] > 0
+			v.vfx_delays[v.vfx_tospawn] = $ - 1
+			return
+		end
+		
+		local blue = P_SpawnMobjFromMobj(v,
+			Soap_RandomFixedRange(-RED_OFFSET, RED_OFFSET),
+			Soap_RandomFixedRange(-RED_OFFSET, RED_OFFSET),
+			Soap_RandomFixedRange(-RED_OFFSET, RED_OFFSET),
+			MT_PARTICLE
+		)
+		blue.state = S_SOAP_HITM_BSPRK
+		blue.spritexscale = ($*6/5) + P_RandomFixed()/2
+		blue.spriteyscale = blue.spritexscale
+		v.vfx_tospawn = $ - 1
+	elseif (v.state == S_INVISIBLE)
+		P_RemoveMobj(v)
+		return
+	end
+end
+
 --lol
 local function FreezeInHitlag(mo)
+	-- this is handled here because i cant be bothered to make a new mobj
+	if mo.soap_newvfx
+		return NewVFXThink(mo)
+	end
+	
 	local me = mo.tracer
 	if not (me and me.valid and me.health)
 		P_RemoveMobj(mo)

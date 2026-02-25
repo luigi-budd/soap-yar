@@ -618,7 +618,8 @@ local damagecolors = {
 	SKINCOLOR_WHITE,
 	SKINCOLOR_PEPPER,
 	SKINCOLOR_MAGENTA,
-	SKINCOLOR_YELLOW
+	SKINCOLOR_YELLOW,
+	SKINCOLOR_SAPPHIRE
 }
 rawset(_G,"Soap_ImpactVFX",function(src,inf, distmul, scalemul, forcesplat)
 	scalemul = $ or FU
@@ -629,11 +630,9 @@ rawset(_G,"Soap_ImpactVFX",function(src,inf, distmul, scalemul, forcesplat)
 		z = Soap_RandomFixedRange(-disp,disp)
 	}
 	
-	local spr_scale = FixedMul(FU*3/4 + Soap_RandomFixedSigned() / 4, scalemul)
-	local tntstate = S_SOAP_IMPACT --S_TNTBARREL_EXPL3
-	local rflags = RF_PAPERSPRITE|RF_FULLBRIGHT|RF_NOCOLORMAPS
+	local spr_scale = FixedMul(FU*3/2 + Soap_RandomFixedSigned() / 4, scalemul)
+	local rflags = RF_FULLBRIGHT|RF_NOCOLORMAPS
 	local applycolor = ((multiplayer or netgame) and (gametyperules & GTR_FRIENDLY == 0))
-	local frameoffset = (SOAP_IMPACTVFX_LENGTH + 1) * P_RandomRange(0, SOAP_IMPACTVFX_SETS)
 	
 	if distmul ~= nil
 		off.x = FixedMul($, distmul)
@@ -642,66 +641,67 @@ rawset(_G,"Soap_ImpactVFX",function(src,inf, distmul, scalemul, forcesplat)
 		spr_scale = FixedMul($, FU + (distmul - FU)/6)
 	end
 	
-	for i = -1,1
-		local adjust = 0
-		local angle = (i == 1) and ANGLE_90 or 0
-		if (forcesplat) and (i ~= 0) then continue end
-		
-		if (i == 0)
-			--50% of sprite's height - y offset
-			--adjust = FixedMul(SOAP_IMPACTVFX_HEIGHT/2, spr_scale) + off.z
-			angle = 0
-		end
-		
-		local bam = P_SpawnMobjFromMobj(src, off.x,off.y,
-			adjust + off.z,
-			MT_THOK
-		)
-		if (inf and inf.valid)
-			P_SetScale(bam, inf.scale, true)
-		end
-		bam.state = tntstate
-		bam.spritexscale = FixedMul($, spr_scale)
-		bam.spriteyscale = bam.spritexscale
-		bam.renderflags = $|rflags
-		bam.angle = angle
-		bam.frameoffset = frameoffset
-		if inf and inf.valid
-		and applycolor
-			bam.color = inf.color
-			if (bam.color ~= nil and bam.color ~= SKINCOLOR_NONE)
-				bam.colorized = true
-			end
-		end
-		
-		if i == 0
-			--bam.spriteyoffset = -(SOAP_IMPACTVFX_HEIGHT/2)
-			bam.renderflags = $|RF_FLOORSPRITE|RF_NOSPLATBILLBOARD
-			P_SetOrigin(bam, bam.x,bam.y,
-				src.z + FixedMul(34*src.scale, spr_scale) + off.z
-			)
-			local renderer = CV.FindVar("renderer")
-			if (renderer
-			and renderer.string:lower() == "software")
-			and not forcesplat
-				bam.flags2 = $|MF2_DONTDRAW
+	local top_layer = P_SpawnMobjFromMobj(src, off.x,off.y,off.z, MT_SOAP_FREEZEGFX)
+	top_layer.soap_newvfx = true
+	top_layer.state = S_SOAP_HITM_RSPRK
+	top_layer.spritexscale = FixedMul($, spr_scale)
+	top_layer.spriteyscale = top_layer.spritexscale
+	top_layer.renderflags = $|rflags
+	top_layer.vfx_tospawn = P_RandomRange(1, 3)
+	top_layer.vfx_delays = {}
+	for i = 1,top_layer.vfx_tospawn
+		top_layer.vfx_delays[i] = 4 - i
+	end
+	top_layer.vfx_mom = {0,0,0}
+	top_layer.dispoffset = 200
+
+	if inf and inf.valid
+		top_layer.vfx_mom = {inf.momx, inf.momy, inf.momz}
+
+		if applycolor
+			top_layer.color = inf.color
+			if (top_layer.color ~= nil and top_layer.color ~= SKINCOLOR_NONE)
+				top_layer.colorized = true
 			end
 		end
 	end
 	
+	local adjust = P_RandomChance(FU/2)
+	for i = (adjust and 2 or 0), ((not adjust) and 2 or 0), (adjust and -1 or 1)
+		local shck = P_SpawnMobjFromMobj(top_layer, 0,0,0, MT_PARTICLE)
+		shck.state = (P_RandomChance(FU/6) and S_SOAP_HITM_FSHK0 or S_SOAP_HITM_SHK0) + i
+		shck.spritexscale = top_layer.spritexscale + Soap_RandomFixedSigned() / 4
+		shck.spriteyscale = shck.spritexscale
+		shck.renderflags = $|rflags
+		shck.color = top_layer.color
+		shck.colorized = top_layer.colorized
+		if P_RandomChance(FU/2)
+			local shock = P_SpawnMobjFromMobj(top_layer, 0,0,0, MT_PARTICLE)
+			shock.state = shck.state
+			shock.spritexscale = (shck.spritexscale * 6/5) + Soap_RandomFixedSigned() / 4
+			shock.spriteyscale = shock.spritexscale
+			shock.rollangle = ANGLE_90
+			shock.color = top_layer.color
+			shock.colorized = top_layer.colorized
+		end
+	end
+
 	if forcesplat then return end
 	
 	local damagecolor = damagecolors[P_RandomRange(1, #damagecolors)]
-	local irad = 34*src.scale
+	local irad = 40*src.scale
+	local offset = 3
 	for i = 1,16
 		-- caches less angles
 		local ha = FixedAngle(P_RandomRange(0,36) * 10*FU)
 		local va = FixedAngle(P_RandomRange(0,36) * 10*FU)
 		local v = SphereToCartesian(ha,va)
 		local s = P_SpawnMobjFromMobj(src,
-			FixedMul(irad, v.x),
-			FixedMul(irad, v.y),
-			FixedMul(irad, v.z),
+			off.x + FixedMul(irad, v.x),
+			off.y + FixedMul(irad, v.y),
+			-- 40 pixels are how much the red spark are offset
+			-- from 128
+			off.z + FixedMul(irad, v.z) + 40*FU,
 			MT_PARTICLE --MT_SOAP_FREEZEGFX
 		)
 		s.state = S_SOAP_IMPACT_LINE2
@@ -710,6 +710,9 @@ rawset(_G,"Soap_ImpactVFX",function(src,inf, distmul, scalemul, forcesplat)
 		s.color = damagecolor
 		s.tracer = inf
 		s.renderflags = $|RF_ALWAYSONTOP|rflags
+		s.tics = $ + offset
+		s.anim_duration = $ + offset
+		s.scale = $ / 2
 	end
 end)
 
