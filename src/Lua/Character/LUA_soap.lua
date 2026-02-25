@@ -1475,7 +1475,7 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 			me.pitch = FixedMul($, FU*3/4)
 			me.roll = FixedMul($, FU*3/4)
 			
-			p.runspeed = soap.accspeed - 10*FU
+			p.runspeed = max(soap.accspeed - 10*FU, skins[p.skin].runspeed)
 			if soap.accspeed >= FU
 				p.drawangle = R_PointToAngle2(0,0, me.momx,me.momy)
 			end
@@ -3040,9 +3040,14 @@ local function try_pvp_collide(me,thing)
 			local thinghit = false
 			
 			--hit by pound
-			if (soap.pounding)
-			and (thing.health)
-			and (thing.type ~= MT_ROLLOUTROCK)
+			if ((soap.pounding)
+			and (thing.health))
+				-- handled like this because afterimages can
+				-- still attack the rock after this case
+				if (thing.type == MT_ROLLOUTROCK)
+					return
+				end
+				
 				Soap_ImpactVFX(thing, me)
 				local damage = 1
 				local power = 5*FU + FixedDiv(abs(me.momz),me.scale*3)

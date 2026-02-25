@@ -124,9 +124,9 @@ local MOBJ_LIST = {
 			--strange divide by 0 with one of these 2
 			/*
 			--doesnt seem to happen anymore?
-			MT_ROLLOUTSPAWN,
 			MT_ROLLOUTROCK,
 			*/
+			MT_ROLLOUTSPAWN,
 			MT_DUSTDEVIL,
 			MT_DUSTLAYER,
 			MT_STARPOST,
