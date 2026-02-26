@@ -5,6 +5,7 @@
 /*
 	Collaborators:
 	- `Green`/greenbulb : useless dumb shit
+	- romoney5 : Helped with mod compatibility with Orbit
 */
 
 rawset(_G, "TR", TICRATE)
