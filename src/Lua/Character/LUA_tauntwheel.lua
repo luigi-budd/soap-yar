@@ -8,6 +8,9 @@ local taunt_cmd = {
 	y = 0,
 	pointing = -1,
 	buttons = 0,
+	
+	forward = 0,
+	side = 0,
 }
 
 local function CheckTauntAvail(p)
@@ -269,7 +272,16 @@ local gc2bt = {
 	[GC_SPIN]		= BT_SPIN,
 	[GC_JUMP]		= BT_JUMP,
 }
-
+local control_gc = {
+	[GC_FORWARD]		= 1,
+	[GC_BACKWARD]		= -1,
+	
+	[GC_STRAFELEFT]		= -2,
+	[GC_TURNLEFT]		= -2,
+	[GC_STRAFERIGHT]	= 2,
+	[GC_TURNRIGHT]		= 2,
+}
+local keymovespeed = 7*FU
 addHook("KeyDown", function(key)
 	if isdedicatedserver then return end
 	if key.repeated then return end
@@ -300,6 +312,18 @@ addHook("KeyDown", function(key)
 			taunt_cmd.buttons = $|bt
 		end
 	end
+	
+	for gc, type in pairs(control_gc)
+		local k1, k2 = input.gameControlToKeyNum(gc)
+		if not (key.num == k1 or key.num == k2) then continue end
+		
+		-- forwardmove keys
+		if abs(type) == 1
+			taunt_cmd.forward = keymovespeed * type
+		elseif abs(type) == 2
+			taunt_cmd.side = keymovespeed * sign(type)
+		end
+	end
 end)
 
 addHook("KeyUp", function(key)
@@ -314,6 +338,18 @@ addHook("KeyUp", function(key)
 		local k1, k2 = input.gameControlToKeyNum(gc)
 		if key.num == k1 or key.num == k2
 			taunt_cmd.buttons = $ &~bt
+		end
+	end
+	
+	for gc, type in pairs(control_gc)
+		local k1, k2 = input.gameControlToKeyNum(gc)
+		if not (key.num == k1 or key.num == k2) then continue end
+		
+		-- forwardmove keys
+		if abs(type) == 1
+			taunt_cmd.forward = 0
+		elseif abs(type) == 2
+			taunt_cmd.side = 0
 		end
 	end
 end)
@@ -345,6 +381,8 @@ local function ClientTauntHandle(p)
 	-- positive aiming is upwards
 	local workx = -(mouse.dx*8) * scroll_fact
 	local worky = -(mouse.dy*8) * scroll_fact
+	workx = $ - taunt_cmd.side
+	worky = $ + taunt_cmd.forward
 	taunt_cmd.x = $ - workx
 	taunt_cmd.y = $ + worky
 	local ang = R_PointToAngle2(0,0, taunt_cmd.x,taunt_cmd.y)

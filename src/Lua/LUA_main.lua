@@ -29,10 +29,7 @@ addHook("PreThinkFrame",function()
 		for i,v in ipairs(hook_event)
 			Takis_Hook.tryRunHook("PreThinkFrame", v, p)
 		end
-		
-		if (me.skin == SOAP_SKIN or me.skin == TAKIS_SKIN)
-			Soap_TauntWheelThink(p)
-		end
+		Soap_TauntWheelThink(p)
 		
 		--Cool.
 		--see also: https://git.do.srb2.org/STJr/SRB2/-/merge_requests/2656
