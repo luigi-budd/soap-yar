@@ -2260,6 +2260,7 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 		and not Soap_IsCompGamemode()
 			p.pflags = $ &~(PF_JUMPED|PF_THOKKED)
 			P_DoJump(p, true)
+			do_jump_effect(p,me,soap)
 			me.translation = nil
 		end
 		soap.afterimage = false

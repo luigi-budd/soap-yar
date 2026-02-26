@@ -19,6 +19,26 @@ local function stupidbouncesectors(mobj, sector)
     end
 end
 
+local function do_jump_effect(p,me,soap)
+	Soap_DustRing(me,
+		dust_type(me), 8,
+		{me.x,me.y,me.z},
+		me.radius / 2,
+		8*me.scale,
+		me.scale * 3/2,
+		me.scale / 2,
+		false,
+		dust_noviewmobj
+	)
+	
+	Soap_SquashMacro(p, {ease_func = "outsine", ease_time = 8, x = -FU*7/10, y = -FU/2})
+	Soap_RemoveSquash(p, "soap_slide")
+	Soap_RemoveSquash(p, "landeffect")
+	Soap_RemoveSquash(p, "Takis_Clutch")
+	me.soap_jumpdust = 4
+	me.soap_jumpeffect = nil
+end
+
 local function P_PitchRoll(me, frac)
 	me.eflags = $|MFE_NOPITCHROLLEASING
 	local angle = R_PointToAngle2(0,0, me.momx,me.momy)
@@ -931,6 +951,44 @@ Takis_Hook.addHook("Takis_Thinker",function(p)
 		soap.dived = false
 	end
 	
+	--things to do while in pain
+	if soap.inPain
+		local ticker = leveltime/2
+		local painflash = TR/2
+		--not in actual hitlag but the "Invert" translation like
+		--in wl4 seems a litle too harsh here
+		if (soap.paintime < painflash)
+			me.translation = (ticker & 1) and (Soap_Hitlag.hitlagTranslation) or nil
+			soap.setpaintrans = true
+			me.flags2 = $ &~MF2_DONTDRAW
+		elseif (soap.paintime == painflash)
+			me.translation = nil
+			soap.setpaintrans = false
+		end
+		--soap.taunttime = 0
+		
+		--recovery jump
+		if soap.paintime >= TR/2
+		and (soap.jump == 1)
+		and (soap.notCarried)
+		--not in match!
+		and not Soap_IsCompGamemode()
+			p.pflags = $ &~(PF_JUMPED|PF_THOKKED)
+			P_DoJump(p, true)
+			do_jump_effect(p,me,soap)
+			me.translation = nil
+		end
+		soap.sprung = false
+		soap.paintime = $ + 1
+	else
+		soap.paintime = 0
+		
+		if soap.setpaintrans
+			me.translation = nil
+			soap.setpaintrans = false
+		end
+	end
+	
 	if soap.bashspin
 	and not ((p.pflags & PF_SPINNING)
 	or p.skidtime and me.state == S_PLAY_SKID
@@ -1019,23 +1077,7 @@ addHook("JumpSpecial", function(p)
 	
 	if soap.onGround
 	or me.soap_jumpeffect
-		Soap_DustRing(me,
-			dust_type(me), 8,
-			{me.x,me.y,me.z},
-			me.radius / 2,
-			8*me.scale,
-			me.scale * 3/2,
-			me.scale / 2,
-			false,
-			dust_noviewmobj
-		)
-		
-		Soap_SquashMacro(p, {ease_func = "outsine", ease_time = 8, x = -FU*7/10, y = -FU/2})
-		Soap_RemoveSquash(p, "soap_slide")
-		Soap_RemoveSquash(p, "landeffect")
-		Soap_RemoveSquash(p, "Takis_Clutch")
-		me.soap_jumpdust = 4
-		me.soap_jumpeffect = nil
+		do_jump_effect(p,me,soap)
 		soap.dived = false
 		
 		dolunge(p,me,soap, true)
