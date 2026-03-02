@@ -1024,8 +1024,6 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 					end
 				end
 				
-				--this code is based off a script my friend marilyn wrote,
-				--shoutouts to her!
 				if me.standingslope
 					local slope = me.standingslope
 					local xydiff = R_PointToAngle2(0,0,me.momx,me.momy) - slope.xydirection
