@@ -1475,7 +1475,9 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 			me.pitch = FixedMul($, FU*3/4)
 			me.roll = FixedMul($, FU*3/4)
 			
-			p.runspeed = max(soap.accspeed - 10*FU, skins[p.skin].runspeed)
+			if not soap.onGround
+				p.runspeed = max(soap.accspeed - 10*FU, skins[p.skin].runspeed)
+			end
 			if soap.accspeed >= FU
 				p.drawangle = R_PointToAngle2(0,0, me.momx,me.momy)
 			end
@@ -2653,8 +2655,8 @@ addHook("FollowMobj",function(p, m_peel) --master peel
 	local angle = soap.dashangle - FixedAngle(soap.uppercut_spin)
 	
 	local radius = -FixedMul(me.radius + 13*me.scale, me.spritexscale)
-	local forwardx = P_ReturnThrustX(nil,angle, -radius*3/2)
-	local forwardy = P_ReturnThrustY(nil,angle, -radius*3/2)
+	local forwardx = P_ReturnThrustX(nil,angle, -radius*5/4)
+	local forwardy = P_ReturnThrustY(nil,angle, -radius*5/4)
 	local side = 0
 	local sidemove = me.scale/2
 	
