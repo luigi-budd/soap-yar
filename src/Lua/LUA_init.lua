@@ -328,11 +328,11 @@ rawset(_G, "Soap_InitTable", function(p)
 		-- hammer blast
 		hammer = {
 			down = 0, --goin down?
-			up = 0, --for softlock prevention
 			wentdown = false,
 			jumped = 0, --probably was used in the old addon? old carry over from older versions?
 			angle = 0,
 			lockout = 0,
+			stuck = 0,
 		},
 		
 		dived = false,

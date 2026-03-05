@@ -475,7 +475,7 @@ rawset(_G, "Takis_ResetHammerTime", function(p)
 	hammer.wentdown = false
 	hammer.jumped = 0
 	hammer.groundtime = 0
-	hammer.up = 0
+	hammer.stuck = 0
 	p.thrustfactor = skins[TAKIS_SKIN].thrustfactor
 end)
 
@@ -899,16 +899,6 @@ rawset(_G,"Takis_AbilityHelpers",{
 		
 		if me.momz*takis.gravflip <= fallingspeed
 		or hammer.wentdown == true
-			
-			if (me.momz*takis.gravflip >= me.scale)
-				hammer.up = $+1
-			end
-			if hammer.up >= TR
-				Takis_ResetHammerTime(p)
-				me.state = S_PLAY_FALL
-				return
-			end
-			
 			--me.momz = $*15/8
 			me.momz = $-((me.scale*11/10)*takis.gravflip)
 			if p.powers[pw_shield] & SH_FORCE
@@ -965,6 +955,14 @@ rawset(_G,"Takis_AbilityHelpers",{
 		if not domoves
 			Takis_ResetHammerTime(p)
 			return
+		end
+		if abs(me.momz) <= me.scale * 3/2
+			hammer.stuck = $ + 1
+			if hammer.stuck >= 2*TR
+				Takis_ResetHammerTime(p)
+				me.state = S_PLAY_FALL
+				return
+			end
 		end
 		
 		--hit ground

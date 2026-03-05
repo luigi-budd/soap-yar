@@ -318,6 +318,7 @@ Takis_Hook.addHook("Takis_Thinker",function(p)
 		and not (soap.noability & NOABIL_HAMMER or hammer.lockout)
 			p.pflags = $|PF_THOKKED &~PF_SHIELDABILITY
 			
+			hammer.stuck = 0
 			hammer.down = 1
 			hammer.angle = p.drawangle
 			S_StartSoundAtVolume(me,sfx_tk_ahm, 255*9/10)
@@ -906,7 +907,7 @@ Takis_Hook.addHook("Takis_Thinker",function(p)
 			p.powers[pw_strong] = $|STR_HEAVY
 		end
 		*/
-		hammer.up = 0
+		hammer.stuck = 0
 		S_StopSoundByID(me,sfx_tk_fst)
 		S_StopSoundByID(me,sfx_tk_hmd)
 	end
