@@ -82,13 +82,10 @@ rawset(_G,"Takis_DoClutch",function(p,riding)
 	end
 	*/
 	
-	local ccombo = min(clutch.combo,3)
-	
+	local ccombo = clutch.combo
 	if ccombo >= 3
-		if me.friction < FU
-			me.friction = FU + FU/10
-			takis.frictionfreeze = TR/2
-		end
+		me.friction = FU
+		takis.frictionfreeze = TR/2
 	end
 	
 	--sounds mostly similar to final game
@@ -102,15 +99,11 @@ rawset(_G,"Takis_DoClutch",function(p,riding)
 	
 	clutch.time = 1
 	
-	local thrust = 7*FU + FixedMul( (2*FU), (ccombo*FU)/2 )
-	if p.powers[pw_sneakers]
-		if thrust >= 25*FU
-			thrust = 25*FU
-		end
+	local thrust = 8*FU
+	if ccombo < 4
+		thrust = $ + ccombo*FU
 	else
-		if thrust >= 12*FU
-			thrust = 12*FU
-		end
+		thrust = $ + (ccombo*FU * 38/100)
 	end
 	
 	local clutchadjust = clutch.tics --max((takis.clutchtime - p.cmd.latency),0)
@@ -158,7 +151,7 @@ rawset(_G,"Takis_DoClutch",function(p,riding)
 		end
 	end
 	
-	if p.powers[pw_sneakers]
+	if (p.powers[pw_sneakers] or takis.doSuperBuffs)
 		thrust = $*8/5
 	end
 	
@@ -169,7 +162,7 @@ rawset(_G,"Takis_DoClutch",function(p,riding)
 	--stop that stupid momentum mod from givin
 	--us super speed for spamming
 	if thrust == 0
-	and not p.powers[pw_sneakers]
+	and not (p.powers[pw_sneakers] or takis.doSuperBuffs)
 	and (clutch.spamcount >= 3)
 		P_InstaThrust(me,Soap_ControlDir(p),FixedDiv(
 				FixedMul(takis.accspeed,me.scale),
@@ -179,9 +172,9 @@ rawset(_G,"Takis_DoClutch",function(p,riding)
 		me.movefactor = $/2
 	end
 	
-	if (takis.accspeed > ((p.powers[pw_sneakers] or takis.isSuper) and 40*FU or 35*FU))
+	if (takis.accspeed > ((p.powers[pw_sneakers] or takis.doSuperBuffs) and 40*FU or 35*FU))
 		takis.frictionfreeze = TR/2
-		me.friction = FU + FU/10
+		me.friction = FU
 		if not p.powers[pw_sneakers]
 			thrust = 5 * FU
 		end
@@ -274,7 +267,9 @@ rawset(_G,"Takis_DoClutch",function(p,riding)
 	
 	if takis.onGround
 		me.state = S_PLAY_DASH
+		local oldfric = me.friction
 		P_MovePlayer(p)
+		me.friction = oldfric
 		p.panim = PA_DASH
 	end
 	clutch.tics = CLUTCH_TICS

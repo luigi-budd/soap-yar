@@ -216,8 +216,8 @@ Takis_Hook.addHook("Takis_Thinker",function(p)
 		
 		if not soap.noairdrag
 			if not soap.onGround
-			and soap.accspeed >= 35*FU
-				local newspeed = soap.accspeed - FixedMul(soap.accspeed - 35*FU, TAKIS_AIRDRAGFRAC)
+			and soap.accspeed >= TAKIS_AIRDRAGCAP
+				local newspeed = soap.accspeed - FixedMul(soap.accspeed - TAKIS_AIRDRAGCAP, TAKIS_AIRDRAGFRAC)
 				me.momx = FixedMul(FixedDiv(me.momx,soap.accspeed), newspeed)
 				me.momy = FixedMul(FixedDiv(me.momy,soap.accspeed), newspeed)
 			end
@@ -237,12 +237,14 @@ Takis_Hook.addHook("Takis_Thinker",function(p)
 			clutch.combo = 0
 			clutch.misfire = 0
 		end
+		/*
 		if (p.pflags & PF_SPINNING)
 		or (me.state == S_PLAY_SOAP_SLIP)
 			clutch.misfire = 0
 			clutch.tics = 0
 			clutch.time = 0
 		end
+		*/
 		
 		if clutch.good > 0
 			clutch.good = max($-1, 0)
