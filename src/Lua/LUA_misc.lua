@@ -178,7 +178,7 @@ local function NewVFXThink(v)
 			star.soap_newvfx = true
 			star.color = damagecolors[P_RandomRange(1, #damagecolors)]
 			star.scale = $ * 2
-			star.spritexscale = $ / 4
+			star.spritexscale = v.spritexscale / 4
 			star.spriteyscale = star.spritexscale
 			local ha,va = R_PointTo3DAngles(v.x,v.y,v.z, star.x,star.y,star.z)
 			P_3DThrust(star, ha,va, P_RandomRange(12,20)*FU)
@@ -189,15 +189,17 @@ local function NewVFXThink(v)
 			star.momz = $ + v.vfx_mom[3] * 3/4
 		end
 		local wave = P_SpawnMobjFromMobj(v,0,0,0,MT_PARTICLE)
+		wave.spritexscale = v.spritexscale
+		wave.spriteyscale = wave.spritexscale
 		wave.state = S_SOAP_HITM_SHCKW
 	end
 	if (v.state == S_SOAP_HITM_STAR)
 		v.rollangle = $ + v.vfx_roll
-
+		
 		--v.momx = FixedMul($, STAR_DRAG)
 		--v.momy = FixedMul($, STAR_DRAG)
 		v.momz = FixedMul($, STAR_DRAG)
-
+		
 		if not P_TryMove(v, v.x + v.momx, v.y + v.momy, true)
 			P_BounceMove(v)
 		end
@@ -208,10 +210,10 @@ local function NewVFXThink(v)
 			v.extravalue1 = 1
 			v.flags = $|MF_NOCLIPHEIGHT
 		end
-
+		
 		P_ZMovement(v)
 		v.momz = $ + P_GetMobjGravity(v)
-
+		
 		v.tics = $ - 1
 		if v.tics == 0
 			P_RemoveMobj(v)
@@ -235,7 +237,7 @@ local function NewVFXThink(v)
 			MT_PARTICLE
 		)
 		blue.state = S_SOAP_HITM_BSPRK
-		blue.spritexscale = ($*6/5) + P_RandomFixed()/2
+		blue.spritexscale = (v.spritexscale * 6/5) + P_RandomFixed()/2
 		blue.spriteyscale = blue.spritexscale
 		v.vfx_tospawn = $ - 1
 	elseif (v.state == S_INVISIBLE)

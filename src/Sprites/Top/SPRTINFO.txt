@@ -1,0 +1,27 @@
+// Pivot around tip
+Sprite GTOP {
+	Frame A {
+		XPivot 61
+		YPivot 75
+	}
+	Frame B {
+		XPivot 61
+		YPivot 75
+	}
+	Frame C {
+		XPivot 61
+		YPivot 75
+	}
+	Frame D {
+		XPivot 61
+		YPivot 75
+	}
+	Frame E {
+		XPivot 61
+		YPivot 75
+	}
+	Frame F {
+		XPivot 61
+		YPivot 75
+	}
+}
