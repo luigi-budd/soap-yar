@@ -3281,6 +3281,10 @@ local function try_pvp_collide(me,thing)
 				thinghit = true
 				
 				Soap_Hitlag.addHitlag(me, hitlag_tics, false)
+				if (thing and thing.valid and thing.type == MT_ROLLOUTROCK)
+					hitlag_tics = $ / 2
+				end
+				
 				if (thing and thing.valid)
 				and (thing.health)
 				and not (thing.flags & MF_MONITOR)
