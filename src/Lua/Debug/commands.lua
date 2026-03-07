@@ -649,6 +649,29 @@ CMDConstructor("hitlag", {prefix = SOAP_DEVPREFIX, func = function(p,...)
 	end	
 end, unsafe = true})
 
+CMDConstructor("warp", {prefix = SOAP_DEVPREFIX, func = function(p,...)
+	local args = {...}
+	if args[1] == nil
+		prn(p, "warp <x> <y> [<z>]: Warps you to the specified coordinates.")
+		return
+	end
+	
+	local x = tofixed(args[1] or "")
+	local y = tofixed(args[2] or "")
+	local z = tofixed(args[3] or "")
+	
+	if (x == nil or y == nil)
+		prn(p, "\x85Invalid format")
+		return
+	end
+	if (z == nil)
+		z = R_PointInSubsector(x,y).sector.floorheight
+	end
+	
+	P_SetOrigin(p.realmo, x,y,z)
+	TPEffects(p, p.realmo, p.realmo.angle)
+end, unsafe = true})
+
 /*
 CMDConstructor("togglehook", {prefix = SOAP_DEVPREFIX, func = function(p,...)
 	local args = {...}

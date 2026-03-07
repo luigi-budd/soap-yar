@@ -153,6 +153,11 @@ local function WRAP_buttons(v,p,c, me,soap)
 		)
 	end
 	
+	v.drawString(x+00,y-10,
+		string.format("(%.2f,\t%.2f,\t", me.x,me.y) .. string.format("%.2f)", me.z),
+		flags,"thin"
+	)
+	
 	DrawButton(v, p, x, y, flags, color, color2, soap.jump, soap.jump_R, 'J', 'left')
 	DrawButton(v, p, x+11, y, flags, color, color2, soap.use, soap.use_R, 'S', 'left')
 	DrawButton(v, p, x+22, y, flags, color, color2, soap.tossflag, soap.tossflag_R, 'TF', 'thin')
@@ -181,29 +186,6 @@ local function WRAP_buttons(v,p,c, me,soap)
 	drawflag(v,x+60,y-90,"CL",flags,V_GREENMAP,V_REDMAP,"thin",(p.powers[pw_strong] & STR_CEILING))
 	drawflag(v,x+75,y-90,"SP",flags,V_GREENMAP,V_REDMAP,"thin",(p.powers[pw_strong] & STR_SPRING))
 	drawflag(v,x+90,y-90,"SK",flags,V_GREENMAP,V_REDMAP,"thin",(p.powers[pw_strong] & STR_SPIKE))
-	
-	/*
-	"RDASH",
-	"AIRDASH",
-	"UPPERCUT",
-	"POUND",
-	--maybe?
-	"TOP",
-	"TAUNTS",
-	"CROUCH",
-	"BREAKDANCE",
-	*/
-	
-	/*
-	"CLUTCH",
-	"HAMMER",
-	"DIVE",
-	"SLIDE",
-	"SHIELD",
-	"THOK",
-	--TODO: delete this one too?
-	"AFTERIMAGE",	--i wouldnt really call afterimages an ability
-	*/
 	
 	v.drawString(x,y-58,"noability",flags|V_GREENMAP,"thin")
 	if skins[p.skin].name == TAKIS_SKIN

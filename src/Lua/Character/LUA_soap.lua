@@ -997,10 +997,9 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 			rightway = (p.cmd.forwardmove ~= 0) or (p.cmd.sidemove ~= 0)
 		end
 		
-		if (P_GetPlayerControlDirection(p) == 1)
 		--not going backwards
-		and rightway
-		and soap.onGround
+		if ((rightway and soap.onGround)
+		or (p.powers[pw_carry] == CR_MINECART))
 		and not (soap.noability & SNOABIL_RDASH)
 			local skin_t = skins[p.skin]
 			local maximumspeed = skin_t.normalspeed + soap._maxdash
@@ -1573,7 +1572,7 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 	--cancel r-dash when
 	if not me.health
 	or soap.inPain
-	or (not soap.notCarried)
+	or (not soap.notCarried and p.powers[pw_carry] ~= CR_MINECART)
 	or (soap.noability & SNOABIL_RDASH)
 		soap.rdashing = false
 	end
@@ -1587,6 +1586,28 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 		local skin_t = skins[p.skin]
 		local dashspeed = skin_t.normalspeed + soap._maxdash
 		local setangle = false
+		
+		if (p.powers[pw_carry] == CR_MINECART)
+			local cart = me.tracer
+			
+			cart.rdashed = true
+			if (FixedHypot(cart.momx,cart.momy) < dashspeed)
+				P_Thrust(cart, cart.angle, p.normalspeed / 32)
+			end
+			
+			local wasabove = p.normalspeed > dashspeed
+			p.normalspeed = min(FixedHypot(cart.momx,cart.momy), dashspeed)
+			if (p.normalspeed >= dashspeed)
+				if not wasabove
+					S_StartSound(cart,sfx_sp_dss)
+				end
+				
+				if not S_SoundPlaying(me,sfx_sp_mc2)
+					S_StartSound(me,sfx_sp_mc2)
+				end
+			end
+			spawn_aura = true
+		end
 		
 		--5 tics to let you get back on your feet
 		if (me.eflags & MFE_SPRUNG)
@@ -1769,7 +1790,7 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 				end
 				
 				spawn_aura = true
-			else
+			elseif (p.powers[pw_carry] ~= CR_MINECART)
 				S_StopSoundByID(me,sfx_sp_mac)
 				S_StopSoundByID(me,sfx_sp_mc2)
 			end
@@ -2354,6 +2375,18 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 	--kinda annoying how you cant pound when exiting a dust devil
 	elseif soap.last.carry == CR_DUSTDEVIL
 		soap.sprung = true
+	elseif (p.powers[pw_carry] == CR_MINECART)
+	and (me.tracer and me.tracer.valid)
+		local cart = me.tracer
+		
+		if FixedHypot(cart.momx, cart.momy) >= 30*FU
+		and P_IsObjectOnGround(cart)
+		and not cart.rdashed
+			local frac = FU*98/100
+			cart.momx = FixedMul($, frac)
+			cart.momy = FixedMul($, frac)
+		end
+		cart.rdashed = nil
 	end
 	
 	--refresh moves (lol)
