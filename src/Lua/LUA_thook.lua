@@ -131,7 +131,8 @@ local MOBJ_LIST = {
 			MT_DUSTDEVIL,
 			MT_DUSTLAYER,
 			MT_STARPOST,
-			MT_BLACKEGGMAN
+			MT_BLACKEGGMAN,
+			MT_EMBLEM,
 		},
 		hook = "MobjSpawn",
 		func = function(mo)

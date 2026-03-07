@@ -632,6 +632,8 @@ rawset(_G,"Takis_HammerBlastHitbox",function(p)
 			didit = true
 		--Most likely a spike thing
 		elseif (found.info.mass == DMG_SPIKE)
+		and (found.flags & (MF_PAIN|MF_SPECIAL))
+		or (found.type == MT_SPIKE or found.type == MT_WALLSPIKE)
 		and (found.takis_flingme ~= false)
 			found.alreadykilledthis = true
 			
