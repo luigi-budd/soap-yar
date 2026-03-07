@@ -1372,6 +1372,7 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 			p.pflags = $|PF_JUMPED &~(PF_STARTJUMP|PF_SPINNING)
 			me.state = S_PLAY_MELEE
 			me.tics = -1
+			me.mirrored = P_RandomChance(FU/2)
 			p.drawangle = me.angle
 			soap.canuppercut = false
 			
@@ -3833,7 +3834,15 @@ Takis_Hook.addHook("PostThinkFrame",function(p)
 	if me.state == S_PLAY_DASH or me.state == S_PLAY_SOAP_RAM
 	or (me.state == S_PLAY_SOAP_PUNCH1 or me.state == S_PLAY_SOAP_PUNCH2)
 		p.drawangle = R_PointToAngle2(0,0,me.momx,me.momy) --soap.dashangle
-	elseif (soap.last.anim.state == S_PLAY_SOAP_PUNCH1 or soap.last.anim.state == S_PLAY_SOAP_PUNCH2)
+	end
+	
+	if (soap.last.anim.state == S_PLAY_SOAP_PUNCH1 or soap.last.anim.state == S_PLAY_SOAP_PUNCH2)
+	and not (me.state == S_PLAY_SOAP_PUNCH1 or me.state == S_PLAY_SOAP_PUNCH2)
+		me.mirrored = false
+	end
+	
+	if (soap.last.anim.sprite2 == SPR2_MLEE)
+	and not (me.sprite2 == SPR2_MLEE)
 		me.mirrored = false
 	end
 	

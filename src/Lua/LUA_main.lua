@@ -116,23 +116,6 @@ addHook("PlayerThink",function(p)
 		
 		--global thinker
 		soap.nodamageforme = max($-1, 0)
-		
-		soap.last.onground = soap.onGround
-		soap.last.momz = me.momz
-		
-		soap.last.anim.state = me.state
-		soap.last.anim.sprite = me.sprite
-		soap.last.anim.sprite2 = me.sprite2
-		soap.last.anim.frame = me.frame
-		soap.last.anim.angle = p.drawangle
-		
-		soap.last.x = me.x
-		soap.last.y = me.y
-		soap.last.z = me.z
-		
-		soap.last.skin = me.skin
-		soap.last.carry = p.powers[pw_carry]
-		soap.last.pflags = p.pflags
 	end
 end)
 
@@ -174,6 +157,23 @@ addHook("PostThinkFrame",function()
 				soap.last.squash_head = 0
 			end
 		end
+		
+		soap.last.onground = soap.onGround
+		soap.last.momz = me.momz
+		
+		soap.last.anim.state = me.state
+		soap.last.anim.sprite = me.sprite
+		soap.last.anim.sprite2 = me.sprite2
+		soap.last.anim.frame = me.frame
+		soap.last.anim.angle = p.drawangle
+		
+		soap.last.x = me.x
+		soap.last.y = me.y
+		soap.last.z = me.z
+		
+		soap.last.skin = me.skin
+		soap.last.carry = p.powers[pw_carry]
+		soap.last.pflags = p.pflags
 		
 		/*
 		if (me.skin == SOAP_SKIN or me.skin == TAKIS_SKIN)
