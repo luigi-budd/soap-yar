@@ -1330,7 +1330,7 @@ local function try_pvp_collide(me,thing)
 						512*me.scale + power
 					)
 				else
-					Soap_DamageSfx(thing, power, 60*FU, {ultimate = true})
+					Soap_DamageSfx(thing, power, 60*FU)
 					P_StartQuake(power/2, hitlag_tics,
 						{me.x, me.y, me.z},
 						512*me.scale + power
@@ -1381,7 +1381,7 @@ local function try_pvp_collide(me,thing)
 				512*me.scale + power
 			)
 		else
-			Soap_DamageSfx(thing, power, 60*FU, {ultimate = true})
+			Soap_DamageSfx(thing, power, 60*FU)
 			P_StartQuake(power/2, hitlag_tics,
 				{me.x, me.y, me.z},
 				512*me.scale + power
@@ -1437,7 +1437,7 @@ addHook("MobjDamage", function(me,inf,sor,dmg,dmgt)
 		S_StartSound(me,sfx_sp_dmg)
 		if (inf and inf.valid)
 			local inf_speed = FixedHypot(inf.momx,inf.momy)
-			Soap_DamageSfx(me, inf_speed, 40*inf.scale, {
+			Soap_DamageSfx(me, inf_speed, 40*inf.scale, dmgt, {
 				ultimate = (not soap.inBattle) and true or false,
 				nosfx = true
 			})
@@ -1451,7 +1451,7 @@ addHook("MobjDamage", function(me,inf,sor,dmg,dmgt)
 				)
 			end
 		else
-			S_StartSound(me,sfx_sp_db0)
+			S_StartSound(me,sfx_sp_dm0)
 		end
 		
 		Soap_ImpactVFX(me, inf)

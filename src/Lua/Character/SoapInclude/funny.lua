@@ -243,7 +243,7 @@ addHook("TouchSpecial",function(f, mo)
 	f.touchlist[mo] = true
 	local play = mo.player
 	if (play and play.valid)
-		Soap_DamageSfx(mo,FU*3/4,FU,{ultimate = true})
+		Soap_DamageSfx(mo,FU*3/4,FU)
 		Soap_ImpactVFX(mo, f)
 		
 		play.powers[pw_flashing] = 0

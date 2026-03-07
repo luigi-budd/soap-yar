@@ -578,16 +578,28 @@ rawset(_G,"Soap_ZCollide", function(mo1, mo2, extraheight)
 	return true
 end)
 
-rawset(_G,"Soap_DamageSfx", function(src, power, maxpow, props)
+rawset(_G,"Soap_DamageSfx", function(src, power, maxpow, damagetype, props)
 	props = $ or {}
 	local secondary = P_RandomChance(FU/2)
 	
 	local nosfxmobj = props.nosfx or false
-	if props.ultimate ~= nil
-		secondary = not props.ultimate
+
+	local sfx = sfx_sp_dm0
+	local numsfx = 3
+	if (damagetype == DMG_FIRE or damagetype == DMG_NUKE)
+		sfx = sfx_sp_df0
+	elseif (damagetype == DMG_SPIKE)
+		sfx = sfx_sp_ds0
+		numsfx = 2
+	elseif (damagetype == DMG_ELECTRIC)
+		sfx = sfx_sp_de0
+		numsfx = 2
 	end
-	
-	local sfx = secondary and sfx_sp_dm0 or sfx_sp_db0
+	if (sfx == sfx_sp_dm0) and P_RandomChance(FU/2)
+		sfx = sfx_sp_dm5
+		numsfx = 2
+	end
+
 	local vol = secondary and 255 or 255/3
 	if props.vol ~= nil
 		vol = props.vol
@@ -596,7 +608,7 @@ rawset(_G,"Soap_DamageSfx", function(src, power, maxpow, props)
 	sfx = $ + ease.linear(
 		min(FU, FixedDiv(power, maxpow)),
 		0,
-		3*FU
+		numsfx*FU
 	)/FU
 	
 	if not (src and src.valid and src.health)

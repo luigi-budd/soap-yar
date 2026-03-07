@@ -47,6 +47,18 @@ local function playknockoutsfx(p,me,soap)
 		sound = sfx_sp_ow2
 	end
 	S_StartSound(me,sound)
+
+	local speed = soap.accspeed
+	if me.soap_damagevar
+		speed = max($, me.soap_damagevar.speed)
+	end
+
+	sound = sfx_sp_kb0 + clamp(0,
+		FixedMul(2*FU, FixedDiv(speed - 30*FU, 10*FU)),
+		2*FU
+	)/FU
+	S_StartSound(me, sound)
+	S_StartSound(me, sound)
 end
 
 local sfx_armacharge = sfx_s3k84
@@ -607,7 +619,7 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 	end
 	*/
 	
-	if (((soap.weaponnext and soap.weaponprev)
+	if ( (((soap.weaponnext and soap.weaponprev)
 	or (p.exiting and p.pflags & PF_FINISHED
 		and soap.accspeed < FU/5
 		and soap.onGround
@@ -616,12 +628,12 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 		and (soap.accspeed <= FU)
 		and discoranges[Soap_CheckFloorPic(me,true)] == true
 	)) and not soap.taunt.tics)
-	or (soap.taunt.num == 4)
-	and (me.health)
 	-- and not soap.taunttime
 	and not (p.powers[pw_carry] or soap.isSliding)
-	and not P_PlayerInPain(p)
+	and not P_PlayerInPain(p) )
+	and (me.health)
 	and not (soap.noability & SNOABIL_BREAKDANCE)
+	or (soap.taunt.num == 4)
 		if me.state ~= S_PLAY_SOAP_BREAKDANCE
 			me.state = S_PLAY_SOAP_BREAKDANCE
 		else
@@ -2309,7 +2321,7 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 		if soap.paintime == 1 and (soap.hud.painsurge == 0)
 		and (soap.accspeed >= 30*FU)
 			local power = FU + FixedDiv(soap.accspeed, 40*FU)
-			Soap_DamageSfx(me, soap.accspeed, 40*FU, {
+			Soap_DamageSfx(me, soap.accspeed, 40*FU, nil, {
 				ultimate = (not soap.inBattle) and true or false,
 				nosfx = true
 			})
@@ -2320,7 +2332,7 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 			me.tics = -1
 			
 			playknockoutsfx(p,me,soap)
-			S_StartSound(me,sfx_sp_db0)
+			S_StartSound(me,sfx_sp_dm0)
 			soap.hud.painsurge = 6
 		end
 	else
@@ -3106,7 +3118,7 @@ local function try_pvp_collide(me,thing)
 				
 				local halftic = hitlag_tics/2
 				if (FixedDiv(power, 35*FU) >= FU/2)
-					S_StartSound(me,sfx_sp_db4)
+					S_StartSound(me,sfx_sp_dm4)
 					local work = FixedDiv(power, 35*FU) - FU/2
 					repeat
 						Soap_ImpactVFX(thing,me, FU + work*7)
@@ -3311,7 +3323,7 @@ local function try_pvp_collide(me,thing)
 		Soap_DamageSfx(thing, power, 35*FU)
 		
 		if (FixedDiv(power, 35*FU) >= FU/2)
-			S_StartSound(me,sfx_sp_db4)
+			S_StartSound(me,sfx_sp_dm4)
 			local work = FixedDiv(power, 35*FU) - FU/2
 			repeat
 				Soap_ImpactVFX(thing,me, FU + work*7)
@@ -3535,7 +3547,7 @@ local function get_inf_speed(me,inf,sor)
 	elseif inf.type == MT_SMALLMACE or inf.type == MT_BIGMACE
 		default = R_PointTo3DDist(inf.last_x,inf.last_y,inf.last_z, inf.x,inf.y,inf.z)
 	elseif inf.type == MT_TNTBARREL or inf.type == MT_PROXIMITYTNT
-		default = 32 * inf.scale
+		default = 70 * inf.scale
 	end
 	return max(default, R_PointTo3DDist(0,0,0,inf.momx,inf.momy,inf.momz))
 end
@@ -3590,7 +3602,6 @@ addHook("MobjDamage", function(me,inf,sor,dmg,dmgt)
 			ang = R_PointToAngle2(inf.x,inf.y, me.x,me.y),
 			speed = inf_speed
 		}
-		--S_StartSound(me,sfx_sp_db0)
 		if inf_speed >= 30*me.scale
 			soap.hud.painsurge = 6
 		end
@@ -3611,12 +3622,16 @@ addHook("MobjDamage", function(me,inf,sor,dmg,dmgt)
 	end
 	
 	--printf("damage:\n%f\n%f", power, inf_speed)
-	Soap_DamageSfx(me, inf_speed, 30*me.scale, {
+	Soap_DamageSfx(me, inf_speed, 30*me.scale, dmgt, {
 		ultimate = (not soap.inBattle) and true or false,
 		nosfx = true,
 		vol = 255
 	})
 	Soap_ImpactVFX(me, inf, nil, power)
+	while (power > FU)
+		Soap_ImpactVFX(me, inf, 2*FU, power)
+		power = $ - FU/2
+	end
 	
 	me.state = S_PLAY_PAIN
 	if not G_IsSpecialStage()

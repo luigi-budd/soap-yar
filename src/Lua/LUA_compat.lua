@@ -516,7 +516,7 @@ local function SetCompat()
 						Soap_ZLaunch(mo, 14*me.scale)
 						
 						if (B.PriorityFunction[p.battle_sfunc](me,mo))
-							S_StartSound(mo, sfx_sp_db4)
+							S_StartSound(mo, sfx_sp_dm4)
 						end
 					--Spike!
 					else
@@ -530,7 +530,7 @@ local function SetCompat()
 						
 						--onlyy if this is actually a spike
 						if (B.PriorityFunction[p.battle_sfunc](me,mo))
-							S_StartSound(mo, sfx_sp_db4)
+							S_StartSound(mo, sfx_sp_dm4)
 							
 							--tooomble
 							CBW_Battle.DoPlayerTumble(p2,TR*3/2,

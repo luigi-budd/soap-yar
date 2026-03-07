@@ -48,25 +48,50 @@ sfxinfo[sfx_sp_pry].caption = "Parry"
 SafeFreeslot("sfx_sp_cln")
 sfxinfo[sfx_sp_cln].caption = "Slide lunge"
 
-for i = 0, 3
+for i = 0, 7
 	SafeFreeslot("sfx_sp_dm"..i)
 	sfxinfo[sfx_sp_dm0 + i] = {
 		caption = "Damage",
 		flags = SF_X2AWAYSOUND
 	}
 end
-for i = 0, 3
-	SafeFreeslot("sfx_sp_db"..i)
-	sfxinfo[sfx_sp_db0 + i] = {
+sfxinfo[sfx_sp_dm4] = {
+	caption = "\x85Spike!\x80",
+	flags = SF_X2AWAYSOUND
+}
+
+-- spike damage
+for i = 0, 2
+	SafeFreeslot("sfx_sp_ds"..i)
+	sfxinfo[sfx_sp_ds0 + i] = {
 		caption = "Damage",
 		flags = SF_X2AWAYSOUND
 	}
 end
-SafeFreeslot("sfx_sp_db4")
-sfxinfo[sfx_sp_db4] = {
-	caption = "\x85Spike!\x80",
-	flags = SF_X2AWAYSOUND
-}
+-- electric damage
+for i = 0, 2
+	SafeFreeslot("sfx_sp_de"..i)
+	sfxinfo[sfx_sp_de0 + i] = {
+		caption = "Damage",
+		flags = SF_X2AWAYSOUND
+	}
+end
+-- fire damage
+for i = 0, 3
+	SafeFreeslot("sfx_sp_df"..i)
+	sfxinfo[sfx_sp_df0 + i] = {
+		caption = "Damage",
+		flags = SF_X2AWAYSOUND
+	}
+end
+-- knockback
+for i = 0, 3
+	SafeFreeslot("sfx_sp_kb"..i)
+	sfxinfo[sfx_sp_kb0 + i] = {
+		caption = "/",
+		flags = SF_X2AWAYSOUND
+	}
+end
 
 for i = 0, 2
 	SafeFreeslot("sfx_sp_st"..i)
