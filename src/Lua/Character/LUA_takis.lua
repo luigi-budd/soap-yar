@@ -649,29 +649,32 @@ Takis_Hook.addHook("Takis_Thinker",function(p)
 		and not (soap.inPain)
 			Takis_DoClutch(p,cart)
 		end
-		if (soap.inPain)
-		and soap.accspeed >= 15*cart.scale
-			cart.momx = $*9/10
-			cart.momy = $*9/10
-		end
 		
 		--Moved here to remove a mobjthinker
 		if (cart and cart.valid)
 		and (cart.health and me.health)
-		and (soap.c1)
-			p.powers[pw_carry] = CR_NONE
+			if soap.accspeed >= 30*cart.scale
+			and P_IsObjectOnGround(cart)
+				cart.momx = $*99/100
+				cart.momy = $*99/100
+			end
 			
-			p.mo.momx,p.mo.momy = cart.momx,cart.momy
-			
-			p.pflags = $|PF_JUMPED &~PF_THOKKED
-			soap.dived = false
-			
-			P_SetObjectMomZ(me,8*FU)
-			P_DoJump(p,true)
-			p.mo.state = S_PLAY_ROLL
-			
-			--TakisGiveCombo(p,takis,true)
-			cart.target = nil
+			if (soap.c1)
+				p.powers[pw_carry] = CR_NONE
+				
+				p.mo.momx,p.mo.momy = cart.momx,cart.momy
+				
+				p.pflags = $|PF_JUMPED &~PF_THOKKED
+				soap.dived = false
+				
+				P_SetObjectMomZ(me,16*FU)
+				P_DoJump(p,true)
+				p.mo.state = S_PLAY_SOAP_SLIP
+				Soap_DoLunge(p, false)
+				
+				--TakisGiveCombo(p,takis,true)
+				cart.target = nil
+			end
 		end
 	elseif (p.powers[pw_carry] == CR_ROLLOUT)
 		local rock = me.tracer

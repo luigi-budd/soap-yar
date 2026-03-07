@@ -2387,6 +2387,22 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 			cart.momy = FixedMul($, frac)
 		end
 		cart.rdashed = nil
+
+		if (cart.health and me.health)
+		and (soap.c1)
+			p.powers[pw_carry] = CR_NONE
+			
+			p.mo.momx,p.mo.momy = cart.momx,cart.momy
+			
+			p.pflags = $|PF_JUMPED &~PF_THOKKED
+			
+			P_SetObjectMomZ(me,8*FU)
+			P_DoJump(p,true)
+			p.mo.state = S_PLAY_SOAP_SLIP
+			Soap_DoLunge(p, false)
+			
+			cart.target = nil
+		end
 	end
 	
 	--refresh moves (lol)
