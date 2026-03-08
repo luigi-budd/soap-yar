@@ -3228,7 +3228,10 @@ local function try_pvp_collide(me,thing)
 				
 				local hitlag_tics = 4 + (power/FU / 10)
 				if (me.state == S_PLAY_FLOAT_RUN)
+				or (me.state == S_PLAY_SOAP_PUNCH1 or me.state == S_PLAY_SOAP_PUNCH2)
 					soap.extraairdash = true
+					soap.canuppercut = true
+					
 					me.state = S_PLAY_SOAP_PUNCH1
 					local follow = P_SpawnMobjFromMobj(me,0,0,0,MT_SOAP_FREEZEGFX)
 					follow.tics = -1
@@ -3430,7 +3433,9 @@ local function try_pvp_collide(me,thing)
 		
 		local hitlag_tics = 15 + (power/FU / 7)
 		if (me.state == S_PLAY_FLOAT_RUN)
+		or (me.state == S_PLAY_SOAP_PUNCH1 or me.state == S_PLAY_SOAP_PUNCH2)
 			soap.extraairdash = true
+			soap.canuppercut = true
 			me.state = S_PLAY_SOAP_PUNCH1
 			local follow = P_SpawnMobjFromMobj(me,0,0,0,MT_SOAP_FREEZEGFX)
 			follow.tics = -1
