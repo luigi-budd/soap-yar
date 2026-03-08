@@ -167,6 +167,7 @@ local STAR_DRAG = FU*99/100
 local function NewVFXThink(v)
 	if (v.state == S_SOAP_HITM_RSPRK)
 	and (v.tics == 1)
+	and not Soap_IsCompGamemode()
 		for i = 0, 5
 			local star = P_SpawnMobjFromMobj(v,
 				Soap_RandomFixedRange(-RED_STAROFFSET, RED_STAROFFSET),
