@@ -23,8 +23,8 @@ rawset(_G,"Takis_DoClutch",function(p,riding)
 		--allow braking if you're not inputting anything
 		if not (p.cmd.forwardmove or p.cmd.sidemove) then return end
 		
-		--TakisSoundEffect(me,sfx_tk_cl0,255*3/5,p)
-		--TakisSoundEffect(me,sfx_tk_cl1,133,p)
+		S_StartSoundAtVolume(me,sfx_tk_cl0,255*3/5)
+		S_StartSoundAtVolume(me,sfx_tk_cl1,133)
 		if not takis.inWater
 			S_StartSoundAtVolume(me,sfx_tk_cl2,179)
 		else
@@ -66,7 +66,7 @@ rawset(_G,"Takis_DoClutch",function(p,riding)
 		p.drillmeter = max($ - 30, 0)
 		p.bumpertime = TR/2
 		clutch.nights = p.bumpertime
-		return
+		return true
 	end
 	
 	--but wait! first thing we needa do is check if we're
@@ -632,7 +632,7 @@ rawset(_G,"Takis_HammerBlastHitbox",function(p)
 			didit = true
 		--Most likely a spike thing
 		elseif (found.info.mass == DMG_SPIKE)
-		and (found.flags & (MF_PAIN|MF_SPECIAL))
+		and (found.flags & (MF_PAIN))
 		or (found.type == MT_SPIKE or found.type == MT_WALLSPIKE)
 		and (found.takis_flingme ~= false)
 			found.alreadykilledthis = true

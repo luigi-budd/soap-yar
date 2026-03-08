@@ -337,11 +337,13 @@ rawset(_G, "Soap_InitTable", function(p)
 		
 		dived = false,
 		canceltime = 0,
+		lastbumper = 0, -- for nights clutches
+		nadotime = 0,
 	}
 	
 	CONS_Printf(p,"\x82Soap_InitTable(): Success!")
 	Soap_PrintCompInfo(p)
-	CONS_Printf(p,"\x83Soap The Hedge is created by EpixGamer21 (contact @epixgamer3333333) (NOT JISK LMAOOO)")
+	CONS_Printf(p,"\x83Soap The Hedge is created by EpixGamer21 (contact @epixgamer3333333)")
 end)
 
 -- LLOLOLOLO

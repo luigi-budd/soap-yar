@@ -135,6 +135,19 @@ local function generic_slingshot(p,me,takis, stop_ang)
 	return didit
 end
 
+Takis_Hook.addHook("PreThinkFrame",function(p)
+	local me = p.realmo
+	if (me.skin ~= TAKIS_SKIN) then return end
+	local takis = p.soaptable
+	
+	if (p.powers[pw_carry] == CR_NIGHTSMODE)
+	and takis.use == 1
+		if Takis_DoClutch(p)
+			p.cmd.buttons = $ &~BT_USE
+		end
+	end
+end)
+
 Takis_Hook.addHook("Takis_Thinker",function(p)
 	local me = p.realmo
 	local soap = p.soaptable
@@ -291,6 +304,26 @@ Takis_Hook.addHook("Takis_Thinker",function(p)
 			S_StartSound(me, sfx_sp_top)
 			clutch.slinglag = false
 		end
+
+		if clutch.nights
+			if (me.state ~= S_PLAY_TAKIS_TORNADO)
+				me.state = S_PLAY_TAKIS_TORNADO
+			end
+			--other way
+			if (p.flyangle > 90)
+			and (p.flyangle < 270)
+				me.rollangle = $ + ANGLE_90
+			else
+				me.rollangle = $ - ANGLE_90
+			end
+			if p.flyangle == 90
+				me.rollangle = 0
+			elseif p.flyangle == 270
+				me.rollangle = ANGLE_180
+			end
+			
+			clutch.nights = $ - 1
+		end
 	end
 	
 	--spin specials
@@ -303,6 +336,7 @@ Takis_Hook.addHook("Takis_Thinker",function(p)
 		and me.health
 		and (me.state ~= S_PLAY_GASP)
 		and (me.sprite2 ~= SPR2_PAIN)
+		and (p.powers[pw_carry] ~= CR_NIGHTSMODE)
 		and not (soap.noability & NOABIL_CLUTCH)
 		and not (soap.isSliding)
 			Takis_DoClutch(p)
@@ -1528,11 +1562,50 @@ end)
 
 Takis_Hook.addHook("PostThinkFrame",function(p)
 	local me = p.mo
-	local soap = p.soaptable
+	local takis = p.soaptable
 	
 	if me.skin ~= TAKIS_SKIN then return end
-	
 	if (me.flags & MF_NOTHINK) then return end
+	
+	local clutch = takis.clutch
+	if p.bumpertime
+		if p.powers[pw_carry] == CR_NIGHTSMODE
+			if p.bumpertime > takis.lastbumper
+			and clutch.nights <= (TR/2) - 2
+				S_StartSoundAtVolume(me,sfx_cltch5,220)
+			end
+			
+			if (me.state ~= S_PLAY_TAKIS_TORNADO)
+				me.state = S_PLAY_TAKIS_TORNADO
+			end
+			if not clutch.nights
+				--other way
+				if (p.flyangle > 90)
+				and (p.flyangle < 270)
+					me.rollangle = $ + ANGLE_90
+				else
+					me.rollangle = $ - ANGLE_90
+				end
+				if p.flyangle == 90
+					me.rollangle = 0
+				elseif p.flyangle == 270
+					me.rollangle = ANGLE_180
+				end
+			end
+		else
+			Takis_ResetHammerTime(p)
+			takis.dived = false
+		end
+	end
+	takis.lastbumper = p.bumpertime
+	
+	--do we really need to spin anymore if the frames spin?
+	if (me.sprite2 == SPR2_NADO)
+		takis.nadotime = ($ + 1) % skins[p.skin].sprites[SPR2_NADO].numframes
+		me.frame = (($ &~FF_FRAMEMASK) + takis.nadotime)
+	else
+		takis.nadotime = 0
+	end
 	
 	if me.sprite2 == SPR2_STUN
 		p.drawangle = $ - ANG15
