@@ -85,7 +85,8 @@ local MOBJ_LIST = {
 		mobjs = {
 			MT_STEAM,
 			MT_STARPOST,
-			MT_MINECARTSPAWNER
+			MT_MINECARTSPAWNER,
+			MT_SPIKE
 		},
 		hook = "MobjSpawn",
 		func = function(mo)
