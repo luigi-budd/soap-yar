@@ -190,7 +190,7 @@ local function NewVFXThink(v)
 			star.momz = $ + v.vfx_mom[3] * 3/4
 		end
 		local wave = P_SpawnMobjFromMobj(v,0,0,0,MT_PARTICLE)
-		wave.spritexscale = v.spritexscale
+		wave.spritexscale = v.spritexscale * 3/4
 		wave.spriteyscale = wave.spritexscale
 		wave.state = S_SOAP_HITM_SHCKW
 	end

@@ -3152,15 +3152,18 @@ local function try_pvp_collide(me,thing)
 					end
 				end
 				
+				
+				DealDamage(thing, me,me, damage)
+				thinghit = true
+				if (thing and thing.valid and thing.flags & MF_BOSS and (thing.health <= 0))
+					hitlag_tics = $ * 5/2
+				end
+				me.momz = $ - (3 * me.scale * soap.gravflip)
+				
 				Soap_StartQuake(power*2, hitlag_tics,
 					{me.x, me.y, me.z},
 					512*me.scale + power
 				)
-				
-				DealDamage(thing, me,me, damage)
-				thinghit = true
-				me.momz = $ - (3 * me.scale * soap.gravflip)
-				
 				Soap_Hitlag.addHitlag(me, hitlag_tics, false)
 				if (thing and thing.valid)
 				and not (thing.flags & MF_MONITOR)
@@ -3188,15 +3191,19 @@ local function try_pvp_collide(me,thing)
 				Soap_DamageSfx(thing, power, 35*FU)
 				
 				local hitlag_tics = 10 + (power/FU / 5)
-				Soap_StartQuake(power*2, hitlag_tics,
-					{me.x, me.y, me.z},
-					512*me.scale + power
-				)
 				
 				DealDamage(thing, me,me)
 				thinghit = true
 				
-				Soap_Hitlag.addHitlag(me, hitlag_tics - 3, false)
+				if (thing and thing.valid and thing.flags & MF_BOSS and (thing.health <= 0))
+					hitlag_tics = $ * 5/2
+				end
+				
+				Soap_StartQuake(power*2, hitlag_tics,
+					{me.x, me.y, me.z},
+					512*me.scale + power
+				)
+				Soap_Hitlag.addHitlag(me, hitlag_tics, false)
 				if (thing and thing.valid)
 				and (thing.health)
 				and not (thing.flags & MF_MONITOR)
@@ -3254,10 +3261,6 @@ local function try_pvp_collide(me,thing)
 					hitlag_tics = $ * 3/2
 				end
 				
-				Soap_StartQuake(power/2, hitlag_tics,
-					{me.x, me.y, me.z},
-					512*me.scale + power
-				)
 				P_Thrust(me, R_PointToAngle2(0,0,me.momx,me.momy), me.scale*8)
 				if (me.state == S_PLAY_DASH or me.state == S_PLAY_SOAP_RAM)
 					me.state = S_PLAY_SOAP_RAM
@@ -3282,7 +3285,14 @@ local function try_pvp_collide(me,thing)
 				
 				DealDamage(thing, me,me)
 				thinghit = true
+				if (thing and thing.valid and thing.flags & MF_BOSS and (thing.health <= 0))
+					hitlag_tics = $ * 5/2
+				end
 				
+				Soap_StartQuake(power/2, hitlag_tics,
+					{me.x, me.y, me.z},
+					512*me.scale + power
+				)
 				Soap_Hitlag.addHitlag(me, hitlag_tics, false)
 				if (thing and thing.valid and thing.type == MT_ROLLOUTROCK)
 					hitlag_tics = $ / 2
