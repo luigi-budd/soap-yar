@@ -41,6 +41,9 @@ local soap_rdashwind_dest = SKINCOLOR_YELLOW
 local soap_rdashwind_inc = (soap_rdashwind_dest - soap_rdashwind_base)
 
 local function playknockoutsfx(p,me,soap)
+	if abs(leveltime - soap.kotic) < TR*3/2 then return end
+	soap.kotic = leveltime
+	
 	local sound = P_RandomChance(FU/50) and sfx_sp_em1 or P_RandomRange(sfx_sp_ow0,sfx_sp_ow1)
 	if R_PointToDist(me.x,me.y) >= 1024*FU
 	and (p ~= displayplayer)
@@ -2310,12 +2313,12 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 		if me.soap_damagevar ~= nil
 			P_Thrust(me, me.soap_damagevar.ang, me.soap_damagevar.speed)
 			if me.soap_damagevar.speed >= 30*me.scale
+				playknockoutsfx(p,me,soap)
+				
 				me.state = S_PLAY_DEAD
 				me.frame = A|($ &~FF_FRAMEMASK)
 				me.sprite2 = SPR2_MSC2
 				me.tics = -1
-				
-				playknockoutsfx(p,me,soap)
 			end
 			me.soap_damagevar = nil
 		end
@@ -2327,14 +2330,14 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 				nosfx = true
 			})
 			
+			playknockoutsfx(p,me,soap)
+			S_StartSound(me,sfx_sp_dm0)
+			soap.hud.painsurge = 6
+			
 			me.state = S_PLAY_DEAD
 			me.frame = A|($ &~FF_FRAMEMASK)
 			me.sprite2 = SPR2_MSC2
 			me.tics = -1
-			
-			playknockoutsfx(p,me,soap)
-			S_StartSound(me,sfx_sp_dm0)
-			soap.hud.painsurge = 6
 		end
 	else
 		soap.paintime = 0
@@ -3152,7 +3155,6 @@ local function try_pvp_collide(me,thing)
 					end
 				end
 				
-				
 				DealDamage(thing, me,me, damage)
 				thinghit = true
 				if (thing and thing.valid and thing.flags & MF_BOSS and (thing.health <= 0))
@@ -3966,3 +3968,29 @@ Takis_Hook.addHook("PostThinkFrame",function(p)
 		p.drawangle = me.angle - FixedAngle(soap.topspin)
 	end
 end)
+
+states[mobjinfo[MT_EGGROBO1].meleestate].action = function(mo)
+	local me = mo.target
+	if not (me and me.valid and me.player and me.player.valid) then return end
+	if me.skin ~= SOAP_SKIN then return end
+	
+	P_DoPlayerPain(me.player, mo, mo)
+	local dist = mo.radius*2 + me.radius + 96*mo.scale
+	P_MoveOrigin(me,
+		mo.cusval + P_ReturnThrustX(nil, mo.movedir, dist),
+		mo.cvmem + P_ReturnThrustY(nil, mo.movedir, dist),
+		me.z
+	)
+	
+	me.player.soaptable.hud.painsurge = 6
+	Soap_DamageSfx(me, FU,FU, nil,{
+		forcesound = sfx_sp_dm2
+	})
+	Soap_ImpactVFX(mo,me, nil, FU*3/2)
+	Soap_Hitlag.addHitlag(mo, 16, false)
+	Soap_Hitlag.addHitlag(me, 16, true)
+	me.soap_damagevar = {
+		ang = mo.movedir,
+		speed = 64*mo.scale
+	}
+end

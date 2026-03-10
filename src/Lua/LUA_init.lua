@@ -132,6 +132,7 @@ rawset(_G, "Soap_InitTable", function(p)
 		doublejumped = false,
 		rmomz = 0,
 		paintime = 0,
+		kotic = 0,
 		setpaintrans = false,
 		sprung = false,
 		jumptime = 0,

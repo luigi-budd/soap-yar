@@ -599,6 +599,11 @@ rawset(_G,"Soap_DamageSfx", function(src, power, maxpow, damagetype, props)
 		sfx = sfx_sp_dm5
 		numsfx = 2
 	end
+	
+	if props.forcesound
+		sfx = props.forcesound
+		numsfx = 0
+	end
 
 	local vol = secondary and 255 or 255/3
 	if props.vol ~= nil
@@ -1764,6 +1769,11 @@ rawset(_G,"Soap_HandleNoAbils", function(p)
 	if (PSO)
 		na = $|SNOABIL_ALL &~SNOABIL_BOTHTAUNTS
 	end
+	if (p.pflags & PF_STASIS)
+	or (soap.stasistic)
+	or (p.powers[pw_nocontrol] or me.reactiontime)
+		na = $|SNOABIL_ALL
+	end
 	
 	-- jump moves
 	if (p.charability ~= CA_SOAPMOVE)
@@ -1826,6 +1836,9 @@ rawset(_G,"Soap_DeathThinker",function(p,me,soap)
 		if soap.onGround
 		and me.health
 			me.state = S_PLAY_SOAP_KNOCKOUT
+			me.sprite2 = SPR2_MSC4
+			me.tics = -1
+			
 			me.soap_kickme = true
 		end
 	elseif me.soap_kickme
@@ -1834,7 +1847,10 @@ rawset(_G,"Soap_DeathThinker",function(p,me,soap)
 			me.soap_kickme = nil
 		end
 		if me.state ~= S_PLAY_SOAP_KNOCKOUT
+		and not (P_PlayerInPain(p) or soap.inPain)
 			me.state = S_PLAY_SOAP_KNOCKOUT
+			me.sprite2 = SPR2_MSC4
+			me.tics = -1
 		end
 		soap.stasistic = max($, 2)
 		soap.allowjump = false
