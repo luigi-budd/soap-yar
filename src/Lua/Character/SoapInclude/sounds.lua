@@ -111,7 +111,3 @@ sfxinfo[sfx_sp_kco] = {
 	flags = SF_X2AWAYSOUND,
 	caption = "Knockout!!"
 }
-
---takis sound
-SafeFreeslot("sfx_tk_djm")
-sfxinfo[sfx_tk_djm].caption = "Double jump"
