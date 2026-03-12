@@ -1766,13 +1766,11 @@ rawset(_G,"Soap_HandleNoAbils", function(p)
 		na = $|SNOABIL_ALL
 	end
 	
-	if (PSO)
-		na = $|SNOABIL_ALL &~SNOABIL_BOTHTAUNTS
-	end
 	if (p.pflags & PF_STASIS)
 	or (soap.stasistic)
 	or (p.powers[pw_nocontrol] or me.reactiontime)
-		na = $|SNOABIL_ALL
+	or (PSO)
+		na = $|SNOABIL_ALL &~SNOABIL_BOTHTAUNTS
 	end
 	
 	-- jump moves

@@ -385,6 +385,8 @@ local function destroy_uppercut_aura(p,me,soap)
 end
 
 local function spawn_sweat_mobjs(p,me,soap)
+	if soap.inWater then return end
+	
 	local height = FixedDiv(me.height,me.scale)/FU
 	local sweat = P_SpawnMobjFromMobj(me,
 		P_RandomRange(-16,16)*FU, --+ FixedDiv(me.momx,me.scale),
