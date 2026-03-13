@@ -85,7 +85,7 @@ for i = 0, 3
 	}
 end
 -- knockback
-for i = 0, 3
+for i = 0, 2
 	SafeFreeslot("sfx_sp_kb"..i)
 	sfxinfo[sfx_sp_kb0 + i] = {
 		caption = "/",

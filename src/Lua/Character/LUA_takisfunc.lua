@@ -440,7 +440,10 @@ rawset(_G,"Takis_HandleNoAbils", function(p)
 		na = $|SNOABIL_ALL
 	end
 	
-	if (PSO)
+	if (p.pflags & PF_STASIS)
+	or (soap.stasistic)
+	or (p.powers[pw_nocontrol] or me.reactiontime)
+	or (PSO)
 		na = $|SNOABIL_ALL &~SNOABIL_BOTHTAUNTS
 	end
 	

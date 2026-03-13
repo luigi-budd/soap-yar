@@ -40,6 +40,7 @@ local includes = {
 	"boombox.lua",
 	"spiderman.lua",
 	"sexmodv2.lua",
+	"riders.lua",
 }
 for k,file in ipairs(includes)
 	dofile("Character/SoapInclude/"..file)

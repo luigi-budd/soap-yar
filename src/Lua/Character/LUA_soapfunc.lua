@@ -663,7 +663,7 @@ rawset(_G,"Soap_ImpactVFX",function(src,inf, distmul, scalemul, forcesplat)
 	top_layer.state = S_SOAP_HITM_RSPRK
 	top_layer.spritexscale = FixedMul($, spr_scale)
 	top_layer.spriteyscale = top_layer.spritexscale
-	top_layer.renderflags = $|rflags
+	top_layer.renderflags = $|rflags|(P_RandomChance(FU/2) and RF_HORIZONTALFLIP or 0)
 	top_layer.vfx_tospawn = P_RandomRange(1, 3)
 	top_layer.vfx_delays = {}
 	for i = 1,top_layer.vfx_tospawn
@@ -880,7 +880,7 @@ rawset(_G,"Soap_DustRing",function(src,
 	
 	local ang = FixedDiv(360*FU, amount*FU)
 	
-	for i = 0, amount
+	for i = 1, amount
 		local fa = FixedAngle(ang * i)
 		local dust = P_SpawnMobj(
 			pos[1] + P_ReturnThrustX(nil, fa, radius),

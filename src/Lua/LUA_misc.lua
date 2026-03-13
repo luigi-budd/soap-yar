@@ -240,6 +240,7 @@ local function NewVFXThink(v)
 		blue.state = S_SOAP_HITM_BSPRK
 		blue.spritexscale = (v.spritexscale * 6/5) + P_RandomFixed()/2
 		blue.spriteyscale = blue.spritexscale
+		blue.renderflags = $|(P_RandomChance(FU/2) and RF_HORIZONTALFLIP or 0)
 		v.vfx_tospawn = $ - 1
 	elseif (v.state == S_INVISIBLE)
 		P_RemoveMobj(v)

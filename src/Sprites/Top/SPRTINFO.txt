@@ -24,4 +24,8 @@ Sprite GTOP {
 		XPivot 61
 		YPivot 75
 	}
+	Frame G {
+		XPivot 17
+		YPivot 12
+	}
 }

@@ -1015,8 +1015,8 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 		end
 		
 		--not going backwards
-		if ((rightway and soap.onGround)
-		or (p.powers[pw_carry] == CR_MINECART))
+		if (rightway and soap.onGround)
+		and (soap.notCarried or p.powers[pw_carry] == CR_MINECART)
 		and not (soap.noability & SNOABIL_RDASH)
 			local skin_t = skins[p.skin]
 			local maximumspeed = skin_t.normalspeed + soap._maxdash
@@ -2189,28 +2189,26 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 					S_StartSoundAtVolume(me,sfx_s3k79, 255/2)
 				end
 				
-				do --if (leveltime & 1)
-					local spark = P_SpawnMobjFromMobj(me,0,0,0,MT_SOAP_WALLBUMP)
-					local speed = 12*me.scale
-					local limit = 28
-					local my_ang = FixedAngle(Soap_RandomFixedRange(0,360*FU))
-					
-					P_InstaThrust(spark, my_ang, speed)
-					P_SetObjectMomZ(spark, Soap_RandomFixedRange(3*FU,8*FU))
-					
-					P_SetScale(spark,me.scale / 10, true)
-					spark.destscale = me.scale
-					--5 tics
-					spark.scalespeed = FixedDiv(me.scale - me.scale / 10, 5*FU)
-					spark.color = p.skincolor
-					spark.colorized = true
-					spark.fuse = TR
-					
-					spark.spritexscale = FU * 3/2
-					spark.spriteyscale = spark.spritexscale
-					
-					spark.random = P_RandomRange(-limit,limit) * ANG1
-				end
+				local spark = P_SpawnMobjFromMobj(me,0,0,0,MT_SOAP_WALLBUMP)
+				local speed = 12*me.scale
+				local limit = 28
+				local my_ang = FixedAngle(Soap_RandomFixedRange(0,360*FU))
+				
+				P_InstaThrust(spark, my_ang, speed)
+				P_SetObjectMomZ(spark, Soap_RandomFixedRange(3*FU,8*FU))
+				
+				P_SetScale(spark,me.scale / 10, true)
+				spark.destscale = me.scale
+				--5 tics
+				spark.scalespeed = FixedDiv(me.scale - me.scale / 10, 5*FU)
+				spark.color = p.skincolor
+				spark.colorized = true
+				spark.fuse = TR
+				
+				spark.spritexscale = FU * 3/2
+				spark.spriteyscale = spark.spritexscale
+				
+				spark.random = P_RandomRange(-limit,limit) * ANG1
 			else
 				p.pflags = $ &~PF_STARTJUMP
 				
