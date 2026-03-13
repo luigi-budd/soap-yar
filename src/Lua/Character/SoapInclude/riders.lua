@@ -421,7 +421,12 @@ addHook("MobjMoveCollide",function(mo, thing)
 	if thing == mo.target
 		return false
 	elseif (thing.flags & MF_SPRING)
+	and Soap_ZCollide(mo,thing)
 		P_DoSpring(thing, mo)
+		if (mobjinfo[thing.type].damage ~= 0)
+		and (mobjinfo[thing.type].reactiontime == 0)
+			mo.angle = thing.angle
+		end
 	end
 end, MT_RIDERBOARD)
 addHook("MobjMoveBlocked",function(top,m,l)
