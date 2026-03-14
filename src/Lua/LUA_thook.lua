@@ -86,7 +86,8 @@ local MOBJ_LIST = {
 			MT_STEAM,
 			MT_STARPOST,
 			MT_MINECARTSPAWNER,
-			MT_SPIKE
+			MT_SPIKE,
+			MT_SIGN
 		},
 		hook = "MobjSpawn",
 		func = function(mo)
@@ -134,6 +135,7 @@ local MOBJ_LIST = {
 			MT_STARPOST,
 			MT_BLACKEGGMAN,
 			MT_EMBLEM,
+			MT_SIGN,
 		},
 		hook = "MobjSpawn",
 		func = function(mo)
