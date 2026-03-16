@@ -2886,7 +2886,8 @@ rawset(_G, "Soap_IsCompGamemode",function()
 	return iscomp
 end)
 
-rawset(_G, "Soap_SolThinker",function(p,me,soap)
+rawset(_G, "Soap_SuperThinker",function(p,me,soap)
+	/*
 	if ((leveltime % 3) == 0
 	or (soap.accspeed > 40*FU))
 	and (soap.isSolForm or p.powers[pw_super])
@@ -2901,6 +2902,132 @@ rawset(_G, "Soap_SolThinker",function(p,me,soap)
 	if not (soap.isSolForm or p.powers[pw_super]) then return end
 	p.powers[pw_underwater] = 0
 	--spacedrown is different from water
+	*/
+	
+	if not soap.doSuperBuffs then return end
+	
+	p.powers[pw_underwater] = 0
+	
+	-- punch
+	if (soap.use == 1)
+	and (soap.use_R)
+	and (soap.onGround)
+		me.state = S_PLAY_SOAP_PUNCH1
+		soap.use_R = 0
+		me.soap_punchtics = 4
+	end
+	if me.soap_punchtics
+		me.soap_punchtics = $ - 1
+		
+		local dist = 70*FU
+		local ang = me.angle
+		local thok = P_SpawnMobjFromMobj(me,
+			P_ReturnThrustX(nil,ang,dist) + FixedDiv(me.momx, me.scale),
+			P_ReturnThrustY(nil,ang,dist) + FixedDiv(me.momy, me.scale),
+			0,
+			MT_THOK
+		)
+		P_SetOrigin(thok, thok.x,thok.y,thok.z)
+		thok.radius = 35*me.scale
+		thok.height = 70*me.scale
+		thok.scale = me.scale
+		thok.fuse = 2
+		thok.flags2 = $|MF2_DONTDRAW
+		
+		local fakerange = 250*FU
+		local range = thok.radius*3/2
+		local enemyhit = false
+		searchBlockmap("objects", function(ref, found)
+			if found == me then return end
+			if R_PointToDist2(found.x, found.y, thok.x, thok.y) > range + found.radius
+				return
+			end
+			if not Soap_ZCollide(found,thok) then return end
+			if not (found.health) then return end
+			if not P_CheckSight(me,found) then return end
+			local topheight = found.z + found.height
+			if soap.gravflip == -1
+				topheight = found.z
+			end
+			if (topheight < (soap.gravflip == 1 and me.floorz or me.ceilingz)) then return end
+			
+			if (found.type == MT_TNTBARREL)
+				P_KillMobj(found,me,me)
+				enemyhit = true
+			elseif Soap_CanDamageEnemy(p, found,MF_ENEMY|MF_BOSS|MF_MONITOR|MF_SHOOTABLE)
+				Soap_ImpactVFX(found, me, nil,nil, true)
+				Soap_SpawnBumpSparks(found, me, nil,false, found.scale * 3/2, true)
+				Soap_DamageSfx(found, 25*FU, 30*me.scale)
+				P_DamageMobj(found,me,me, damage)
+				Soap_Hitlag.addHitlag(found, 12, true)
+				Soap_Hitlag.addHitlag(me, 12, false)
+				Soap_StartQuake(10*FU, 12, {me.x, me.y, me.z}, 512*me.scale)
+				
+				enemyhit = true
+			--Most likely a spike thing
+			elseif (found.info.mass == DMG_SPIKE)
+			and (found.flags & (MF_PAIN))
+			or (found.type == MT_SPIKE or found.type == MT_WALLSPIKE)
+			and (found.takis_flingme ~= false)
+				-- probably a cactus in acz
+				if found.flags & MF_SCENERY
+				and not (found.type == MT_SPIKE or found.type == MT_WALLSPIKE)
+					local speed = 15*found.scale
+					local range = 15*FU
+					for i = 0,P_RandomRange(15,20)
+						local poof = P_SpawnMobjFromMobj(found,
+							Soap_RandomFixedRange(-range, range),
+							Soap_RandomFixedRange(-range, range),
+							FixedDiv(found.height,found.scale)/2 + Soap_RandomFixedRange(-range, range),
+							MT_SOAP_DUST
+						)
+						local hang,vang = R_PointTo3DAngles(
+							poof.x,poof.y,poof.z,
+							found.x,found.y,found.z + found.height/2
+						)
+						P_3DThrust(poof, hang,vang, speed)
+						
+						poof.spritexscale = $ + Soap_RandomFixedRange(0,2*FU)/3
+						poof.spriteyscale = poof.spritexscale
+					end
+					
+					P_SpawnMobjFromMobj(found,0,0,0,MT_THOK).state = S_XPLD1
+					local sfx = P_SpawnGhostMobj(found)
+					sfx.flags2 = $|MF2_DONTDRAW
+					sfx.fuse = TR
+					sfx.tics = TR
+					S_StartSound(sfx, sfx_pop)
+				end
+				P_KillMobj(found,me,me)
+			elseif (found.flags & MF_SPRING)
+			and (found.info.painchance ~= 3)
+				Soap_ImpactVFX(found, me, nil,nil, true)
+				P_DoSpring(found,me)
+				enemyhit = true
+			elseif (found.player and found.player.valid)
+				local p2 = found.player
+				
+				if Soap_CanHurtPlayer(p, p2)
+					Soap_ImpactVFX(found, me, nil,nil, true)
+					Soap_SpawnBumpSparks(found, me, nil,false, found.scale * 3/2, true)
+					Soap_DamageSfx(found, 25*FU, 30*me.scale)
+					P_DamageMobj(found,me,me)
+					Soap_Hitlag.addHitlag(found, 12, true)
+					Soap_Hitlag.addHitlag(me, 12, false)
+					Soap_StartQuake(10*FU, 12, {me.x, me.y, me.z}, 512*me.scale)
+					
+					enemyhit = true
+				end
+			end
+		end, 
+		thok,
+		thok.x-fakerange, thok.x+fakerange,
+		thok.y-fakerange, thok.y+fakerange)
+		
+		if enemyhit
+			me.soap_punchtics = 0
+		end
+	end
 end)
 
 local SOAP_GRAB_ACTIONSTATE = 9999
