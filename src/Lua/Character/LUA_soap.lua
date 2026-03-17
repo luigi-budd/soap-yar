@@ -3684,6 +3684,7 @@ Takis_Hook.addHook("PostThinkFrame",function(p)
 	or (me.state == S_PLAY_SOAP_PUNCH1 or me.state == S_PLAY_SOAP_PUNCH2)
 		p.drawangle = R_PointToAngle2(0,0,me.momx,me.momy) --soap.dashangle
 		if (soap.onGround)
+		and (me.state == S_PLAY_SOAP_PUNCH1 or me.state == S_PLAY_SOAP_PUNCH2)
 			p.drawangle = me.angle
 		end
 	end
