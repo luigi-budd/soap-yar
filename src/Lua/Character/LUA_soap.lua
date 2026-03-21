@@ -3091,15 +3091,13 @@ local function try_pvp_collide(me,thing)
 	local soap = p.soaptable
 	
 	if not soap then return end
-	if (soap.damagedealtthistic > SOAP_MAXDAMAGETICS) then return end
-	soap.damagedealtthistic = $ + 1
 	if me.skin ~= SOAP_SKIN then return end
 	
 	local DealDamage = (soap.doSuperBuffs or p.powers[pw_invulnerability]) and P_KillMobj or P_DamageMobj
 	
 	--if the thing we're killing ISNT a player, then theyre probably an enemy
 	local candamagemobj = false
-	if thing.type ~= MT_PLAYER
+	if (thing.type ~= MT_PLAYER)
 	or not (thing.player and thing.player.valid)
 		candamagemobj = Soap_CanDamageEnemy(p, thing)
 	end
@@ -3114,6 +3112,9 @@ local function try_pvp_collide(me,thing)
 		end
 	end
 	if not candamagemobj then return end
+	
+	if (soap.damagedealtthistic > SOAP_MAXDAMAGETICS) then return end
+	soap.damagedealtthistic = $ + 1
 	
 	local thinghit = false
 	

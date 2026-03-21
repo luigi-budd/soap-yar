@@ -638,6 +638,7 @@ local damagecolors = {
 	SKINCOLOR_YELLOW,
 	SKINCOLOR_SAPPHIRE
 }
+local vfxheight = 90*FU
 rawset(_G,"Soap_ImpactVFX",function(src,inf, distmul, scalemul, forcesplat)
 	scalemul = $ or FU
 	local disp = 25*FU
@@ -647,7 +648,8 @@ rawset(_G,"Soap_ImpactVFX",function(src,inf, distmul, scalemul, forcesplat)
 		z = Soap_RandomFixedRange(-disp,disp)
 	}
 	
-	local spr_scale = FixedMul(FU*3/2 + Soap_RandomFixedSigned() / 4, scalemul)
+	local orig_scale = FU*3/2 + Soap_RandomFixedSigned() / 4
+	local spr_scale = FixedMul(orig_scale, scalemul)
 	local rflags = RF_FULLBRIGHT|RF_NOCOLORMAPS
 	local applycolor = ((multiplayer or netgame) and (gametyperules & GTR_FRIENDLY == 0))
 	
@@ -657,6 +659,8 @@ rawset(_G,"Soap_ImpactVFX",function(src,inf, distmul, scalemul, forcesplat)
 		off.z = FixedMul($, distmul)
 		spr_scale = FixedMul($, FU + (distmul - FU)/6)
 	end
+	off.z = $ + (FixedMul(vfxheight,orig_scale) - FixedMul(vfxheight,spr_scale))/2
+	
 	
 	local top_layer = P_SpawnMobjFromMobj(src, off.x,off.y,off.z, MT_SOAP_FREEZEGFX)
 	top_layer.soap_newvfx = true
@@ -671,6 +675,8 @@ rawset(_G,"Soap_ImpactVFX",function(src,inf, distmul, scalemul, forcesplat)
 	end
 	top_layer.vfx_mom = {0,0,0}
 	top_layer.dispoffset = 200
+	top_layer.anim_duration = 4
+	top_layer.tics = $ + 4
 
 	if inf and inf.valid
 		top_layer.vfx_mom = {inf.momx, inf.momy, inf.momz}
