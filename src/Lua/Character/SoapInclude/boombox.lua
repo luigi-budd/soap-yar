@@ -220,7 +220,7 @@ mobjinfo[MT_SOAP_BOOMBOX] = {
 	height = 28*FRACUNIT,
 	radius = 14*FRACUNIT,
 	flags = MF_NOCLIPTHING,
-	painchance = FU/2, --FU / 10 -- special tune chance
+	painchance = FU / 10 -- special tune chance
 }
 addHook("ShouldDamage",function(mo,_,_,_,dmgt)
 	if dmgt == DMG_DEATHPIT
