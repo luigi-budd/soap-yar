@@ -134,6 +134,9 @@ local MOBJ_LIST = {
 			MT_STARPOST,
 			MT_BLACKEGGMAN,
 			MT_EMBLEM,
+			MT_SMALLMACE,
+			MT_BIGMACE,
+			MT_EGGMOBILE4_MACE,
 		},
 		hook = "MobjSpawn",
 		func = function(mo)

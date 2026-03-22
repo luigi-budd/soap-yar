@@ -18,8 +18,8 @@ end
 fakeenum("NOABIL_ALL",SNOABIL_ALL)
 
 rawset(_G, "TAKIS_HAMMERDISP", FixedMul(52*FU,9*FU/10))
-rawset(_G, "TAKIS_AIRDRAGFRAC", FU - (FU * 978/1000))
-rawset(_G, "TAKIS_AIRDRAGCAP", 40*FU)
+rawset(_G, "TAKIS_AIRDRAGFRAC", FU - (FU * 979/1000))
+rawset(_G, "TAKIS_AIRDRAGCAP", 39*FU)
 
 rawset(_G, "CLUTCH_MISFIRE", TR)
 rawset(_G, "CLUTCH_TICS", TR)

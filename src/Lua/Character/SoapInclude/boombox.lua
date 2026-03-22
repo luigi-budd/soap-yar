@@ -76,7 +76,7 @@ states[S_SOAP_BOOMBOX] = {
 			soap = p.soaptable
 			
 			if mo.funny
-				if (soap.taunttime)
+				if (soap.taunt.num and soap.taunt.num ~= 4)
 					killCond = true
 				end
 				if (soap.breakdance)
@@ -211,7 +211,7 @@ mobjinfo[MT_SOAP_BOOMBOX] = {
 	height = 28*FRACUNIT,
 	radius = 14*FRACUNIT,
 	flags = MF_NOCLIPTHING,
-	painchance = FU / 10
+	painchance = FU / 10 -- special tune chance
 }
 addHook("ShouldDamage",function(mo,_,_,_,dmgt)
 	if dmgt == DMG_DEATHPIT

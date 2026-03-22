@@ -267,6 +267,14 @@ rawset(_G, "Soap_InitTable", function(p)
 				frame = A,
 				angle = p.drawangle,
 			},
+			-- dupe...
+			anim2 = {
+				state = S_PLAY_STND,
+				sprite = SPR_PLAY,
+				sprite2 = SPR2_STND,
+				frame = A,
+				angle = p.drawangle,
+			},
 			
 			x = (p.realmo and p.realmo.valid) and p.realmo.x or 0,
 			y = (p.realmo and p.realmo.valid) and p.realmo.y or 0,

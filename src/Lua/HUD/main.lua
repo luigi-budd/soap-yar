@@ -3,7 +3,7 @@
 addHook("HUD",function(v,p)
 	local soap = p.soaptable
 	if not soap then return end
-	if not (skins[p.skin].name == SOAP_SKIN) then return end
+	if not (skins[p.skin].name == SOAP_SKIN or skins[p.skin].name == TAKIS_SKIN) then return end
 	local hud = soap.hud
 	
 	if hud.painsurge
@@ -26,14 +26,13 @@ addHook("HUD",function(v,p)
 	end
 end,"game")
 
+local CLUTCH_FADEOUT = 2*TR
+local CLUTCH_FADE = 4
+local clutchfade = 0
 addHook("HUD",function(v,p, cam)
 	v.dointerp = function(tag)
 		if v.interpolate == nil then return end
 		v.interpolate(tag)
-	end
-	v.dolatch = function(tag)
-		if v.interpLatch == nil then return end
-		v.interpLatch(tag)
 	end
 	
 	local takis = p.soaptable
@@ -71,20 +70,10 @@ addHook("HUD",function(v,p, cam)
 		stra,strb = "CLUTCH ON", "GREEN"
 		thina,thinb = true,true
 	end
-	if stra
-		v.drawString(x,y,
-			stra,
-			V_PERPLAYER|V_ALLOWLOWERCASE, thina and "thin-fixed" or "fixed"
-		)
-	end
-	if strb
-		v.drawString(x,y+8*FU,
-			strb,
-			V_PERPLAYER|V_ALLOWLOWERCASE, thinb and "thin-fixed" or "fixed"
-		)
-	end
 	
 	if clutch.tics > 0
+		clutchfade = 0
+		
 		local pre = "CLTCHMET_"
 		local bg = v.cachePatch(pre .. "BACK")
 		local fill = v.cachePatch(pre .. "FILL")
@@ -106,6 +95,25 @@ addHook("HUD",function(v,p, cam)
 		)
 		
 		v.drawScaled(x, y, scale, v.cachePatch(pre .. "MARK"), V_PERPLAYER|V_HUDTRANS)
+	else
+		clutchfade = min($ + 1, CLUTCH_FADEOUT)
+	end
+	
+	local fade = 0
+	if (clutchfade >= (CLUTCH_FADEOUT - CLUTCH_FADE))
+		fade = (clutchfade - (CLUTCH_FADEOUT - CLUTCH_FADE))<<V_ALPHASHIFT
+	end
+	if stra
+		v.drawString(x,y,
+			stra,
+			V_PERPLAYER|V_ALLOWLOWERCASE|fade, thina and "thin-fixed" or "fixed"
+		)
+	end
+	if strb
+		v.drawString(x,y+8*FU,
+			strb,
+			V_PERPLAYER|V_ALLOWLOWERCASE|fade, thinb and "thin-fixed" or "fixed"
+		)
 	end
 	v.dointerp(false)
 end,"game")

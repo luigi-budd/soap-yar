@@ -562,34 +562,6 @@ rawset(_G,"Takis_HammerBlastHitbox",function(p)
 		didit = true
 	end
 	
-	--wind ring
-	/*
-	if not (takis.hammerblastdown % 6)
-	and takis.hammerblastdown > 6
-	and (me.momz*takis.gravflip < 0)
-	and (thok and thok.valid)
-		local ring = P_SpawnMobjFromMobj(thok,
-			0,0,-5*FU*takis.gravflip,MT_THOK --MT_WINDRINGLOL
-		)
-		if (ring and ring.valid)
-			ring.renderflags = RF_FLOORSPRITE
-			ring.frame = $|FF_TRANS50
-			ring.startingtrans = FF_TRANS50
-			ring.scale = FixedDiv(me.scale,2*FU)
-			P_SetObjectMomZ(ring,10*me.scale)
-			--i thought this would fade out the object
-			ring.fuse = 10
-			ring.destscale = FixedMul(ring.scale,2*FU)
-			ring.colorized = true
-			ring.color = SKINCOLOR_WHITE
-			ring.state = S_SOAPYWINDRINGLOL
-			if (takis.gravflip == -1)
-				ring.z = $ - me.height
-			end
-		end
-	end
-	*/
-	
 	local nerfed = false
 	if takis.inBattle
 	or G_RingSlingerGametype()
@@ -634,9 +606,9 @@ rawset(_G,"Takis_HammerBlastHitbox",function(p)
 			enemyhit = true
 			didit = true
 		--Most likely a spike thing
-		elseif (found.info.mass == DMG_SPIKE)
+		elseif ((found.info.mass == DMG_SPIKE)
 		and (found.flags & (MF_PAIN))
-		or (found.type == MT_SPIKE or found.type == MT_WALLSPIKE)
+		or (found.type == MT_SPIKE or found.type == MT_WALLSPIKE))
 		and (found.takis_flingme ~= false)
 			found.alreadykilledthis = true
 			
@@ -703,7 +675,7 @@ rawset(_G,"Takis_HammerBlastHitbox",function(p)
 		forcehambounce(p)
 	end
 	if enemyhit
-		Soap_Hitlag.addHitlag(me, 2, false)
+		Soap_Hitlag.addHitlag(me, 4, false)
 	end
 	return didit
 end)
@@ -881,6 +853,7 @@ rawset(_G,"Takis_AbilityHelpers",{
 		me.roll = FixedMul($,FU*3/4)
 		
 		if me.state ~= S_PLAY_MELEE
+		and not takis.inPain
 			me.state = S_PLAY_MELEE
 		end
 		
@@ -913,7 +886,7 @@ rawset(_G,"Takis_AbilityHelpers",{
 			hammer.wentdown = true
 			
 			if not S_SoundPlaying(me,sfx_tk_hmd)
-				S_StartSoundAtVolume(me,sfx_tk_hmd,255*8/10)
+				S_StartSoundAtVolume(me,sfx_tk_hmd,255*7/10)
 			end
 			
 			/*

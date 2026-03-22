@@ -102,3 +102,11 @@ states[S_PLAY_SOAP_PUNCH2] = {
 	tics = 12,
 	nextstate = S_PLAY_FALL
 }
+
+SafeFreeslot("S_PLAY_SOAP_FIREASS")
+states[S_PLAY_SOAP_FIREASS] = {
+	sprite = SPR_PLAY,
+	frame = SPR2_MSC7|FF_ANIMATE,
+	tics = 4,
+	nextstate = S_PLAY_SOAP_FIREASS
+}

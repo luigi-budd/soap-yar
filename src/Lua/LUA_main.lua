@@ -127,6 +127,12 @@ addHook("PlayerThink",function(p)
 		soap.last.onground = soap.onGround
 		soap.last.momz = me.momz
 		
+		soap.last.anim2.state = me.state
+		soap.last.anim2.sprite = me.sprite
+		soap.last.anim2.sprite2 = me.sprite2
+		soap.last.anim2.frame = me.frame
+		soap.last.anim2.angle = p.drawangle
+		
 		soap.last.skin = me.skin
 		soap.last.carry = p.powers[pw_carry]
 		soap.last.pflags = p.pflags

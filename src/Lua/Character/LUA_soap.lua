@@ -17,6 +17,7 @@
 	- MSC4: death taunt
 	- MSC5: r-dash ram
 	- MSC6: b-rush punch
+	- MSC7: fireass
 */
 
 --max speed increase
@@ -157,12 +158,13 @@ local function soap_poundonland(p,me,soap)
 			end
 		end
 		
-		if br >= 140*me.scale
+		if abs(soap.last.momz) >= 60*me.scale
 			S_StartSound(me, sfx_s3k9b)
 			S_StartSoundAtVolume(me, sfx_s3k5f, 255/2)
 			
 			local iterations = 16
 			local ang = FixedDiv(360*FU, iterations*FU)
+			local limit = 28
 			for i = 0, iterations
 				local rock = P_SpawnMobjFromMobj(me,
 					0,0, 4*FU,
@@ -174,6 +176,29 @@ local function soap_poundonland(p,me,soap)
 				P_Thrust(rock, FixedAngle(ang * i), Soap_RandomFixedRange(3*FU,7*FU))
 				rock.fuse = TR*3
 			end
+			Soap_DustRing(me,
+				MT_SOAP_WALLBUMP,
+				16 + max(
+					abs(FixedDiv(soap.last.momz, me.scale) - 5*FU)/FU / 4,
+					0
+				),
+				{me.x,me.y,me.z},
+				me.radius * 3/2,
+				br/3, --soap.last.momz,
+				me.scale / 10,
+				me.scale * 3/2,
+				false, function(spark)
+					--5 tics
+					spark.scalespeed = FixedDiv(spark.destscale - (spark.scale / 10), 5*FU)
+					
+					spark.fuse = 5 * TR
+					spark.startfuse = spark.fuse
+					
+					spark.random = P_RandomRange(-limit,limit) * ANG1
+					spark.momz = Soap_RandomFixedRange(15*me.scale, 30*me.scale) * soap.gravflip
+					dust_noviewmobj(spark)
+				end
+			)
 		end
 		
 		if me.health
@@ -1016,7 +1041,7 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 		end
 		
 		--not going backwards
-		if (rightway and soap.onGround)
+		if (rightway and soap.onGround or p.powers[pw_carry] == CR_MINECART)
 		and (soap.notCarried or p.powers[pw_carry] == CR_MINECART)
 		and not (soap.noability & SNOABIL_RDASH)
 			local skin_t = skins[p.skin]
@@ -2897,65 +2922,6 @@ addHook("PlayerThink",function(p)
 end)
 ----
 
-local function Soap_Bump(me,thing,line, weak)
-	local p = me.player
-	local soap = p.soaptable
-
-	Soap_StartQuake(5*FU, 8, {me.x,me.y,me.z}, 512*me.scale)
-	S_StartSound(me, sfx_s3k49)
-	Soap_SpawnBumpSparks(me, thing, line)
-	
-	if (line and line.valid)
-		local line_ang = R_PointToAngle2(
-			line.v1.x, line.v1.y, line.v2.x, line.v2.y
-		)
-		local speed = FixedDiv(20*me.scale, me.friction) + FixedHypot(p.cmomx,p.cmomy)
-		speed = $ + abs(FixedMul(
-			R_PointToDist2(0,0,me.momx,me.momy) * 3/4,
-			sin(line_ang - R_PointToAngle2(0,0,me.momx,me.momy))
-		))
-		
-		--its ambiguous syntax to have the `func` definition on the same line
-		--as the call, so :shrug:
-		--C DOESNT COMPLAIN....
-		local func = ((soap.onGround or weak) and P_Thrust or P_InstaThrust)
-		func(me,
-			line_ang - ANGLE_90*(P_PointOnLineSide(me.x,me.y, line) and 1 or -1),
-			-speed
-		)
-		p.rmomx = me.momx - p.cmomx
-		p.rmomy = me.momy - p.cmomy
-		
-		if me.health
-			soap.linebump = max($, 12)
-		end
-		if soap.in2D
-			me.momy = 0
-		end
-		return true
-	elseif (thing and thing.valid)
-		local ang = R_PointToAngle2(me.x,me.y, thing.x,thing.y)
-		local speed = R_PointToDist2(0,0,thing.momx,thing.momy) + (R_PointToDist2(0,0,me.momx,me.momy)/2) + FixedMul(
-			20*FU, FixedSqrt(FixedMul(thing.scale,me.scale))
-		)
-		if soap.onGround then speed = FixedDiv($, me.friction) end
-		
-		P_InstaThrust(me, ang, -speed)
-		p.rmomx = me.momx - p.cmomx
-		p.rmomy = me.momy - p.cmomy
-		
-		if soap.in2D
-			me.momy = 0
-		end
-		if me.health
-			soap.linebump = max($, 12)
-		end
-		return true
-	end
-	P_BounceMove(me)
-	return true
-end
-
 Takis_Hook.addHook("MoveBlocked",function(me,thing,line, goingup)
 	local p = me.player
 	local soap = p.soaptable
@@ -3092,6 +3058,7 @@ local function try_pvp_collide(me,thing)
 	
 	if not soap then return end
 	if me.skin ~= SOAP_SKIN then return end
+	if (soap.damagedealtthistic > SOAP_MAXDAMAGETICS) then return end
 	
 	local DealDamage = (soap.doSuperBuffs or p.powers[pw_invulnerability]) and P_KillMobj or P_DamageMobj
 	
@@ -3109,11 +3076,11 @@ local function try_pvp_collide(me,thing)
 			if not (thing.player.soaptable) then return end
 			if thing.player.soaptable.iwashitthistic then return end
 			thing.player.soaptable.iwashitthistic = true
+			DealDamage = P_DamageMobj
 		end
 	end
 	if not candamagemobj then return end
 	
-	if (soap.damagedealtthistic > SOAP_MAXDAMAGETICS) then return end
 	soap.damagedealtthistic = $ + 1
 	
 	local thinghit = false
@@ -3457,18 +3424,16 @@ addHook("MobjDamage", function(me,inf,sor,dmg,dmgt)
 		end
 	end
 	
-	if me.health
-		if (dmgt == DMG_FIRE)
-			soap.firepain = TR * 2
-			S_StartSound(me, sfx_s3kc2s)
-			S_StartSound(me, sfx_s248)
-			S_StartSound(me, sfx_s233)
-			S_StartSound(me, sfx_s3kcds)
-		elseif (dmgt == DMG_ELECTRIC)
-			soap.elecpain = TR * 3/2
-			S_StartSound(me, sfx_buzz2)
-			S_StartSound(me, sfx_s250)
-		end
+	if (dmgt == DMG_FIRE)
+		soap.firepain = TR * 2
+		S_StartSound(me, sfx_s3kc2s)
+		S_StartSound(me, sfx_s248)
+		S_StartSound(me, sfx_s233)
+		S_StartSound(me, sfx_s3kcds)
+	elseif (dmgt == DMG_ELECTRIC)
+		soap.elecpain = TR * 3/2
+		S_StartSound(me, sfx_buzz2)
+		S_StartSound(me, sfx_s250)
 	end
 	
 	--printf("damage:\n%f\n%f", power, inf_speed)

@@ -135,10 +135,38 @@ local function generic_slingshot(p,me,takis, stop_ang)
 	return didit
 end
 
+local function playknockoutsfx(p,me,soap)
+	if abs(leveltime - soap.kotic) < TR*3/2 then return end
+	soap.kotic = leveltime
+	
+	local sound = P_RandomChance(FU/50) and sfx_sp_em1 or P_RandomRange(sfx_sp_ow0,sfx_sp_ow1)
+	if R_PointToDist(me.x,me.y) >= 1024*FU
+	and (p ~= displayplayer)
+		sound = sfx_sp_ow2
+	end
+	S_StartSound(me,sound)
+
+	local speed = soap.accspeed
+	if me.soap_damagevar
+		speed = max($, me.soap_damagevar.speed)
+	end
+
+	sound = sfx_sp_kb0 + clamp(0,
+		FixedMul(2*FU, FixedDiv(speed - 30*FU, 10*FU)),
+		2*FU
+	)/FU
+	S_StartSound(me, sound)
+	S_StartSound(me, sound)
+end
+
 Takis_Hook.addHook("PreThinkFrame",function(p)
 	local me = p.realmo
 	if (me.skin ~= TAKIS_SKIN) then return end
 	local takis = p.soaptable
+	
+	--ticked back here so any changes will be instant
+	--(also out of the way of hitlag)
+	Soap_HUDTicker(p,me,soap)
 	
 	if (p.powers[pw_carry] == CR_NIGHTSMODE)
 	and takis.use == 1
@@ -349,7 +377,7 @@ Takis_Hook.addHook("Takis_Thinker",function(p)
 		and not (soap.inPain)
 		and me.health
 		and (soap.notCarried)
-		and not (soap.noability & NOABIL_HAMMER or hammer.lockout)
+		and not (soap.noability & NOABIL_HAMMER or hammer.lockout ~= 0)
 			p.pflags = $|PF_THOKKED &~PF_SHIELDABILITY
 			
 			hammer.stuck = 0
@@ -443,7 +471,7 @@ Takis_Hook.addHook("Takis_Thinker",function(p)
 			end
 			Soap_SquashMacro(p, {ease_func = "outsine", ease_time = 12, x = -FU*7/10, y = -FU*3/10})
 			
-			p.pflags = $|PF_THOKKED &~(PF_JUMPED|PF_SPINNING)
+			p.pflags = $|PF_JUMPED|PF_THOKKED &~(PF_SPINNING)
 			soap.dived = true
 			soap.sprung = false
 			soap.noability = $|NOABIL_SLIDE
@@ -799,6 +827,7 @@ Takis_Hook.addHook("Takis_Thinker",function(p)
 		and not (soap.noability & NOABIL_SLIDE)
 		and not (soap.use)
 			me.state = S_PLAY_SOAP_SLIP
+			p.pflags = $ &~PF_JUMPED
 			Soap_DoLunge(p, false)
 			soap.noability = $|NOABIL_DIVE
 			soap.setrolltrol = false
@@ -948,8 +977,11 @@ Takis_Hook.addHook("Takis_Thinker",function(p)
 		S_StopSoundByID(me,sfx_tk_fst)
 		S_StopSoundByID(me,sfx_tk_hmd)
 	end
-	if hammer.lockout
+	if hammer.lockout > 0
 		hammer.lockout = $ - 1
+	elseif hammer.lockout == -1
+	and soap.onGround
+		hammer.lockout = 0
 	end
 	if hammer.jumped
 		hammer.jumped = $+1
@@ -1017,9 +1049,41 @@ Takis_Hook.addHook("Takis_Thinker",function(p)
 			P_DoJump(p, true)
 			do_jump_effect(p,me,soap)
 			me.translation = nil
+			soap.dived = false
 		end
 		soap.sprung = false
 		soap.paintime = $ + 1
+
+		--DAMMIT!!!
+		if me.soap_damagevar ~= nil
+			P_Thrust(me, me.soap_damagevar.ang, me.soap_damagevar.speed)
+			if me.soap_damagevar.speed >= 30*me.scale
+				playknockoutsfx(p,me,soap)
+				
+				me.state = S_PLAY_DEAD
+				me.frame = A|($ &~FF_FRAMEMASK)
+				me.sprite2 = SPR2_MSC2
+				me.tics = -1
+			end
+			me.soap_damagevar = nil
+		end
+		if soap.paintime == 1 and (soap.hud.painsurge == 0)
+		and (soap.accspeed >= 30*FU)
+			local power = FU + FixedDiv(soap.accspeed, 40*FU)
+			Soap_DamageSfx(me, soap.accspeed, 40*FU, nil, {
+				ultimate = (not soap.inBattle) and true or false,
+				nosfx = true
+			})
+			
+			playknockoutsfx(p,me,soap)
+			S_StartSound(me,sfx_sp_dm0)
+			soap.hud.painsurge = 6
+			
+			me.state = S_PLAY_DEAD
+			me.frame = A|($ &~FF_FRAMEMASK)
+			me.sprite2 = SPR2_MSC2
+			me.tics = -1
+		end
 	else
 		soap.paintime = 0
 		
@@ -1208,6 +1272,13 @@ Takis_Hook.addHook("MoveBlocked",function(me,thing,line, goingup)
 	
 	if me.skin ~= TAKIS_SKIN then return end
 	
+	if not (me.health)
+	or (me.sprite2 == SPR2_MSC2)
+	and not (p.spectator or p.playerstate == PST_REBORN)
+		Soap_Bump(me,thing,line)
+		return
+	end
+	
 	if not (me.state == S_PLAY_DASH or me.state == S_PLAY_TAKIS_TORNADO or me.state == S_PLAY_GLIDE) then return end
 	if goingup then return end
 	
@@ -1219,6 +1290,7 @@ Takis_Hook.addHook("MoveBlocked",function(me,thing,line, goingup)
 		
 		if not soap.onGround
 			me.state = S_PLAY_FALL
+			soap.hammer.lockout = -1
 		else
 			me.state = S_PLAY_WALK
 		end
@@ -1330,72 +1402,33 @@ local function try_pvp_collide(me,thing)
 	local soap = p.soaptable
 	
 	if not soap then return end
-	if (soap.damagedealtthistic > SOAP_MAXDAMAGETICS) then return end
-	soap.damagedealtthistic = $ + 1
 	if me.skin ~= TAKIS_SKIN then return end
-	if not Soap_ZCollide(me,thing, true) then return end
+	if (soap.damagedealtthistic > SOAP_MAXDAMAGETICS) then return end
 	
 	local DealDamage = (p.powers[pw_super] or soap.isSolForm or p.powers[pw_invulnerability]) and P_KillMobj or P_DamageMobj
 	
 	--if the thing we're killing ISNT a player, then theyre probably an enemy
-	if thing.type ~= MT_PLAYER
+	local candamagemobj = false
+	if (thing.type ~= MT_PLAYER)
 	or not (thing.player and thing.player.valid)
-		if Soap_CanDamageEnemy(p, thing)
-			
-			--hit by clutch
-			if (soap.afterimage)
-				Soap_ImpactVFX(thing,me)
-				
-				local power = FixedMul(10*FU + max(soap.accspeed - 20*FU,0), me.scale)
-				
-				local hitlag_tics = 5
-				--P_Thrust(me, R_PointToAngle2(0,0,me.momx,me.momy), me.scale*8)
-				
-				DealDamage(thing, me,me)
-				if generic_slingshot(p,me,soap)
-					Soap_Hitlag.addHitlag(me, hitlag_tics, false)
-					--Soap_DamageSfx(thing, FU*3/4,FU, {ultimate = false})
-					S_StartSoundAtVolume(me, sfx_tk_hml, 255*3/4)
-					S_StartSound(me, sfx_sp_kil)
-					S_StartSound(me, sfx_sp_smk)
-					
-					P_StartQuake(power, hitlag_tics + 3,
-						{me.x, me.y, me.z},
-						512*me.scale + power
-					)
-				else
-					Soap_DamageSfx(thing, power, 60*FU)
-					P_StartQuake(power/2, hitlag_tics,
-						{me.x, me.y, me.z},
-						512*me.scale + power
-					)
-				end
-				
-				if (thing and thing.valid and thing.type == MT_ROLLOUTROCK)
-					hitlag_tics = $ / 2
-				end
-				if (thing and thing.valid)
-				and (thing.health)
-				and not (thing.flags & MF_MONITOR)
-					Soap_Hitlag.addHitlag(thing, hitlag_tics, true)
-					if not (thing.flags & MF_NOGRAVITY)
-						Soap_ZLaunch(thing, 5*FU)
-					end
-				end
-				Soap_SpawnBumpSparks(me, thing, nil, true)
-				return
-			end
-		end
-		return
+		candamagemobj = Soap_CanDamageEnemy(p, thing)
 	end
+	-- enemies get extra leeway for damaging
+	if not Soap_ZCollide(me,thing, candamagemobj) then return end
+	if (thing.player and thing.player.valid)
+		candamagemobj = Soap_CanHurtPlayer(p, thing.player)
+		if candamagemobj
+			if not (thing.player.soaptable) then return end
+			if thing.player.soaptable.iwashitthistic then return end
+			thing.player.soaptable.iwashitthistic = true
+			DealDamage = P_DamageMobj
+		end
+	end
+	if not candamagemobj then return end
+
+	soap.damagedealtthistic = $ + 1
 	
-	--now for the other guy
-	local p2 = thing.player
-	local soap2 = p2.soaptable
-	local battlepass = false --(soap.inBattle)
-	
-	if not Soap_CanHurtPlayer(p, p2, battlepass) then return end
-	
+	--if the thing we're killing ISNT a player, then theyre probably an enemy
 	--hit by clutch
 	if (soap.afterimage)
 		Soap_ImpactVFX(thing,me)
@@ -1405,10 +1438,10 @@ local function try_pvp_collide(me,thing)
 		local hitlag_tics = 5
 		--P_Thrust(me, R_PointToAngle2(0,0,me.momx,me.momy), me.scale*8)
 		
-		P_DamageMobj(thing, me,me)
+		DealDamage(thing, me,me)
 		if generic_slingshot(p,me,soap)
 			Soap_Hitlag.addHitlag(me, hitlag_tics, false)
-			--Soap_DamageSfx(thing, FU*3/4,FU, {ultimate = false})
+			Soap_DamageSfx(thing, FU*3/4,FU,nil, {volume = 255/2})
 			S_StartSoundAtVolume(me, sfx_tk_hml, 255*3/4)
 			S_StartSound(me, sfx_sp_kil)
 			S_StartSound(me, sfx_sp_smk)
@@ -1425,6 +1458,9 @@ local function try_pvp_collide(me,thing)
 			)
 		end
 		
+		if (thing and thing.valid and thing.type == MT_ROLLOUTROCK)
+			hitlag_tics = $ / 2
+		end
 		if (thing and thing.valid)
 		and (thing.health)
 		and not (thing.flags & MF_MONITOR)
@@ -1442,6 +1478,33 @@ addHook("MobjMoveCollide",try_pvp_collide,MT_PLAYER)
 addHook("MobjCollide",try_pvp_collide,MT_PLAYER)
 
 --various effects
+local function get_inf_speed(me,inf,sor)
+	local default = 0
+	if (inf.flags & MF_MISSILE)
+		if ((inf.flags2 & MF2_SCATTER) and sor)
+			local dist = FixedHypot(FixedHypot(sor.x - me.x, sor.y - me.y),sor.z - me.z)
+			dist = 128*inf.scale - dist/4
+			if dist < 4*inf.scale
+				dist = 4*inf.scale
+			end
+			default = dist
+		elseif ((inf.flags2 & MF2_EXPLOSION) and sor)
+			if (inf.flags2 & MF2_RAILRING)
+				default = 38*inf.scale
+			else
+				default = 30*inf.scale
+			end
+		elseif inf.flags2 & MF2_RAILRING
+			default = 45*inf.scale
+		end
+	elseif inf.type == MT_SMALLMACE or inf.type == MT_BIGMACE
+		default = R_PointTo3DDist(inf.last_x,inf.last_y,inf.last_z, inf.x,inf.y,inf.z)
+	elseif inf.type == MT_TNTBARREL or inf.type == MT_PROXIMITYTNT
+		default = 70 * inf.scale
+	end
+	return max(default, R_PointTo3DDist(0,0,0,inf.momx,inf.momy,inf.momz))
+end
+
 --handle soap damage
 addHook("MobjDamage", function(me,inf,sor,dmg,dmgt)
 	if not (me and me.valid) then return end
@@ -1469,55 +1532,60 @@ addHook("MobjDamage", function(me,inf,sor,dmg,dmgt)
 	if (p.guard ~= nil and (p.guard == 1)) then return end
 	p.pflags = $ &~(PF_THOKKED|PF_JUMPED|PF_SHIELDABILITY)
 	
-	if me.health
-		S_StartSoundAtVolume(me,sfx_sp_smk,255*3/4)
-		S_StartSound(me,sfx_sp_dmg)
-		if (inf and inf.valid)
-			local inf_speed = FixedHypot(inf.momx,inf.momy)
-			Soap_DamageSfx(me, inf_speed, 40*inf.scale, dmgt, {
-				ultimate = (not soap.inBattle) and true or false,
-				nosfx = true
-			})
-			
-			if (inf_speed - 10 * inf.scale) > 0
-				P_Thrust(me, 
-					R_PointToAngle2(inf.x,inf.y,
-						me.x,me.y
-					),
-					inf_speed - 10*inf.scale
-				)
-			end
-		else
-			S_StartSound(me,sfx_sp_dm0)
-		end
+	local power = 0
+	local inf_speed = 0
+	--S_StartSoundAtVolume(me,sfx_sp_smk,255*3/4)
+	S_StartSound(me,sfx_sp_dmg)
+	if Soap_IsLocalPlayer(p)
+		Soap_StartQuake((20 + p.timeshit*3/2)*FU, 16 + 4*(p.losstime / (10*TR)),
+			nil,
+			512*me.scale
+		)
+	end
+	
+	if (inf and inf.valid)
+		--default speeds
+		inf_speed = get_inf_speed(me,inf,sor)
+		power = FU + FixedDiv(inf_speed, 30*me.scale)
 		
-		Soap_ImpactVFX(me, inf)
-		if Soap_IsLocalPlayer(p)
-			P_StartQuake((20 + p.timeshit*3/2)*FU, 16 + 16*(p.losstime / (10*TR)),
-				nil,
-				512*me.scale
-			)
-		end
-		
-		/*
-		if takis.heartcards > (not extraheight and 1 or 0)
-			S_StartAntonOw(mo)
-		end
-		*/
-		
-		if (dmgt == DMG_FIRE)
-			soap.firepain = TR * 2
-			S_StartSound(me, sfx_s3kc2s)
-			S_StartSound(me, sfx_s248)
-			S_StartSound(me, sfx_s233)
-			S_StartSound(me, sfx_s3kcds)
-		elseif (dmgt == DMG_ELECTRIC)
-			soap.elecpain = TR * 3/2
-			S_StartSound(me, sfx_buzz2)
-			S_StartSound(me, sfx_s250)
+		me.soap_damagevar = {
+			ang = R_PointToAngle2(inf.x,inf.y, me.x,me.y),
+			speed = inf_speed
+		}
+		if inf_speed >= 30*me.scale
+			soap.hud.painsurge = 6
 		end
 	end
-
+	
+	if (dmgt == DMG_FIRE)
+		soap.firepain = TR * 2
+		S_StartSound(me, sfx_s3kc2s)
+		S_StartSound(me, sfx_s248)
+		S_StartSound(me, sfx_s233)
+		S_StartSound(me, sfx_s3kcds)
+	elseif (dmgt == DMG_ELECTRIC)
+		soap.elecpain = TR * 3/2
+		S_StartSound(me, sfx_buzz2)
+		S_StartSound(me, sfx_s250)
+	end
+	
+	--printf("damage:\n%f\n%f", power, inf_speed)
+	Soap_DamageSfx(me, inf_speed, 30*me.scale, dmgt, {
+		ultimate = (not soap.inBattle) and true or false,
+		nosfx = true,
+		vol = 255
+	})
+	Soap_ImpactVFX(me, inf, nil, power)
+	while (power > FU)
+		Soap_ImpactVFX(me, inf, 2*FU, power)
+		power = $ - FU/2
+	end
+	
+	me.state = S_PLAY_PAIN
+	if not G_IsSpecialStage()
+	and not me.hitlag
+		Soap_Hitlag.addHitlag(me, 10 + (inf_speed/FU/2), true, false)
+	end
 end,MT_PLAYER)
 
 --soap death hook

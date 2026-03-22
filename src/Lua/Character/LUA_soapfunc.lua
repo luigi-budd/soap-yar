@@ -2004,6 +2004,22 @@ rawset(_G,"Soap_DeathThinker",function(p,me,soap)
 		--reset
 		me.soap_deadtimer = 0
 	end
+	if (P_PlayerTouchingSectorSpecial(p,1,3))
+	and (soap.deathtype ~= DMG_FIRE)
+		soap.deathtype = DMG_FIRE
+		dmg = soap.deathtype
+		--reset
+		me.soap_deadtimer = 0
+		
+		Soap_DamageSfx(me, FU/2, FU, DMG_FIRE, {
+			nosfx = true,
+			vol = 255
+		})
+		S_StartSound(me, sfx_s3kc2s)
+		S_StartSound(me, sfx_s248)
+		S_StartSound(me, sfx_s233)
+		S_StartSound(me, sfx_s3kcds)
+	end
 	
 	if soap.allowdeathanims
 		if dmg == DMG_DEATHPIT
@@ -2012,24 +2028,23 @@ rawset(_G,"Soap_DeathThinker",function(p,me,soap)
 				--smoke cloud in his shape
 				local ghs = P_SpawnGhostMobj(me)
 				ghs.tics = -1
-				ghs.sprite = soap.last.anim.sprite
-				ghs.sprite2 = soap.last.anim.sprite2
-				ghs.frame = soap.last.anim.frame
-				ghs.angle = soap.last.anim.angle
+				ghs.sprite = soap.last.anim2.sprite
+				ghs.sprite2 = soap.last.anim2.sprite2
+				ghs.frame = soap.last.anim2.frame
+				ghs.angle = soap.last.anim2.angle
 				ghs.colorized = true
 				ghs.fuse = 23
 				ghs.color = SKINCOLOR_WHITE
 				
-				local speed = 5*me.scale
+				local speed = 15*me.scale
 				local range = 15*FU
-				for i = 0,P_RandomRange(20,29)
+				for i = 0,20
 					local poof = P_SpawnMobjFromMobj(me,
 						Soap_RandomFixedRange(-range, range),
 						Soap_RandomFixedRange(-range, range),
 						FixedDiv(me.height,me.scale)/2 + Soap_RandomFixedRange(-range, range),
-						MT_THOK
+						MT_SOAP_DUST
 					)
-					poof.state = mobjinfo[MT_SOAP_DUST].spawnstate
 					local hang,vang = R_PointTo3DAngles(
 						poof.x,poof.y,poof.z,
 						me.x,me.y,me.z + me.height/2
@@ -2043,6 +2058,7 @@ rawset(_G,"Soap_DeathThinker",function(p,me,soap)
 				
 				--shoes
 				if me.skin == SOAP_SKIN
+				and (me.subsector.sector.floorpic ~= "F_SKY1")
 					local angle = soap.last.anim.angle
 					local radius = FixedDiv(me.radius, me.scale)
 					for i = -1,1,2
@@ -2066,6 +2082,7 @@ rawset(_G,"Soap_DeathThinker",function(p,me,soap)
 						shoe.mirrored = (i == 1 and true or false)
 						shoe.shoemode = true
 					end
+					me.fuse = 3*TR
 				end
 				
 				local momz = soap.last.momz
@@ -2132,56 +2149,48 @@ rawset(_G,"Soap_DeathThinker",function(p,me,soap)
 			me.soap_landondeath = false
 		end
 		
-		--TODO: finish this animation
 		if dmg == DMG_FIRE
-			if (me.soap_deadtimer <= 3)
-				me.momz = 0
-				if me.soap_deadtimer == 1
-					S_StartSound(me, sfx_s233)
-				end
+			if me.soap_deadtimer == 1
+				S_StartSound(me, sfx_s233)
+				S_StartSound(me, sfx_sp_ow0)
+				S_StartSound(me, sfx_sp_kb2)
+				P_Thrust(me, me.angle, -10 * me.scale)
+				me.momz = $ * 3
+				me.fuse = -1
+				me.state = S_PLAY_SOAP_FIREASS
 			end
 			me.soap_landondeath = false
 			me.flags = $ &~MF_NOCLIPHEIGHT
 			
-			if (me.soap_deadtimer <= 20)
-				local rad = FixedDiv(me.radius,me.scale)/FU
-				local hei = FixedDiv(me.height,me.scale)/FU
-				
-				local smoke = P_SpawnMobjFromMobj(me,
-					P_RandomRange(-rad,rad)*FU,
-					P_RandomRange(-rad,rad)*FU,
-					P_RandomRange(0,hei)*FU,
-					MT_SMOKE
+			local range = 16*FU
+			local smoke = P_SpawnMobjFromMobj(me,
+				Soap_RandomFixedRange(-range,range),
+				Soap_RandomFixedRange(-range,range),
+				0, MT_SMOKE
+			)
+			smoke.spritexscale = $ + P_RandomFixed()/2
+			smoke.spriteyscale = smoke.spritexscale
+			
+			if me.soap_deadtimer <= TR/2
+				local flame = P_SpawnMobjFromMobj(me,
+					Soap_RandomFixedRange(-range,range),
+					Soap_RandomFixedRange(-range,range),
+					Soap_RandomFixedRange(0,range),
+					MT_FLAMEPARTICLE
 				)
-				P_SetObjectMomZ(smoke,P_RandomRange(2,4)*me.scale+P_RandomFixed())
-				smoke.scale = $ + P_RandomRange(0,FU/3)
-				me.alpha = (FU/20) * me.soap_deadtimer
-			else
-				if me.soap_deadtimer == 21
-					local speed = 5*me.scale
-					local range = 15*FU
-					for i = 0,P_RandomRange(20,29)
-						local poof = P_SpawnMobjFromMobj(me,
-							Soap_RandomFixedRange(-range, range),
-							Soap_RandomFixedRange(-range, range),
-							FixedDiv(me.height,me.scale)/2 + Soap_RandomFixedRange(-range, range),
-							MT_SMOKE
-						)
-						local hang,vang = R_PointTo3DAngles(
-							poof.x,poof.y,poof.z,
-							me.x,me.y,me.z + me.height/2
-						)
-						P_3DThrust(poof, hang,vang, speed)
-						P_SetObjectMomZ(poof, FU)
-						
-						poof.spritexscale = $ + Soap_RandomFixedRange(0,2*FU)/3
-						poof.spriteyscale = poof.spritexscale
-					end
-					S_StopSound(me)
-					S_StartSound(me, sfx_s3k43)
-				end
-				me.flags2 = $|MF2_DONTDRAW
+				P_SetObjectMomZ(flame,P_RandomRange(2,4)*me.scale+P_RandomFixed())
+				flame.colorized = true
+				flame.renderflags = $|RF_NOCOLORMAPS|RF_FULLBRIGHT
+				flame.frame = $|FF_FULLBRIGHT
+				flame.blendmode = AST_ADD
+				flame.scale = $ + P_RandomRange(0,FU/2)
 			end
+			
+			if soap.onGround
+				P_SetObjectMomZ(me, 27*FU)
+				S_StartSoundAtVolume(me, sfx_s3k44, 255 * 3/4)
+			end
+			me.momz = $ + P_GetMobjGravity(me)
 		end
 		
 		--TODO: This could use a little more flair?
@@ -3659,4 +3668,63 @@ rawset(_G, "Soap_AccelerativeSpeedlines", function(p,me,soap, speed, threshold, 
 	and not (leveltime % 7)
 		Soap_WindLines(me,rmomz,color,fang)
 	end
+end)
+
+rawset(_G, "Soap_Bump", function(me,thing,line, weak)
+	local p = me.player
+	local soap = p.soaptable
+
+	Soap_StartQuake(5*FU, 8, {me.x,me.y,me.z}, 512*me.scale)
+	S_StartSound(me, sfx_s3k49)
+	Soap_SpawnBumpSparks(me, thing, line)
+	
+	if (line and line.valid)
+		local line_ang = R_PointToAngle2(
+			line.v1.x, line.v1.y, line.v2.x, line.v2.y
+		)
+		local speed = FixedDiv(20*me.scale, me.friction) + FixedHypot(p.cmomx,p.cmomy)
+		speed = $ + abs(FixedMul(
+			R_PointToDist2(0,0,me.momx,me.momy) * 3/4,
+			sin(line_ang - R_PointToAngle2(0,0,me.momx,me.momy))
+		))
+		
+		--its ambiguous syntax to have the `func` definition on the same line
+		--as the call, so :shrug:
+		--C DOESNT COMPLAIN....
+		local func = ((soap.onGround or weak) and P_Thrust or P_InstaThrust)
+		func(me,
+			line_ang - ANGLE_90*(P_PointOnLineSide(me.x,me.y, line) and 1 or -1),
+			-speed
+		)
+		p.rmomx = me.momx - p.cmomx
+		p.rmomy = me.momy - p.cmomy
+		
+		if me.health
+			soap.linebump = max($, 12)
+		end
+		if soap.in2D
+			me.momy = 0
+		end
+		return true
+	elseif (thing and thing.valid)
+		local ang = R_PointToAngle2(me.x,me.y, thing.x,thing.y)
+		local speed = R_PointToDist2(0,0,thing.momx,thing.momy) + (R_PointToDist2(0,0,me.momx,me.momy)/2) + FixedMul(
+			20*FU, FixedSqrt(FixedMul(thing.scale,me.scale))
+		)
+		if soap.onGround then speed = FixedDiv($, me.friction) end
+		
+		P_InstaThrust(me, ang, -speed)
+		p.rmomx = me.momx - p.cmomx
+		p.rmomy = me.momy - p.cmomy
+		
+		if soap.in2D
+			me.momy = 0
+		end
+		if me.health
+			soap.linebump = max($, 12)
+		end
+		return true
+	end
+	P_BounceMove(me)
+	return true
 end)
