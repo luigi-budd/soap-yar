@@ -16,6 +16,13 @@ sfxinfo[sfx_sp_rto] = {
 	caption = "\x89".."Retro Jam\x80"
 }
 
+-- Vylet Pony - ANTONYMPH
+SafeFreeslot("sfx_sp_ant")
+sfxinfo[sfx_sp_ant] = {
+	flags = SF_X2AWAYSOUND|SF_NOMULTIPLESOUND,
+	caption = "\x89".."ANTONYMPH Jam\x80"
+}
+
 local S_CLIPPING_DIST = (1536*FU)
 local set_musvol = false
 local this_musvol = 100
@@ -25,12 +32,14 @@ local boomjam_bpm = 130*FU
 local epicjam_bpm = 128*FU
 local mulejam_bpm = 136*FU
 local retrojam_bpm = 120*FU
+local larpyjam_bpm = 132*FU
 --should be fine if we dont synch this
 rawset(_G, "SOAP_BOOMBOXJAMS", {
 	[1] = {sfx = sfx_sp_jam, bpm = boomjam_bpm, fadeto = 50},
 	[2] = {sfx = sfx_sp_epi, bpm = epicjam_bpm, fadeto = 0},
 	[3] = {sfx = sfx_sp_mul, bpm = mulejam_bpm, fadeto = 0},
 	[4] = {sfx = sfx_sp_rto, bpm = retrojam_bpm, fadeto = 0},
+	[5] = {sfx = sfx_sp_ant, bpm = larpyjam_bpm, fadeto = 0},
 })
 rawset(_G, "Soap_MakeJamCrochet",function(fixed_bpm)
 	return FixedDiv(60*TR*FU, fixed_bpm)
@@ -211,7 +220,7 @@ mobjinfo[MT_SOAP_BOOMBOX] = {
 	height = 28*FRACUNIT,
 	radius = 14*FRACUNIT,
 	flags = MF_NOCLIPTHING,
-	painchance = FU / 10 -- special tune chance
+	painchance = FU/2, --FU / 10 -- special tune chance
 }
 addHook("ShouldDamage",function(mo,_,_,_,dmgt)
 	if dmgt == DMG_DEATHPIT
