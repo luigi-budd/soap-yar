@@ -20,7 +20,8 @@ mobjinfo[MT_RIDERBOARD] = {
 	flags = MF_SPECIAL|MF_SLIDEME|MF_SOLID
 }
 
-spr2defaults[freeslot("SPR2_GRND")] = SPR2_STND
+freeslot("SPR2_GRND")
+spr2defaults[SPR2_GRND] = SPR2_STND
 states[freeslot("S_PLAY_GRIND")] = {
 	sprite = SPR_PLAY,
 	frame = SPR2_GRND,
