@@ -2,7 +2,6 @@ local compat = {
 	takiskart = false,
 	battlemod = false,
 	ptsrhook = false,
-	heist = false,
 	mrce = false,
 	ze2config = false,
 	--solform = false,
@@ -14,7 +13,6 @@ local compat_names = {
 	["takiskart"]	= "TakisKart        ",
 	["battlemod"]	= "BattleMoveset    ",
 	["ptsrhook"]	= "PTSR Hooks       ",
-	["heist"]		= "Fang's Heist set ",
 	["mrce"]		= "MRCE Compat.     ",
 	["ze2config"]	= "ZE2 Config.      ",
 	--["solform"]		= "Sol Form     ",
@@ -732,84 +730,6 @@ local function SetCompat()
 		
 		compat.ptsrhook = true
 		printf("Added PTSR stuff.")
-	end
-	
-	if FangsHeist
-	and not compat.heist
-		local FH = FangsHeist
-		
-		FH.makeCharacter(SOAP_SKIN, {
-			isAttacking = function(self, p)
-				return (p.heist.attack_time) or p.mo.state == S_PLAY_MELEE
-			end,
-			onHit = function(self,p, p2)
-				Soap_ImpactVFX(p2.mo, p.mo)
-			end,
-			
-			controls = {
-				{
-					key = "C1",
-					name = "Uppercut",
-					cooldown = function(self, p)
-						return (p.heist.attack_cooldown or p.soaptable.uppercut_cooldown)
-					end,
-					visible = function(self, p)
-						return not p.heist.blocking
-					end
-				},
-				{
-					key = "FIRE",
-					name = "Attack",
-					cooldown = function(self, p)
-						return (p.heist.attack_cooldown)
-					end,
-					visible = function(self, p)
-						return not p.heist.blocking
-					end
-				},
-				{
-					key = "FIRE NORMAL",
-					name = "Block",
-					cooldown = function(self, p)
-						return (p.heist.attack_cooldown or p.heist.block_cooldown)
-					end,
-					visible = function(self, p)
-						return true
-					end
-				}
-			}
-		})
-		
-		Takis_Hook.addHook("CanPlayerHurtPlayer",function(p1,p2, nobs)
-			if FH.isMode() then
-				return false
-			end
-		end)
-		
-		Takis_Hook.addHook("Soap_NoAbility",function(p, noabil)
-			if not FH.isMode() then return end
-			if p.heist.attack_cooldown
-				return noabil|SNOABIL_POUND|SNOABIL_AIRDASH
-			end
-		end)
-		
-		Takis_Hook.addHook("Soap_OnMove",function(p, move, var1, var2, var3, var4)
-			if not FH.isMode() then return end
-			local soap = p.soaptable
-			local me = p.mo
-			
-			if move == "uppercut"
-				soap.uppercut_cooldown = 70
-				p.heist.attack_cooldown = soap.uppercut_cooldown
-				
-				if FH.isPlayerNerfed(p)
-					Soap_ZLaunch(me, 7*FU)
-				end
-			end
-		end)
-		
-		compat.heist = true
-		printf("Added Fang's Heist stuff.")
 	end
 	
 	if mrceCharacterPhysics

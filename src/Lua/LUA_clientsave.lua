@@ -65,6 +65,10 @@ local function loadfromfile(localonly)
 	end
 end
 loadfromfile(true)
+-- loading again with synched cvars
+-- might fix an issue where synched values
+-- wouldnt get set properly when joining
+loadfromfile(false)
 
 addHook("PlayerThink",function(p)
 	if p.jointime == TR * 3/4
