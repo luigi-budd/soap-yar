@@ -3231,6 +3231,7 @@ local function try_pvp_collide(me,thing)
 			follow.dontdrawforviewmobj = me
 			follow.zcorrect = true
 			follow.angle = me.angle - ANGLE_90
+			follow.firstangle = follow.angle
 			follow.dist = 20*FU
 			Soap_SquashMacro(p, {
 				ease_func = "inexpo",
@@ -3255,6 +3256,7 @@ local function try_pvp_collide(me,thing)
 			follow.dontdrawforviewmobj = me
 			follow.zcorrect = true
 			follow.angle = me.angle - ANGLE_90
+			follow.firstangle = follow.angle
 			follow.dist = 20*FU
 			Soap_SquashMacro(p, {
 				ease_func = "inexpo",

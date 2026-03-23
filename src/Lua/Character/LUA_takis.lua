@@ -114,6 +114,7 @@ local function generic_slingshot(p,me,takis, stop_ang)
 			follow.dontdrawforviewmobj = me
 			follow.zcorrect = true
 			follow.angle = me.angle - ANGLE_90
+			follow.firstangle = follow.angle
 			follow.spritexscale = $ * 3/2
 			follow.spriteyscale = follow.spritexscale
 			takis.fx.dash_aura = follow
