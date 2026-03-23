@@ -164,35 +164,67 @@ local damagecolors = {
 local RED_OFFSET = 16*FU
 local RED_STAROFFSET = 8*FU
 local STAR_DRAG = FU*99/100
+local function TryVFXStars(v)
+	if Soap_IsCompGamemode() then return end
+	if v.sentstars then return end
+	v.sentstars = true
+
+	for i = 0, 5
+		local star = P_SpawnMobjFromMobj(v,
+			Soap_RandomFixedRange(-RED_STAROFFSET, RED_STAROFFSET),
+			Soap_RandomFixedRange(-RED_STAROFFSET, RED_STAROFFSET),
+			Soap_RandomFixedRange(-RED_STAROFFSET, RED_STAROFFSET) + 40*FU,
+			MT_SOAP_FREEZEGFX
+		)
+		star.state = S_SOAP_HITM_STAR
+		star.soap_newvfx = true
+		star.color = damagecolors[P_RandomRange(1, #damagecolors)]
+		star.scale = $ * 2
+		star.spritexscale = v.spritexscale / 4
+		star.spriteyscale = star.spritexscale
+		local ha,va = R_PointTo3DAngles(v.x,v.y,v.z, star.x,star.y,star.z)
+		P_3DThrust(star, ha,va, P_RandomRange(12,20)*FU)
+		star.vfx_roll = FixedAngle(P_RandomRange(-28,28)*FU)
+		star.flags = $ &~(MF_NOGRAVITY|MF_NOCLIP)
+		star.momx = $ + v.vfx_mom[1]
+		star.momy = $ + v.vfx_mom[2]
+		star.momz = $ + v.vfx_mom[3] * 3/4
+	end
+	local wave = P_SpawnMobjFromMobj(v,0,0,0,MT_PARTICLE)
+	wave.spritexscale = v.spritexscale * 3/4
+	wave.spriteyscale = wave.spritexscale
+	wave.state = S_SOAP_HITM_SHCKW
+end
+
 local function NewVFXThink(v)
 	if (v.state == S_SOAP_HITM_RSPRK)
-	and (v.tics == 1)
-	and not Soap_IsCompGamemode()
-		for i = 0, 5
-			local star = P_SpawnMobjFromMobj(v,
-				Soap_RandomFixedRange(-RED_STAROFFSET, RED_STAROFFSET),
-				Soap_RandomFixedRange(-RED_STAROFFSET, RED_STAROFFSET),
-				Soap_RandomFixedRange(-RED_STAROFFSET, RED_STAROFFSET) + 40*FU,
-				MT_SOAP_FREEZEGFX
-			)
-			star.state = S_SOAP_HITM_STAR
-			star.soap_newvfx = true
-			star.color = damagecolors[P_RandomRange(1, #damagecolors)]
-			star.scale = $ * 2
-			star.spritexscale = v.spritexscale / 4
-			star.spriteyscale = star.spritexscale
-			local ha,va = R_PointTo3DAngles(v.x,v.y,v.z, star.x,star.y,star.z)
-			P_3DThrust(star, ha,va, P_RandomRange(12,20)*FU)
-			star.vfx_roll = FixedAngle(P_RandomRange(-28,28)*FU)
-			star.flags = $ &~(MF_NOGRAVITY|MF_NOCLIP)
-			star.momx = $ + v.vfx_mom[1]
-			star.momy = $ + v.vfx_mom[2]
-			star.momz = $ + v.vfx_mom[3] * 3/4
+		if (v.tics == 1)
+			TryVFXStars(v)
+		elseif (v.tracer and v.tracer.valid or v.target and v.target.valid)
+			local mobj = v.target or v.tracer
+			if not mobj.hitlag
+				if v.extended
+					TryVFXStars(v)
+				end
+				v.tracer = nil
+				v.target = nil
+			end
+			
+			v.anim_duration = $ + 1
+			v.tics = $ + 1
+			v.extended = true
+			
+			if (leveltime % 4 == 0)
+				local shck = P_SpawnMobjFromMobj(v, 0,0,0, MT_PARTICLE)
+				shck.state = (P_RandomChance(FU/6) and S_SOAP_HITM_FSHK0 or S_SOAP_HITM_SHK0) + P_RandomRange(0,2)
+				shck.spritexscale = v.spritexscale + Soap_RandomFixedSigned() / 4
+				shck.spriteyscale = shck.spritexscale
+				shck.renderflags = $|RF_FULLBRIGHT|RF_NOCOLORMAPS|RF_ALWAYSONTOP
+				shck.color = v.color
+				shck.colorized = v.colorized
+				shck.rollangle = P_RandomChance(FU/2) and ANGLE_90 or 0
+			end
 		end
-		local wave = P_SpawnMobjFromMobj(v,0,0,0,MT_PARTICLE)
-		wave.spritexscale = v.spritexscale * 3/4
-		wave.spriteyscale = wave.spritexscale
-		wave.state = S_SOAP_HITM_SHCKW
 	end
 	if (v.state == S_SOAP_HITM_STAR)
 		v.rollangle = $ + v.vfx_roll

@@ -657,10 +657,9 @@ rawset(_G,"Soap_ImpactVFX",function(src,inf, distmul, scalemul, forcesplat)
 		off.x = FixedMul($, distmul)
 		off.y = FixedMul($, distmul)
 		off.z = FixedMul($, distmul)
-		spr_scale = FixedMul($, FU + (distmul - FU)/6)
+		--spr_scale = FixedMul($, FU + (distmul - FU)/6)
 	end
 	off.z = $ + (FixedMul(vfxheight,orig_scale) - FixedMul(vfxheight,spr_scale))/2
-	
 	
 	local top_layer = P_SpawnMobjFromMobj(src, off.x,off.y,off.z, MT_SOAP_FREEZEGFX)
 	top_layer.soap_newvfx = true
@@ -675,8 +674,10 @@ rawset(_G,"Soap_ImpactVFX",function(src,inf, distmul, scalemul, forcesplat)
 	end
 	top_layer.vfx_mom = {0,0,0}
 	top_layer.dispoffset = 200
-	top_layer.anim_duration = 4
-	top_layer.tics = $ + 4
+	top_layer.anim_duration = 4 + (src.hitlag or 0)
+	top_layer.tics = $ + 4 + (src.hitlag or 0)
+	top_layer.tracer = inf
+	top_layer.target = src
 
 	if inf and inf.valid
 		top_layer.vfx_mom = {inf.momx, inf.momy, inf.momz}
