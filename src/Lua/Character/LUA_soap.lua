@@ -3095,6 +3095,7 @@ local function try_pvp_collide(me,thing)
 	
 	local thinghit = false
 	if (me.sixsev_super and me.sixsev_super >= 3*TR)
+	and not (thing.hitlag)
 		Soap_DamageSfx(thing,FU*3/4,FU)
 		Soap_ImpactVFX(thing, me)
 		local angleto = R_PointToAngle2(thing.x,thing.y, me.x,me.y)
