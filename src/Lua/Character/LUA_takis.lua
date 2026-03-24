@@ -1386,6 +1386,12 @@ local function handleBump(p,me,thing)
 	end
 end
 
+local function dotumble(p)
+	local me = p.mo
+	me.soap_tumble = true
+	me.soap_tumble_oldmomz = me.momz
+end
+
 local function try_pvp_collide(me,thing)
 	if not (me and me.valid) then return end
 	if not (thing and thing.valid) then return end
@@ -1428,6 +1434,32 @@ local function try_pvp_collide(me,thing)
 	if not candamagemobj then return end
 
 	soap.damagedealtthistic = $ + 1
+	if (me.sixsev_super and me.sixsev_super >= 3*TR)
+		Soap_DamageSfx(thing,FU*3/4,FU)
+		Soap_ImpactVFX(thing, me)
+		local angleto = R_PointToAngle2(thing.x,thing.y, me.x,me.y)
+		
+		if (thing.player and thing.player.valid)
+			local play = thing.player
+			play.powers[pw_flashing] = 0
+			P_ResetPlayer(play)
+			thing.state = S_PLAY_PAIN
+			play.drawangle = angleto
+			
+			dotumble(play)
+			P_Thrust(thing, angleto, -FixedMul(30*FU, me.scale))
+			if P_IsObjectOnGround(thing)
+				thing.z = $ + P_MobjFlip(thing)
+			end
+			P_SetObjectMomZ(thing, 45*FU, true)
+			play.powers[pw_flashing] = flashingtics
+		else
+			P_KillMobj(thing, me,me)
+		end
+		
+		Soap_Hitlag.addHitlag(thing, TR/2, true)
+		return
+	end
 	
 	--if the thing we're killing ISNT a player, then theyre probably an enemy
 	--hit by clutch
