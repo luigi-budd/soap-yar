@@ -435,6 +435,7 @@ addHook("KeyDown", function(key)
 	local kname = key.name:lower()
 	
 	if kname == CV.taunt_key.string:lower()
+	and (skins[consoleplayer.skin].name == SOAP_SKIN or skins[consoleplayer.skin].name == TAKIS_SKIN)
 		if taunt_cmd.active
 		and (consoleplayer.soaptable and consoleplayer.soaptable.taunt.prev > 0)
 			COM_BufInsertText(consoleplayer, "_soap_dotaunt "..cmd_sig.." "..(consoleplayer.soaptable.taunt.prev - 1))
@@ -442,6 +443,7 @@ addHook("KeyDown", function(key)
 		else
 			StartMenu()
 		end
+		return true
 	elseif kname == "escape"
 	and taunt_cmd.active
 		StopMenu()
