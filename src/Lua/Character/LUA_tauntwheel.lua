@@ -104,6 +104,7 @@ local sixseven_callback = function(spark)
 	spark.sprite = SPR_SOAP_GFX
 	spark.frame = 62|FF_PAPERSPRITE
 	spark.momz = 0
+	spark.renderflags = $|RF_NOCOLORMAPS|RF_FULLBRIGHT
 end
 
 rawset(_G, "SOAP_TAUNTS", {})
@@ -344,6 +345,7 @@ SOAP_TAUNTS[SOAP_SKIN] = {
 						Soap_RandomFixedRange(0, 30*FU),
 						MT_WATERZAP
 					)
+					z.renderflags = $|RF_NOCOLORMAPS|RF_FULLBRIGHT
 					if me.sixsev_super >= 3*TR
 						local range = 4*me.scale
 						local g = P_SpawnGhostMobj(me)

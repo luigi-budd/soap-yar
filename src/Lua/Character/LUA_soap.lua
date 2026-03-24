@@ -2649,6 +2649,9 @@ addHook("PlayerSpawn",function(p)
 		end
 	end
 	
+	soap.taunt.num = 0
+	soap.taunt.tics = 0
+	
 	soap.deathtype = 0
 	Soap_ResetLunge(p)
 	
