@@ -432,10 +432,13 @@ rawset(_G, "Soap_TauntWheelThink", function(p)
 		-- nice one asshole
 		if SOAP_TAUNTS[me.skin] == nil
 		or (me.skin ~= soap.last.skin)
+		or not (me.health)
 			taunt.tics = 0
-			me.state = S_PLAY_WALK
-			P_MovePlayer(p)
-			Soap_ResetState(p)
+			if me.health
+				me.state = S_PLAY_WALK
+				P_MovePlayer(p)
+				Soap_ResetState(p)
+			end
 			return
 		end
 		
