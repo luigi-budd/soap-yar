@@ -1454,7 +1454,7 @@ local function try_pvp_collide(me,thing)
 			P_SetObjectMomZ(thing, 45*FU, true)
 			play.powers[pw_flashing] = flashingtics
 		else
-			P_KillMobj(thing, me,me)
+			P_DamageMobj(thing, me,me)
 		end
 		
 		Soap_Hitlag.addHitlag(thing, TR/2, true)

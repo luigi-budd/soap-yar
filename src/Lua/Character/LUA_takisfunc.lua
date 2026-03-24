@@ -437,6 +437,9 @@ rawset(_G,"Takis_HandleNoAbils", function(p)
 	
 	if (me.state >= S_PLAY_SUPER_TRANS1)
 	and (me.state <= S_PLAY_SUPER_TRANS6)
+	or (me.punchtarget and me.punchtarget.valid)
+	or (me.punchsource and me.punchsource.valid)
+	or (me.soap_kickme or me.sprite2 == SPR2_MSC2 or me.state == S_PLAY_SOAP_KNOCKOUT)
 		na = $|SNOABIL_ALL
 	end
 	

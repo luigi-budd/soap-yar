@@ -886,7 +886,6 @@ rawset(_G,"Soap_DustRing",function(src,
 	end
 	
 	local ang = FixedDiv(360*FU, amount*FU)
-	
 	for i = 1, amount
 		local fa = FixedAngle(ang * i)
 		local dust = P_SpawnMobj(

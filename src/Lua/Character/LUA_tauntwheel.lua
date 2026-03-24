@@ -105,6 +105,7 @@ local sixseven_callback = function(spark)
 	spark.frame = 62|FF_PAPERSPRITE
 	spark.momz = 0
 	spark.renderflags = $|RF_NOCOLORMAPS|RF_FULLBRIGHT
+	P_ThrustEvenIn2D(spark, spark.angle - ANGLE_90, 8*FU)
 end
 
 rawset(_G, "SOAP_TAUNTS", {})

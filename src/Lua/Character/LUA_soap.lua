@@ -3114,7 +3114,7 @@ local function try_pvp_collide(me,thing)
 			P_SetObjectMomZ(thing, 45*FU, true)
 			play.powers[pw_flashing] = flashingtics
 		else
-			P_KillMobj(thing, me,me)
+			P_DamageMobj(thing, me,me)
 		end
 		
 		Soap_Hitlag.addHitlag(thing, TR/2, true)
@@ -3808,7 +3808,7 @@ end)
 states[mobjinfo[MT_EGGROBO1].meleestate].action = function(mo)
 	local me = mo.target
 	if not (me and me.valid and me.player and me.player.valid) then return end
-	if me.skin ~= SOAP_SKIN then return end
+	if not (me.skin == SOAP_SKIN or me.skin == TAKIS_SKIN) then return end
 	
 	P_DoPlayerPain(me.player, mo, mo)
 	local dist = mo.radius*2 + me.radius + 96*mo.scale
