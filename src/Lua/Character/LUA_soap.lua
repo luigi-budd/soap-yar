@@ -3050,6 +3050,215 @@ local function dotumble(p)
 	me.soap_tumble_oldmomz = me.momz
 end
 
+local function try_damage_cases(me,thing, p,soap,DealDamage)
+	--hit by pound
+	if ((soap.pounding)
+	and (thing.health))
+		-- handled like this because afterimages can
+		-- still attack the rock after this case
+		if (thing.type == MT_ROLLOUTROCK)
+			return false
+		end
+		
+		Soap_ImpactVFX(thing, me)
+		local damage = 1
+		local power = 5*FU + FixedDiv(abs(me.momz),me.scale*3)
+		local hitlag_tics = 10 + ((power/FU) / 5)
+		Soap_DamageSfx(thing, power, 35*FU)
+		
+		local halftic = hitlag_tics/2
+		if (FixedDiv(power, 35*FU) >= FU/2)
+			S_StartSound(me,sfx_sp_dm4)
+			local work = FixedDiv(power, 35*FU) - FU/2
+			repeat
+				Soap_ImpactVFX(thing,me, FU + work*7)
+				work = $ - FU/4
+				damage = $ + 2
+			until (work <= 0)
+			
+			local rad = FixedDiv(me.radius, me.scale)
+			local hei = FixedDiv(me.height, me.scale)
+			for i = 0, 32
+				local s = P_SpawnMobjFromMobj(me,
+					Soap_RandomFixedRange(-rad, rad),
+					Soap_RandomFixedRange(-rad, rad),
+					Soap_RandomFixedRange(0, hei) + 256*FU,
+					MT_PARTICLE
+				)
+				s.state = S_SOAP_IMPACT_LINE2
+				s.angle = me.angle - ANGLE_90
+				s.color = armacolors[P_RandomRange(1, #armacolors)]
+				s.rollangle = -ANGLE_90
+				s.renderflags = $|RF_ALWAYSONTOP
+				s.spriteyscale = $ * 3/2
+				s.flags = $|MF_NOCLIPTHING|MF_NOCLIP|MF_NOCLIPHEIGHT|MF_NOBLOCKMAP
+				s.takis_flingme = false
+				local offset = P_RandomRange(-4, 8)
+				s.tics = $ + halftic + offset
+				s.anim_duration = $ + halftic + offset
+				-- stuff breaks if too many things have hitlag so watch out
+				--Soap_Hitlag.addHitlag(s, hitlag_tics / 2, false)
+			end
+		end
+		
+		DealDamage(thing, me,me, damage)
+		if (thing and thing.valid and thing.flags & MF_BOSS and (thing.health <= 0))
+			hitlag_tics = $ * 5/2
+		end
+		me.momz = $ - (3 * me.scale * soap.gravflip)
+		
+		Soap_StartQuake(power*2, hitlag_tics,
+			{me.x, me.y, me.z},
+			512*me.scale + power
+		)
+		Soap_Hitlag.addHitlag(me, hitlag_tics, false)
+		if (thing and thing.valid)
+		and not (thing.flags & MF_MONITOR)
+			Soap_Hitlag.addHitlag(thing, hitlag_tics, true)
+			if not (thing.flags & MF_NOGRAVITY)
+				Soap_ZLaunch(thing, power)
+			end
+		end
+		
+		Soap_ZLaunch(me, 3*FU, true)
+		try_pound_bounce(me,thing)
+		return true
+	end
+	
+	--hit by uppercut
+	if soap.uppercutted
+	and (me.momz*soap.gravflip > 0)
+	and (me.sprite2 == SPR2_MLEE)
+	and (thing.type ~= MT_ROLLOUTROCK)
+		Soap_ImpactVFX(thing,me)
+		soap.uppercut_spin = soap_baseuppercutturn
+		soap.canuppercut = true
+		
+		local power = 5*FU + FixedDiv(me.momz,me.scale)
+		Soap_DamageSfx(thing, power, 35*FU)
+		
+		local hitlag_tics = 10 + (power/FU / 5)
+		
+		DealDamage(thing, me,me)
+		
+		if (thing and thing.valid and thing.flags & MF_BOSS and (thing.health <= 0))
+			hitlag_tics = $ * 5/2
+		end
+		
+		Soap_StartQuake(power*2, hitlag_tics,
+			{me.x, me.y, me.z},
+			512*me.scale + power
+		)
+		Soap_Hitlag.addHitlag(me, hitlag_tics, false)
+		if (thing and thing.valid)
+		and (thing.health)
+		and not (thing.flags & MF_MONITOR)
+			Soap_Hitlag.addHitlag(thing, hitlag_tics, true)
+			if not (thing.flags & MF_NOGRAVITY)
+				Soap_ZLaunch(thing, power)
+			end
+		end
+		
+		Soap_ZLaunch(me, 3*FU, true)
+		return true
+	end
+	
+	--r-dashing but too slow to deal damage
+	if canBumpAtAll(p)
+		if handleBump(p,me,thing)
+			return false
+		end
+		return
+	end
+	
+	--hit by r-dash / b-rush
+	if (soap.rdashing and p.normalspeed >= skins[p.skin].normalspeed + soap._maxdash)
+	or (soap.airdashed and Soap_AirdashState(me))
+	and not (thing.type == MT_ROLLOUTROCK and me.tracer == thing)
+		Soap_ImpactVFX(thing,me)
+		
+		local power = FixedMul(10*FU + max(soap.accspeed - 20*FU,0), me.scale)
+		Soap_DamageSfx(thing, power, 60*FU)
+		
+		local hitlag_tics = 4 + (power/FU / 10)
+		if (me.state == S_PLAY_FLOAT_RUN)
+		or (me.state == S_PLAY_SOAP_PUNCH1 or me.state == S_PLAY_SOAP_PUNCH2)
+			soap.extraairdash = true
+			soap.canuppercut = true
+			
+			me.state = S_PLAY_SOAP_PUNCH1
+			local follow = P_SpawnMobjFromMobj(me,0,0,0,MT_SOAP_FREEZEGFX)
+			follow.tics = -1
+			follow.fuse = -1
+			follow.tracer = me
+			follow.bigwind = true
+			follow.state = S_TAKIS_SLINGFX
+			follow.dontdrawforviewmobj = me
+			follow.zcorrect = true
+			follow.angle = me.angle - ANGLE_90
+			follow.firstangle = follow.angle
+			follow.dist = 20*FU
+			Soap_SquashMacro(p, {
+				ease_func = "inexpo",
+				ease_time = 6,
+				x = -FU * 1/5,
+				y = -FU/4,
+				singular = true
+			})
+			Soap_ZLaunch(me, 7*FU)
+			hitlag_tics = $ * 3/2
+		end
+		
+		P_Thrust(me, R_PointToAngle2(0,0,me.momx,me.momy), me.scale*8)
+		if (me.state == S_PLAY_DASH or me.state == S_PLAY_SOAP_RAM)
+			me.state = S_PLAY_SOAP_RAM
+			local follow = P_SpawnMobjFromMobj(me,0,0,0,MT_SOAP_FREEZEGFX)
+			follow.tics = -1
+			follow.fuse = -1
+			follow.tracer = me
+			follow.bigwind = true
+			follow.state = S_TAKIS_SLINGFX
+			follow.dontdrawforviewmobj = me
+			follow.zcorrect = true
+			follow.angle = me.angle - ANGLE_90
+			follow.firstangle = follow.angle
+			follow.dist = 20*FU
+			Soap_SquashMacro(p, {
+				ease_func = "inexpo",
+				ease_time = 6,
+				x = FU * 1/5,
+				y = FU/4,
+				singular = true
+			})
+		end
+		
+		DealDamage(thing, me,me)
+		if (thing and thing.valid and thing.flags & MF_BOSS and (thing.health <= 0))
+			hitlag_tics = $ * 5/2
+		end
+		
+		Soap_StartQuake(power/2, hitlag_tics,
+			{me.x, me.y, me.z},
+			512*me.scale + power
+		)
+		Soap_Hitlag.addHitlag(me, hitlag_tics, false)
+		if (thing and thing.valid and thing.type == MT_ROLLOUTROCK)
+			hitlag_tics = $ / 2
+		end
+		
+		if (thing and thing.valid)
+		and (thing.health)
+		and not (thing.flags & MF_MONITOR)
+			Soap_Hitlag.addHitlag(thing, hitlag_tics, true)
+			if not (thing.flags & MF_NOGRAVITY)
+				Soap_ZLaunch(thing, 5*FU)
+			end
+		end
+		Soap_SpawnBumpSparks(me, thing, nil, true)
+		return true
+	end
+end
+
 local function try_pvp_collide(me,thing)
 	if not (me and me.valid) then return end
 	if not (thing and thing.valid) then return end
@@ -3122,213 +3331,9 @@ local function try_pvp_collide(me,thing)
 		return
 	end
 	
-	--hit by pound
-	if ((soap.pounding)
-	and (thing.health))
-		-- handled like this because afterimages can
-		-- still attack the rock after this case
-		if (thing.type == MT_ROLLOUTROCK)
-			return
-		end
-		
-		Soap_ImpactVFX(thing, me)
-		local damage = 1
-		local power = 5*FU + FixedDiv(abs(me.momz),me.scale*3)
-		local hitlag_tics = 10 + ((power/FU) / 5)
-		Soap_DamageSfx(thing, power, 35*FU)
-		
-		local halftic = hitlag_tics/2
-		if (FixedDiv(power, 35*FU) >= FU/2)
-			S_StartSound(me,sfx_sp_dm4)
-			local work = FixedDiv(power, 35*FU) - FU/2
-			repeat
-				Soap_ImpactVFX(thing,me, FU + work*7)
-				work = $ - FU/4
-				damage = $ + 2
-			until (work <= 0)
-			
-			local rad = FixedDiv(me.radius, me.scale)
-			local hei = FixedDiv(me.height, me.scale)
-			for i = 0, 32
-				local s = P_SpawnMobjFromMobj(me,
-					Soap_RandomFixedRange(-rad, rad),
-					Soap_RandomFixedRange(-rad, rad),
-					Soap_RandomFixedRange(0, hei) + 256*FU,
-					MT_PARTICLE
-				)
-				s.state = S_SOAP_IMPACT_LINE2
-				s.angle = me.angle - ANGLE_90
-				s.color = armacolors[P_RandomRange(1, #armacolors)]
-				s.rollangle = -ANGLE_90
-				s.renderflags = $|RF_ALWAYSONTOP
-				s.spriteyscale = $ * 3/2
-				s.flags = $|MF_NOCLIPTHING|MF_NOCLIP|MF_NOCLIPHEIGHT|MF_NOBLOCKMAP
-				s.takis_flingme = false
-				local offset = P_RandomRange(-4, 8)
-				s.tics = $ + halftic + offset
-				s.anim_duration = $ + halftic + offset
-				-- stuff breaks if too many things have hitlag so watch out
-				--Soap_Hitlag.addHitlag(s, hitlag_tics / 2, false)
-			end
-		end
-		
-		DealDamage(thing, me,me, damage)
-		thinghit = true
-		if (thing and thing.valid and thing.flags & MF_BOSS and (thing.health <= 0))
-			hitlag_tics = $ * 5/2
-		end
-		me.momz = $ - (3 * me.scale * soap.gravflip)
-		
-		Soap_StartQuake(power*2, hitlag_tics,
-			{me.x, me.y, me.z},
-			512*me.scale + power
-		)
-		Soap_Hitlag.addHitlag(me, hitlag_tics, false)
-		if (thing and thing.valid)
-		and not (thing.flags & MF_MONITOR)
-			Soap_Hitlag.addHitlag(thing, hitlag_tics, true)
-			if not (thing.flags & MF_NOGRAVITY)
-				Soap_ZLaunch(thing, power)
-			end
-		end
-		
-		Soap_ZLaunch(me, 3*FU, true)
-		try_pound_bounce(me,thing)
-		return
-	end
-	
-	--hit by uppercut
-	if soap.uppercutted
-	and (me.momz*soap.gravflip > 0)
-	and (me.sprite2 == SPR2_MLEE)
-	and (thing.type ~= MT_ROLLOUTROCK)
-		Soap_ImpactVFX(thing,me)
-		soap.uppercut_spin = soap_baseuppercutturn
-		soap.canuppercut = true
-		
-		local power = 5*FU + FixedDiv(me.momz,me.scale)
-		Soap_DamageSfx(thing, power, 35*FU)
-		
-		local hitlag_tics = 10 + (power/FU / 5)
-		
-		DealDamage(thing, me,me)
-		thinghit = true
-		
-		if (thing and thing.valid and thing.flags & MF_BOSS and (thing.health <= 0))
-			hitlag_tics = $ * 5/2
-		end
-		
-		Soap_StartQuake(power*2, hitlag_tics,
-			{me.x, me.y, me.z},
-			512*me.scale + power
-		)
-		Soap_Hitlag.addHitlag(me, hitlag_tics, false)
-		if (thing and thing.valid)
-		and (thing.health)
-		and not (thing.flags & MF_MONITOR)
-			Soap_Hitlag.addHitlag(thing, hitlag_tics, true)
-			if not (thing.flags & MF_NOGRAVITY)
-				Soap_ZLaunch(thing, power)
-			end
-		end
-		
-		Soap_ZLaunch(me, 3*FU, true)
-		return
-	end
-	
-	--r-dashing but too slow to deal damage
-	if canBumpAtAll(p)
-		if handleBump(p,me,thing)
-			return false
-		end
-		return
-	end
-	
-	--hit by r-dash / b-rush
-	if (soap.rdashing and p.normalspeed >= skins[p.skin].normalspeed + soap._maxdash)
-	or (soap.airdashed and Soap_AirdashState(me))
-		Soap_ImpactVFX(thing,me)
-		
-		local power = FixedMul(10*FU + max(soap.accspeed - 20*FU,0), me.scale)
-		Soap_DamageSfx(thing, power, 60*FU)
-		
-		local hitlag_tics = 4 + (power/FU / 10)
-		if (me.state == S_PLAY_FLOAT_RUN)
-		or (me.state == S_PLAY_SOAP_PUNCH1 or me.state == S_PLAY_SOAP_PUNCH2)
-			soap.extraairdash = true
-			soap.canuppercut = true
-			
-			me.state = S_PLAY_SOAP_PUNCH1
-			local follow = P_SpawnMobjFromMobj(me,0,0,0,MT_SOAP_FREEZEGFX)
-			follow.tics = -1
-			follow.fuse = -1
-			follow.tracer = me
-			follow.bigwind = true
-			follow.state = S_TAKIS_SLINGFX
-			follow.dontdrawforviewmobj = me
-			follow.zcorrect = true
-			follow.angle = me.angle - ANGLE_90
-			follow.firstangle = follow.angle
-			follow.dist = 20*FU
-			Soap_SquashMacro(p, {
-				ease_func = "inexpo",
-				ease_time = 6,
-				x = -FU * 1/5,
-				y = -FU/4,
-				singular = true
-			})
-			Soap_ZLaunch(me, 7*FU)
-			hitlag_tics = $ * 3/2
-		end
-		
-		P_Thrust(me, R_PointToAngle2(0,0,me.momx,me.momy), me.scale*8)
-		if (me.state == S_PLAY_DASH or me.state == S_PLAY_SOAP_RAM)
-			me.state = S_PLAY_SOAP_RAM
-			local follow = P_SpawnMobjFromMobj(me,0,0,0,MT_SOAP_FREEZEGFX)
-			follow.tics = -1
-			follow.fuse = -1
-			follow.tracer = me
-			follow.bigwind = true
-			follow.state = S_TAKIS_SLINGFX
-			follow.dontdrawforviewmobj = me
-			follow.zcorrect = true
-			follow.angle = me.angle - ANGLE_90
-			follow.firstangle = follow.angle
-			follow.dist = 20*FU
-			Soap_SquashMacro(p, {
-				ease_func = "inexpo",
-				ease_time = 6,
-				x = FU * 1/5,
-				y = FU/4,
-				singular = true
-			})
-		end
-		
-		DealDamage(thing, me,me)
-		thinghit = true
-		if (thing and thing.valid and thing.flags & MF_BOSS and (thing.health <= 0))
-			hitlag_tics = $ * 5/2
-		end
-		
-		Soap_StartQuake(power/2, hitlag_tics,
-			{me.x, me.y, me.z},
-			512*me.scale + power
-		)
-		Soap_Hitlag.addHitlag(me, hitlag_tics, false)
-		if (thing and thing.valid and thing.type == MT_ROLLOUTROCK)
-			hitlag_tics = $ / 2
-		end
-		
-		if (thing and thing.valid)
-		and (thing.health)
-		and not (thing.flags & MF_MONITOR)
-			Soap_Hitlag.addHitlag(thing, hitlag_tics, true)
-			if not (thing.flags & MF_NOGRAVITY)
-				Soap_ZLaunch(thing, 5*FU)
-			end
-		end
-		Soap_SpawnBumpSparks(me, thing, nil, true)
-		return
+	thinghit = try_damage_cases(me,thing, p,soap,DealDamage)
+	if thinghit == false
+		return false
 	end
 	
 	if thinghit and thing.type == MT_ROLLOUTROCK

@@ -161,15 +161,11 @@ rawset(_G,"Takis_DoClutch",function(p,riding)
 	
 	--stop that stupid momentum mod from givin
 	--us super speed for spamming
+	local penaltyslowdown = false
 	if thrust == 0
 	and not (p.powers[pw_sneakers] or takis.doSuperBuffs)
 	and (clutch.spamcount >= 3)
-		P_InstaThrust(me,Soap_ControlDir(p),FixedDiv(
-				FixedMul(takis.accspeed,me.scale),
-				3*FU
-			)
-		)
-		me.movefactor = $/2
+		penaltyslowdown = true
 	end
 	
 	if (takis.accspeed > ((p.powers[pw_sneakers] or takis.doSuperBuffs) and 40*FU or 35*FU))
@@ -215,6 +211,16 @@ rawset(_G,"Takis_DoClutch",function(p,riding)
 		end
 		
 		thrust = $ + FixedMul(convspeed,me.scale)/4
+	end
+	
+	if penaltyslowdown
+		P_InstaThrust(mo,Soap_ControlDir(p),FixedDiv(
+				FixedMul(takis.accspeed,mo.scale),
+				3*FU
+			)
+		)
+		me.movefactor = $/2
+		thrust = 0
 	end
 	
 	thrust = FixedMul(thrust,me.scale)

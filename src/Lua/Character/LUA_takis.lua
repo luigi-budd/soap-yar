@@ -1432,7 +1432,8 @@ local function try_pvp_collide(me,thing)
 		end
 	end
 	if not candamagemobj then return end
-
+	
+	local thinghit = false
 	soap.damagedealtthistic = $ + 1
 	if (me.sixsev_super and me.sixsev_super >= 3*TR)
 	and not (thing.hitlag)
@@ -1465,6 +1466,7 @@ local function try_pvp_collide(me,thing)
 	--if the thing we're killing ISNT a player, then theyre probably an enemy
 	--hit by clutch
 	if (soap.afterimage)
+	and not (thing.type == MT_ROLLOUTROCK and me.tracer == thing)
 		Soap_ImpactVFX(thing,me)
 		
 		local power = FixedMul(10*FU + max(soap.accspeed - 20*FU,0), me.scale)
@@ -1504,7 +1506,12 @@ local function try_pvp_collide(me,thing)
 			end
 		end
 		Soap_SpawnBumpSparks(me, thing, nil, true)
-		return
+		thinghit = true
+	end
+
+	if thinghit and thing.type == MT_ROLLOUTROCK
+		thing.soap_flingcooldown = max((thing.hitlag or 0)* 2, 10)
+		thing.takis_flingme = false
 	end
 end
 

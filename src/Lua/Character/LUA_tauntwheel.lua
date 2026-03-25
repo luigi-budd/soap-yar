@@ -367,6 +367,8 @@ SOAP_TAUNTS[SOAP_SKIN] = {
 							{me.x,me.y,me.z}, 256*FU
 						)
 						me.colorized = (leveltime % 2 == 0)
+					else
+						me.colorized = false
 					end
 				else
 					me.colorized = false
