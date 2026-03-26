@@ -98,6 +98,10 @@ local deprecated = {
 --check for new events...
 for event_name, event_t in pairs(events)
 	if (Takis_Hook.events[event_name] == nil)
+		if event_t.events == nil
+			event_t.events = {}
+			event_t.numhooks = 0
+		end
 		Takis_Hook.events[event_name] = event_t
 		print("\x83TAKIS:\x80 Adding new hookevent... (\""..event_name..'")')
 	else
@@ -122,19 +126,21 @@ Takis_Hook.addHook = function(hooktype, func, typefor)
 			hooktype = dep_t.correct
 		end
 		
-		table.insert(Takis_Hook.events[hooktype], {
+		local event_t = Takis_Hook.events[hooktype]
+		table.insert(event_t.events, {
 			func = func,
 			typedef = typefor,
 			
 			errored = false,
 			
 			-- debugging
-			id = #Takis_Hook.events[hooktype],
+			id = event_t.numhooks,
 			src = takis_lumpname or "???",
 			us_taken = 0, -- microseconds
 			activity = 0,
 			tic_called = -1,
 		})
+		event_t.numhooks = $ + 1
 	else
 		S_StartSound(nil,sfx_skid)
 		error("\x83TAKIS: \x82WARNING:\x80 Hook type \""..hooktype.."\" does not exist.", 2)
@@ -150,32 +156,33 @@ Takis_Hook.tryRunHook = function(hooktype, v, ...)
 	if (debugmode and Takis_Hook.disabled[hooktype] == true)
 		return
 	end
+	if debugmode then starttime = getTimeMicros(); end
 	
 	local results = {pcall(v.func, ...)}
 	local status = results[1] or nil
 	table.remove(results,1)
 	
 	if status then
-		if debugmode then starttime = getTimeMicros(); end
 		override = {handler.func(
 			override,
 			unpack(results)
 		)}
-		if debugmode
-			local taken = (getTimeMicros() - starttime)
-			if v.tic_called == leveltime
-				v.us_taken = $ + taken
-			else
-				v.us_taken = taken
-			end
-			v.activity = min($ + taken, TR)
-			v.tic_called = leveltime
-		end
 	elseif (not v.errored) then
 		v.errored = true
 		S_StartSound(nil,sfx_lose)
 		print("\x83TAKIS: \x82WARNING:\x80 Hook " .. hooktype .. " handler #" .. i .. " error:")
 		print(unpack(results))
+	end
+
+	if debugmode
+		local taken = (getTimeMicros() - starttime)
+		if v.tic_called == leveltime
+			v.us_taken = $ + taken
+		else
+			v.us_taken = taken
+		end
+		v.activity = min($ + taken, TR)
+		v.tic_called = leveltime
 	end
 	
 	if override == nil then return nil; end
@@ -184,11 +191,16 @@ Takis_Hook.tryRunHook = function(hooktype, v, ...)
 end
 
 local notvalid = {}
+local seendep = false
 Takis_Hook.findEvent = function(hooktype)
 	local debugmode = (debug and (SOAP_DEBUG & DEBUG_HOOKS))
 	local name = hooktype
 	local events = Takis_Hook.events[name]
 	
+	if not seendep
+		print('\x83TAKIS: \x82WARNING\x80: Takis_Hook.findEvent is deprecated and should not be used. Check for Takis_Hook.events[eventname] explicity.')
+		seendep = true
+	end
 	if (debugmode and Takis_Hook.disabled[hooktype] == true)
 		return nil,nil
 	end
@@ -202,7 +214,7 @@ Takis_Hook.findEvent = function(hooktype)
 	if events == nil
 	and not (notvalid[name])
 		notvalid[name] = true
-		print('\x83TAKIS:\x82WARNING\x80: could not find hookevent "'..hooktype..'"')
+		print('\x83TAKIS: \x82WARNING\x80: could not find hookevent "'..hooktype..'"')
 	end
 	
 	--can still return nil!

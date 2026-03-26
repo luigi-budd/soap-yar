@@ -21,6 +21,28 @@
 	- MSC8: 67
 */
 
+local Soap_DustRing = Soap_DustRing
+local Soap_CreateAfterimage = Soap_CreateAfterimage
+local Takis_Hook = Takis_Hook
+local R_PointToAngle2 = R_PointToAngle2
+local R_PointToDist2 = R_PointToDist2
+local type = type
+local skins = skins
+local FixedMul = FixedMul
+local FixedDiv = FixedDiv
+local FixedAngle = FixedAngle
+local Soap_RandomFixedRange = Soap_RandomFixedRange
+local P_SpawnMobjFromMobj = P_SpawnMobjFromMobj
+local max = max
+local min = min
+local clamp = clamp
+local sign = sign
+local P_Lerp = P_Lerp
+local R_PointTo3DDist = R_PointTo3DDist
+local R_PointTo3DAngles = R_PointTo3DAngles
+local P_3DThrust = P_3DThrust
+local P_IsObjectOnGround = P_IsObjectOnGround
+
 --max speed increase
 rawset(_G,"SOAP_MAXDASH", 21*FU)
 --speed increase ramp-up time
@@ -146,14 +168,14 @@ local function soap_poundonland(p,me,soap)
 			)
 		)
 		*/
-		local hook_event,hook_name = Takis_Hook.findEvent("Char_OnMove")
-		if hook_event
-			for i,v in ipairs(hook_event)
-				local newrad = Takis_Hook.tryRunHook(hook_name, v, p, "poundland",
+		local event_t = Takis_Hook.events["Char_OnMove"]
+		if (event_t.numhooks)
+			local events = event_t.events
+			for i = 1, event_t.numhooks
+				local newrad = Takis_Hook.tryRunHook("Char_OnMove", events[i], p, "poundland",
 					br
 				)
-				if newrad ~= nil
-				and (tonumber(newrad) ~= nil)
+				if newrad ~= nil and (tonumber(newrad) ~= nil)
 					br = abs(newrad)
 				end
 			end
@@ -608,48 +630,6 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 		p.charflags = $ &~SF_SUPER
 	end
 	
-	--taunts
-	/*
-	if (soap.tossflag and (soap.c2 or soap.c3))
-	and (p.panim == PA_IDLE or p.panim == PA_RUN or soap.accspeed <= 5*FU)
-	and (P_IsObjectOnGround(me))
-	and not soap.taunttime
-	and me.health
-	and (soap.notCarried)
-	and not (soap.noability & SNOABIL_TAUNTS)
-		if (soap.c2)
-			S_StartSound(me,sfx_flex)
-			me.state = S_PLAY_SOAP_FLEX
-			soap.taunttime = TR
-		elseif (soap.c3)
-			S_StartSound(me,sfx_hahaha)
-			me.state = S_PLAY_SOAP_LAUGH
-			soap.taunttime = TR
-		end
-		setstate = true
-		soap.stasistic = soap.taunttime
-		
-		me.momx,me.momy = p.cmomx,p.cmomy
-	end
-	
-	if soap.taunttime
-		local angle = (p.cmd.angleturn << 16)
-		if soap.in2D then angle = ANGLE_90 end
-		
-		if me.state == S_PLAY_SOAP_FLEX
-			p.drawangle = angle + ANGLE_90
-		elseif me.state == S_PLAY_SOAP_LAUGH
-			p.drawangle = angle + ANGLE_180
-		end
-		
-		soap.taunttime = $-1
-		if soap.taunttime == 0
-			me.state = S_PLAY_STND
-		end
-		soap.noability = $|SNOABIL_TOP
-	end
-	*/
-	
 	if ( (((soap.weaponnext and soap.weaponprev)
 	or (p.exiting and p.pflags & PF_FINISHED
 		and soap.accspeed < FU/5
@@ -759,7 +739,6 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 	
 	--MF_NOSQUISH
 	local squishme = true
-	
 	local lunge = soap.lunge
 	
 	--c2 specials
@@ -972,10 +951,11 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 	local my_dashtime = SOAP_DASHTIME
 	local my_noadjust = false
 	do
-		local hook_event,hook_name = Takis_Hook.findEvent("Soap_DashSpeeds")
-		if hook_event
-			for i,v in ipairs(hook_event)
-				local new_md,new_dt,no_adjust = Takis_Hook.tryRunHook(hook_name, v, p,my_maxdash,my_dashtime)
+		local event_t = Takis_Hook.events["Soap_DashSpeeds"]
+		if (event_t.numhooks)
+			local events = event_t.events
+			for i = 1, event_t.numhooks
+				local new_md,new_dt,no_adjust = Takis_Hook.tryRunHook("Soap_DashSpeeds", events[i], p,my_maxdash,my_dashtime)
 				
 				if new_md ~= nil
 				and type(new_md) == "number"
@@ -1230,11 +1210,13 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 				min_speed = $*4/3
 				S_StartSound(me,sfx_s3k43)
 			end
-			local hook_event,hook_name = Takis_Hook.findEvent("Char_OnMove")
-			if hook_event
-				for i,v in ipairs(hook_event)
-					local new_t, new_min, new_max = Takis_Hook.tryRunHook(hook_name, v, p, "airdash", thrust,min_speed,max_speed)
-					
+
+			local event_t = Takis_Hook.events["Char_OnMove"]
+			if (event_t.numhooks)
+				local events = event_t.events
+				for i = 1, event_t.numhooks
+					local new_t, new_min, new_max = Takis_Hook.tryRunHook("Char_OnMove", events[i], p, "airdash", thrust,min_speed,max_speed)
+
 					if new_t ~= nil
 					and type(new_t) == "number"
 						thrust = abs(new_t)
@@ -1437,10 +1419,11 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 				S_StartSoundAtVolume(me,sfx_sp_upr, 255 * 8/10)
 			end
 			
-			local hook_event,hook_name = Takis_Hook.findEvent("Char_OnMove")
-			if hook_event
-				for i,v in ipairs(hook_event)
-					Takis_Hook.tryRunHook(hook_name, v, p, "uppercut", sound)
+			local event_t = Takis_Hook.events["Char_OnMove"]
+			if (event_t.numhooks)
+				local events = event_t.events
+				for i = 1, event_t.numhooks
+					local newrad = Takis_Hook.tryRunHook("Char_OnMove", events[i], p, "uppercut", sound)
 				end
 			end
 			setstate = true
@@ -1473,10 +1456,11 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 			Soap_ZLaunch(me,13*FU)
 			p.pflags = $|PF_THOKKED|PF_JUMPED &~(PF_STARTJUMP|PF_SPINNING)
 			
-			local hook_event,hook_name = Takis_Hook.findEvent("Char_OnMove")
-			if hook_event
-				for i,v in ipairs(hook_event)
-					Takis_Hook.tryRunHook(hook_name, v, p, "pound")
+			local event_t = Takis_Hook.events["Char_OnMove"]
+			if (event_t.numhooks)
+				local events = event_t.events
+				for i = 1, event_t.numhooks
+					local newrad = Takis_Hook.tryRunHook("Char_OnMove", events[i], p, "pound")
 				end
 			end
 			setstate = true
@@ -1582,16 +1566,16 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 			end
 			
 			soap.afterimage = true
-			if Soap_DirBreak(p,me, R_PointToAngle2(0,0,me.momx,me.momy))
+			if Soap_DirBreak(p,me, R_PointToAngle2(0,0,me.momx,me.momy), true)
 				Soap_Hitlag.addHitlag(me, 7, false)
 				soap.canuppercut = true
 				P_SetObjectMomZ(me, 5*FU,true)
 				soap.uppercut_spin = $ - ANGLE_90
 			end
 		else
-			if me.state == S_PLAY_MELEE
+			if (me.state == S_PLAY_MELEE
 			--shitty
-			or me.sprite2 == SPR2_MLEE
+			or me.sprite2 == SPR2_MLEE)
 			and not setstate
 				me.state = S_PLAY_FALL
 			end
@@ -1605,8 +1589,7 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 			destroy_uppercut_aura(p,me,soap)
 		end
 		
-		if (me.sprite2 == SPR2_MLEE
-		and not soap.onGround)
+		if (me.sprite2 == SPR2_MLEE and not soap.onGround)
 		and not (soap.inPain or P_PlayerInPain(p))
 			me.state = (me.momz * soap.gravflip > 0) and S_PLAY_SPRING or S_PLAY_FALL
 		end
@@ -1627,6 +1610,7 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 	--just take it off when we dont need it`
 	p.charflags = $ &~(SF_RUNONWATER|SF_NOSKID)|(lunge.effect and SF_NOSKID or 0)
 	if soap.rdashing and not soap.resetdash
+		local micros = getTimeMicros()
 		local skin_t = skins[p.skin]
 		local dashspeed = skin_t.normalspeed + soap._maxdash
 		local setangle = false
@@ -1740,6 +1724,7 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 				me.momy = FixedMul($, FU*5/6)
 			end
 			
+			/*
 			local eased = 0
 			if soap._maxdash ~= 0
 				eased = ease.inoutquad(FU/5,
@@ -1757,6 +1742,7 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 					)
 				end
 			end
+			*/
 			S_StopSoundByID(me,sfx_sp_mac)
 			S_StopSoundByID(me,sfx_sp_mc2)
 			soap.dashangle = p.drawangle
@@ -1765,6 +1751,7 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 			if not (soap.uppercutted and me.state == S_PLAY_FALL)
 				soap.afterimage = true
 				
+				local micros = getTimeMicros()
 				local color = soap_rdashwind_base
 				if (soap.dashcharge)
 					local speed_frac = FixedDiv(
@@ -1779,16 +1766,17 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 					)/FU
 				end
 				color = max(0, min($, #skincolors - 1))
-				Soap_WindLines(me,nil,color)
+				--Soap_WindLines(me,nil,color)
 				-- accelerative_speedlines(p,me,soap, FixedDiv(R_PointTo3DDist(0,0,0,me.momx,me.momy,me.momz),me.scale), 65*FU, color)
 				
-				if Soap_DirBreak(p,me, R_PointToAngle2(0,0,me.momx,me.momy))
+				if false --Soap_DirBreak(p,me, R_PointToAngle2(0,0,me.momx,me.momy),false, true)
 					Soap_Hitlag.addHitlag(me, 7, false)
 				end
 				
 				p.powers[pw_strong] = $|STR_SPIKE|STR_ANIM|STR_HEAVY
 			end
 			
+			/*
 			if not Soap_IsCompGamemode()
 				--test shallowness, so we dont get "stuck" on water
 				local floor = ((soap.gravflip == -1) and P_CeilingzAtPos or P_FloorzAtPos)(me.x,me.y,me.z,me.height)
@@ -1809,6 +1797,7 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 					p.charflags = $|SF_RUNONWATER
 				end
 			end
+			*/
 			
 			if me.state == S_PLAY_DASH or me.state == S_PLAY_SOAP_RAM
 				if not soap.onGround
@@ -1830,7 +1819,7 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 					setangle = true
 				end
 				if (leveltime & 1)
-					spawn_sweat_mobjs(p,me,soap)
+					--spawn_sweat_mobjs(p,me,soap)
 				end
 				
 				spawn_aura = true
@@ -1853,7 +1842,7 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 				P_PitchRoll(me, FU/6)
 			end
 		end
-		
+		print(getTimeMicros() - micros)
 	elseif soap.lastrdash or soap.resetdash
 		--local micros = getTimeMicros()
 		me.friction = ORIG_FRICTION
@@ -2061,10 +2050,11 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 		end
 		
 		if (soap.pounding)
-			local hook_event,hook_name = Takis_Hook.findEvent("Char_OnMove")
-			if hook_event
-				for i,v in ipairs(hook_event)
-					Takis_Hook.tryRunHook(hook_name, v, p, "poundthinker")
+			local event_t = Takis_Hook.events["Char_OnMove"]
+			if (event_t.numhooks)
+				local events = event_t.events
+				for i = 1, event_t.numhooks
+					local newrad = Takis_Hook.tryRunHook("Char_OnMove", events[i], p, "poundthinker")
 				end
 			end
 		end
@@ -3424,10 +3414,11 @@ addHook("MobjDamage", function(me,inf,sor,dmg,dmgt)
 	if (soap.hurtframe == leveltime) then return; end
 	soap.hurtframe = leveltime
 	
-	local hook_event,hook_name = Takis_Hook.findEvent("Char_OnDamage")
-	if hook_event
-		for i,v in ipairs(hook_event)
-			local short = Takis_Hook.tryRunHook(hook_name, v, me,inf,sor,dmg,dmgt)
+	local event_t = Takis_Hook.events["Char_OnDamage"]
+	if (event_t.numhooks)
+		local events = event_t.events
+		for i = 1, event_t.numhooks
+			local short = Takis_Hook.tryRunHook("Char_OnDamage", events[i], me,inf,sor,dmg,dmgt)
 			
 			-- does not short out the calling MobjDamage
 			if short == true then return; end

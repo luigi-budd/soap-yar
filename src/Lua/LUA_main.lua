@@ -1,7 +1,11 @@
 local mbrelease = dofile("Vars/mbrelease.lua")
+local Takis_Hook = Takis_Hook
+local Soap_TauntWheelThink = Soap_TauntWheelThink
+local Soap_ButtonStuff = Soap_ButtonStuff
+local Soap_Booleans = Soap_Booleans
 
 addHook("PreThinkFrame",function()
-	local hook_event = Takis_Hook.events["PreThinkFrame"]
+	local event_t = Takis_Hook.events["PreThinkFrame"]
 	for p in players.iterate
 		if not (p and p.valid) then continue end
 		
@@ -26,8 +30,11 @@ addHook("PreThinkFrame",function()
 		end
 		
 		soap.noability = 0
-		for i,v in ipairs(hook_event)
-			Takis_Hook.tryRunHook("PreThinkFrame", v, p)
+		if (event_t.numhooks)
+			local events = event_t.events
+			for i = 1, event_t.numhooks
+				Takis_Hook.tryRunHook("PreThinkFrame", events[i], p)
+			end
 		end
 		Soap_TauntWheelThink(p)
 		
@@ -62,7 +69,6 @@ addHook("PlayerThink",function(p)
 		if (p.powers[pw_carry] == CR_MINECART)
 		and (me.tracer and me.tracer.valid)
 			soap.accspeed = FixedDiv(FixedHypot(me.tracer.momx, me.tracer.momy), me.tracer.scale)
-		
 		elseif p.powers[pw_carry] ~= CR_NONE
 		or soap.isSliding
 			local momx = me.x - soap.last.x
@@ -82,18 +88,24 @@ addHook("PlayerThink",function(p)
 			end
 		end
 		
+		local micros = getTimeMicros()
 		if me.skin == SOAP_SKIN
-			local hook_event = Takis_Hook.events["Soap_Thinker"]
-			for i,v in ipairs(hook_event)
-				Takis_Hook.tryRunHook("Soap_Thinker", v, p)
+			local event_t = Takis_Hook.events["Soap_Thinker"]
+			if (event_t.numhooks)
+				local events = event_t.events
+				for i = 1, event_t.numhooks
+					Takis_Hook.tryRunHook("Soap_Thinker", events[i], p)
+				end
 			end
 		end
-		
 		if me.skin == TAKIS_SKIN
 		and not mbrelease
-			local hook_event = Takis_Hook.events["Takis_Thinker"]
-			for i,v in ipairs(hook_event)
-				Takis_Hook.tryRunHook("Takis_Thinker", v, p)
+			local event_t = Takis_Hook.events["Takis_Thinker"]
+			if (event_t.numhooks)
+				local events = event_t.events
+				for i = 1, event_t.numhooks
+					Takis_Hook.tryRunHook("Takis_Thinker", events[i], p)
+				end
 			end
 		end
 		
@@ -140,7 +152,7 @@ addHook("PlayerThink",function(p)
 end)
 
 addHook("PostThinkFrame",function()
-	local hook_event = Takis_Hook.events["PostThinkFrame"]
+	local event_t = Takis_Hook.events["PostThinkFrame"]
 	for p in players.iterate
 		if not (p and p.valid) then continue end
 		
@@ -151,8 +163,11 @@ addHook("PostThinkFrame",function()
 		
 		if not (me and me.valid) then continue end
 		
-		for i,v in ipairs(hook_event)
-			Takis_Hook.tryRunHook("PostThinkFrame", v, p)
+		if (event_t.numhooks)
+			local events = event_t.events
+			for i = 1, event_t.numhooks
+				Takis_Hook.tryRunHook("PostThinkFrame", events[i], p)
+			end
 		end
 		-- This is placed after the hookcalls so any squahes
 		-- added can immediately take effect

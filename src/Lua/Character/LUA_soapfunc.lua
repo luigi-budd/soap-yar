@@ -1,4 +1,24 @@
 local CV = SOAP_CV
+local Takis_Hook = Takis_Hook
+local R_PointToAngle2 = R_PointToAngle2
+local R_PointToDist2 = R_PointToDist2
+local type = type
+local skins = skins
+local FixedMul = FixedMul
+local FixedDiv = FixedDiv
+local FixedAngle = FixedAngle
+local Soap_RandomFixedRange = Soap_RandomFixedRange
+local P_SpawnMobjFromMobj = P_SpawnMobjFromMobj
+local max = max
+local min = min
+local clamp = clamp
+local sign = sign
+local P_Lerp = P_Lerp
+local R_PointTo3DDist = R_PointTo3DDist
+local R_PointTo3DAngles = R_PointTo3DAngles
+local P_3DThrust = P_3DThrust
+local P_IsObjectOnGround = P_IsObjectOnGround
+
 local function dust_type(me)
 	return (me.eflags & (MFE_UNDERWATER|MFE_TOUCHWATER)) and P_RandomRange(MT_SMALLBUBBLE,MT_MEDIUMBUBBLE) or MT_SOAP_DUST
 end
@@ -393,44 +413,60 @@ rawset(_G, "Soap_BreakFloors", function(p, me)
 end)
 
 --lul
-rawset(_G, "Soap_DirBreak", function(p, me, angle, nomom)
-	local soap = p.soaptable
-	local val = false
+local R_PointInSubsectorOrNil = R_PointInSubsectorOrNil
+local P_ReturnThrustX = P_ReturnThrustX
+local P_ReturnThrustY = P_ReturnThrustY
+local FF_EXISTS = FF_EXISTS
+local FF_BUSTUP = FF_BUSTUP
+local function check_for_bustables(p,me, x,y)
+	local newsubsec = R_PointInSubsectorOrNil(x,y)
+	if not (newsubsec and newsubsec.valid) then return end
+	local newsec = newsubsec.sector
+	if not (newsec and newsec.valid) then return end
 	
+	local val = false
+	for rover in newsec.ffloors()
+		-- ..? srb2gens gives a weird error about "flags" being an invalid option...
+		if not (rover and rover.valid) then continue end
+		if not (rover.flags & FF_EXISTS) then continue end
+		if not (rover.flags & FF_BUSTUP) then continue end
+		
+		--"equal to" checks because we want to be ABOVE the fof, not ON it
+		--prevents being able to break floor bustables by just clutching
+		if me.z + me.momz + me.height <= rover.bottomheight then continue end 
+		if me.z + me.momz >= rover.topheight then continue end
+		
+		EV_CrumbleChain(rover)
+		val = true
+	end
+	return val
+end
+
+rawset(_G, "Soap_DirBreak", function(p, me, angle, nomom, noqsteps)
+	local soap = p.soaptable
+	local broke = false
+	
+	local ox = P_ReturnThrustX(nil,angle,me.radius)
+	local oy = P_ReturnThrustY(nil,angle,me.radius)
 	local momx = 0
 	local momy = 0
 	if not nomom
-		momx = me.momx + P_ReturnThrustX(nil,angle,me.radius)
-		momy = me.momy + P_ReturnThrustY(nil,angle,me.radius)
+		momx = me.momx
+		momy = me.momy
 	end
 	
-	local my_mx = momx/4
-	local my_my = momy/4
-	for i = 1, (nomom and 1 or 4)
-		local newsubsec = R_PointInSubsectorOrNil(
-			me.x + my_mx*i,
-			me.y + my_my*i
-		)
-		if not (newsubsec and newsubsec.valid) then continue end
-		local newsec = newsubsec.sector
-		if not (newsec and newsec.valid) then continue end
-		
-		for rover in newsec.ffloors()
-			-- ..? srb2gens gives a weird error about "flags" being an invalid option...
-			if not (rover and rover.valid) then continue end
-			if not (rover.flags & FF_EXISTS) then continue end
-			if not (rover.flags & FF_BUSTUP) then continue end
-			
-			--"equal to" checks because we want to be ABOVE the fof, not ON it
-			--prevents being able to break floor bustables by just clutching
-			if me.z + me.momz + me.height <= rover.bottomheight then continue end 
-			if me.z + me.momz >= rover.topheight then continue end
-			
-			EV_CrumbleChain(rover)
-			val = true
+	if noqsteps or nomom
+		return check_for_bustables(p,me, ox + momx, oy + momy)
+	end
+	
+	for i = 1, 4
+		local my_mx = (momx/4)*i
+		local my_my = (momy/4)*i
+		if check_for_bustables(p,me, ox+my_mx, oy+my_my)
+			return true
 		end
 	end
-	return val
+	return broke
 end)
 
 --clairebun
@@ -1007,14 +1043,15 @@ local WIND_PUSHMIN = (20*FU)
 local WIND_PUSHMAX = (31*FU)
 local WIND_PUSHANG_MIN = 29*FU
 local WIND_PUSHANG_MAX = 35*FU
+local playerrad = mobjinfo[MT_PLAYER].radius
 rawset(_G, "Soap_WindLines", function(me,rmomz,color,forceang,forceside)
 	if not (me and me.valid) then return end --?
 	if not me.health then return end
 	local p = me.player
+	local micros = getTimeMicros()
 	
 	if (p and p.valid)
-	and (p.powers[pw_carry] == CR_ROLLOUT
-	or p.powers[pw_carry] == CR_PLAYER)
+	and (p.powers[pw_carry] == CR_ROLLOUT or p.powers[pw_carry] == CR_PLAYER)
 		Soap_WindLines(me.tracer,p.soaptable.rmomz,color,forceang)
 	end
 	
@@ -1026,15 +1063,13 @@ rawset(_G, "Soap_WindLines", function(me,rmomz,color,forceang,forceside)
 		end
     end
 	
-	local offx = me.momx
-	local offy = me.momy
-	do
-		local progress = P_RandomFixed()
-		offx = FixedMul($, progress)
-		offy = FixedMul($, progress)
-	end
+	local progress = P_RandomFixed()
+	local momx = me.momx
+	local momy = me.momy
+	local offx = FixedMul(momx, progress)
+	local offy = FixedMul(momy, progress)
 	
-	local zangle = R_PointToAngle2(0, 0, R_PointToDist2(0,0,me.momx,me.momy), momz)
+	local zangle = R_PointToAngle2(0, 0, R_PointToDist2(0,0,momx,momy), momz)
 	local height = (me.height)/2
 	local wind = P_SpawnMobj(
 		me.x,
@@ -1046,8 +1081,8 @@ rawset(_G, "Soap_WindLines", function(me,rmomz,color,forceang,forceside)
 	wind.scale = me.scale
 	if forceang == nil
 		local angle = (me.player and me.player.drawangle or me.angle)
-		if FixedHypot(me.momx,me.momy) > me.scale
-			angle = R_PointToAngle2(0,0,me.momx,me.momy)
+		if FixedHypot(momx,momy) > me.scale
+			angle = R_PointToAngle2(0,0,momx,momy)
 		end
 		wind.angle = angle
 	else
@@ -1057,40 +1092,40 @@ rawset(_G, "Soap_WindLines", function(me,rmomz,color,forceang,forceside)
 	local pushangle = wind.angle + ANGLE_90
 	local pushpush = FixedAngle(Soap_RandomFixedRange(WIND_PUSHANG_MIN,WIND_PUSHANG_MAX))
 	local pushsign = (forceside ~= nil) and sign(forceside) or P_RandomSign()
-	local pushdist = (FixedMul(Soap_RandomFixedRange(WIND_PUSHMIN,WIND_PUSHMAX), me.scale) + (me.radius - FixedMul(mobjinfo[MT_PLAYER].radius,me.scale))) * pushsign
+	local pushdist = (FixedMul(Soap_RandomFixedRange(WIND_PUSHMIN,WIND_PUSHMAX), me.scale) + (me.radius - FixedMul(playerrad,me.scale))) * pushsign
 	local sidex,sidey
 	--forward + backward shift for downwards movement
-	do
-		local distance = Soap_RandomFixedRange(-WIND_PUSHMAX,WIND_PUSHMAX)
-		distance = FixedMul($, abs(sin(zangle)))
-		sidex = P_ReturnThrustX(nil,wind.angle, distance)
-		sidey = P_ReturnThrustY(nil,wind.angle, distance)
-	end
+	local distance = Soap_RandomFixedRange(-WIND_PUSHMAX,WIND_PUSHMAX)
+	distance = FixedMul($, abs(sin(zangle)))
+	sidex = P_ReturnThrustX(nil,wind.angle, distance)
+	sidey = P_ReturnThrustY(nil,wind.angle, distance)
+	local speed = Soap_RandomFixedRange(2*FU,7*FU)
 	P_SetOrigin(wind,
 		me.x + P_ReturnThrustX(nil,pushangle,pushdist) + sidex + offx,
 		me.y + P_ReturnThrustY(nil,pushangle,pushdist) + sidey + offy,
 		wind.z
 	)
 	--Painful
+	speed = FixedMul($, me.scale)
 	P_Thrust(wind,
 		wind.angle + (pushpush)*pushsign,
-		FixedMul(FixedMul(Soap_RandomFixedRange(2*FU,7*FU), cos(zangle)), me.scale)
+		FixedMul(speed, cos(zangle))
 	)
 	P_Thrust(wind,
 		wind.angle + ANGLE_90*pushsign,
-		FixedMul(abs(FixedMul(Soap_RandomFixedRange(2*FU,7*FU), sin(zangle))), me.scale)
+		abs(FixedMul(speed, sin(zangle)))
 	)
 	wind.angle = $ - (pushpush/3)*pushsign
 	
 	local mocolor = color
-	if mocolor == nil
-	and color == nil
+	if mocolor == nil and color == nil
 		mocolor = SKINCOLOR_SAPPHIRE
 	end
 	wind.color = mocolor
 	wind.rollangle = zangle
     
 	wind.source = me
+	print("wind: "..getTimeMicros() - micros)
 	return wind
 end)
 

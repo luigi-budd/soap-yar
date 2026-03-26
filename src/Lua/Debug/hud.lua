@@ -283,7 +283,7 @@ addHook("HUD",function(v,p)
 
 			x = $ + 4
 			y = $ + 4
-			for key,hook_t in pairs(event_t)
+			for key,hook_t in pairs(event_t.events)
 				-- these are irrelevant
 				if (key == "typefor" or key == "handler")
 					continue
