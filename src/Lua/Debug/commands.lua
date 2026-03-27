@@ -61,7 +61,14 @@ local function CMDConstructor(name, props)
 			admin = true
 		end
 		
-		local adminonly = (not props.noadmin) and (checkadmin and not props.unsafe)
+		local adminonly = checkadmin
+		if (not props.noadmin)
+		and not checkadmin
+			adminonly = false
+		end
+		if (not checkadmin)
+			adminonly = props.unsafe
+		end
 		
 		if (not admin) and (adminonly)
 			prn(p, "You can't use this.")
