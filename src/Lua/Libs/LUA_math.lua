@@ -58,6 +58,7 @@ rawset(_G,"P_3DInstaThrust",function(mo, h_ang, v_ang, speed)
 	mo.momz = FixedMul(speed, t.z)
 end)
 
+-- p_larp
 rawset(_G,"P_Lerp",function(frac, from, to)
 	return from + FixedMul(to - from, frac)
 end)

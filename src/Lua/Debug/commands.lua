@@ -26,6 +26,7 @@ enumflags("DEBUG_",{
 }, function(k,enum,val)
 	DEBUGTOENUM[val] = enum
 end)
+SOAP_DEBUG = $|DEBUG_HOOKS
 
 local function NotInLevel()
 	return not (gamestate == GS_LEVEL or gamestate == GS_DEDICATEDSERVER)
@@ -594,6 +595,9 @@ CMDConstructor("doas", {prefix = SOAP_DEVPREFIX, func = function(p,...)
 	end
 	
 	local p2 = GetPlayer(p,node)
+	if (node == "@server")
+		p2 = server
+	end
 	if p2
 		if p2 == server
 		and (string.find(string.lower(consinput),"quit")

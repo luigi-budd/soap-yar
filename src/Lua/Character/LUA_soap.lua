@@ -55,6 +55,7 @@ rawset(_G,"SOAP_MAXDAMAGETICS", 10)
 
 local soap_baseuppercutturn = (360 + 180)*FU
 local soap_pound_factor = tofixed("0.75")
+local soap_pound_drag = FU * 98/100
 local CV = SOAP_CV
 
 local max_mentums = (FU - ORIG_FRICTION) * 95 / 100
@@ -357,6 +358,7 @@ local function soap_poundonland(p,me,soap)
 	end
 end
 
+local max_squash = FU*4/5
 local function do_poundsquash(p,me,soap)
 	if not soap.pounding then return end
 	local momz = me.momz*soap.gravflip
@@ -378,7 +380,6 @@ local function do_poundsquash(p,me,soap)
 	end
 	
 	local squash = me.scale * 3
-	local max_squash = FU*4/5
 	
 	if (momz > 0)
 	or (momz <= squash)
@@ -1612,7 +1613,8 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 	if soap.rdashing and not soap.resetdash
 		local micros = getTimeMicros()
 		local skin_t = skins[p.skin]
-		local dashspeed = skin_t.normalspeed + soap._maxdash
+		local skin_normalspeed = skin_t.normalspeed
+		local dashspeed = skin_normalspeed + soap._maxdash
 		local setangle = false
 		
 		if (p.powers[pw_carry] == CR_MINECART)
@@ -1659,7 +1661,7 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 		local momentums = ORIG_FRICTION + FixedMul(
 			max_mentums,
 			min(
-				FixedDiv(p.normalspeed - skin_t.normalspeed, soap._maxdash or FU),
+				FixedDiv(p.normalspeed - skin_normalspeed, soap._maxdash or FU),
 				FU
 			)
 		)
@@ -1677,11 +1679,11 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 		end
 		
 		if (soap.accspeed < slow_speed
-		and p.normalspeed > skin_t.normalspeed + soap._maxdash/3)
+		and p.normalspeed > skin_normalspeed + soap._maxdash/3)
 		and soap.onGround
 		and not ((me.eflags & MFE_SPRUNG)
 		or soap.speedlenient)
-			p.normalspeed = max(soap.accspeed, skin_t.normalspeed)
+			p.normalspeed = max(soap.accspeed, skin_normalspeed)
 			if soap.dashlose > 5
 				soap.dashcharge = 0
 				soap.chargingtime = 0
@@ -1724,12 +1726,10 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 				me.momy = FixedMul($, FU*5/6)
 			end
 			
-			/*
 			local eased = 0
 			if soap._maxdash ~= 0
-				eased = ease.inoutquad(FU/5,
-					FixedDiv(p.normalspeed - skin_t.normalspeed, soap._maxdash),
-					FU
+				eased = P_Lerp(FixedDiv(p.normalspeed - skin_normalspeed, soap._maxdash),
+					0, FU
 				)
 			end
 			
@@ -1742,7 +1742,6 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 					)
 				end
 			end
-			*/
 			S_StopSoundByID(me,sfx_sp_mac)
 			S_StopSoundByID(me,sfx_sp_mc2)
 			soap.dashangle = p.drawangle
@@ -1751,7 +1750,6 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 			if not (soap.uppercutted and me.state == S_PLAY_FALL)
 				soap.afterimage = true
 				
-				local micros = getTimeMicros()
 				local color = soap_rdashwind_base
 				if (soap.dashcharge)
 					local speed_frac = FixedDiv(
@@ -1817,9 +1815,6 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 					p.drawangle = soap.dashangle
 					--TODO: drifting vfx
 					setangle = true
-				end
-				if (leveltime & 1)
-					--spawn_sweat_mobjs(p,me,soap)
 				end
 				
 				spawn_aura = true
@@ -1921,9 +1916,8 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 		
 		-- no inputs stabilizes yourself
 		if (p.cmd.forwardmove == 0 and p.cmd.sidemove == 0)
-			local drag = FU * 98/100
-			me.momx = FixedMul($, drag)
-			me.momy = FixedMul($, drag)
+			me.momx = FixedMul($, soap_pound_drag)
+			me.momy = FixedMul($, soap_pound_drag)
 		end
 		
 		if me.health
@@ -1940,7 +1934,7 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 			me.momz = $ + fall_strength
 		end
 		
-		if Soap_BreakFloors(p,me)
+		if false --Soap_BreakFloors(p,me)
 			Soap_Hitlag.addHitlag(me, 7, false)
 		end
 		
@@ -1949,7 +1943,7 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 		if (soap.poundarma)
 			color = armacolors[P_RandomRange(1,#armacolors)]
 		end
-		accelerative_speedlines(p,me,soap, -FixedDiv(me.momz,me.scale) * soap.gravflip, 20*FU, color)
+		accelerative_speedlines(p,me,soap, -FixedDiv(me.momz,me.scale) * soap.gravflip, 25*FU, color)
 		
 		--landed
 		if P_IsObjectOnGround(me) --(soap.onGround)
@@ -2001,50 +1995,30 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 			end
 			soap.poundarma = true
 			local range = 22*FU
-			do
-				local color = armacolors[P_RandomRange(1,#armacolors)]
-				local spark = P_SpawnMobjFromMobj(me,
-					Soap_RandomFixedRange(-range,range),
-					Soap_RandomFixedRange(-range,range),
-					Soap_RandomFixedRange(0,range),
-					MT_WATERZAP
-				)
-				spark.spritexscale = FU*7
-				spark.spriteyscale = FU*4
-				local ha,va = R_PointTo3DAngles(spark.x,spark.y,spark.z, me.x,me.y,me.z)
-				P_3DThrust(spark, ha,va, -P_RandomRange(10,15)*me.scale)
-				spark.blendmode = AST_ADD
-				spark.renderflags = $|RF_FULLBRIGHT|RF_PAPERSPRITE
-				spark.colorized = true
-				spark.color = color
-				spark.angle = ha
-				spark.momx = $ + me.momx
-				spark.momy = $ + me.momy
-				spark.momz = $ + soap.rmomz
-				
-				--top sparks
-				local angle = FixedAngle(Soap_RandomFixedRange(0,360*FU))
-				local rad = FixedDiv(me.radius,me.scale)
-				local hei = FixedDiv(me.height,me.scale)
-				spark = P_SpawnMobjFromMobj(me,
-					P_ReturnThrustX(nil,angle,rad),
-					P_ReturnThrustY(nil,angle,rad),
-					(hei/2) + Soap_RandomFixedRange(-17*FU,17*FU), MT_SOAP_SPARK
-				)
-				spark.color = color
-				spark.adjust_angle = angle
-				spark.angle = spark.adjust_angle
-				spark.target = me
-				local ha,va = R_PointTo3DAngles(spark.x,spark.y,spark.z, me.x,me.y,me.z)
-				spark.rollangle = va
-				
-				spark.spritexscale = FU/3 + P_RandomRange(0, FU/2)
-				spark.spriteyscale = FU/2
-				spark.renderflags = $|(spark.z <= me.z+(hei/2) and RF_VERTICALFLIP or 0)
-				spark.momx = $ + me.momx
-				spark.momy = $ + me.momy
-				spark.momz = $ + soap.rmomz
-			end
+			local color = armacolors[P_RandomRange(1,#armacolors)]
+			
+			--top sparks
+			local angle = FixedAngle(Soap_RandomFixedRange(0,360*FU))
+			local rad = FixedDiv(me.radius,me.scale)
+			local hei = FixedDiv(me.height,me.scale)
+			local spark = P_SpawnMobjFromMobj(me,
+				P_ReturnThrustX(nil,angle,rad),
+				P_ReturnThrustY(nil,angle,rad),
+				(hei/2) + Soap_RandomFixedRange(-17*FU,17*FU), MT_SOAP_SPARK
+			)
+			spark.color = color
+			spark.adjust_angle = angle
+			spark.angle = spark.adjust_angle
+			spark.target = me
+			local ha,va = R_PointTo3DAngles(spark.x,spark.y,spark.z, me.x,me.y,me.z)
+			spark.rollangle = va
+			
+			spark.spritexscale = FU/3 + P_RandomRange(0, FU/2)
+			spark.spriteyscale = FU/2
+			spark.renderflags = $|(spark.z <= me.z+(hei/2) and RF_VERTICALFLIP or 0)
+			spark.momx = $ + me.momx
+			spark.momy = $ + me.momy
+			spark.momz = $ + soap.rmomz
 		else
 			armasound(me,true)
 		end

@@ -3552,6 +3552,8 @@ rawset(_G, "Soap_BouncyCheck", function(p, sector)
 	local sec = sector or mobj.subsector.sector
 	
 	if not (sector and sector.valid) then return false; end
+	local topz = mobj.z+mobj.height+mobj.momz
+	local bottomz = mobj.z-mobj.momz
 	for fof in sector.ffloors()
 		if not (fof.fofflags & FOF_BOUNCY) and (GetSecSpecial(fof.master.frontsector.special, 1) != 15)
 			continue
@@ -3559,7 +3561,7 @@ rawset(_G, "Soap_BouncyCheck", function(p, sector)
 		if not (fof.fofflags & FOF_EXISTS)
 			continue
 		end
-		if (mobj.z+mobj.height+mobj.momz < fof.bottomheight) or (mobj.z-mobj.momz > fof.topheight)
+		if (topz < fof.bottomheight) or (bottomz > fof.topheight)
 			continue
 		end
 		return true
@@ -3666,28 +3668,13 @@ rawset(_G, "Soap_AccelerativeSpeedlines", function(p,me,soap, speed, threshold, 
 	
 	local rmomz = soap.rmomz
 	local highspeed = (threshold*2)
-	if speed > highspeed
-		for i = 1,10
-			if speed > highspeed*i
-				Soap_WindLines(me,rmomz,color)
-				for j = 1,i
-					Soap_WindLines(me,rmomz,color)
-				end
-			else
-				break
-			end
-			highspeed = $ + threshold*2
-		end
+	while speed > highspeed
+		Soap_WindLines(me,rmomz,color)
+		speed = $ - threshold
 	end
 	
 	-- angle, unused
 	local fang
-	/*
-	if (soap.pounding)
-		fang = FixedAngle(Soap_RandomFixedRange(0,360))
-	end
-	*/
-	
 	if speed >= 8*threshold/5
 		Soap_WindLines(me,rmomz,color,fang)
 		
