@@ -230,11 +230,12 @@ addHook("MobjMoveBlocked", function(me, thing, line)
 		end
 	end
 	
-	local hook_event = Takis_Hook.events["MoveBlocked"]
-	for i,v in ipairs(hook_event)
-		local hookresult = Takis_Hook.tryRunHook("MoveBlocked", v, me,thing,line, goingup)
-		if hookresult ~= nil
-			return hookresult
+	local event_t = Takis_Hook.events["MoveBlocked"]
+	if (event_t.numhooks)
+		local events = event_t.events
+		for i = 1, event_t.numhooks
+			local res = Takis_Hook.tryRunHook("MoveBlocked", events[i], me,thing,line, goingup)
+			if res ~= nil then return res; end
 		end
 	end
 end,MT_PLAYER)
