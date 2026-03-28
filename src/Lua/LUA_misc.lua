@@ -208,6 +208,7 @@ local function NewVFXThink(v)
 				end
 				v.tracer = nil
 				v.target = nil
+				v.tics = $ - 1
 			end
 			
 			v.anim_duration = $ + 1
