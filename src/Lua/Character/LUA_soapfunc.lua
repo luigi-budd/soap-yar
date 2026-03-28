@@ -1048,7 +1048,6 @@ rawset(_G, "Soap_WindLines", function(me,rmomz,color,forceang,forceside)
 	if not (me and me.valid) then return end --?
 	if not me.health then return end
 	local p = me.player
-	local micros = getTimeMicros()
 	
 	if (p and p.valid)
 	and (p.powers[pw_carry] == CR_ROLLOUT or p.powers[pw_carry] == CR_PLAYER)
@@ -1125,7 +1124,6 @@ rawset(_G, "Soap_WindLines", function(me,rmomz,color,forceang,forceside)
 	wind.rollangle = zangle
     
 	wind.source = me
-	print("wind: "..getTimeMicros() - micros)
 	return wind
 end)
 

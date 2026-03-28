@@ -1611,7 +1611,7 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 	--just take it off when we dont need it`
 	p.charflags = $ &~(SF_RUNONWATER|SF_NOSKID)|(lunge.effect and SF_NOSKID or 0)
 	if soap.rdashing and not soap.resetdash
-		local micros = getTimeMicros()
+		--local micros = getTimeMicros()
 		local skin_t = skins[p.skin]
 		local skin_normalspeed = skin_t.normalspeed
 		local dashspeed = skin_normalspeed + soap._maxdash
@@ -1728,9 +1728,7 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 			
 			local eased = 0
 			if soap._maxdash ~= 0
-				eased = P_Lerp(FixedDiv(p.normalspeed - skin_normalspeed, soap._maxdash),
-					0, FU
-				)
+				eased = FixedDiv(p.normalspeed - skin_normalspeed, soap._maxdash)
 			end
 			
 			if P_RandomChance(eased)
@@ -1764,27 +1762,26 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 					)/FU
 				end
 				color = max(0, min($, #skincolors - 1))
-				--Soap_WindLines(me,nil,color)
-				-- accelerative_speedlines(p,me,soap, FixedDiv(R_PointTo3DDist(0,0,0,me.momx,me.momy,me.momz),me.scale), 65*FU, color)
+				Soap_WindLines(me,nil,color)
+				accelerative_speedlines(p,me,soap, FixedDiv(R_PointTo3DDist(0,0,0,me.momx,me.momy,me.momz),me.scale), 65*FU, color)
 				
-				if false --Soap_DirBreak(p,me, R_PointToAngle2(0,0,me.momx,me.momy),false, true)
+				if Soap_DirBreak(p,me, R_PointToAngle2(0,0,me.momx,me.momy),false, true)
 					Soap_Hitlag.addHitlag(me, 7, false)
 				end
 				
 				p.powers[pw_strong] = $|STR_SPIKE|STR_ANIM|STR_HEAVY
 			end
 			
-			/*
 			if not Soap_IsCompGamemode()
 				--test shallowness, so we dont get "stuck" on water
 				local floor = ((soap.gravflip == -1) and P_CeilingzAtPos or P_FloorzAtPos)(me.x,me.y,me.z,me.height)
 				local watertop = (soap.gravflip == -1) and me.waterbottom - me.height or me.watertop
 				
-				--we DO have a water fof near us...
-				if (me.watertop ~= me.z - 1000*FU
-				and me.waterbottom ~= me.z - 1000*FU)
 				--maybe not while we're water running
-				and (floor ~= watertop)
+				if (floor ~= watertop)
+				--we DO have a water fof near us...
+				and (me.watertop ~= me.z - 1000*FU
+				and me.waterbottom ~= me.z - 1000*FU)
 					if (watertop - floor)*soap.gravflip <= 38 * me.scale
 						p.charflags = $ &~SF_RUNONWATER
 					else
@@ -1795,7 +1792,6 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 					p.charflags = $|SF_RUNONWATER
 				end
 			end
-			*/
 			
 			if me.state == S_PLAY_DASH or me.state == S_PLAY_SOAP_RAM
 				if not soap.onGround
@@ -1837,7 +1833,7 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 				P_PitchRoll(me, FU/6)
 			end
 		end
-		print(getTimeMicros() - micros)
+		--print(getTimeMicros() - micros)
 	elseif soap.lastrdash or soap.resetdash
 		--local micros = getTimeMicros()
 		me.friction = ORIG_FRICTION

@@ -26,7 +26,6 @@ enumflags("DEBUG_",{
 }, function(k,enum,val)
 	DEBUGTOENUM[val] = enum
 end)
-SOAP_DEBUG = $|DEBUG_HOOKS
 
 local function NotInLevel()
 	return not (gamestate == GS_LEVEL or gamestate == GS_DEDICATEDSERVER)
