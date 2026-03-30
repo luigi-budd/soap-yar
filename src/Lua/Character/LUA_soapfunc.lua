@@ -395,12 +395,15 @@ end)
 --tatsuru
 local function CheckAndCrumble(me, sec)
 	local val = false
+	local topheight = me.z + me.height + me.momz
+	local bottomheight = me.z + me.momz
 	for fof in sec.ffloors()
+		if not (rover and rover.valid) then continue end
 		if not (fof.flags & FF_EXISTS) continue end -- Does it exist?
 		if not (fof.flags & FF_BUSTUP) continue end -- Is it bustable?
 		
-		if me.z + me.height + me.momz < fof.bottomheight continue end -- Are we too low?
-		if me.z + me.momz > fof.topheight continue end -- Are we too high?
+		if topheight < fof.bottomheight continue end -- Are we too low?
+		if bottomheight > fof.topheight continue end -- Are we too high?
 		
 		EV_CrumbleChain(fof) -- Crumble
 		val = true
@@ -425,6 +428,8 @@ local function check_for_bustables(p,me, x,y)
 	if not (newsec and newsec.valid) then return end
 	
 	local val = false
+	local topheight = me.z + me.height + me.momz
+	local bottomheight = me.z + me.momz
 	for rover in newsec.ffloors()
 		-- ..? srb2gens gives a weird error about "flags" being an invalid option...
 		if not (rover and rover.valid) then continue end
@@ -433,8 +438,8 @@ local function check_for_bustables(p,me, x,y)
 		
 		--"equal to" checks because we want to be ABOVE the fof, not ON it
 		--prevents being able to break floor bustables by just clutching
-		if me.z + me.momz + me.height <= rover.bottomheight then continue end 
-		if me.z + me.momz >= rover.topheight then continue end
+		if topheight <= rover.bottomheight then continue end 
+		if bottomheight >= rover.topheight then continue end
 		
 		EV_CrumbleChain(rover)
 		val = true
@@ -446,8 +451,8 @@ rawset(_G, "Soap_DirBreak", function(p, me, angle, nomom, noqsteps)
 	local soap = p.soaptable
 	local broke = false
 	
-	local ox = P_ReturnThrustX(nil,angle,me.radius)
-	local oy = P_ReturnThrustY(nil,angle,me.radius)
+	local ox = me.x + P_ReturnThrustX(nil,angle,me.radius)
+	local oy = me.y + P_ReturnThrustY(nil,angle,me.radius)
 	local momx = 0
 	local momy = 0
 	if not nomom
@@ -455,13 +460,15 @@ rawset(_G, "Soap_DirBreak", function(p, me, angle, nomom, noqsteps)
 		momy = me.momy
 	end
 	
-	if noqsteps or nomom
+	if (noqsteps) or (nomom)
 		return check_for_bustables(p,me, ox + momx, oy + momy)
 	end
 	
+	momx = $ / 4
+	momy = $ / 4
 	for i = 1, 4
-		local my_mx = (momx/4)*i
-		local my_my = (momy/4)*i
+		local my_mx = momx*i
+		local my_my = momy*i
 		if check_for_bustables(p,me, ox+my_mx, oy+my_my)
 			return true
 		end
@@ -591,13 +598,12 @@ rawset(_G, "Soap_CanHurtPlayer", function(p1,p2,nobs)
 			if false, force no hits
 			if nil, use the above checks
 		*/
-		local hook_event,hook_name = Takis_Hook.findEvent("CanPlayerHurtPlayer")
-		if hook_event
-			for i,v in ipairs(hook_event)
-				local result = Takis_Hook.tryRunHook(hook_name, v, p1,p2,nobs)
-				if result ~= nil
-					allowhurt = result
-				end
+		local event_t = Takis_Hook.events["CanPlayerHurtPlayer"]
+		if (event_t.numhooks)
+			local events = event_t.events
+			for i = 1, event_t.numhooks
+				local res = Takis_Hook.tryRunHook("CanPlayerHurtPlayer", events[i], p1,p2,nobs)
+				if res ~= nil then allowhurt = res; end
 			end
 		end
 	end
@@ -821,17 +827,15 @@ rawset(_G,"Soap_CanDamageEnemy",function(p, mobj,flags,exclude, nobs)
 		if false, force no hits
 		if nil, use the above checks
 	*/
-	local hook_event,hook_name = Takis_Hook.findEvent("CanFlingThing")
-	if hook_event
-		for i,v in ipairs(hook_event)
-			if hook_event.typefor ~= nil
-				if hook_event.typefor(mobj, v.typedef) == false then continue end
+	local event_t = Takis_Hook.events["CanFlingThing"]
+	if (event_t.numhooks)
+		local events = event_t.events
+		for i = 1, event_t.numhooks
+			if event_t.typefor ~= nil
+				if event_t.typefor(mobj, events[i].typedef) == false then continue end
 			end
-			
-			local result = Takis_Hook.tryRunHook(hook_name, v, mobj, p,flags,false,exclude)
-			if result ~= nil
-				flingable = result
-			end
+			local res = Takis_Hook.tryRunHook("CanFlingThing", events[i], mobj, p,flags,false,exclude)
+			if res ~= nil then flingable = res; end
 		end
 	end
 	return flingable
@@ -1822,12 +1826,12 @@ rawset(_G,"Soap_HandleNoAbils", function(p)
 	end
 	
 	--return value: new noabilities field (absolute)
-	local hook_event,hook_name = Takis_Hook.findEvent("Char_NoAbility")
-	if hook_event
-		for i,v in ipairs(hook_event)
-			local new_noabil = Takis_Hook.tryRunHook(hook_name, v, p, na)
-			if new_noabil ~= nil
-			and type(new_noabil) == "number"
+	local event_t = Takis_Hook.events["Char_NoAbility"]
+	if (event_t.numhooks)
+		local events = event_t.events
+		for i = 1, event_t.numhooks
+			local new_noabil = Takis_Hook.tryRunHook("Char_NoAbility", events[i], mobj, p,flags,false,exclude)
+			if new_noabil ~= nil and type(new_noabil) == "number"
 				na = abs(new_noabil)
 			end
 		end
@@ -2866,12 +2870,16 @@ rawset(_G,"Soap_VFX",function(p,me,soap, props)
 			["deathanims"] = boolean
 			etc...
 	*/
-	local hook_event,hook_name = Takis_Hook.findEvent("Char_VFX")
-	if hook_event
-		for i,v in ipairs(hook_event)
-			local fxtable = Takis_Hook.tryRunHook(hook_name, v, p, props)
+	local event_t = Takis_Hook.events["Char_VFX"]
+	if (event_t.numhooks)
+		local events = event_t.events
+		for i = 1, event_t.numhooks
+			local new_noabil = Takis_Hook.tryRunHook("Char_VFX", events[i], p, props)
 			if fxtable == nil then continue end
 			
+			-- this looks bad but this should be
+			-- faster than using an iterator to
+			-- check for all of these
 			if fxtable.waterrun
 				allowed.waterrun = false
 			end

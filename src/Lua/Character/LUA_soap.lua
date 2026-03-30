@@ -316,8 +316,8 @@ local function soap_poundonland(p,me,soap)
 				P_BlackOw(p)
 			end
 		end
-		
-		Soap_DirBreak(p,me, R_PointToAngle2(0,0,me.momx,me.momy), true)
+		 
+		Soap_BreakFloors(p,me)
 		if not noquake
 			local quake_tics = 16 + (FixedDiv(br,me.scale)/FU / 25)
 			if Soap_IsCompGamemode()
@@ -1567,7 +1567,7 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 			end
 			
 			soap.afterimage = true
-			if Soap_DirBreak(p,me, R_PointToAngle2(0,0,me.momx,me.momy), true)
+			if Soap_BreakFloors(p,me)
 				Soap_Hitlag.addHitlag(me, 7, false)
 				soap.canuppercut = true
 				P_SetObjectMomZ(me, 5*FU,true)
@@ -1765,7 +1765,7 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 				Soap_WindLines(me,nil,color)
 				accelerative_speedlines(p,me,soap, FixedDiv(R_PointTo3DDist(0,0,0,me.momx,me.momy,me.momz),me.scale), 65*FU, color)
 				
-				if Soap_DirBreak(p,me, R_PointToAngle2(0,0,me.momx,me.momy),false, true)
+				if Soap_DirBreak(p,me, R_PointToAngle2(0,0,me.momx,me.momy))
 					Soap_Hitlag.addHitlag(me, 7, false)
 				end
 				
@@ -1930,7 +1930,7 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 			me.momz = $ + fall_strength
 		end
 		
-		if false --Soap_BreakFloors(p,me)
+		if Soap_BreakFloors(p,me)
 			Soap_Hitlag.addHitlag(me, 7, false)
 		end
 		

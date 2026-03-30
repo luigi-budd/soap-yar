@@ -140,6 +140,7 @@ hl.iterateHitlagged = function()
 		end
 	end
 
+	local stunned_hook = Takis_Hook.events["Soap_StunnedThink"]
 	for k,v in ipairs(hl.stunned)
 		local mo = v[1]
 		local lastflags = v[2]
@@ -242,12 +243,14 @@ hl.iterateHitlagged = function()
 				mo.soap_setvfx = true
 			end
 			
-			local hook_event,hook_name = Takis_Hook.findEvent("Soap_StunnedThink")
-			for i,v in ipairs(hook_event)
-				if hook_event.typefor ~= nil
-					if hook_event.typefor(mo, v.typedef) == false then continue end
+			if (stunned_hook.numhooks)
+				local events = stunned_hook.events
+				for i = 1, stunned_hook.numhooks
+					if stunned_hook.typefor ~= nil
+						if stunned_hook.typefor(mo, events[i].typedef) == false then continue end
+					end
+					Takis_Hook.tryRunHook("Soap_StunnedThink", events[i], mo)
 				end
-				local result = Takis_Hook.tryRunHook(hook_name, v, mo)
 			end
 			
 			if hl.cv_hitlagtics.value
@@ -429,14 +432,17 @@ hl.stunEnemy = function(mo,tics)
 		tics = FixedMul($, hl.cv_hitlagmulti.value)
 	end
 	
-	local hook_event,hook_name = Takis_Hook.findEvent("Soap_OnStunEnemy")
-	for i,v in ipairs(hook_event)
-		if hook_event.typefor ~= nil
-			if hook_event.typefor(mo, v.typedef) == false then continue end
+	local stunned_hook = Takis_Hook.events["Soap_OnStunEnemy"]
+	if (stunned_hook.numhooks)
+		local events = stunned_hook.events
+		for i = 1, stunned_hook.numhooks
+			if stunned_hook.typefor ~= nil
+				if stunned_hook.typefor(mo, events[i].typedef) == false then continue end
+			end
+			local res = Takis_Hook.tryRunHook("Soap_StunnedThink", events[i], mo,tics)
+			if res then return end
+			if not (mo and mo.valid) then return end
 		end
-		local result = Takis_Hook.tryRunHook(hook_name, v, mo,tics)
-		if result then return end
-		if not (mo and mo.valid) then return end
 	end
 	
 	mo.soap_stunned = $+tics

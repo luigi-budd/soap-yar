@@ -1554,10 +1554,11 @@ addHook("MobjDamage", function(me,inf,sor,dmg,dmgt)
 	local p = me.player 
 	local soap = p.soaptable
 
-	local hook_event,hook_name = Takis_Hook.findEvent("Char_OnDamage")
-	if hook_event
-		for i,v in ipairs(hook_event)
-			local short = Takis_Hook.tryRunHook(hook_name, v, me,inf,sor,dmg,dmgt)
+	local event_t = Takis_Hook.events["Char_OnDamage"]
+	if (event_t.numhooks)
+		local events = event_t.events
+		for i = 1, event_t.numhooks
+			local short = Takis_Hook.tryRunHook("Char_OnDamage", events[i], me,inf,sor,dmg,dmgt)
 			
 			-- does not short out the calling MobjDamage
 			if short == true then return; end
