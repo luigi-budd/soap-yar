@@ -481,17 +481,15 @@ SOAP_TAUNTS[SOAP_SKIN] = {
 						elseif (found.player and found.player.valid)
 							local p2 = found.player
 							
-							if Soap_CanHurtPlayer(p, p2)
-								Soap_ImpactVFX(found, me, nil,nil, true)
-								Soap_SpawnBumpSparks(found, me, nil,false, found.scale * 3/2, true)
-								Soap_DamageSfx(found, 25*FU, 30*me.scale)
-								P_DamageMobj(found,me,me, DMG_INSTAKILL)
-								Soap_Hitlag.addHitlag(found, 12, true)
-								Soap_Hitlag.addHitlag(me, 12, false)
-								Soap_StartQuake(10*FU, 12, {me.x, me.y, me.z}, 512*me.scale)
-								
-								enemyhit = true
-							end
+							Soap_ImpactVFX(found, me, nil,nil, true)
+							Soap_SpawnBumpSparks(found, me, nil,false, found.scale * 3/2, true)
+							Soap_DamageSfx(found, 25*FU, 30*me.scale)
+							P_DamageMobj(found,me,me, DMG_INSTAKILL)
+							Soap_Hitlag.addHitlag(found, 12, true)
+							Soap_Hitlag.addHitlag(me, 12, false)
+							Soap_StartQuake(10*FU, 12, {me.x, me.y, me.z}, 512*me.scale)
+							
+							enemyhit = true
 						--Most likely a spike thing
 						elseif (found.info.mass == DMG_SPIKE)
 						and (found.flags & (MF_PAIN))
