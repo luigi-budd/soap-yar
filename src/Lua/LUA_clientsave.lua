@@ -50,6 +50,16 @@ local function loadfromfile(localonly)
 				continue
 			else
 				local cvar_local = cv_synched[line] ~= true
+				-- debug
+				if cv_synched[line]
+					printf("Found synched cvar... localonly="..tostring(localonly))
+					if (cvar_local and not localonly)
+					or (not cvar_local and localonly)
+						printf("Can't parse this synched cvar!")
+					end
+				end
+				
+				
 				if (cvar_local and not localonly)
 				or (not cvar_local and localonly)
 					skip = true

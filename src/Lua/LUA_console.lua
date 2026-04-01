@@ -50,6 +50,8 @@ local function CMD_Constructor(cv_name, tablename, type)
 		if sig ~= iAmLua then return end
 		local value = args[2]
 		
+		printf("\x83SOAP (I/O):\x80 (%s) Sending synch data for %s (%s)...", cv_name, p.name, tostring(value))
+		
 		local soap = p.soaptable
 		local type = CV.commandtypes["_soap_"..cv_name]
 		if type == CMD_BOOLEAN

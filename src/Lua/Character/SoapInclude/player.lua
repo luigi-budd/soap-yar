@@ -87,6 +87,7 @@ states[S_PLAY_SOAP_RAM] = {
 
 SafeFreeslot("S_PLAY_SOAP_PUNCH1")
 SafeFreeslot("S_PLAY_SOAP_PUNCH2")
+SafeFreeslot("S_PLAY_SOAP_PUNCH3")
 states[S_PLAY_SOAP_PUNCH1] = {
 	sprite = SPR_PLAY,
 	frame = SPR2_MSC6|A,
@@ -100,7 +101,21 @@ states[S_PLAY_SOAP_PUNCH2] = {
 	sprite = SPR_PLAY,
 	frame = SPR2_MSC6|B,
 	tics = 12,
-	nextstate = S_PLAY_FALL
+	nextstate = S_PLAY_SOAP_PUNCH3
+}
+states[S_PLAY_SOAP_PUNCH3] = {
+	sprite = SPR_PLAY,
+	frame = SPR2_MSC6|B,
+	tics = 0,
+	nextstate = S_PLAY_FALL,
+	action = function(me)
+		if P_IsObjectOnGround(me)
+			me.state = S_PLAY_WALK
+			Soap_ResetState(me.player)
+			return
+		end
+		me.state = S_PLAY_FALL
+	end
 }
 
 SafeFreeslot("S_PLAY_SOAP_FIREASS")
