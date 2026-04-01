@@ -59,7 +59,6 @@ local function loadfromfile(localonly)
 					end
 				end
 				
-				
 				if (cvar_local and not localonly)
 				or (not cvar_local and localonly)
 					skip = true

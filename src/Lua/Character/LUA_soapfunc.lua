@@ -3002,10 +3002,12 @@ rawset(_G, "Soap_SuperThinker",function(p,me,soap)
 			if not (found.health) then return end
 			if not P_CheckSight(me,found) then return end
 			local topheight = found.z + found.height
+			local botheight = me.floorz
 			if soap.gravflip == -1
 				topheight = found.z
+				botheight = me.ceilingz
 			end
-			if (topheight < (soap.gravflip == 1 and me.floorz or me.ceilingz)) then return end
+			if (topheight < botheight) then return end
 			
 			if (found.type == MT_TNTBARREL)
 				P_KillMobj(found,me,me)
