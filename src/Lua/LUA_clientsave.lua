@@ -80,7 +80,7 @@ loadfromfile(true)
 loadfromfile(false)
 
 addHook("PlayerThink",function(p)
-	if p.jointime == TR * 3/4
+	if p.jointime == TR + 10
 	and (p == consoleplayer)
 		loadfromfile(false)
 	end

@@ -24,6 +24,7 @@ local function CVSynched_CanChange(cv, value)
 	if gamestate ~= GS_LEVEL
 		-- its whatever, itll still be synched when we join a game
 		if (gamestate == GS_TITLESCREEN)
+		or (gamestate == GS_WAITINGPLAYERS)
 			return true
 		end
 		print("You must be in a level to use this.")
