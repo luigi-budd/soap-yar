@@ -445,6 +445,7 @@ SOAP_TAUNTS[SOAP_SKIN] = {
 					thok.scale = me.scale
 					thok.fuse = 2
 					thok.flags2 = $|MF2_DONTDRAW
+					thok.angle = ang
 					
 					local fakerange = 128*FU
 					local range = thok.radius*3/2
@@ -484,7 +485,24 @@ SOAP_TAUNTS[SOAP_SKIN] = {
 							Soap_ImpactVFX(found, me, nil,nil, true)
 							Soap_SpawnBumpSparks(found, me, nil,false, found.scale * 3/2, true)
 							Soap_DamageSfx(found, 25*FU, 30*me.scale)
-							P_DamageMobj(found,me,me, DMG_INSTAKILL)
+							
+							if Soap_CanHurtPlayer(p,p2)	
+								P_DamageMobj(found,me,me, DMG_INSTAKILL)
+							else
+								found.soap_tumble = true
+								found.soap_tumble_oldmomz = found.momz
+								
+								P_ResetPlayer(p2)
+								found.state = S_PLAY_PAIN
+								p2.drawangle = ang + ANGLE_180
+								
+								P_Thrust(found, ang, 12 * me.scale)
+								if P_IsObjectOnGround(found)
+									found.z = $ + P_MobjFlip(found)
+								end
+								P_SetObjectMomZ(found, 30*me.scale, true)
+								p2.powers[pw_flashing] = flashingtics
+							end
 							Soap_Hitlag.addHitlag(found, 12, true)
 							Soap_Hitlag.addHitlag(me, 12, false)
 							Soap_StartQuake(10*FU, 12, {me.x, me.y, me.z}, 512*me.scale)
