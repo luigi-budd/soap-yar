@@ -622,8 +622,6 @@ end)
 
 rawset(_G,"Soap_DamageSfx", function(src, power, maxpow, damagetype, props)
 	props = $ or {}
-	local secondary = P_RandomChance(FU/2)
-	
 	local nosfxmobj = props.nosfx or false
 
 	local sfx = sfx_sp_dm0
@@ -647,7 +645,7 @@ rawset(_G,"Soap_DamageSfx", function(src, power, maxpow, damagetype, props)
 		numsfx = 0
 	end
 
-	local vol = secondary and 255 or 255/3
+	local vol = P_RandomRange(230,255)
 	if props.vol ~= nil
 		vol = props.vol
 	end
