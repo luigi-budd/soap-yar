@@ -398,7 +398,7 @@ local function CheckAndCrumble(me, sec)
 	local topheight = me.z + me.height + me.momz
 	local bottomheight = me.z + me.momz
 	for fof in sec.ffloors()
-		if not (rover and rover.valid) then continue end
+		if not (fof and fof.valid) then continue end
 		if not (fof.flags & FF_EXISTS) continue end -- Does it exist?
 		if not (fof.flags & FF_BUSTUP) continue end -- Is it bustable?
 		
