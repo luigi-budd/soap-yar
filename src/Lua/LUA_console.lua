@@ -21,6 +21,8 @@ local iAmLua = "iAmLua"..P_RandomFixed()
 addHook("NetVars",function(n) iAmLua = n($); end)
 
 local function CVSynched_CanChange(cv, value)
+	-- ..? i guess this is okay to comment out..
+	/*
 	if gamestate ~= GS_LEVEL
 		-- its whatever, itll still be synched when we join a game
 		if (gamestate == GS_TITLESCREEN)
@@ -30,6 +32,7 @@ local function CVSynched_CanChange(cv, value)
 		print("You must be in a level to use this.")
 		return false
 	end
+	*/
 	
 	if not (consoleplayer and consoleplayer.valid and consoleplayer.soaptable)
 		print("You must be in a level to use this.")
