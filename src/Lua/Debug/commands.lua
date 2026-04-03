@@ -38,7 +38,8 @@ local checkadmin = true
 	outoflevels = boolean :: Don't check for level-ness beforehand if true
 	checksoap = boolean :: Check for player.soaptable
 	flags = INT32 :: Command flags
-	noadmin = boolean :: Don't check if the player is admin
+	noadmin = boolean :: Don't check if the player is admin (only if checkadmin is FALSE)
+	forcenoadmin = boolean :: Never check if the player is admin
 	unsafe = boolean :: If checkadmin is FALSE, dont allow this command to be ran
 } */
 local function CMDConstructor(name, props)
@@ -67,6 +68,9 @@ local function CMDConstructor(name, props)
 		end
 		if (not checkadmin)
 			adminonly = props.unsafe
+		end
+		if (props.forcenoadmin)
+			adminonly = false
 		end
 		
 		if (not admin) and (adminonly)
@@ -163,7 +167,7 @@ CMDConstructor("shield", {prefix = SOAP_DEVPREFIX, func = function(p,...)
 	end
 end})
 
-CMDConstructor("debug", {prefix = SOAP_DEVPREFIX, outoflevels = true, checksoap = false, noadmin = true, func = function(p,...)
+CMDConstructor("debug", {prefix = SOAP_DEVPREFIX, outoflevels = true, checksoap = false, forcenoadmin = true, func = function(p,...)
 	local args = {...}
 	if not #args
 		prn(p, "Current flags enabled:")
