@@ -30,9 +30,11 @@ local CLUTCH_FADEOUT = 2*TR
 local CLUTCH_FADE = 4
 local clutchfade = 0
 addHook("HUD",function(v,p, cam)
-	v.dointerp = function(tag)
-		if v.interpolate == nil then return end
-		v.interpolate(tag)
+	if not v.dointerp
+		v.dointerp = function(tag)
+			if v.interpolate == nil then return end
+			v.interpolate(tag)
+		end
 	end
 	
 	local takis = p.soaptable

@@ -26,20 +26,47 @@ sfxinfo[sfx_sp_ant] = {
 local S_CLIPPING_DIST = (1536*FU)
 local set_musvol = false
 local this_musvol = 100
-local listening_boombox
+local listening_boombox, prev_listbox
+local listening_leveltime = 0
+local showtitle = 0
 
 local boomjam_bpm = 130*FU
 local epicjam_bpm = 128*FU
 local mulejam_bpm = 136*FU
 local retrojam_bpm = 120*FU
-local larpyjam_bpm = 132*FU
+local larpyjam_bpm = 132*FU -- no hate to vylet or this song lol i love them both
+local larpyjam_captions = {
+	-- [timestamp] = {"multi-line", "captions"} 
+	[1] = {""},
+	[TR*4/10] = {"I'm the Antonymph", "of the internet!"},
+	[3*TR + (TR*15/100)] = {"Still cleaning up", "the viruses,"},
+	[5*TR + (TR*6/10)] = {"that you had left"},
+	[7*TR + (TR*45/100)] = {"I think I'm falling", "in love again..."},
+	[11*TR] = {""},
+	
+	[11*TR + (TR*3/10)] = {"Don't stop, don't stop", "until you-"},
+	[13*TR + (TR*6/10)] = {""},
+
+	[14*TR + (TR*9/10)] = {"I'm the Antonymph", "of the internet!"},
+	[17*TR + (TR*9/10)] = {"Been fighting on Newgrounds", "over if my love is valid"},
+	[21*TR + (TR*7/10)] = {""},
+	[22*TR] = {"Fuck the cynicism,"},
+	[23*TR + (TR*6/10)] = {"Fuck the cynicism,", "let the \x85".."c\x87o\x82l\x83o\x88u\x89r\x8Fs \x88".."f\x8Al\x81y"},
+	[25*TR] = {"Don't care if you think it\'s cringe", "because its"},
+	[27*TR + (TR*2/10)] = {"Don't care if you think it\'s cringe", "because its not"},
+	[27*TR + (TR*7/10)] = {"Don't care if you think it\'s cringe", "because its not your"},
+	[28*TR + (TR*1/10)] = {"Don't care if you think it\'s cringe", "because its not your life"},
+	[29*TR] = {""},
+}
+
 --should be fine if we dont synch this
+-- credits = {"song name", "artist"}
 rawset(_G, "SOAP_BOOMBOXJAMS", {
 	[1] = {sfx = sfx_sp_jam, bpm = boomjam_bpm, fadeto = 50},
-	[2] = {sfx = sfx_sp_epi, bpm = epicjam_bpm, fadeto = 0},
-	[3] = {sfx = sfx_sp_mul, bpm = mulejam_bpm, fadeto = 0},
+	[2] = {sfx = sfx_sp_epi, bpm = epicjam_bpm, fadeto = 0, credits = {"Spectre", "Alan Walker"}},
+	[3] = {sfx = sfx_sp_mul, bpm = mulejam_bpm, fadeto = 0, credits = {"M.U.L.E.", "Seth Sternberger, Michelle Sternberger"}},
 	[4] = {sfx = sfx_sp_rto, bpm = retrojam_bpm, fadeto = 0},
-	[5] = {sfx = sfx_sp_ant, bpm = larpyjam_bpm, fadeto = 0},
+	[5] = {sfx = sfx_sp_ant, bpm = larpyjam_bpm, fadeto = 0, credits = {"ANTONYMPH", "Vylet Pony"}, captions = larpyjam_captions},
 })
 rawset(_G, "Soap_MakeJamCrochet",function(fixed_bpm)
 	return FixedDiv(60*TR*FU, fixed_bpm)
@@ -48,6 +75,7 @@ for k,v in ipairs(SOAP_BOOMBOXJAMS)
 	v.crochet = Soap_MakeJamCrochet(v.bpm)
 end
 
+local damping = 6
 SafeFreeslot("SPR_SOAP_BOOMBOX")
 SafeFreeslot("S_SOAP_BOOMBOX")
 SafeFreeslot("MT_SOAP_BOOMBOX")
@@ -89,14 +117,23 @@ states[S_SOAP_BOOMBOX] = {
 					killCond = true
 				end
 				if (soap.breakdance)
-					me.markedfordeath = nil
+					mo.markedfordeath = nil
+					mo.flags2 = $ &~MF2_DONTDRAW
 				else
-					if me.markedfordeath == nil
-						me.markedfordeath = 45 * TR
-					elseif me.markedfordeath
-						me.markedfordeath = $ - 1
-						if me.markedfordeath <= 0
+					if mo.markedfordeath == nil
+						mo.markedfordeath = 45 * TR
+					elseif mo.markedfordeath
+						mo.markedfordeath = $ - 1
+						if mo.markedfordeath <= 0
 							killCond = true
+						elseif mo.markedfordeath <= TR
+							mo.flags2 = $^^MF2_DONTDRAW
+						elseif mo.markedfordeath <= 4*TR
+							if (mo.markedfordeath/2) % 2
+								mo.flags2 = $ &~MF2_DONTDRAW
+							else
+								mo.flags2 = $|MF2_DONTDRAW
+							end
 						end
 					end
 				end
@@ -149,15 +186,16 @@ states[S_SOAP_BOOMBOX] = {
 			end
 			
 			if disttome > 128 * me.scale
-				local ha,va = R_PointTo3DAngles(mo.x,mo.y,mo.z, me.x,me.y,me.z)
-				P_3DThrust(mo,
-					ha,va,
-					FixedDiv(disttome, 128*me.scale)
-				)
-				mo.flags = $|MF_NOGRAVITY|MF_NOCLIP
-			elseif P_CheckPosition(mo, mo.x,mo.y,mo.z)
-			and R_PointToDist2(0,0, mo.momx,mo.momy) <= 3 * mo.scale
-				mo.flags = $ &~(MF_NOGRAVITY|MF_NOCLIP)
+				mo.momx = (me.x - mo.x) / damping
+				mo.momy = (me.y - mo.y) / damping
+				mo.momz = (me.z - mo.z) / damping
+				mo.flags = $|MF_NOGRAVITY|MF_NOCLIP|MF_NOCLIPHEIGHT
+			else
+				mo.flags = $ &~MF_NOCLIPHEIGHT
+				if P_CheckPosition(mo, mo.x,mo.y,mo.z)
+				and R_PointToDist2(0,0, mo.momx,mo.momy) <= 3 * mo.scale
+					mo.flags = $ &~(MF_NOGRAVITY|MF_NOCLIP)
+				end
 			end
 		else
 			if not mo.wasinhitlag
@@ -170,7 +208,11 @@ states[S_SOAP_BOOMBOX] = {
 		if not S_SoundPlaying(mo,my_jam)
 		-- Synch it
 		and ((mo.lifetime*FU) % my_crochet < (mo.lifetime + 1)*FU % my_crochet)
+		-- should stop this boombox from playing its tune if we're
+		-- already listening to one
+		and not (prev_listbox and prev_listbox.valid and prev_listbox ~= mo)
 			S_StartSound(mo,my_jam)
+			listening_leveltime = leveltime
 		end
 		
 		if P_IsObjectOnGround(mo)
@@ -209,7 +251,22 @@ states[S_SOAP_BOOMBOX] = {
 			end
 			if sounddist > S_CLIPPING_DIST then return end
 			
-			listening_boombox = mo
+			if (prev_listbox and prev_listbox.valid)
+				local canplay = true
+				if (displayplayer.soaptable.boombox and displayplayer.soaptable.boombox.valid)
+					canplay = displayplayer.soaptable.boombox == mo
+				end
+				if canplay
+					listening_boombox = mo
+				else
+					S_StopSoundByID(mo, my_jam)
+				end
+			else
+				listening_boombox = mo
+			end
+			if prev_listbox ~= mo
+				showtitle = 4*TR
+			end
 		end
 	end
 }
@@ -220,7 +277,7 @@ mobjinfo[MT_SOAP_BOOMBOX] = {
 	height = 28*FRACUNIT,
 	radius = 14*FRACUNIT,
 	flags = MF_NOCLIPTHING,
-	painchance = FU / 10 -- special tune chance
+	painchance = FU, --FU / 6 -- special tune chance
 }
 addHook("ShouldDamage",function(mo,_,_,_,dmgt)
 	if dmgt == DMG_DEATHPIT
@@ -261,8 +318,73 @@ addHook("ThinkFrame",do
 			this_musvol = dest_fade
 		end
 	end
+	prev_listbox = listening_boombox
 	listening_boombox = nil
+	
+	showtitle = max($ - 1, 0)
 end)
+
+local last_caption = nil
+addHook("HUD",function(v,p,cam)
+	if not v.dointerp
+		v.dointerp = function(tag)
+			if v.interpolate == nil then return end
+			v.interpolate(tag)
+		end
+	end
+	if not (prev_listbox and prev_listbox.valid) then return end
+	
+	local jam_t = SOAP_BOOMBOXJAMS[prev_listbox.songid or 1]
+	local result = K_GetScreenCoords(v,p,cam, prev_listbox, {anglecliponly = true})
+	
+	-- credits drawer
+	if (showtitle and jam_t.credits and result.onscreen)
+		local fade = 0
+		if showtitle < 9
+			fade = (10 - showtitle) << V_ALPHASHIFT
+		end
+		v.dointerp(true)
+		v.drawString(result.x,result.y + 4*FU, "\025  "..jam_t.credits[1], V_ALLOWLOWERCASE|fade, "small-thin-fixed-center")
+		v.drawString(result.x,result.y + 8*FU, jam_t.credits[2], V_GRAYMAP|V_ALLOWLOWERCASE|fade, "small-thin-fixed-center")
+		v.dointerp(false)
+	end
+	
+	-- caption drawer
+	local ticker = leveltime - listening_leveltime
+	if not (jam_t.captions) then return end
+	local captions = jam_t.captions
+	
+	if (captions[ticker] ~= nil)
+		last_caption = captions[ticker]
+	end
+	if not last_caption then return end
+	local numcaptions = #last_caption
+	
+	--v.drawString(result.x,result.y + 8*FU, ("%.2f sec"):format(FixedDiv(ticker, TR)), V_ALLOWLOWERCASE, "thin-fixed-center")
+	if not result.onscreen then return end
+	if numcaptions == 1 and last_caption[1] == "" then return end
+	
+	local work = -36*result.scale
+	local width = 0
+	for i = 1, numcaptions
+		width = max($, v.stringWidth(last_caption[i], V_ALLOWLOWERCASE, "thin"))
+	end
+	width = $ / 2
+	
+	v.dointerp(true)
+	v.drawStretched(result.x - FU - (width*FU/2), result.y + work - FU,
+		(width + 2)*FU, numcaptions*FU + (FU/2),
+		v.cachePatch("SOAP_CAP_FL"), V_40TRANS
+	)
+	v.drawScaled(result.x,result.y + work + (4*FU * numcaptions), FU, v.cachePatch("SOAP_CAP_AR"), V_40TRANS)
+	
+	for i = 1, numcaptions
+		v.dointerp(1204 + i)
+		v.drawString(result.x,result.y + work, last_caption[i], V_ALLOWLOWERCASE, "small-thin-fixed-center")
+		work = $ + 4*FU
+	end
+	v.dointerp(false)
+end,"game")
 
 addHook("NetVars",function(n)
 	SOAP_BOOMBOXJAMS = n($)
