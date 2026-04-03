@@ -104,7 +104,7 @@ local sixseven_callback = function(spark)
 	spark.sprite = SPR_SOAP_GFX
 	spark.frame = 62|FF_PAPERSPRITE
 	spark.momz = 0
-	spark.renderflags = $|RF_NOCOLORMAPS|RF_FULLBRIGHT
+	spark.renderflags = $|RF_NOCOLORMAPS|RF_FULLBRIGHT|(P_RandomChance(FU/2) and RF_HORIZONTALFLIP or 0)
 	P_ThrustEvenIn2D(spark, spark.angle - ANGLE_90, 8*FU)
 end
 
@@ -309,6 +309,7 @@ SOAP_TAUNTS[SOAP_SKIN] = {
 					end
 					if (me.sixsev_super == 3*TR)
 						S_StartSound(me,sfx_cdfm40)
+						S_StartSound(me,sfx_sp_em2)
 					elseif (me.sixsev_super == 6*TR)
 						S_StartSoundAtVolume(me,sfx_s3k9c,192)
 					end
@@ -321,7 +322,7 @@ SOAP_TAUNTS[SOAP_SKIN] = {
 							dust_type(me),
 							P_RandomRange(6, 10),
 							{me.x,me.y,me.z},
-							16*me.scale,
+							16*me.scale + (me.sixsev_super - TR) * 783,
 							me.scale*7,
 							me.scale,
 							me.scale/2,

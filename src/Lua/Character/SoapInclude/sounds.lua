@@ -111,3 +111,10 @@ sfxinfo[sfx_sp_kco] = {
 	flags = SF_X2AWAYSOUND,
 	caption = "Knockout!!"
 }
+
+-- lol
+SafeFreeslot("sfx_sp_em2")
+sfxinfo[sfx_sp_em2] = {
+	flags = SF_X2AWAYSOUND,
+	caption = "\x89Six seven!!"
+}

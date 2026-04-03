@@ -3063,7 +3063,9 @@ local function try_damage_cases(me,thing, p,soap,DealDamage)
 		
 		DealDamage(thing, me,me, damage)
 		if (thing and thing.valid and thing.flags & MF_BOSS and (thing.health <= 0))
-			hitlag_tics = $ * 5/2
+			hitlag_tics = $ * 3
+			S_StartSound(me, sfx_sp_kco)
+			soap.hud.painsurge = 6
 		end
 		me.momz = $ - (3 * me.scale * soap.gravflip)
 		
@@ -3102,7 +3104,9 @@ local function try_damage_cases(me,thing, p,soap,DealDamage)
 		DealDamage(thing, me,me)
 		
 		if (thing and thing.valid and thing.flags & MF_BOSS and (thing.health <= 0))
-			hitlag_tics = $ * 5/2
+			hitlag_tics = $ * 3
+			S_StartSound(me, sfx_sp_kco)
+			soap.hud.painsurge = 6
 		end
 		
 		Soap_StartQuake(power*2, hitlag_tics,
@@ -3194,7 +3198,9 @@ local function try_damage_cases(me,thing, p,soap,DealDamage)
 		
 		DealDamage(thing, me,me)
 		if (thing and thing.valid and thing.flags & MF_BOSS and (thing.health <= 0))
-			hitlag_tics = $ * 5/2
+			hitlag_tics = $ * 3
+			S_StartSound(me, sfx_sp_kco)
+			soap.hud.painsurge = 6
 		end
 		
 		Soap_StartQuake(power/2, hitlag_tics,
