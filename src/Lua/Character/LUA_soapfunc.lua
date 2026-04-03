@@ -278,6 +278,7 @@ rawset(_G,"Soap_CreateAfterimage", function(p,me)
 	ghost.tics = -1
 	ghost.fuse = 4
 	ghost.renderflags = $|rflags
+	ghost.mirrored = me.mirrored --lol
 	
 	ghost.angle = p.drawangle
 	
