@@ -2389,7 +2389,7 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 			cart.momy = FixedMul($, frac)
 		end
 		cart.rdashed = nil
-
+		
 		if (cart.health and me.health)
 		and (soap.c1)
 			p.powers[pw_carry] = CR_NONE
@@ -2404,6 +2404,12 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 			Soap_DoLunge(p, false)
 			
 			cart.target = nil
+		end
+	elseif (p.powers[pw_carry] == CR_ROLLOUT)
+		-- fix this weird bug
+		if (p.pflags & PF_JUMPED)
+			me.state = S_PLAY_WALK
+			P_MovePlayer(p)
 		end
 	end
 	

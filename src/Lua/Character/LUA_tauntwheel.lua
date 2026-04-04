@@ -497,10 +497,10 @@ SOAP_TAUNTS[SOAP_SKIN] = {
 								found.state = S_PLAY_PAIN
 								p2.drawangle = ang + ANGLE_180
 								
-								P_Thrust(found, ang, 12 * me.scale)
 								if P_IsObjectOnGround(found)
 									found.z = $ + P_MobjFlip(found)
 								end
+								P_Thrust(found, ang, 12 * me.scale)
 								P_SetObjectMomZ(found, 30*me.scale, true)
 								p2.powers[pw_flashing] = flashingtics
 							end
