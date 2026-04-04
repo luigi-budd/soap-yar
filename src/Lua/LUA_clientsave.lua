@@ -8,6 +8,7 @@ local cv_save = {
 	CV.quake_mul.name,
 	CV.taunt_key.name,
 	CV.rotations.name,
+	CV.boomboxsfx.name,
 	
 	CV.SYNC_airdashmode.name,
 }

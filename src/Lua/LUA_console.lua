@@ -101,6 +101,14 @@ CV.rotations = CV_RegisterVar({
 })
 CV.PossibleValues["soap_spriterot"] = {values = rotations_pv, length = 2}
 
+local boombox_pv = {Off = 0, On = 1, MineOnly = 2}
+CV.boomboxsfx = CV_RegisterVar({
+	name = "soap_boomboxsfx",
+	defaultvalue = "On",
+	flags = CV_SHOWMODIF,
+	PossibleValue = boombox_pv,
+})
+CV.PossibleValues["soap_boomboxsfx"] = {values = boombox_pv, length = 3}
 
 -- cvars below here will need to be synched
 -- as of 2.2.15, because these all have a `can_change` field,

@@ -27,6 +27,7 @@ end
 
 local menu_buf = ""
 local menu_bufid = MenuLib.newBufferID()
+local menu_tooltip = nil
 
 local sld_id = 0
 local sld_grabbed = false
@@ -87,6 +88,7 @@ SOAP_MENUS.buttontoggle = function(v, x,y, width, props)
 				ML.client.commandbuffer = "toggle "..cv_name
 				S_StartSound(nil,sfx_menu1)
 			end
+			menu_tooltip = props.tooltip
 		end
 		SOAP_MENUS.drawRounded(v, left + 1 + (bhalf*cv.value), y + 2, 10, "SMALL", v.getColormap(TC_DEFAULT,cv.value and SKINCOLOR_GREEN or SKINCOLOR_RED))
 		v.drawString(left+3 + ((bhalf+7)*(1-cv.value)),y+3, cv.value and "On" or "Off", V_ALLOWLOWERCASE,cv.value and "thin" or "thin-right")
@@ -128,6 +130,7 @@ SOAP_MENUS.buttontoggle = function(v, x,y, width, props)
 				ML.client.commandbuffer = cv_name.." "..((cv.value + 1) % items)
 				S_StartSound(nil,sfx_menu1)
 			end
+			menu_tooltip = props.tooltip
 		end
 		for i = 0, items - 1
 			if i == cv.value
@@ -335,7 +338,7 @@ ML.addMenu({
 	stringId = "soap_options",
 	title = "Soap Options",
 	width = 290,
-	height = 130,
+	height = 170,
 	ms_flags = MS_NOANIM,
 	drawer = function(v,ML,menu, props)
 		local cx = props.corner_x + 2
@@ -349,11 +352,11 @@ ML.addMenu({
 		
 		SOAP_MENUS.buttontoggle(v, cx,cy, menu.width - 4, {
 			cv_name = "soap_afterimagestyle", name = "Afterimage Style",
-			cv_type = "custom",
+			cv_type = "custom", tooltip = {"Changes the appearance of your afterimages.", "Affects the afterimages of every player on your screen."}
 		})
 		SOAP_MENUS.buttontoggle(v, cx,cy+13, menu.width - 4, {
 			cv_name = "soap_quakes", name = "Earthquakes",
-			cv_type = "custom",
+			cv_type = "custom", tooltip = {"Adjusts the intensity of screenshake."}
 		})
 		SOAP_MENUS.buttontoggle(v, cx,cy+26, menu.width - 4, {
 			cv_name = "soap_tauntkey", name = "Taunt Key",
@@ -366,7 +369,7 @@ ML.addMenu({
 				y = $ + 1
 				do
 					local w = 36
-					hover = ML.mouseInZone(right-w, y, w,10)
+					hover = ML.mouseInZone(right-w, y, w,10) and not (#ML.client.popups)
 					local c = 0
 					if hover
 						c = (ML.client.mouseHeld > 0) and 4 or 2
@@ -396,13 +399,17 @@ ML.addMenu({
 		})
 		SOAP_MENUS.buttontoggle(v, cx,cy+39, menu.width - 4, {
 			cv_name = "soap_b-rushmode", name = "B-Rush Mode",
-			cv_type = "custom",
+			cv_type = "custom", tooltip = {"Change which direction Soap's B-Rush will send you."}
 		})
 		SOAP_MENUS.buttontoggle(v, cx,cy+52, menu.width - 4, {
-			cv_name = "soap_spriterot", name = "Sprite Rotations",
-			cv_type = "custom",
+			cv_name = "soap_spriterot", name = "Sprite Rotation",
+			cv_type = "custom", tooltip = {"Toggles sprite rotations for certain VFX."}
 		})
-		cy = $ + 65
+		SOAP_MENUS.buttontoggle(v, cx,cy+65, menu.width - 4, {
+			cv_name = "soap_boomboxsfx", name = "Boombox Audio",
+			cv_type = "custom", tooltip = {"Adjusts the audio from Soap's boomboxes."}
+		})
+		cy = $ + 78
 		
 		v.drawString(cx, cy, "Netvars", V_ALLOWLOWERCASE|V_YELLOWMAP,"left")
 		v.drawFill(cx, cy+9, menu.width - 4, 2, 26)
@@ -433,6 +440,14 @@ ML.addMenu({
 		end
 		
 		sld_display.tics = max($ - 1, 0)
+		if menu_tooltip
+			local y = props.corner_y + menu.height - 23
+			for i = 1, #menu_tooltip
+				v.drawString(props.corner_x + 1,y, menu_tooltip[i], V_ALLOWLOWERCASE, "thin")
+				y = $ + 10
+			end
+			menu_tooltip = nil
+		end
 	end
 })
 
