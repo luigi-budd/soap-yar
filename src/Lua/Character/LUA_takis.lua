@@ -450,26 +450,28 @@ Takis_Hook.addHook("Takis_Thinker",function(p)
 				end,
 				ang, vertang
 			)
-			local sidepush = FixedDiv(me.radius,me.scale) * 3/2
-			local toppush = FixedDiv(FixedDiv(me.radius,me.scale) * 3/2, 8*FU)
-			local angstep = FixedDiv(45*FU, 8*FU)
-			for i = -8, 8, 2
-				if not i then continue end
-				local s = P_SpawnMobjFromMobj(me,
-					P_ReturnThrustX(nil, ang + ANGLE_90, sidepush * sign(i)),
-					P_ReturnThrustY(nil, ang + ANGLE_90, sidepush * sign(i)),
-					toppush * abs(i), MT_PARTICLE
-				)
-				s.scale = $ / 2
-				s.state = S_SOAP_IMPACT_LINE
-				s.angle = ang - ANG15 * sign(i) + ANGLE_180
-				s.rollangle = InvAngle(vertang) + FixedAngle(angstep * abs(i)) - ANGLE_22h
-				s.translation = "AllWhite"
-				s.tracer = inf
-				s.renderflags = $|RF_ALWAYSONTOP
-				s.momx = $ + me.momx / 2
-				s.momy = $ + me.momy / 2
-				s.momz = $ + me.momz / 2
+			if CV.rotations.value
+				local sidepush = FixedDiv(me.radius,me.scale) * 3/2
+				local toppush = FixedDiv(FixedDiv(me.radius,me.scale) * 3/2, 8*FU)
+				local angstep = FixedDiv(45*FU, 8*FU)
+				for i = -8, 8, 2
+					if not i then continue end
+					local s = P_SpawnMobjFromMobj(me,
+						P_ReturnThrustX(nil, ang + ANGLE_90, sidepush * sign(i)),
+						P_ReturnThrustY(nil, ang + ANGLE_90, sidepush * sign(i)),
+						toppush * abs(i), MT_PARTICLE
+					)
+					s.scale = $ / 2
+					s.state = S_SOAP_IMPACT_LINE
+					s.angle = ang - ANG15 * sign(i) + ANGLE_180
+					s.rollangle = InvAngle(vertang) + FixedAngle(angstep * abs(i)) - ANGLE_22h
+					s.translation = "AllWhite"
+					s.tracer = inf
+					s.renderflags = $|RF_ALWAYSONTOP
+					s.momx = $ + me.momx / 2
+					s.momy = $ + me.momy / 2
+					s.momz = $ + me.momz / 2
+				end
 			end
 			Soap_SquashMacro(p, {ease_func = "outsine", ease_time = 12, x = -FU*7/10, y = -FU*3/10})
 			

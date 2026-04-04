@@ -772,7 +772,11 @@ rawset(_G,"Soap_ImpactVFX",function(src,inf, distmul, scalemul, forcesplat)
 		)
 		s.state = S_SOAP_IMPACT_LINE2
 		s.angle = ha
-		s.rollangle = va
+		if CV.rotations.value
+			s.rollangle = va
+		else
+			s.flags2 = $|MF2_DONTDRAW
+		end
 		s.color = damagecolor
 		s.tracer = inf
 		s.renderflags = $|RF_ALWAYSONTOP|rflags
@@ -1124,8 +1128,10 @@ rawset(_G, "Soap_WindLines", function(me,rmomz,color,forceang,forceside)
 		mocolor = SKINCOLOR_SAPPHIRE
 	end
 	wind.color = mocolor
-	wind.rollangle = zangle
-    
+	if CV.rotations.value
+		wind.rollangle = zangle
+    end
+	
 	wind.source = me
 	return wind
 end)
@@ -2509,6 +2515,9 @@ local function VFX_Waterrun(p,me,soap)
 			end
 			
 			rollangle = InvAngle(pitchroll)
+		end
+		if not CV.rotations.value
+			rollangle = 0
 		end
 		
 		local speedup_frame = false

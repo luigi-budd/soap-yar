@@ -314,18 +314,20 @@ rawset(_G,"Takis_DoClutch",function(p,riding)
 		fx.flags = $ &~MF_NOCLIPHEIGHT
 		
 		if not combod then continue end
-		for j = 0,4
-			local s = P_SpawnMobjFromMobj(me,
-				P_ReturnThrustX(nil, ang + angoff*i, dist) + pushx*i,
-				P_ReturnThrustY(nil, ang + angoff*i, dist) + pushy*i,
-				0, MT_PARTICLE
-			)
-			s.state = S_SOAP_IMPACT_LINE
-			s.angle = fx.angle
-			s.rollangle = FixedAngle(angrot * j)
-			s.tracer = inf
-			s.renderflags = $|RF_ALWAYSONTOP
-			s.momx,s.momy = mo.momx/2,mo.momy/2
+		if CV.rotations.value
+			for j = 0,4
+				local s = P_SpawnMobjFromMobj(me,
+					P_ReturnThrustX(nil, ang + angoff*i, dist) + pushx*i,
+					P_ReturnThrustY(nil, ang + angoff*i, dist) + pushy*i,
+					0, MT_PARTICLE
+				)
+				s.state = S_SOAP_IMPACT_LINE
+				s.angle = fx.angle
+				s.rollangle = FixedAngle(angrot * j)
+				s.tracer = inf
+				s.renderflags = $|RF_ALWAYSONTOP
+				s.momx,s.momy = mo.momx/2,mo.momy/2
+			end
 		end
 	end
 end)

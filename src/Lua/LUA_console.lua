@@ -92,6 +92,16 @@ CV.taunt_key = CV_RegisterVar({
 	flags = CV_SHOWMODIF,
 })
 
+local rotations_pv = {Off = 0, On = 1}
+CV.rotations = CV_RegisterVar({
+	name = "soap_spriterot",
+	defaultvalue = "On",
+	flags = CV_SHOWMODIF,
+	PossibleValue = rotations_pv,
+})
+CV.PossibleValues["soap_spriterot"] = {values = rotations_pv, length = 2}
+
+
 -- cvars below here will need to be synched
 -- as of 2.2.15, because these all have a `can_change` field,
 -- we cant get the consvar_t directly from the CV_RegisterVar call

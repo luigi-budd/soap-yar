@@ -398,7 +398,11 @@ ML.addMenu({
 			cv_name = "soap_b-rushmode", name = "B-Rush Mode",
 			cv_type = "custom",
 		})
-		cy = $ + 52
+		SOAP_MENUS.buttontoggle(v, cx,cy+52, menu.width - 4, {
+			cv_name = "soap_spriterot", name = "Sprite Rotations",
+			cv_type = "custom",
+		})
+		cy = $ + 65
 		
 		v.drawString(cx, cy, "Netvars", V_ALLOWLOWERCASE|V_YELLOWMAP,"left")
 		v.drawFill(cx, cy+9, menu.width - 4, 2, 26)

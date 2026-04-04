@@ -1,3 +1,5 @@
+local CV = SOAP_CV
+
 local AI_MINALPHA = FU/4
 addHook("MobjThinker",function(ai)
 	if (ai.target and ai.target.valid
@@ -29,14 +31,6 @@ addHook("MobjThinker",function(wind)
 	if not (wind and wind.valid) then return end
 	if (wind.source and wind.source.valid and wind.source.hitlag)
 		return true
-	end
-	
-	if wind.tics <= halftics
-		local factor = FixedDiv(wind.tics*FU,halftics*FU) --* (halftics - wind.tics)
-		
-		--worse effect but i cant get the squishing
-		--to look good
-		--wind.alpha = factor
 	end
 	
 	if wind.topwind
@@ -84,7 +78,9 @@ addHook("MobjThinker",function(bump)
 	end
 	
 	bump.momz = $ + P_GetMobjGravity(bump)
-	bump.rollangle = $ + (bump.random or 0)
+	if CV.rotations.value
+		bump.rollangle = $ + (bump.random or 0)
+	end
 	bump.lifetime = (bump.lifetime ~= nil and $+1 or 0)
 	
 	if bump.shoemode
@@ -131,7 +127,9 @@ addHook("MobjThinker",function(mo)
 		return
 	end
 	
-	mo.rollangle = $ + ANG10
+	if CV.rotations.value
+		mo.rollangle = $ + ANG10
+	end
 	mo.timealive = $ + 10*FU
 	mo.extravalue1 = $ + 23*FU
 	local org = mo.target
@@ -228,7 +226,9 @@ local function NewVFXThink(v)
 		end
 	end
 	if (v.state == S_SOAP_HITM_STAR)
-		v.rollangle = $ + v.vfx_roll
+		if CV.rotations.value
+			v.rollangle = $ + v.vfx_roll
+		end
 		
 		--v.momx = FixedMul($, STAR_DRAG)
 		--v.momy = FixedMul($, STAR_DRAG)

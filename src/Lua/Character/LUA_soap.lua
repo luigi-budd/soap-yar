@@ -109,6 +109,10 @@ local function dust_noviewmobj(dust)
 end
 
 local function P_PitchRoll(me, frac)
+	-- youll still have to turn off slope pitch-roll from
+	-- srb2edit's menus
+	if not CV.rotations.value then return end
+	
 	me.eflags = $|MFE_NOPITCHROLLEASING
 	local angle = R_PointToAngle2(0,0, me.momx,me.momy)
 	local mang = R_PointToAngle2(0,0, FixedHypot(me.momx, me.momy), me.momz)
@@ -1285,26 +1289,28 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 				end,
 				angle, vertang
 			)
-			local sidepush = FixedDiv(me.radius,me.scale) * 3/2
-			local toppush = FixedDiv(FixedDiv(me.radius,me.scale) * 3/2, 8*FU)
-			local angstep = FixedDiv(45*FU, 8*FU)
-			for i = -8, 8, 2
-				if not i then continue end
-				local s = P_SpawnMobjFromMobj(me,
-					P_ReturnThrustX(nil, angle + ANGLE_90, sidepush * sign(i)),
-					P_ReturnThrustY(nil, angle + ANGLE_90, sidepush * sign(i)),
-					toppush * abs(i), MT_PARTICLE
-				)
-				s.scale = $ / 2
-				s.state = S_SOAP_IMPACT_LINE
-				s.angle = angle - ANG15 * sign(i) + ANGLE_180
-				s.rollangle = vertang + FixedAngle(angstep * abs(i)) - ANGLE_22h
-				s.translation = "AllWhite"
-				s.tracer = inf
-				s.renderflags = $|RF_ALWAYSONTOP
-				s.momx = $ + me.momx / 2
-				s.momy = $ + me.momy / 2
-				s.momz = $ + me.momz / 2
+			if CV.rotations.value
+				local sidepush = FixedDiv(me.radius,me.scale) * 3/2
+				local toppush = FixedDiv(FixedDiv(me.radius,me.scale) * 3/2, 8*FU)
+				local angstep = FixedDiv(45*FU, 8*FU)
+				for i = -8, 8, 2
+					if not i then continue end
+					local s = P_SpawnMobjFromMobj(me,
+						P_ReturnThrustX(nil, angle + ANGLE_90, sidepush * sign(i)),
+						P_ReturnThrustY(nil, angle + ANGLE_90, sidepush * sign(i)),
+						toppush * abs(i), MT_PARTICLE
+					)
+					s.scale = $ / 2
+					s.state = S_SOAP_IMPACT_LINE
+					s.angle = angle - ANG15 * sign(i) + ANGLE_180
+					s.rollangle = vertang + FixedAngle(angstep * abs(i)) - ANGLE_22h
+					s.translation = "AllWhite"
+					s.tracer = inf
+					s.renderflags = $|RF_ALWAYSONTOP
+					s.momx = $ + me.momx / 2
+					s.momy = $ + me.momy / 2
+					s.momz = $ + me.momz / 2
+				end
 			end
 			
 			if soap.airdashcharge == 0
@@ -2741,6 +2747,21 @@ addHook("FollowMobj",function(p, m_peel) --master peel
 	local myflip = P_MobjFlip(me)
 	local mycolor = me.color
 	local mycolorized = me.colorized
+	local myrollangle = me.rollangle
+	
+	local pitchroll = 0
+	local pitch = me.pitch
+	local roll = me.roll
+	--we're awesome and have pitch/roll-tation
+	if takis_custombuild
+	and (cv_pitchroll and cv_pitchroll.value)
+		pitchroll = FixedMul(pitch,r_sin) + FixedMul(roll,r_cos)
+	end
+	myrollangle = $ + pitchroll
+	
+	if not CV.rotations.value
+		myrollangle = 0
+	end
 	
 	for i = -peels, peels
 		if i == 0
@@ -2819,16 +2840,7 @@ addHook("FollowMobj",function(p, m_peel) --master peel
 		peel.pitch,peel.roll = 0,0
 		peel.translation = mytrans
 		
-		local pitchroll = 0
-		local pitch = me.pitch
-		local roll = me.roll
-		--we're awesome and have pitch/roll-tation
-		if takis_custombuild
-		and (cv_pitchroll and cv_pitchroll.value)
-			pitchroll = FixedMul(pitch,r_sin) + FixedMul(roll,r_cos)
-		end
-		
-		peel.rollangle = me.rollangle + pitchroll
+		peel.rollangle = myrollangle
 		side = $ - sidemove
 	end
 end,MT_SOAP_PEELOUT)
