@@ -1,3 +1,5 @@
+local CV = SOAP_CV
+
 SafeFreeslot("sfx_sp_jam")
 sfxinfo[sfx_sp_jam].caption = "\x89".."Boombox Jam\x80"
 SafeFreeslot("sfx_sp_epi")
@@ -28,6 +30,8 @@ local set_musvol = false
 local this_musvol = 100
 local listening_boombox, prev_listbox
 local listening_leveltime = 0
+-- CV.boomboxsfx breaks the fade out here if theres more than 1 boombox
+-- but honestly it might just be better like that
 local showtitle = 0
 
 local boomjam_bpm = 130*FU
@@ -211,8 +215,12 @@ states[S_SOAP_BOOMBOX] = {
 		-- should stop this boombox from playing its tune if we're
 		-- already listening to one
 		and not (prev_listbox and prev_listbox.valid and prev_listbox ~= mo)
+		and (CV.boomboxsfx.value == 1 or (CV.boomboxsfx.value == 2 and mo.tracer.player == displayplayer))
 			S_StartSound(mo,my_jam)
 			listening_leveltime = leveltime
+		elseif (CV.boomboxsfx.value == 0)
+		or (CV.boomboxsfx.value == 2 and mo.tracer.player ~= displayplayer)
+			S_StopSoundByID(mo,my_jam)
 		end
 		
 		if P_IsObjectOnGround(mo)
@@ -233,6 +241,7 @@ states[S_SOAP_BOOMBOX] = {
 		end
 		
 		if (displayplayer and displayplayer.valid)
+		and (CV.boomboxsfx.value)
 			local dis = displayplayer
 			if not (dis.realmo and dis.realmo.valid) then return end
 			local dmo = dis.realmo
@@ -253,7 +262,9 @@ states[S_SOAP_BOOMBOX] = {
 			
 			if (prev_listbox and prev_listbox.valid)
 				local canplay = true
+				-- prioritizes our boomboxes before others
 				if (displayplayer.soaptable.boombox and displayplayer.soaptable.boombox.valid)
+				or (CV.boomboxsfx.value == 2)
 					canplay = displayplayer.soaptable.boombox == mo
 				end
 				if canplay
@@ -262,7 +273,13 @@ states[S_SOAP_BOOMBOX] = {
 					S_StopSoundByID(mo, my_jam)
 				end
 			else
-				listening_boombox = mo
+				-- not currently listening to one
+				if (CV.boomboxsfx.value == 2)
+				and not (displayplayer.soaptable.boombox and displayplayer.soaptable.boombox.valid)
+					-- do nothing lol
+				else
+					listening_boombox = mo
+				end
 			end
 			if prev_listbox ~= mo
 				showtitle = 4*TR
@@ -364,7 +381,7 @@ addHook("HUD",function(v,p,cam)
 	if not result.onscreen then return end
 	if numcaptions == 1 and last_caption[1] == "" then return end
 	
-	local work = -36*result.scale
+	local work = -32*result.scale - (4 * numcaptions)*FU
 	local width = 0
 	for i = 1, numcaptions
 		width = max($, v.stringWidth(last_caption[i], V_ALLOWLOWERCASE, "thin"))
