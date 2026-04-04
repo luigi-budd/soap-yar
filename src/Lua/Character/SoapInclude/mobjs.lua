@@ -70,10 +70,17 @@ mobjinfo[MT_SOAP_PEELOUT] = {
 SafeFreeslot("SPR_SOAP_SPEEDLINE")
 SafeFreeslot("S_SOAP_SPEEDLINE")
 SafeFreeslot("MT_SOAP_SPEEDLINE")
+local speedlinemul = tofixed("1.93")
 states[S_SOAP_SPEEDLINE] = {
     sprite = SPR_SOAP_SPEEDLINE,
-    frame = A|FF_PAPERSPRITE|FF_SEMIBRIGHT,
-	tics = 12,
+    frame = A|FF_PAPERSPRITE|FF_SEMIBRIGHT|FF_ANIMATE,
+	tics = 6 * 1,
+	var1 = 5,
+	var2 = 1,
+	action = function(mo)
+		mo.spritexscale = FixedMul($, speedlinemul)
+		mo.spriteyscale = mo.spritexscale
+	end
 }
 mobjinfo[MT_SOAP_SPEEDLINE] = {
 	doomednum = -1,
@@ -81,7 +88,7 @@ mobjinfo[MT_SOAP_SPEEDLINE] = {
 	spawnhealth = 1,
 	height = 6*FRACUNIT,
 	radius = 6*FRACUNIT,
-	flags = MF_NOCLIP|MF_NOCLIPHEIGHT|MF_NOGRAVITY
+	flags = MF_NOCLIP|MF_NOCLIPHEIGHT|MF_NOGRAVITY|MF_RUNSPAWNFUNC
 }
 
 SafeFreeslot("SPR_SOAP_WATERTRAIL")

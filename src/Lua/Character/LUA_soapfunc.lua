@@ -2964,6 +2964,7 @@ rawset(_G, "Soap_SuperThinker",function(p,me,soap)
 	p.powers[pw_underwater] = 0
 	
 	-- punch
+	/*
 	if (soap.use == 1)
 	and (soap.use_R)
 	and (soap.onGround)
@@ -3084,6 +3085,16 @@ rawset(_G, "Soap_SuperThinker",function(p,me,soap)
 		if enemyhit
 			me.soap_punchtics = 0
 		end
+	end
+	*/
+	
+	if (soap.firenormal)
+		P_SPMAngle(me, MT_REDRING, me.angle, 1, 0)
+		local drag = FU * 93/100
+		me.momx = FixedMul($, drag)
+		me.momy = FixedMul($, drag)
+		me.momz = FixedMul($, drag)
+		p.drawangle = me.angle
 	end
 end)
 

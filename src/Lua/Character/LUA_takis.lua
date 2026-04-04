@@ -90,6 +90,7 @@ local function generic_slingshot(p,me,takis, stop_ang)
 		me.state = S_PLAY_TAKIS_TORNADO
 		
 		--reset clutch timer
+		takis.clutch.combo = $ + 1
 		takis.clutch.time = CLUTCH_TICS
 		takis.clutch.spamtime = CLUTCH_TICS
 		takis.clutch.misfire = CLUTCH_MISFIRE
@@ -1471,11 +1472,12 @@ local function try_pvp_collide(me,thing)
 		
 		local power = FixedMul(10*FU + max(soap.accspeed - 20*FU,0), me.scale)
 		
-		local hitlag_tics = 5
+		local hitlag_tics = 6
 		--P_Thrust(me, R_PointToAngle2(0,0,me.momx,me.momy), me.scale*8)
 		
 		DealDamage(thing, me,me)
 		if generic_slingshot(p,me,soap)
+			hitlag_tics = $ + FixedDiv(soap.accspeed, 50*FU) / FU
 			Soap_Hitlag.addHitlag(me, hitlag_tics, false)
 			Soap_DamageSfx(thing, FU*3/4,FU,nil, {volume = 255/2})
 			S_StartSoundAtVolume(me, sfx_tk_hml, 255*3/4)

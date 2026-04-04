@@ -3173,7 +3173,7 @@ local function try_damage_cases(me,thing, p,soap,DealDamage)
 			hitlag_tics = $ * 3/2
 		end
 		
-		P_Thrust(me, R_PointToAngle2(0,0,me.momx,me.momy), me.scale*8)
+		P_Thrust(me, R_PointToAngle2(0,0,me.momx,me.momy), me.scale*11)
 		if (me.state == S_PLAY_DASH or me.state == S_PLAY_SOAP_RAM)
 			me.state = S_PLAY_SOAP_RAM
 			local follow = P_SpawnMobjFromMobj(me,0,0,0,MT_SOAP_FREEZEGFX)

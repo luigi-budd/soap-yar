@@ -36,7 +36,7 @@ addHook("MobjThinker",function(wind)
 		
 		--worse effect but i cant get the squishing
 		--to look good
-		wind.alpha = factor
+		--wind.alpha = factor
 	end
 	
 	if wind.topwind
