@@ -116,5 +116,5 @@ sfxinfo[sfx_sp_kco] = {
 SafeFreeslot("sfx_sp_em2")
 sfxinfo[sfx_sp_em2] = {
 	flags = SF_X2AWAYSOUND,
-	caption = "\x89Six seven!!"
+	caption = "\x89Six seven!!\x80"
 }
