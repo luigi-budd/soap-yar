@@ -22,6 +22,12 @@ addHook("NetVars",function(n) iAmLua = n($); end)
 
 local function CVSynched_CanChange(cv, value)
 	-- ..? i guess this is okay to comment out..
+	-- actually now that i think about it
+	-- theres really no real use for this canchange function,
+	-- since the command already checks validity,
+	-- and blocking the cvar from changing its value anyway
+	-- is probably whats causing this cvar to load as the wrong
+	-- option sometimes
 	/*
 	if gamestate ~= GS_LEVEL
 		-- its whatever, itll still be synched when we join a game
@@ -32,12 +38,12 @@ local function CVSynched_CanChange(cv, value)
 		print("You must be in a level to use this.")
 		return false
 	end
-	*/
 	
 	if not (consoleplayer and consoleplayer.valid and consoleplayer.soaptable)
 		print("You must be in a level to use this.")
 		return false
 	end
+	*/
 	return true
 end
 
@@ -123,6 +129,7 @@ CV.SYNC_airdashmode = CV_RegisterVar({
 	flags = CV_CALL,
 	PossibleValue = brush_pv,
 	func = function(cv)
+		if not (consoleplayer and consoleplayer.valid) then return end
 		COM_BufInsertText(consoleplayer, "_soap_b-rushmode "..iAmLua.." "..cv.string)
 	end,
 	can_change = CVSynched_CanChange,
