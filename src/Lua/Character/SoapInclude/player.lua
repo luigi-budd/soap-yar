@@ -14,8 +14,7 @@ spr2defaults[SPR2_SLID] = SPR2_ROLL
 SafeFreeslot("S_PLAY_SOAP_FLEX")
 states[S_PLAY_SOAP_FLEX] = {
     sprite = SPR_PLAY,
-    frame = SPR2_FLEX,
-    var2 = 2,
+    frame = SPR2_FLEX|FF_RANDOMANIM,
     tics = TR,
     nextstate = S_PLAY_STND
 }

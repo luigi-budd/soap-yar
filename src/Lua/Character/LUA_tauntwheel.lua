@@ -114,7 +114,7 @@ SOAP_TAUNTS[SOAP_SKIN] = {
 		name = "Flex",
 		
 		run = function(p, me, soap, taunt)
-			S_StartSound(me,sfx_flex)
+			S_StartSound(me, (me.skin == TAKIS_SKIN) and sfx_tk_whp or sfx_flex)
 			me.state = S_PLAY_SOAP_FLEX
 			soap.stasistic = TR
 			taunt.tics = soap.stasistic
@@ -125,11 +125,15 @@ SOAP_TAUNTS[SOAP_SKIN] = {
 			local angle = (p.cmd.angleturn << 16)
 			if soap.in2D then angle = ANGLE_90 end
 			
-			p.drawangle = angle + ANGLE_90
+			local angoff = ANGLE_90
+			if (me.skin == TAKIS_SKIN)
+				angoff = ANGLE_180
+			end
+			p.drawangle = angle + angoff
 		end,
 		drawer = function(v,i, x,y, selected)
 			chardrawer(v,i, x,y, {
-				skin = SOAP_SKIN,
+				skin = skins[consoleplayer.skin].name,
 				spr2 = SPR2_FLEX,
 				frame = A, angle = 1
 			}, selected)
@@ -157,7 +161,7 @@ SOAP_TAUNTS[SOAP_SKIN] = {
 		end,
 		drawer = function(v,i, x,y, selected)
 			chardrawer(v,i, x,y, {
-				skin = SOAP_SKIN,
+				skin = skins[consoleplayer.skin].name,
 				spr2 = SPR2_APOS,
 				frame = A, angle = 1
 			}, selected)
@@ -196,9 +200,11 @@ SOAP_TAUNTS[SOAP_SKIN] = {
 			if cancelConds(p)
 			or me.tempangle == nil
 				me.tempangle = nil
-				me.state = S_PLAY_WALK
-				P_MovePlayer(p)
-				Soap_ResetState(p)
+				if not (P_PlayerInPain(p) or me.state == S_PLAY_PAIN)
+					me.state = S_PLAY_WALK
+					P_MovePlayer(p)
+					Soap_ResetState(p)
+				end
 				soap.stasistic, taunt.tics = 0,0
 			else
 				soap.stasistic = max($, 2)
@@ -239,9 +245,11 @@ SOAP_TAUNTS[SOAP_SKIN] = {
 		end,
 		think = function(p, me, soap, taunt)
 			if cancelConds(p)
-				me.state = S_PLAY_WALK
-				P_MovePlayer(p)
-				Soap_ResetState(p)
+				if not (P_PlayerInPain(p) or me.state == S_PLAY_PAIN)
+					me.state = S_PLAY_WALK
+					P_MovePlayer(p)
+					Soap_ResetState(p)
+				end
 				soap.stasistic, taunt.tics = 0,0
 			else
 				soap.stasistic = max($, 2)
@@ -273,9 +281,11 @@ SOAP_TAUNTS[SOAP_SKIN] = {
 		end,
 		think = function(p, me, soap, taunt)
 			if cancelConds(p,nil, true)
-				me.state = S_PLAY_WALK
-				P_MovePlayer(p)
-				Soap_ResetState(p)
+				if not (P_PlayerInPain(p) or me.state == S_PLAY_PAIN)
+					me.state = S_PLAY_WALK
+					P_MovePlayer(p)
+					Soap_ResetState(p)
+				end
 				soap.stasistic, taunt.tics = 0,0
 				me.sixseveeeen = nil
 				me.sixsev_adjust = nil
@@ -411,14 +421,17 @@ SOAP_TAUNTS[SOAP_SKIN] = {
 			taunt.tics = 34
 			
 			me.momx,me.momy = p.cmomx,p.cmomy
+			soap.accspeed = 0
 		end,
 		think = function(p, me, soap, taunt)
 			if cancelConds(p, true)
 			or me.tempangle == nil
 				me.tempangle = nil
-				me.state = S_PLAY_WALK
-				P_MovePlayer(p)
-				Soap_ResetState(p)
+				if not (P_PlayerInPain(p) or me.state == S_PLAY_PAIN)
+					me.state = S_PLAY_WALK
+					P_MovePlayer(p)
+					Soap_ResetState(p)
+				end
 				soap.stasistic, taunt.tics = 0,0
 				return
 			end
@@ -568,8 +581,57 @@ SOAP_TAUNTS[SOAP_SKIN] = {
 	},
 }
 SOAP_TAUNTS[TAKIS_SKIN] = {
-	[1] = SOAP_TAUNTS[SOAP_SKIN][3],
-	[2] = SOAP_TAUNTS[SOAP_SKIN][5],
+	[1] = SOAP_TAUNTS[SOAP_SKIN][1],
+	[2] = SOAP_TAUNTS[SOAP_SKIN][2],
+	[3] = SOAP_TAUNTS[SOAP_SKIN][3],
+	[4] = {
+		name = "Surfin' Bird",
+		
+		run = function(p,me,soap, taunt)
+			soap.stasistic = max($, 2)
+			taunt.tics = 2
+			
+			me.momx,me.momy = p.cmomx,p.cmomy
+			me.state = S_PLAY_SOAP_BREAKDANCE
+			
+			soap.breakdance = 0
+		end,
+		think = function(p,me,soap, taunt)
+			if cancelConds(p)
+				if not (P_PlayerInPain(p) or me.state == S_PLAY_PAIN)
+					me.state = S_PLAY_WALK
+					P_MovePlayer(p)
+					Soap_ResetState(p)
+				end
+				soap.stasistic, taunt.tics = 0,0
+				return
+			end
+			
+			soap.stasistic = max($, 2)
+			taunt.tics = 2
+			if me.state ~= S_PLAY_SOAP_BREAKDANCE
+				me.state = S_PLAY_SOAP_BREAKDANCE
+			end
+			
+			--init
+			local timer = soap.breakdance % skins[p.skin].sprites[SPR2_BRDA].numframes
+			me.frame = ($ &~FF_FRAMEMASK)|(timer)
+			
+			p.drawangle = (p.cmd.angleturn << 16) + ANGLE_180
+			local incre_frame = (leveltime & 3) == 0
+			if incre_frame
+				soap.breakdance = $ + 1
+			end
+		end,
+		drawer = function(v,i, x,y, selected)
+			chardrawer(v,i, x,y, {
+				skin = skins[consoleplayer.skin].name,
+				spr2 = SPR2_BRDA,
+				frame = A, angle = 0
+			}, selected)
+		end,
+	},
+	[5] = SOAP_TAUNTS[SOAP_SKIN][5],
 }
 
 local cmd_sig = "iAmLua"..P_RandomFixed()
@@ -846,10 +908,12 @@ addHook("HUD",function(v,p)
 	
 	if (dist >= wheel_start)
 		local taunt_t = TAUNTS[taunt.pointing + 1]
-		v.drawString(160*FU, 100*FU + (wheel_radius + 5*FU),
-			taunt_t.name, V_ALLOWLOWERCASE|V_YELLOWMAP,
-			"thin-fixed-center"
-		)
+		if taunt_t
+			v.drawString(160*FU, 100*FU + (wheel_radius + 5*FU),
+				taunt_t.name, V_ALLOWLOWERCASE|V_YELLOWMAP,
+				"thin-fixed-center"
+			)
+		end
 	end
 	
 	v.drawString(160*FU, 100*FU - (wheel_radius + 10*FU),
