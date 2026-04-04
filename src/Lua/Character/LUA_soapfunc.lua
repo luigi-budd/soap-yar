@@ -1818,6 +1818,7 @@ rawset(_G,"Soap_HandleNoAbils", function(p)
 	or (me.punchtarget and me.punchtarget.valid)
 	or (me.punchsource and me.punchsource.valid)
 	or (me.soap_kickme or me.sprite2 == SPR2_MSC2 or me.state == S_PLAY_SOAP_KNOCKOUT)
+	or (p.kart or p.inkart)
 		na = $|SNOABIL_ALL
 	end
 	

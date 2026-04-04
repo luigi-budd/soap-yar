@@ -443,19 +443,20 @@ rawset(_G,"Takis_HandleNoAbils", function(p)
 		end
 	end
 	
-	if (me.state >= S_PLAY_SUPER_TRANS1)
-	and (me.state <= S_PLAY_SUPER_TRANS6)
-	or (me.punchtarget and me.punchtarget.valid)
-	or (me.punchsource and me.punchsource.valid)
-	or (me.soap_kickme or me.sprite2 == SPR2_MSC2 or me.state == S_PLAY_SOAP_KNOCKOUT)
-		na = $|SNOABIL_ALL
-	end
-	
 	if (p.pflags & PF_STASIS)
 	or (soap.stasistic)
 	or (p.powers[pw_nocontrol] or me.reactiontime)
 	or (PSO)
 		na = $|SNOABIL_ALL &~SNOABIL_BOTHTAUNTS
+	end
+	
+	if (me.state >= S_PLAY_SUPER_TRANS1)
+	and (me.state <= S_PLAY_SUPER_TRANS6)
+	or (me.punchtarget and me.punchtarget.valid)
+	or (me.punchsource and me.punchsource.valid)
+	or (me.soap_kickme or me.sprite2 == SPR2_MSC2 or me.state == S_PLAY_SOAP_KNOCKOUT)
+	or (p.kart or p.inkart)
+		na = $|SNOABIL_ALL
 	end
 	
 	-- jump moves
