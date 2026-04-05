@@ -199,6 +199,7 @@ local function NewVFXThink(v)
 		if (v.tics == 1)
 			TryVFXStars(v)
 		elseif (v.tracer and v.tracer.valid or v.target and v.target.valid)
+		and not (v.nosparks)
 			local mobj = v.target or v.tracer
 			if not mobj.hitlag
 				if v.extended
@@ -213,7 +214,9 @@ local function NewVFXThink(v)
 			v.tics = $ + 1
 			v.extended = true
 			
-			if (leveltime % 4 == 0)
+			if (leveltime % 7 == 0)
+			--and (v and v.valid and v.tracer and v.tracer.valid)
+				/*
 				local shck = P_SpawnMobjFromMobj(v, 0,0,0, MT_PARTICLE)
 				shck.state = (P_RandomChance(FU/6) and S_SOAP_HITM_FSHK0 or S_SOAP_HITM_SHK0) + P_RandomRange(0,2)
 				shck.spritexscale = v.spritexscale + Soap_RandomFixedSigned() / 4
@@ -222,6 +225,9 @@ local function NewVFXThink(v)
 				shck.color = v.color
 				shck.colorized = v.colorized
 				shck.rollangle = P_RandomChance(FU/2) and ANGLE_90 or 0
+				*/
+				v.distmul = ($ or FU) + FU
+				Soap_ImpactVFX(v.target or v, v.tracer or v, v.distmul,v.scalemul, false, true)
 			end
 		end
 	end

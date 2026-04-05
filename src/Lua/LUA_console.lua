@@ -130,7 +130,7 @@ CV.SYNC_airdashmode = CV_RegisterVar({
 	PossibleValue = brush_pv,
 	func = function(cv)
 		if not (consoleplayer and consoleplayer.valid) then return end
-		COM_BufInsertText(consoleplayer, "_soap_b-rushmode "..iAmLua.." "..cv.string)
+		COM_BufInsertText(consoleplayer, "_soap_b-rushmode "..iAmLua..' "'..cv.string..'"')
 	end,
 	can_change = CVSynched_CanChange,
 })

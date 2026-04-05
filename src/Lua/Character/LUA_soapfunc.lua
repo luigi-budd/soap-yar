@@ -680,7 +680,7 @@ local damagecolors = {
 	SKINCOLOR_SAPPHIRE
 }
 local vfxheight = 90*FU
-rawset(_G,"Soap_ImpactVFX",function(src,inf, distmul, scalemul, forcesplat)
+rawset(_G,"Soap_ImpactVFX",function(src,inf, distmul, scalemul, forcesplat, nosparklag)
 	scalemul = $ or FU
 	local disp = 25*FU
 	local off = {
@@ -715,10 +715,18 @@ rawset(_G,"Soap_ImpactVFX",function(src,inf, distmul, scalemul, forcesplat)
 	end
 	top_layer.vfx_mom = {0,0,0}
 	top_layer.dispoffset = 200
-	top_layer.anim_duration = 4 + (src.hitlag or 0)
-	top_layer.tics = $ + 4 + (src.hitlag or 0)
+	if not nosparklag
+		top_layer.anim_duration = 4 + (src.hitlag or 0)
+		top_layer.tics = $ + 4 + (src.hitlag or 0)
+	else
+		top_layer.sentstars = true
+		top_layer.nosparks = true
+	end
 	top_layer.tracer = inf
 	top_layer.target = src
+	top_layer.startinghitlag = (src.hitlag or 0)
+	top_layer.distmul = distmul
+	top_layer.scalemul = scalemul
 
 	if inf and inf.valid
 		top_layer.vfx_mom = {inf.momx, inf.momy, inf.momz}
@@ -752,7 +760,7 @@ rawset(_G,"Soap_ImpactVFX",function(src,inf, distmul, scalemul, forcesplat)
 		end
 	end
 
-	if forcesplat then return end
+	if forcesplat or nosparklag then return end
 	
 	local damagecolor = damagecolors[P_RandomRange(1, #damagecolors)]
 	local irad = 40*src.scale
@@ -1849,13 +1857,14 @@ local soap_airfric = tofixed("0.96")
 rawset(_G,"Soap_DeathThinker",function(p,me,soap)
 	if me.sprite2 == SPR2_MSC2
 		local sweat = P_SpawnMobjFromMobj(me,
-			P_RandomRange(-16,16)*FU,
-			P_RandomRange(-16,16)*FU,
+			P_RandomRange(-20,20)*FU,
+			P_RandomRange(-20,20)*FU,
 			P_RandomRange(0, FixedDiv(me.height,me.scale)/FU)*FU,
 			MT_SOAP_DUST
 		)
-		sweat.spritexscale = $ + Soap_RandomFixedRange(0,1*FU)/4
+		sweat.spritexscale = ($ * 2) + Soap_RandomFixedRange(-FU,FU)/3
 		sweat.spriteyscale = sweat.spritexscale
+		sweat.tics = $ * 3
 		
 		if (me.soap_inf and me.soap_inf.valid)
 		and me.soap_inf.color ~= SKINCOLOR_NONE
@@ -1864,7 +1873,7 @@ rawset(_G,"Soap_DeathThinker",function(p,me,soap)
 		end
 		
 		sweat.destscale = 1
-		sweat.scalespeed = FixedDiv($, sweat.scale)
+		sweat.scalespeed = FixedDiv(sweat.scale, (13 + sweat.tics)*FU)
 		P_SetObjectMomZ(sweat, FU*4)
 		
 		if (me.momz*soap.gravflip < 0)
