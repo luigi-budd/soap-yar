@@ -327,6 +327,7 @@ rawset(_G, "Soap_InitTable", function(p)
 			dustspawn = 0,
 			slinglag = false,
 		},
+		rollboost = 0,
 		
 		-- for momentuminos
 		frictionfreeze = 0,

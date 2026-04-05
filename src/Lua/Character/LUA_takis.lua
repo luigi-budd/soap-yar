@@ -498,9 +498,10 @@ Takis_Hook.addHook("Takis_Thinker",function(p)
 		and soap.c3 == 0
 		--and soap.taunttime == 0
 		and me.health
-		
+			
 			if soap.onGround
 			and (me.state ~= S_PLAY_SOAP_SLIP)
+			and (me.state ~= S_PLAY_ROLL)
 			--and not ((takis.tauntmenu.open) and (takis.tossflag))
 			and not (soap.isSliding)
 			and not (soap.noability & NOABIL_SLIDE)
@@ -577,14 +578,42 @@ Takis_Hook.addHook("Takis_Thinker",function(p)
 					fx.momz = soap.rmomz
 					fx.state = S_TAKIS_CDUST1
 				end
-			--auto-lunge / auto lunge
+			-- recurl
 			elseif me.state == S_PLAY_SOAP_SLIP
 			--and soap.onGround
-				dolunge(p,me,soap)
 				me.state = S_PLAY_ROLL
+				P_Thrust(me, me.angle, 6*me.scale)
+				soap.rollboost = CLUTCH_TICS
+			-- mario oddysey style rolling
+			elseif soap.onGround
+			and (me.state == S_PLAY_ROLL)
+			and not (soap.isSliding)
+			and soap.notCarried
+				local newangle = Soap_ControlDir(p)
+				local thrust = 0
+				if (soap.rollboost <= CLUTCH_TICS - CLUTCH_OKAY)
+					thrust = 12 * (FixedDiv(soap.rollboost, CLUTCH_TICS - CLUTCH_OKAY))
+				end
+				-- cap between 30 - 50 fracs
+				if soap.accspeed >= 30*FU
+					local frac = FU - min(FixedDiv(soap.accspeed - 30*FU, 20*FU), FU)
+					thrust = FixedMul($, frac)
+					
+					-- rotate our momentum slightly towards our angle
+					local momang = R_PointToAngle2(0,0, me.momx,me.momy)
+					local newangle = P_Lerp(FU/2, momang, newangle)
+					P_InstaThrust(me, newangle, FixedMul(soap.accspeed, me.scale))
+					p.rmomx = me.momx - p.cmomx
+					p.rmomy = me.momy - p.cmomy
+				end
+				
+				P_Thrust(me, newangle, FixedMul(thrust, me.scale))
+				soap.rollboost = CLUTCH_TICS
+				printf("thrust: %.2f", thrust)
 			end
 		end
 	end
+	soap.rollboost = max($ - 1, 0)
 	
 	--jump specials
 	if (soap.jump)
@@ -864,7 +893,10 @@ Takis_Hook.addHook("Takis_Thinker",function(p)
 			soap.afterimage = true
 			p.powers[pw_strong] = $|STR_SPIKE
 			
-			if not (soap.bashspin)
+			if not (
+				soap.bashspin
+				or me.state == S_PLAY_ROLL
+			)
 				clutch.dustspawn = $ + FixedDiv(soap.accspeed,64*FU) / 4
 				while clutch.dustspawn > FU
 					clutch.dustspawn = $-FU
