@@ -3096,7 +3096,7 @@ local function try_damage_cases(me,thing, p,soap,DealDamage)
 		and not (thing.flags & MF_MONITOR)
 			Soap_Hitlag.addHitlag(thing, hitlag_tics, true)
 			if not (thing.flags & MF_NOGRAVITY)
-				Soap_ZLaunch(thing, power)
+				Soap_ZLaunch(thing, -power)
 			end
 		end
 		
@@ -3187,7 +3187,7 @@ local function try_damage_cases(me,thing, p,soap,DealDamage)
 				y = -FU/4,
 				singular = true
 			})
-			Soap_ZLaunch(me, 7*FU)
+			Soap_ZLaunch(me, 7*FU + FU/2)
 			hitlag_tics = $ * 3/2
 		end
 		
