@@ -5,7 +5,7 @@ supername = Flamin'_Hot_Takis
 flags = SF_NOSHIELDABILITY|SF_NONIGHTSSUPER|SF_NOSUPERSPRITES|SF_NOJUMPSPIN|SF_STOMPDAMAGE|SF_NOSHIELDABILITY
 
 startcolor = 96
-prefcolor = Forest
+prefcolor = Emerald
 supercolor = Purple
 
 ability = CA_DOUBLEJUMP

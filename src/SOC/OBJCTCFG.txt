@@ -22,3 +22,22 @@ Epic fail!
 
 ^5 -- DEMO --^0
 #
+
+Character
+SkinName = takisthefox
+NameTag = TA_CHRT
+TagTextColor = SKINCOLOR_FOREST
+TagOutlineColor = SKINCOLOR_RED
+OppositeColor = SKINCOLOR_SALMON
+PlayerText = Placeholder!
+#
+
+Character
+SkinName = soapthehedge&takisthefox
+PicName = SP_CHRTG
+DisplayName = soap & takis
+TagTextColor = SKINCOLOR_FOREST
+TagOutlineColor = SKINCOLOR_RED
+OppositeColor = SKINCOLOR_SALMON
+PlayerText = Test
+#
