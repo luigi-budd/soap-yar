@@ -118,3 +118,8 @@ sfxinfo[sfx_sp_em2] = {
 	flags = SF_X2AWAYSOUND,
 	caption = "\x89Six seven!!\x80"
 }
+
+SafeFreeslot("sfx_sp_bsl")
+sfxinfo[sfx_sp_bsl].caption = "/"
+SafeFreeslot("sfx_sp_bsm")
+sfxinfo[sfx_sp_bsm].caption = "/"

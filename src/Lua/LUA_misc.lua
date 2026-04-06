@@ -215,6 +215,7 @@ local function NewVFXThink(v)
 			v.extended = true
 			
 			if (leveltime % 7 == 0)
+			and not Soap_IsCompGamemode()
 			--and (v and v.valid and v.tracer and v.tracer.valid)
 				/*
 				local shck = P_SpawnMobjFromMobj(v, 0,0,0, MT_PARTICLE)

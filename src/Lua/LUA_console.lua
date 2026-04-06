@@ -136,3 +136,11 @@ CV.SYNC_airdashmode = CV_RegisterVar({
 })
 CV.SYNC_airdashmode = CV.FindVar("soap_b-rushmode")
 CV.PossibleValues["soap_b-rushmode"] = {values = brush_pv, length = 2}
+
+-- lol
+CV.forcecombatmode = CV_RegisterVar({
+	name = "soap_combatmode",
+	defaultvalue = "Off",
+	flags = CV_SHOWMODIF|CV_NETVAR,
+	PossibleValue = CV_OnOff,
+})

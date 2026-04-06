@@ -74,54 +74,6 @@ local function SetCompat()
 	and not compat.battlemod
 		local B = CBW_Battle
 		
-		local function FakeExhaust(p, me, sweatonly)
-			local soap = p.soaptable
-			local sweatheight = FixedDiv(me.height, me.scale) * 3/2
-			if not (leveltime & 7)
-			and not (p.sweatobj and p.sweatobj.valid)
-				if not sweatonly
-					S_StartSound(me, sfx_s3kbb, p)
-				end
-				local sweat = P_SpawnMobjFromMobj(me, 0, 0, sweatheight, MT_THOK) --we got a local sweat in our area
-				sweat.spritexoffset = $ - FixedDiv(me.radius,me.scale)*2
-				sweat.state = S_SWEAT
-				sweat.target = me
-				B.InstaFlip(sweat)
-				p.sweatobj = sweat
-			end
-			if (p.sweatobj and p.sweatobj.valid)
-				local s = p.sweatobj
-				B.InstaFlip(s)
-				P_MoveOrigin(s,
-					me.x + me.momx,
-					me.y + me.momy,
-					me.z + FixedMul(sweatheight, me.scale) + (soap.gravflip == -1 and
-						me.height - s.height
-					or 0)
-				)
-			end
-			
-			if not sweatonly
-				if (leveltime&4)
-					if me.soap_exclr == nil
-						me.soap_exclr = me.color
-					end
-					me.color = SKINCOLOR_BRONZE
-					me.colorized = true
-				elseif me.soap_exclr ~= nil
-					me.color = me.soap_exclr
-					me.colorized = false
-					me.soap_exclr = nil
-				end
-			elseif me.soap_exclr ~= nil
-				me.color = me.soap_exclr
-				me.colorized = false
-				me.soap_exclr = nil
-			end
-			
-			me.soap_exhaust = true
-		end
-		
 		--returning true sets secondary stats (sourspot, in this case)
 		B.AddPriorityFunction("soap_uppercut", function(me, mo)
 			--youre only every going up while uppercutting
@@ -138,71 +90,8 @@ local function SetCompat()
 			local me = p.mo
 			local soap = p.soaptable
 			
-			local setexhaust = false
-			local exhausttimer = false
-			
-			if me.soap_poundcount == nil then me.soap_poundcount = 0; end
-			if me.soap_adashcount == nil then me.soap_adashcount = 0; end
-			
-			if (soap.pounding)
-				me.soap_poundtime = $ + 1
-				local stale = false
-				--fall faster lol
-				if (me.soap_poundcount < 3)
-					me.momz = $ + P_GetMobjGravity(me)
-				--fall slower lol
-				else
-					if me.soap_poundtime > TR
-						soap.pounding = false
-						S_StartSound(me, sfx_s3k51)
-						p.pflags = $|PF_NOJUMPDAMAGE
-						me.state = S_PLAY_FALL
-						me.soap_poundtimedout = true
-					end
-					
-					local terminal = (-20 + me.soap_poundcount)*me.scale
-					me.momz = $ - P_GetMobjGravity(me)
-					if (me.momz*soap.gravflip < terminal)
-						me.momz = terminal * soap.gravflip
-					end
-					stale = true
-					
-					FakeExhaust(p,me)
-					setexhaust = true
-				end
-				
-				B.SetPriority(p,
-					--at least pierce spin jumps
-					(stale and 1 or 2), 1,
-					"fang_tailbounce",
-					--sweet spot
-					(stale and 2 or 3), (stale and 2 or 3),
-					"pound"
-				)
-				
-				return
-			elseif soap.onGround
-				if (me.soap_poundstale)
-					me.soap_poundstale = $ - 1
-					exhausttimer = true
-				else
-					me.soap_poundcount = 0
-				end
-				if me.soap_poundtimedout
-					soap.pound_cooldown = $ + TR*3/2
-					me.soap_poundtimedout = nil
-				end
-			elseif (me.soap_poundstale)
-			and (me.soap_poundcount >= 3)
-				exhausttimer = true
-			end
-			
-			if not soap.pounding
-				me.soap_poundtime = 0
-			end
-			
 			--uppercut
-			if soap.uppercutted
+			if (me.state == S_PLAY_MELEE)
 			and (me.momz*soap.gravflip > 0)
 			and (me.sprite2 == SPR2_MLEE)
 				B.SetPriority(p, 2, 1, "soap_uppercut",
@@ -212,10 +101,28 @@ local function SetCompat()
 				)
 				return
 			end
-			if me.soap_cutted
-			and soap.onGround
-				soap.uppercut_cooldown = TR/2
-				me.soap_cutted = nil
+			
+			if me.soap_sweeptics
+				B.SetPriority(p, 1,1, "can_damage",
+					--no sour spot
+					1, 1,
+					"Sweeping Kick"
+				)
+			end
+			if me.soap_spiketics
+				B.SetPriority(p, 2,1, "can_damage",
+					--no sour spot
+					2, 1,
+					"Meteor Knuckle"
+				)
+			end
+			
+			if me.soap_sweeptics
+				B.SetPriority(p, 1,1, "can_damage",
+					--no sour spot
+					1, 1,
+					"Sweeping Kick"
+				)
 			end
 			
 			if (soap.toptics
@@ -228,128 +135,13 @@ local function SetCompat()
 				)
 			end
 			
-			if (soap.rdashing or soap.airdashed)
-			and (me.state == S_PLAY_DASH or me.state == S_PLAY_FLOAT_RUN)
-				local attack = 1
-				local defense = 1
-				local stale = (me.soap_adashcount > 2)
-				
-				if (soap.rdashing and me.state == S_PLAY_DASH)
-				and (soap.accspeed >= 45*FU)
-					attack = 2
-				end
-				if soap.airdashed
-					if me.soap_airdashsweet
-					and not stale
-						attack = 2
-					end
-					if stale
-						defense = 0
-						FakeExhaust(p,me)
-						setexhaust = true
-						
-						local maxspeed = (30 - (me.soap_adashcount * 2)) * me.scale
-						maxspeed = max($, 5 * me.scale)
-						if (p.speed > maxspeed)
-							local div = 4 * FU
-							
-							local newspeed = p.speed - FixedDiv(p.speed - maxspeed,div)
-							me.momx = FixedMul(FixedDiv(me.momx, p.speed), newspeed)
-							me.momy = FixedMul(FixedDiv(me.momy, p.speed), newspeed)
-						end
-					end
-				end
-				
-				B.SetPriority(p, 1, 1, "knuckles_glide",
-					--sweet spot
-					attack, defense,
-					soap.airdashed and "B-Rush" or "R-Dash"
-				)
-				return
-			elseif soap.onGround
-				if (me.soap_adashstale)
-					me.soap_adashstale = $ - 1
-					exhausttimer = true
-				else
-					me.soap_adashcount = 0
-				end
-			elseif (me.soap_adashstale)
-			and (me.soap_adashcount > 2)
-				exhausttimer = true
-			end
-			
-			if me.soap_airdashsweet then me.soap_airdashsweet = $ - 1; end
-			
-			if not setexhaust
-				if me.soap_exhaust
-					me.soap_exhaust = nil
-					if (me.soap_exclr ~= nil)
-						me.color = me.soap_exclr
-						me.colorized = false
-						me.soap_exclr = nil
-					end
-				end
-				
-				if exhausttimer
-					FakeExhaust(p,me,true)
-				end
-			end
-			
 			--Bruh();
 			if not (me.beingsucked)
 			and me.soap_oldsucked
 				p.actionstate = 0
 			end
 			
-			if me.soap_spikevfx
-				local range = 22*FU
-				do
-					local color = G_GametypeHasTeams() and ((p.ctfteam == 1 and skincolor_redteam or skincolor_bluering)) or p.skincolor
-					local spark = P_SpawnMobjFromMobj(me,
-						Soap_RandomFixedRange(-range,range),
-						Soap_RandomFixedRange(-range,range),
-						Soap_RandomFixedRange(0,range),
-						MT_WATERZAP
-					)
-					spark.spritexscale = FU*7
-					spark.spriteyscale = FU*4
-					local ha,va = R_PointTo3DAngles(spark.x,spark.y,spark.z, me.x,me.y,me.z)
-					P_3DThrust(spark, ha,va, -P_RandomRange(10,15)*me.scale)
-					spark.blendmode = AST_ADD
-					spark.renderflags = $|RF_FULLBRIGHT|RF_PAPERSPRITE
-					spark.colorized = true
-					spark.color = color
-					spark.angle = ha
-					spark.momx = $ + me.momx
-					spark.momy = $ + me.momy
-					spark.momz = $ + soap.rmomz
-					
-					--top sparks
-					local angle = FixedAngle(Soap_RandomFixedRange(0,360*FU))
-					local rad = FixedDiv(me.radius,me.scale)
-					local hei = FixedDiv(me.height,me.scale)
-					spark = P_SpawnMobjFromMobj(me,
-						P_ReturnThrustX(nil,angle,rad),
-						P_ReturnThrustY(nil,angle,rad),
-						(hei/2) + Soap_RandomFixedRange(-17*FU,17*FU), MT_SOAP_SPARK
-					)
-					spark.color = color
-					spark.adjust_angle = angle
-					spark.angle = spark.adjust_angle
-					spark.target = me
-					local ha,va = R_PointTo3DAngles(spark.x,spark.y,spark.z, me.x,me.y,me.z)
-					spark.rollangle = va
-					
-					spark.spritexscale = FU/3 + P_RandomRange(0, FU/2)
-					spark.spriteyscale = FU/2
-					spark.renderflags = $|(spark.z <= me.z+(hei/2) and RF_VERTICALFLIP or 0)
-					spark.momx = $ + me.momx
-					spark.momy = $ + me.momy
-					spark.momz = $ + soap.rmomz
-				end
-				me.soap_spikevfx = $ - 1
-			end
-			
+			/*
 			if (soap.fire == 1)
 			and (p.guard ~= 0)
 			and not me.soap_grabcooldown
@@ -366,57 +158,10 @@ local function SetCompat()
 				end
 				p.guard = 0
 			end
+			*/
 			
 			me.soap_oldsucked = me.beingsucked
 		end
-		
-		Takis_Hook.addHook("Soap_OnMove", function(p, move, var1)
-			local soap = p.soaptable
-			local me = p.mo
-			
-			if not soap.inBattle then return end
-			
-			if move == "airdash"
-				me.soap_airdashsweet = 11
-				me.soap_adashcount = $ + 1
-				me.soap_adashstale = TR * 5/4
-			elseif move == "uppercut"
-				me.soap_cutted = true
-			elseif move == "pound"
-				me.soap_poundcount = $ + 1
-				me.soap_poundstale = TR * 3/2
-			elseif move == "poundland"
-				me.soap_noairdash = soap.bm.lockmove + TR/2
-				return max(var1, 155*me.scale)
-			end
-		end)
-		Takis_Hook.addHook("Soap_NoAbility", function(p, nb)
-			local soap = p.soaptable
-			local me = p.realmo
-			
-			if not (me and me.valid) then return end
-			if not soap.inBattle then return end
-			
-			local na = nb
-			if p.armachargeup
-				na = $|SNOABIL_ALL
-			end
-			if soap.uppercutted
-				na = $|SNOABIL_POUND
-			end
-			if me.soap_noairdash
-				na = $|SNOABIL_AIRDASH
-				me.soap_noairdash = $ - 1
-			end
-			
-			--no easy recoveries, sorry
-			if not soap.onGround
-			and not (p.pflags & PF_JUMPED)
-				na = $|SNOABIL_UPPERCUT
-			end
-			
-			return na
-		end)
 		
 		B.SkinVars[SOAP_SKIN] = {
 			flags = SKINVARS_GUARD|SKINVARS_NOSPINSHIELD,
@@ -434,6 +179,7 @@ local function SetCompat()
 				p.actionsuper = true
 				
 				if doaction == 1
+				and not (soap.noability & SNOABIL_TOP)
 					if p.rings < p.actionrings
 						S_StartSound(nil, sfx_s3k8c, p)
 						return
@@ -453,9 +199,14 @@ local function SetCompat()
 						me.scale,
 						false, dust_noviewmobj
 					)
-					
+				end
+				
+				if me.soap_noguarding
+					p.canguard = false
+					me.soap_noguarding = false
 				end
 			end,
+			--[[
 			func_precollide = function(
 				n1,n2, play, mobjs,
 				attacks, defenses, weights,
@@ -611,7 +362,7 @@ local function SetCompat()
 				--we're done with this, free it
 				me.soap_bm_moves = nil
 			end,
-			
+			]]--
 			/*
 			special = Titanium,
 			func_precollide = Titanium_PreCollide,
@@ -625,7 +376,7 @@ local function SetCompat()
 		local G = B.GuardFunc
 		
 		S[TAKIS_SKIN] = {
-			flags = SKINVARS_GUARD|SKINVARS_NOSPINSHIELD|SKINVARS_GUNSLINGER,
+			flags = SKINVARS_GUARD|SKINVARS_NOSPINSHIELD,
 			weight = 100,
 			special = Act.CombatRoll,
 			guard_frame = 1,

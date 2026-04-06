@@ -473,7 +473,7 @@ rawset(_G,"Takis_HandleNoAbils", function(p)
 	if (event_t.numhooks)
 		local events = event_t.events
 		for i = 1, event_t.numhooks
-			local new_noabil = Takis_Hook.tryRunHook("Char_NoAbility", events[i], mobj, p,flags,false,exclude)
+			local new_noabil = Takis_Hook.tryRunHook("Char_NoAbility", events[i], p,na)
 			if new_noabil ~= nil and type(new_noabil) == "number"
 				na = abs(new_noabil)
 			end

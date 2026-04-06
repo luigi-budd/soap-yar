@@ -19,6 +19,7 @@
 	- MSC6: b-rush punch
 	- MSC7: fireass
 	- MSC8: 67
+	- MSC9: punch startup
 */
 
 local Soap_DustRing = Soap_DustRing
@@ -741,6 +742,7 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 	end
 	
 	soap.pound_cooldown = max($ - 1, 0)
+	Soap_Combat(p)
 	
 	--MF_NOSQUISH
 	local squishme = true
@@ -756,7 +758,7 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 			-- and not (p.pflags & PF_SPINNING)
 			-- and soap.taunttime == 0
 			and me.health
-			and not (soap.noability & SNOABIL_CROUCH)
+			and not (soap.noability & (SNOABIL_CROUCH|SNOABIL_COMBAT))
 			and soap.notCarried
 			and not soap.pounding
 				--if you were spinning already, and WERENT sliding,
@@ -814,6 +816,7 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 				end
 			--auto-lunge / auto lunge
 			elseif me.state == S_PLAY_SOAP_SLIP
+			and not (soap.noability & (SNOABIL_CROUCH|SNOABIL_COMBAT))
 			--and soap.onGround
 				dolunge(p,me,soap)
 			end
@@ -915,7 +918,7 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 		soap.lunge.lunged = false
 	end
 	
-	if not (soap.noability & SNOABIL_CROUCH)
+	if not (soap.noability & (SNOABIL_CROUCH|SNOABIL_COMBAT))
 		if p.pflags & PF_JUMPED then p.pflags = $ &~PF_SPINNING end
 		
 		local reset = false
@@ -1029,7 +1032,7 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 		--not going backwards
 		if (rightway and soap.onGround or p.powers[pw_carry] == CR_MINECART)
 		and (soap.notCarried or p.powers[pw_carry] == CR_MINECART)
-		and not (soap.noability & SNOABIL_RDASH)
+		and not (soap.noability & (SNOABIL_RDASH|SNOABIL_COMBAT))
 			local skin_t = skins[p.skin]
 			local maximumspeed = skin_t.normalspeed + soap._maxdash
 			soap.rdashing = true
@@ -1197,7 +1200,7 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 		and me.health
 		and (p.powers[pw_carry] == CR_NONE)
 		and not soap.noairdashforme
-		and not (soap.noability & SNOABIL_AIRDASH or soap.lunge.lockout)
+		and not (soap.noability & (SNOABIL_AIRDASH|SNOABIL_COMBAT) or soap.lunge.lockout)
 			local thrust = 12*FU
 			local min_speed = 25*FU
 			local max_speed = clamp(39*FU, soap.accspeed, 39*FU + soap._maxdash)
@@ -1357,7 +1360,7 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 		and not soap.pounding
 		and not soap.uppercut_cooldown
 		and (p.powers[pw_carry] == CR_NONE)
-		and not (soap.noability & SNOABIL_UPPERCUT)
+		and not (soap.noability & (SNOABIL_UPPERCUT|SNOABIL_COMBAT))
 			soap.uppercut_spin = soap_baseuppercutturn
 			
 			local thrust = soap.nerfed and 10*FU or 13*FU
@@ -1453,7 +1456,7 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 		and me.health
 		and not P_IsObjectInGoop(me)
 		and (soap.pound_cooldown == 0)
-		and not (soap.noability & SNOABIL_POUND)
+		and not (soap.noability & (SNOABIL_POUND|SNOABIL_COMBAT))
 		and not (soap.inPain)
 			soap.pounding = true
 			soap.sprung = false
@@ -1526,7 +1529,7 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 	
 	if soap.uppercutted
 	and me.health and not (soap.inPain or me.state == S_PLAY_GASP)
-	and not (soap.noability & SNOABIL_UPPERCUT)
+	and not (soap.noability & (SNOABIL_UPPERCUT|SNOABIL_COMBAT))
 		if (me.momz*soap.gravflip >= 0)
 			
 			--replenish on badnik bounces
@@ -1583,7 +1586,7 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 			if (me.state == S_PLAY_MELEE
 			--shitty
 			or me.sprite2 == SPR2_MLEE)
-			and not setstate
+			and not (setstate or me.soap_uppercutbattle)
 				me.state = S_PLAY_FALL
 			end
 			
@@ -1597,7 +1600,7 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 		end
 		
 		if (me.sprite2 == SPR2_MLEE and not soap.onGround)
-		and not (soap.inPain or P_PlayerInPain(p))
+		and not (soap.inPain or P_PlayerInPain(p) or me.soap_uppercutbattle)
 			me.state = (me.momz * soap.gravflip > 0) and S_PLAY_SPRING or S_PLAY_FALL
 		end
 	end
@@ -1607,7 +1610,7 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 	if not me.health
 	or soap.inPain
 	or (not soap.notCarried and p.powers[pw_carry] ~= CR_MINECART)
-	or (soap.noability & SNOABIL_RDASH)
+	or (soap.noability & (SNOABIL_RDASH|SNOABIL_COMBAT))
 		soap.rdashing = false
 	end
 	
@@ -1899,7 +1902,7 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 	local do_poundaura = false
 	local was_pounding = soap.pounding
 	
-	if (soap.noability & SNOABIL_POUND)
+	if (soap.noability & (SNOABIL_POUND|SNOABIL_COMBAT))
 		soap.pounding = false
 		if me.state == S_PLAY_MELEE
 		and (me.sprite2 ~= SPR2_MLEE)
@@ -1908,7 +1911,7 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 	end
 	
 	if soap.pounding
-	and not (soap.noability & SNOABIL_POUND)
+	and not (soap.noability & (SNOABIL_POUND|SNOABIL_COMBAT))
 		do_poundaura = true
 		squishme = false
 		
@@ -3044,6 +3047,7 @@ local function try_damage_cases(me,thing, p,soap,DealDamage)
 		local hitlag_tics = 10 + ((power/FU) / 5)
 		Soap_DamageSfx(thing, power, 35*FU)
 		
+		-- spike!
 		local halftic = hitlag_tics/2
 		if (FixedDiv(power, 35*FU) >= FU/2)
 			S_StartSound(me,sfx_sp_dm4)
@@ -3678,7 +3682,7 @@ Takis_Hook.addHook("PostThinkFrame",function(p)
 	if me.state == S_PLAY_DASH or me.state == S_PLAY_SOAP_RAM
 	or (me.state == S_PLAY_SOAP_PUNCH1 or me.state == S_PLAY_SOAP_PUNCH2)
 		p.drawangle = R_PointToAngle2(0,0,me.momx,me.momy) --soap.dashangle
-		if (soap.onGround)
+		if (soap.onGround or (soap.noability & SNOABIL_COMBAT))
 		and (me.state == S_PLAY_SOAP_PUNCH1 or me.state == S_PLAY_SOAP_PUNCH2)
 			p.drawangle = me.angle
 		end

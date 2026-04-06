@@ -87,6 +87,13 @@ states[S_PLAY_SOAP_RAM] = {
 SafeFreeslot("S_PLAY_SOAP_PUNCH1")
 SafeFreeslot("S_PLAY_SOAP_PUNCH2")
 SafeFreeslot("S_PLAY_SOAP_PUNCH3")
+SafeFreeslot("S_PLAY_SOAP_PREPUNCH")
+states[S_PLAY_SOAP_PREPUNCH] = {
+	sprite = SPR_PLAY,
+	frame = SPR2_MSC9|A,
+	tics = -1,
+	nextstate = S_PLAY_STND,
+}
 states[S_PLAY_SOAP_PUNCH1] = {
 	sprite = SPR_PLAY,
 	frame = SPR2_MSC6|A,

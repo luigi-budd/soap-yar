@@ -18,6 +18,11 @@ end
 --yeah just set all the bits lol
 --noability macros/shortcuts (there is no preprocessor anymore)
 fakeenum("SNOABIL_ALL",INT32_MAX)
+-- this ones a special case, every move
+-- checks for their respective SNOABIL_*,
+-- as well as this one, with SNOABIL_COMBAT unlocking
+-- more combat oriented moves
+fakeenum("SNOABIL_COMBAT", (1<<31))
 
 fakeenum("SNOABIL_TAUNTSONLY",
 	SNOABIL_ALL &~(SNOABIL_TAUNTS|SNOABIL_BREAKDANCE)

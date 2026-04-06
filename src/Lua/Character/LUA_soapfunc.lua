@@ -1558,6 +1558,30 @@ local function TryTopClash(p,me,found)
 end
 
 --SpinningTop
+rawset(_G,"SoapST_Start",function(p)
+	if (p.spectator) then return end --Fuck!
+	local me = p.mo
+	local soap = p.soaptable
+	
+	if soap.inPain
+	or soap.inSlide
+	or p.tumble --battle
+		return
+	end
+	if soap.toptics then return end
+	if not (me.health) then return end
+	if (soap.noability & SNOABIL_TOP) then return end
+	
+	soap.topwindup = 13
+	soap.toptics = TR
+	if (p.pflags & PF_SPINNING)
+		p.pflags = $ &~PF_SPINNING
+		Soap_ResetState(p)
+	end
+	
+	S_StartSound(me, sfx_sp_tch)
+end)
+
 rawset(_G,"SoapST_Hitbox",function(p)
 	local me = p.mo
 	local soap = p.soaptable
@@ -1679,30 +1703,6 @@ rawset(_G,"SoapST_Hitbox",function(p)
 	me.y-fakerange, me.y+fakerange)
 end)
 
-rawset(_G,"SoapST_Start",function(p)
-	if (p.spectator) then return end --Fuck!
-	local me = p.mo
-	local soap = p.soaptable
-	
-	if soap.inPain
-	or soap.inSlide
-	or p.tumble --battle
-		return
-	end
-	if soap.toptics then return end
-	if not (me.health) then return end
-	if (soap.noability & SNOABIL_TOP) then return end
-	
-	soap.topwindup = 13
-	soap.toptics = TR
-	if (p.pflags & PF_SPINNING)
-		p.pflags = $ &~PF_SPINNING
-		Soap_ResetState(p)
-	end
-	
-	S_StartSound(me, sfx_sp_tch)
-end)
-
 local cv_hidetime = CV.FindVar("hidetime")
 rawset(_G,"Soap_HandleNoAbils", function(p)
 	local soap = p.soaptable
@@ -1779,6 +1779,7 @@ rawset(_G,"Soap_HandleNoAbils", function(p)
 			noaction = true
 		end
 		
+		soap.noability = $|SNOABIL_COMBAT
 		if (p.tumble)
 		or P_PlayerInPain(p)
 		--or not CBW_Battle.CanDoAction(p)
@@ -1788,6 +1789,9 @@ rawset(_G,"Soap_HandleNoAbils", function(p)
 				na = $ &~(SNOABIL_BOTHTAUNTS)
 			end
 		end
+	end
+	if CV.forcecombatmode.value
+		soap.noability = $|SNOABIL_COMBAT
 	end
 	
 	--Gametypes
@@ -1844,13 +1848,12 @@ rawset(_G,"Soap_HandleNoAbils", function(p)
 	if (event_t.numhooks)
 		local events = event_t.events
 		for i = 1, event_t.numhooks
-			local new_noabil = Takis_Hook.tryRunHook("Char_NoAbility", events[i], mobj, p,flags,false,exclude)
+			local new_noabil = Takis_Hook.tryRunHook("Char_NoAbility", events[i], p,na)
 			if new_noabil ~= nil and type(new_noabil) == "number"
 				na = abs(new_noabil)
 			end
 		end
 	end
-	soap.noability = $|na
 end)
 
 local soap_airfric = tofixed("0.96")
@@ -3291,7 +3294,7 @@ rawset(_G, "Soap_Grabbed",function(p,me,soap)
 	p.powers[pw_nocontrol] = 2
 	p.powers[pw_flashing] = 0
 	p.pflags = $|PF_FULLSTASIS
-	p.canguard = false
+	me.soap_noguarding = true
 	me.momx,me.momy,me.momz = 0,0,0
 	me.recoilangle = nil
 	me.recoilthrust = nil
@@ -3300,7 +3303,7 @@ rawset(_G, "Soap_Grabbed",function(p,me,soap)
 	p.guard = 0
 	p.action2text = string.format("Release: %.1f%%", me.punchfree*100)
 	p.canstunbreak = -5
-	p.canguard = false
+	me.soap_noguarding = true
 	
 	local mashed = false
 	if (soap.jump == 1)
@@ -3786,4 +3789,403 @@ rawset(_G, "Soap_Bump", function(me,thing,line, weak)
 	end
 	P_BounceMove(me)
 	return true
+end)
+
+local SWEEP_TICS = 22
+local SWEEP_LAG = 30
+local SWEEP_DIST = 55*FU
+
+local UPPER_START = 6
+local UPPER_MOMZ = 45*FU
+local UPPER_DRAG = FU * 6/7
+
+local SPIKE_START = 10
+local armacolors = {
+	SKINCOLOR_KETCHUP, SKINCOLOR_PEPPER, SKINCOLOR_CRIMSON, SKINCOLOR_GARNET, SKINCOLOR_VOLCANIC
+}
+local function CheckForClash(p,me, p2,them, myattackpri)
+	local soap = p.soaptable
+	local B = CBW_Battle
+	if B
+		B.DoPriority(p, me) --seems like Tweaks requires we pass our mobj
+		B.DoSPriority(p, me) --or should it be theirs?
+		B.DoPriority(p2, them) --seems like Tweaks requires we pass our mobj
+		B.DoSPriority(p2, them) --or should it be theirs?
+	else --lol
+		return
+	end
+	local apri = p2.battle_atk
+	local dpri = p2.battle_def
+	
+	--Clash!
+	if (dpri ~= nil)
+	and dpri >= myattackpri
+		Soap_Hitlag.addHitlag(me, 12, false)
+		Soap_Hitlag.addHitlag(them, 12, false)
+		
+		S_StartSound(me,sfx_sp_pry)
+		S_StartSound(me,sfx_s259)
+		-- parry fx
+		if B
+			local dx = ((me.x + them.x) / 2)
+			local dy = ((me.y + them.y) / 2)
+			local sb = P_SpawnMobjFromMobj(me,0,0,0,MT_STUNBREAK)
+			P_SetOrigin(sb,dx,dy,sb.z)
+			sb.scale = me.scale * 4/3
+			sb.destscale = me.scale * 3
+			sb.momz = me.momz * 3/4
+			sb.renderflags = $|RF_PAPERSPRITE|RF_FULLBRIGHT
+			sb.angle = R_PointToAngle2(me.x,me.y,them.x,them.y) + ANGLE_90
+			
+			local sh = P_SpawnMobjFromMobj(me,0,0,0,MT_BATTLESHIELD)
+			P_SetOrigin(sh,dx,dy,sh.z)
+			sh.renderflags = $|RF_PAPERSPRITE|RF_FULLBRIGHT
+			sh.angle = sb.angle
+			sh.scale = $ * 4
+		end
+	end
+end
+
+local function CheckHitbox(tempatk, p,me,soap, from, range,fakerange, power, maxpower,scalemul, hitlagtics, spike)
+	local enemyhit = false
+	searchBlockmap("objects", function(ref, found)
+		if found == me or found == from then return end
+		if R_PointToDist2(found.x, found.y, from.x, from.y) > range + found.radius
+			return
+		end
+		if not Soap_ZCollide(found,from) then return end
+		if not (found.health) then return end
+		if not P_CheckSight(from,found) then return end
+		local topheight = found.z + found.height
+		local botheight = from.floorz
+		if soap.gravflip == -1
+			topheight = found.z
+			botheight = from.ceilingz
+		end
+		if (topheight < botheight) then return end
+		
+		if (found.type == MT_TNTBARREL)
+			P_KillMobj(found,me,me)
+			enemyhit = true
+		elseif Soap_CanDamageEnemy(p, found,MF_ENEMY|MF_BOSS|MF_MONITOR|MF_SHOOTABLE)
+			Soap_ImpactVFX(found, me, nil,scalemul, true)
+			Soap_SpawnBumpSparks(found, me, nil,false, found.scale * 3/2, true)
+			Soap_DamageSfx(found, power, maxpower)
+			P_DamageMobj(found,me,me, damage)
+			Soap_Hitlag.addHitlag(found, hitlagtics, true)
+			Soap_Hitlag.addHitlag(me, hitlagtics, false)
+			Soap_StartQuake(10*FU, 12, {me.x, me.y, me.z}, 512*me.scale)
+			
+			enemyhit = true
+		elseif (found.player and found.player.valid)
+		and Soap_CanHurtPlayer(p,found.player, soap.inBattle)
+			local p2 = found.player
+			
+			if CheckForClash(p,me, p2,found, tempatk or 0) then return end
+			
+			Soap_ImpactVFX(found, me, nil,scalemul, true)
+			Soap_SpawnBumpSparks(found, me, nil,false, found.scale * 3/2, true)
+			Soap_DamageSfx(found, power, maxpower,nil, {vol = spike and 255/2 or nil})
+			
+			local wasgrounded = P_IsObjectOnGround(found)
+			P_DamageMobj(found,me,me, damage)
+			if spike
+				S_StartSound(me,sfx_sp_dm4)
+				local rad = FixedDiv(me.radius, me.scale)
+				local hei = FixedDiv(me.height, me.scale)
+				local halftic = hitlagtics / 2
+				for i = 0, 16
+					local s = P_SpawnMobjFromMobj(me,
+						Soap_RandomFixedRange(-rad, rad),
+						Soap_RandomFixedRange(-rad, rad),
+						Soap_RandomFixedRange(0, hei) + 256*FU,
+						MT_PARTICLE
+					)
+					s.state = S_SOAP_IMPACT_LINE2
+					s.angle = me.angle - ANGLE_90
+					s.color = armacolors[P_RandomRange(1, #armacolors)]
+					s.rollangle = -ANGLE_90
+					s.renderflags = $|RF_ALWAYSONTOP
+					s.spriteyscale = $ * 3/2
+					s.flags = $|MF_NOCLIPTHING|MF_NOCLIP|MF_NOCLIPHEIGHT|MF_NOBLOCKMAP
+					s.takis_flingme = false
+					local offset = P_RandomRange(-4, 8)
+					s.tics = $ + halftic + offset
+					s.anim_duration = $ + halftic + offset
+				end
+				if not wasgrounded
+					Soap_ZLaunch(found, -12 * me.scale)
+				end
+			end
+			
+			Soap_Hitlag.addHitlag(found, hitlagtics, true)
+			Soap_Hitlag.addHitlag(me, hitlagtics, false)
+			Soap_StartQuake(10*FU, 12, {me.x, me.y, me.z}, 512*me.scale)
+			
+			enemyhit = true
+		end
+	end, 
+	from,
+	from.x - fakerange, from.x + fakerange,
+	from.y - fakerange, from.y + fakerange)
+	return enemyhit
+end
+
+--TODO: soap should get his own "special" action in his
+--		battle skin defs, so that p.canguard can be set
+rawset(_G, "Soap_Combat", function(p)
+	local me = p.realmo
+	local soap = p.soaptable
+	if not (soap.noability & SNOABIL_COMBAT) then return end
+	
+	local tempatk = 0
+	
+	--c2 specials
+	if (soap.c2)
+		
+		-- sweeping kick
+		if (soap.c2 == 1)
+		and (soap.onGround)
+		and (me.health)
+		and not (soap.inPain)
+		and not (me.soap_kickme)
+		and soap.notCarried
+		and not (me.soap_sweepcool)
+		and not p.armachargeup
+		and not (p.guard)
+			me.soap_sweepcool = SWEEP_LAG
+			me.soap_sweeptics = SWEEP_TICS
+			me.soap_sweepangle = me.angle
+			me.soap_noguarding = true
+			S_StartSound(me, sfx_sp_bsm)
+		end
+	end
+	
+	if me.soap_sweepcool
+		me.soap_sweepcool = $ - 1
+	end
+	if me.soap_sweeptics
+	and not (soap.inPain
+		or p.guard
+		or p.airdodge
+	)
+	and me.health
+		me.state = S_PLAY_SOAP_SLIP
+		me.soap_noguarding = true
+		tempatk = 1
+		
+		local angle = ease.outquad(FU - FixedDiv(me.soap_sweeptics*FU, SWEEP_TICS*FU), 360 * 3 *FU, 0)
+		soap.stasistic = 1
+		p.drawangle = me.soap_sweepangle + FixedAngle(angle)
+		me.soap_sweeptics = $ - 1
+		
+		local range = SWEEP_DIST
+		angle = p.drawangle
+		for i = -1,1,2
+			local offsetz = Soap_RandomFixedRange(15*FU,30*FU)
+			local wind = P_SpawnMobjFromMobj(me,
+				P_ReturnThrustX(nil,angle,range),
+				P_ReturnThrustY(nil,angle,range),
+				offsetz,
+				MT_SOAP_SPEEDLINE
+			)
+			wind.source = me
+			wind.angle = angle + ANGLE_90
+			wind.color = ColorOpposite(me.color)
+			wind.spritexscale = FU * 2
+			wind.spriteyscale = FU * 14/10
+			--wind.rollangle = -ANG20
+			wind.blendmode = AST_ADD
+			wind.topwind = true
+			wind.dontdrawforviewmobj = me
+			wind.offsetz = FixedMul(offsetz,me.scale)
+			wind.offset = range * i
+			wind.movedir = angle
+			P_SetMobjStateNF(wind, S_SOAP_SPEEDLINE)
+			
+			local dust = P_SpawnMobjFromMobj(me,
+				P_ReturnThrustX(nil,angle,range),
+				P_ReturnThrustY(nil,angle,range),
+				0, MT_SOAP_DUST
+			)
+			P_SetObjectMomZ(dust, 2*FU)
+			dust.tics = $ / 2
+			
+			angle = $ + ANGLE_180
+		end
+		
+		CheckHitbox(tempatk, p,me,soap, me, FixedMul(range, me.scale),128*FU, FU, 3*FU,FU/3, 4)
+		if not S_SoundPlaying(me, sfx_cdfm17)
+			S_StartSound(me, sfx_cdfm17)
+		end
+		
+		if me.soap_sweeptics == 0
+			me.state = S_PLAY_STND
+			Soap_ResetState(p)
+		end
+	else
+		if (me.state == S_PLAY_SOAP_SLIP)
+			me.state = S_PLAY_WALK
+			Soap_ResetState(p)
+		end
+		me.soap_sweeptics = nil
+	end
+	
+	-- c1 specials
+	if (soap.c1)
+		
+		-- uppercut
+		if (soap.c1 == 1)
+		and (me.health)
+		and not (soap.inPain)
+		and not (me.soap_kickme)
+		and soap.notCarried
+		and not (p.pflags & (PF_NOJUMPDAMAGE|PF_THOKKED))
+		and not me.soap_sweeptics
+		and not p.armachargeup
+		and not (p.guard)
+			p.pflags = $|PF_THOKKED
+			me.soap_uppercutstart = UPPER_START
+			me.state = S_PLAY_ROLL
+			Soap_SquashMacro(p, {ease_func = "outsine", ease_time = UPPER_START, x = FU*13/10, y = FU*6/10})
+			me.soap_noguarding = true
+		end
+	end
+	
+	if me.soap_uppercutstart
+	and not (soap.inPain
+		or p.guard
+		or p.airdodge
+	)
+	and me.health
+		me.soap_noguarding = true
+		me.soap_uppercutstart = $ - 1
+		me.momz = FixedMul($, UPPER_DRAG)
+		if me.soap_uppercutstart == 0
+			me.soap_uppercuttics = 0
+			Soap_ZLaunch(me, UPPER_MOMZ)
+			S_StartSoundAtVolume(me,sfx_sp_upr, 255 * 7/10)
+			me.state = S_PLAY_MELEE
+			me.tics = -1
+			me.soap_uppercutbattle = true
+			soap.uppercut_spin = 360 * 2 * FU
+			Soap_SquashMacro(p, {ease_func = "outsine", ease_time = 12, x = -FU*9/10, y = -FU*3/10})
+		end
+	else
+		me.soap_uppercutstart = nil
+	end
+	if me.soap_uppercutbattle
+		me.soap_noguarding = true
+		if me.soap_uppercuttics <= 3
+			tempatk = 2
+			local dist = 35*FU
+			local ang = me.angle
+			local thok = P_SpawnMobjFromMobj(me,
+				P_ReturnThrustX(nil,ang,dist),
+				P_ReturnThrustY(nil,ang,dist),
+				0,
+				MT_THOK
+			)
+			P_SetOrigin(thok, thok.x,thok.y,thok.z)
+			thok.radius = 35*me.scale
+			thok.height = 70*me.scale
+			thok.scale = me.scale
+			thok.fuse = 2
+			thok.flags2 = $|MF2_DONTDRAW
+			thok.angle = ang
+			
+			CheckHitbox(tempatk, p,me,soap, thok, thok.radius,128*FU, 2*FU, 3*FU,nil, 8)
+		end
+		me.soap_uppercuttics = $ + 1
+		
+		me.momx = FixedMul($, UPPER_DRAG)
+		me.momy = FixedMul($, UPPER_DRAG)
+		me.momz = FixedMul($, UPPER_DRAG)
+		me.state = S_PLAY_MELEE
+		soap.afterimage = true
+		
+		if me.momz <= 0
+			me.soap_uppercutbattle = nil
+			me.state = S_PLAY_FALL
+			p.pflags = $|PF_NOJUMPDAMAGE|PF_THOKKED
+		end
+		if soap.inPain
+			me.soap_uppercutbattle = nil
+		end
+	else
+		me.soap_uppercuttics = nil
+	end
+
+	-- spin specials
+	if (soap.use)
+		
+		-- spike
+		if (soap.use == 1)
+		and (me.health)
+		and not (soap.inPain)
+		and not (me.soap_kickme)
+		and soap.notCarried
+		and not soap.onGround
+		and not (p.pflags & (PF_THOKKED))
+		and not p.armachargeup
+			p.pflags = $|PF_THOKKED|PF_JUMPED|PF_NOJUMPDAMAGE
+			me.soap_spikestart = SPIKE_START
+			me.state = S_PLAY_SOAP_PREPUNCH
+			--Soap_SquashMacro(p, {ease_func = "outsine", ease_time = SPIKE_START, x = -FU*2/10, y = -FU*4/10})
+			me.soap_noguarding = true
+			S_StartSound(me, sfx_cdfm17)
+		end
+	end
+	
+	if me.soap_spikestart
+	and not (soap.inPain
+		or p.guard
+		or p.airdodge
+	)
+	and me.health
+		if me.state ~= S_PLAY_SOAP_PREPUNCH
+			me.state = S_PLAY_SOAP_PREPUNCH
+		end
+		
+		p.drawangle = me.angle
+		me.soap_spikestart = $ - 1
+		if me.soap_spikestart == 0
+			me.state = S_PLAY_SOAP_PUNCH1
+			me.soap_spiketics = 3
+			S_StartSound(me, sfx_sp_bsl)
+		end
+	else
+		me.soap_spikestart = nil
+	end
+	
+	if me.soap_spiketics
+	and not (soap.inPain
+		or p.guard
+		or p.airdodge
+	)
+	and me.health
+	and (me.state == S_PLAY_SOAP_PUNCH1 or me.state == S_PLAY_SOAP_PUNCH2)
+		p.drawangle = me.angle
+		me.soap_spiketics = $ - 1
+		local dist = 35*FU
+		local ang = me.angle
+		local thok = P_SpawnMobjFromMobj(me,
+			P_ReturnThrustX(nil,ang,dist),
+			P_ReturnThrustY(nil,ang,dist),
+			0,
+			MT_THOK
+		)
+		P_SetOrigin(thok, thok.x,thok.y,thok.z)
+		thok.radius = 35*me.scale
+		thok.height = 70*me.scale
+		thok.scale = me.scale
+		thok.fuse = 2
+		thok.flags2 = $|MF2_DONTDRAW
+		thok.angle = ang
+		
+		tempatk = 2
+		CheckHitbox(tempatk, p,me,soap, thok, thok.radius,128*FU, 2*FU, 3*FU,nil, 12, true)
+	else
+		me.soap_spiketics = nil
+	end
 end)

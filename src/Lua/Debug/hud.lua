@@ -41,6 +41,7 @@ local function DrawButton(v, player, x, y, flags, color, color2, butt, release, 
 	local stringx, stringy = 1, 1
 	if (strngtype == 'thin') then
 		stringy = 2
+		stringx = 0
 	end
 	
 	v.drawString(
@@ -202,9 +203,10 @@ local function WRAP_buttons(v,p,c, me,soap)
 		drawflag(v,x+30,y-50,"UC",flags,V_GREENMAP,V_REDMAP,"thin",(soap.noability & SNOABIL_UPPERCUT))
 		drawflag(v,x+45,y-50,"PD",flags,V_GREENMAP,V_REDMAP,"thin",(soap.noability & SNOABIL_POUND))
 		drawflag(v,x+60,y-50,"ST",flags,V_GREENMAP,V_REDMAP,"thin",(soap.noability & SNOABIL_TOP))
-		drawflag(v,x+75,y-50,"TT",flags,V_GREENMAP,V_REDMAP,"thin",(soap.noability & SNOABIL_TAUNTS))
-		drawflag(v,x+90,y-50,"CR",flags,V_GREENMAP,V_REDMAP,"thin",(soap.noability & SNOABIL_CROUCH))
+		drawflag(v,x+75,y-50,"TN",flags,V_GREENMAP,V_REDMAP,"thin",(soap.noability & SNOABIL_TAUNTS))
+		drawflag(v,x+90,y-50,"SL",flags,V_GREENMAP,V_REDMAP,"thin",(soap.noability & SNOABIL_CROUCH))
 		drawflag(v,x+105,y-50,"BD",flags,V_GREENMAP,V_REDMAP,"thin",(soap.noability & SNOABIL_BREAKDANCE))
+		drawflag(v,x+120,y-50,"CM",flags,V_GREENMAP,V_REDMAP,"thin",(soap.noability & SNOABIL_COMBAT))
 	end
 	
 	v.drawString(x,y-38,"STASIS TIC",flags|V_GREENMAP,"thin")
