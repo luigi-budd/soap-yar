@@ -100,11 +100,7 @@ rawset(_G,"Takis_DoClutch",function(p,riding)
 	clutch.time = 1
 	
 	local thrust = 8*FU
-	if ccombo < 4
-		thrust = $ + ccombo*FU
-	else
-		thrust = $ + (ccombo*FU * 38/100)
-	end
+	local fricfreeze = false
 	
 	local clutchadjust = clutch.tics --max((takis.clutchtime - p.cmd.latency),0)
 	local spammed = false
@@ -133,7 +129,13 @@ rawset(_G,"Takis_DoClutch",function(p,riding)
 			ghost.momx,ghost.momy = me.momx,me.momy
 			ghost.momz = takis.rmomz
 			
-			thrust = $+(3*FU/2)+FU
+			if ccombo < 4
+				thrust = $ + ccombo*FU
+			else
+				thrust = $ + (ccombo*FU * 38/100)
+			end
+			fricfreeze = true
+			--thrust = $+(3*FU/2)+FU
 		--dont thrust too early, now!
 		elseif (clutchadjust > CLUTCH_TICS - CLUTCH_BAD)
 		--Who cares!
@@ -148,6 +150,12 @@ rawset(_G,"Takis_DoClutch",function(p,riding)
 				thrust = 0
 			end
 			clutch.good = -TR
+		elseif not p.exiting -- not bad but not good either
+			local bottom = CLUTCH_TICS - CLUTCH_BAD
+			local top = (CLUTCH_TICS - CLUTCH_OKAY) - bottom
+			local tics = clutchadjust - bottom
+			thrust = P_Lerp(FixedDiv(tics,top), 0, $ / 5)
+			printf("%.2f",thrust)
 		end
 	end
 	
@@ -169,6 +177,7 @@ rawset(_G,"Takis_DoClutch",function(p,riding)
 	end
 	
 	if (takis.accspeed > ((p.powers[pw_sneakers] or takis.doSuperBuffs) and 40*FU or 35*FU))
+	and fricfreeze
 		takis.frictionfreeze = TR/2
 		me.friction = FU
 		if not p.powers[pw_sneakers]
