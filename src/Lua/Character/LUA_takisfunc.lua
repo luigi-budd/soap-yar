@@ -155,7 +155,6 @@ rawset(_G,"Takis_DoClutch",function(p,riding)
 			local top = (CLUTCH_TICS - CLUTCH_OKAY) - bottom
 			local tics = clutchadjust - bottom
 			thrust = P_Lerp(FixedDiv(tics,top), 0, $ / 5)
-			printf("%.2f",thrust)
 		end
 	end
 	
@@ -511,6 +510,8 @@ local function forcehambounce(p)
 	Takis_DoHammerBlastLand(p,false)
 	
 	hammer.jumped = 1
+	takis.clutch.time = 1
+	takis.clutch.misfire = TR
 	
 	P_DoJump(p,false)
 	me.state = S_PLAY_SPINDASH
@@ -825,6 +826,8 @@ rawset(_G,"Takis_DoHammerBlastLand",function(p,domoves)
 			P_DoJump(p,false)
 			me.state = S_PLAY_SPINDASH
 			Soap_ZLaunch(me, basemomz + (time*FU/8) )
+			takis.clutch.time = 1
+			takis.clutch.misfire = TR
 			
 			S_StartSoundAtVolume(me,sfx_kc52,180)
 			--p.jp = 1

@@ -33,7 +33,7 @@ local function do_jump_effect(p,me,soap)
 		dust_noviewmobj
 	)
 	
-	Soap_SquashMacro(p, {ease_func = "outsine", ease_time = 8, x = -FU*7/10, y = -FU/2})
+	Soap_SquashMacro(p, {ease_func = "outsine", ease_time = 8, x = -FU*7/10, y = -FU/2, name = "jumpeffect"})
 	Soap_RemoveSquash(p, "soap_slide")
 	Soap_RemoveSquash(p, "landeffect")
 	Soap_RemoveSquash(p, "Takis_Clutch")
@@ -227,11 +227,12 @@ Takis_Hook.addHook("Takis_Thinker",function(p)
 		if (p.cmd.forwardmove or p.cmd.sidemove)
 		and soap.accspeed >= topspeed
 		and me.friction < FU
+		and not (p.pflags & PF_SPINNING)
 			me.friction = FU - FU/50
 		end
 		
 		if me.friction > ORIG_FRICTION
-		and not p.spectator
+		and not (p.spectator or p.pflags & PF_SPINNING)
 			if (soap.frictionfreeze == 0)
 				local offset = soap.accspeed - topspeed
 				
@@ -476,6 +477,7 @@ Takis_Hook.addHook("Takis_Thinker",function(p)
 				end
 			end
 			Soap_SquashMacro(p, {ease_func = "outsine", ease_time = 12, x = -FU*7/10, y = -FU*3/10})
+			Soap_RemoveSquash(p, "jumpeffect")
 			
 			p.pflags = $|PF_JUMPED|PF_THOKKED &~(PF_SPINNING)
 			soap.dived = true
@@ -498,7 +500,7 @@ Takis_Hook.addHook("Takis_Thinker",function(p)
 		and soap.c3 == 0
 		--and soap.taunttime == 0
 		and me.health
-		
+			
 			if soap.onGround
 			and (me.state ~= S_PLAY_SOAP_SLIP)
 			--and not ((takis.tauntmenu.open) and (takis.tossflag))
@@ -529,6 +531,12 @@ Takis_Hook.addHook("Takis_Thinker",function(p)
 					if thrust > 0
 						P_InstaThrust(me,ang,thrust)
 					end
+					-- i wish it didnt have to come to this
+					if (soap.accspeed >= 40*FU)
+					and (clutch.time)
+						me.momx = $ * 6/8
+						me.momy = $ * 6/8
+					end
 				end
 				
 				me.state = S_PLAY_SOAP_SLIP
@@ -537,7 +545,7 @@ Takis_Hook.addHook("Takis_Thinker",function(p)
 					P_MovePlayer(p)
 					if not ((p.cmd.forwardmove) and (p.cmd.sidemove))
 					and soap.accspeed + thrust < 14*FU
-						P_InstaThrust(me,ang,15*me.scale)
+						P_InstaThrust(me,ang,9*me.scale)
 					end
 				end
 				Soap_SquashMacro(p, {ease_func = "insine", ease_time = 12, strength = (FU/3), name = "soap_slide"})
