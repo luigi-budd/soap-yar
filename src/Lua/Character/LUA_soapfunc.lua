@@ -2755,6 +2755,7 @@ local function VFX_Lunge(p,me,soap, props)
 	
 	if lunge.effect
 		-- does something vfx shouldnt do (modify player)
+		-- and BECAUSE of this it cant be reused *rollllling eyes*
 		if lunge.effect == 12
 			local func = (me.standingslope and (me.standingslope.flags & SL_NOPHYSICS == 0)) and FixedDiv or FixedMul
 			me.momz = func($, soap.inWater and FU*4/5 or FU*3/4)
@@ -3800,7 +3801,7 @@ local UPPER_MOMZ = 55*FU
 local UPPER_AIRMOMZ = 40*FU
 local UPPER_DRAG = FU * 6/7
 
-local SPIKE_START = 10
+local SPIKE_START = 7
 local armacolors = {
 	SKINCOLOR_KETCHUP, SKINCOLOR_PEPPER, SKINCOLOR_CRIMSON, SKINCOLOR_GARNET, SKINCOLOR_VOLCANIC
 }
@@ -3948,7 +3949,12 @@ rawset(_G, "Soap_Combat", function(p)
 		if (soap.c2 == 1)
 		and (me.soap_sweeptics)
 			me.soap_sweeptics = nil
+			local slope = me.standingslope
 			Soap_DoLunge(p)
+			if not (slope and slope.valid)
+				me.momx = $ * 3/2
+				me.momy = $ * 3/2
+			end
 		end
 		
 		-- sweeping kick
@@ -4086,7 +4092,7 @@ rawset(_G, "Soap_Combat", function(p)
 		me.soap_noguarding = true
 		if me.soap_uppercuttics <= 8
 			tempatk = 2
-			local dist = 35*FU
+			local dist = 45*FU
 			local ang = me.angle
 			local thok = P_SpawnMobjFromMobj(me,
 				P_ReturnThrustX(nil,ang,dist),
@@ -4125,7 +4131,29 @@ rawset(_G, "Soap_Combat", function(p)
 	end
 
 	-- spin specials
-	if (soap.use)
+	if soap.use
+		
+		-- thok lol
+		if (soap.use == 1)
+		and not soap.onGround
+		and ((p.pflags & (PF_JUMPED|PF_THOKKED) == PF_JUMPED) or me.soap_spikestart)
+		and not soap.inPain
+		and not soap.pounding
+		and me.health
+		and (p.powers[pw_carry] == CR_NONE)
+		and me.soap_spikestart
+			me.state = S_PLAY_ROLL
+			soap.lunge.angle = me.angle
+			
+			P_InstaThrust(me, me.angle, 45*me.scale)
+			P_SetObjectMomZ(me, 5*FU)
+			p.pflags = $|PF_THOKKED
+			
+			S_StartSound(me, sfx_thok)
+			S_StartSound(me, sfx_zoom)
+			me.soap_thokimage = TR / 2
+			me.soap_spikestart = nil
+		end
 		
 		-- spike
 		if (soap.use == 1)
@@ -4166,7 +4194,7 @@ rawset(_G, "Soap_Combat", function(p)
 				y = -FU/4,
 				singular = true
 			})
-			me.soap_spiketics = 3
+			me.soap_spiketics = 7
 			S_StartSound(me, sfx_sp_bsl)
 		end
 	else
@@ -4182,7 +4210,7 @@ rawset(_G, "Soap_Combat", function(p)
 	and (me.state == S_PLAY_SOAP_PUNCH1 or me.state == S_PLAY_SOAP_PUNCH2)
 		p.drawangle = me.angle
 		me.soap_spiketics = $ - 1
-		local dist = 35*FU
+		local dist = 37*FU
 		local ang = me.angle
 		local thok = P_SpawnMobjFromMobj(me,
 			P_ReturnThrustX(nil,ang,dist),
@@ -4191,8 +4219,8 @@ rawset(_G, "Soap_Combat", function(p)
 			MT_THOK
 		)
 		P_SetOrigin(thok, thok.x,thok.y,thok.z)
-		thok.radius = 35*me.scale
-		thok.height = 70*me.scale
+		thok.radius = 37*me.scale
+		thok.height = 74*me.scale
 		thok.scale = me.scale
 		thok.fuse = 2
 		thok.flags2 = $|MF2_DONTDRAW
@@ -4202,5 +4230,14 @@ rawset(_G, "Soap_Combat", function(p)
 		CheckHitbox(tempatk, p,me,soap, thok, thok.radius,128*FU, 2*FU, 3*FU,nil, 12, true)
 	else
 		me.soap_spiketics = nil
+	end
+	
+	if me.soap_thokimage
+		soap.afterimage = true
+		me.soap_thokimage = $ - 1
+		if soap.onGround
+		or me.state ~= S_PLAY_ROLL
+			me.soap_thokimage = 0
+		end
 	end
 end)

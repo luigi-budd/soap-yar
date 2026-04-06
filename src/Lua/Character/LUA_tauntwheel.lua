@@ -281,6 +281,7 @@ SOAP_TAUNTS[SOAP_SKIN] = {
 		end,
 		think = function(p, me, soap, taunt)
 			if cancelConds(p,nil, true)
+			or (P_PlayerInPain(p) or me.state == S_PLAY_PAIN)
 				if not (P_PlayerInPain(p) or me.state == S_PLAY_PAIN)
 					me.state = S_PLAY_WALK
 					P_MovePlayer(p)
@@ -290,7 +291,7 @@ SOAP_TAUNTS[SOAP_SKIN] = {
 				me.sixseveeeen = nil
 				me.sixsev_adjust = nil
 				me.sixsev_super = nil
-			
+				
 				me.colorized = false
 			else
 				soap.stasistic = max($, 2)
