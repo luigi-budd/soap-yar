@@ -3470,12 +3470,16 @@ addHook("MobjDamage", function(me,inf,sor,dmg,dmgt)
 	end
 	
 	--printf("damage:\n%f\n%f", power, inf_speed)
-	Soap_DamageSfx(me, inf_speed, 30*me.scale, dmgt, {
-		ultimate = (not soap.inBattle) and true or false,
-		nosfx = true,
-		vol = 255
-	})
-	Soap_ImpactVFX(me, inf, nil, power)
+	-- we check for this cause these effects
+	-- have most likely been ran already
+	if (inf.skin ~= SOAP_SKIN)
+		Soap_DamageSfx(me, inf_speed, 30*me.scale, dmgt, {
+			ultimate = (not soap.inBattle) and true or false,
+			nosfx = true,
+			vol = 255
+		})
+		Soap_ImpactVFX(me, inf, nil, power)
+	end
 	while (power > FU)
 		Soap_ImpactVFX(me, inf, 2*FU, power)
 		power = $ - FU/2
@@ -3484,6 +3488,7 @@ addHook("MobjDamage", function(me,inf,sor,dmg,dmgt)
 	me.state = S_PLAY_PAIN
 	if not G_IsSpecialStage()
 	and not me.hitlag
+	and (inf.skin ~= SOAP_SKIN)
 		Soap_Hitlag.addHitlag(me, 10 + (inf_speed/FU/2), true, false)
 	end
 end,MT_PLAYER)

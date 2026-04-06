@@ -3792,11 +3792,12 @@ rawset(_G, "Soap_Bump", function(me,thing,line, weak)
 end)
 
 local SWEEP_TICS = 22
-local SWEEP_LAG = 30
+local SWEEP_LAG = 60
 local SWEEP_DIST = 55*FU
 
 local UPPER_START = 6
-local UPPER_MOMZ = 45*FU
+local UPPER_MOMZ = 55*FU
+local UPPER_AIRMOMZ = 40*FU
 local UPPER_DRAG = FU * 6/7
 
 local SPIKE_START = 10
@@ -3943,6 +3944,13 @@ rawset(_G, "Soap_Combat", function(p)
 	--c2 specials
 	if (soap.c2)
 		
+		-- lunge
+		if (soap.c2 == 1)
+		and (me.soap_sweeptics)
+			me.soap_sweeptics = nil
+			Soap_DoLunge(p)
+		end
+		
 		-- sweeping kick
 		if (soap.c2 == 1)
 		and (soap.onGround)
@@ -4063,7 +4071,7 @@ rawset(_G, "Soap_Combat", function(p)
 		me.momz = FixedMul($, UPPER_DRAG)
 		if me.soap_uppercutstart == 0
 			me.soap_uppercuttics = 0
-			Soap_ZLaunch(me, UPPER_MOMZ)
+			Soap_ZLaunch(me, soap.onGround and UPPER_MOMZ or UPPER_AIRMOMZ)
 			S_StartSoundAtVolume(me,sfx_sp_upr, 255 * 7/10)
 			me.state = S_PLAY_MELEE
 			me.tics = -1
@@ -4076,7 +4084,7 @@ rawset(_G, "Soap_Combat", function(p)
 	end
 	if me.soap_uppercutbattle
 		me.soap_noguarding = true
-		if me.soap_uppercuttics <= 3
+		if me.soap_uppercuttics <= 8
 			tempatk = 2
 			local dist = 35*FU
 			local ang = me.angle
@@ -4087,8 +4095,8 @@ rawset(_G, "Soap_Combat", function(p)
 				MT_THOK
 			)
 			P_SetOrigin(thok, thok.x,thok.y,thok.z)
-			thok.radius = 35*me.scale
-			thok.height = 70*me.scale
+			thok.radius = 45*me.scale
+			thok.height = 90*me.scale
 			thok.scale = me.scale
 			thok.fuse = 2
 			thok.flags2 = $|MF2_DONTDRAW
@@ -4151,6 +4159,13 @@ rawset(_G, "Soap_Combat", function(p)
 		me.soap_spikestart = $ - 1
 		if me.soap_spikestart == 0
 			me.state = S_PLAY_SOAP_PUNCH1
+			Soap_SquashMacro(p, {
+				ease_func = "inexpo",
+				ease_time = 6,
+				x = -FU * 1/5,
+				y = -FU/4,
+				singular = true
+			})
 			me.soap_spiketics = 3
 			S_StartSound(me, sfx_sp_bsl)
 		end
