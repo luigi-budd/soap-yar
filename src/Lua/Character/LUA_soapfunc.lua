@@ -681,6 +681,10 @@ local damagecolors = {
 }
 local vfxheight = 90*FU
 rawset(_G,"Soap_ImpactVFX",function(src,inf, distmul, scalemul, forcesplat, nosparklag)
+	if (inf and inf.valid and inf.player and inf.skin == SOAP_SKIN)
+		inf.player.soaptable.calledvfxthistic = true
+	end
+	
 	scalemul = $ or FU
 	local disp = 25*FU
 	local off = {
@@ -3805,25 +3809,41 @@ local SPIKE_START = 7
 local armacolors = {
 	SKINCOLOR_KETCHUP, SKINCOLOR_PEPPER, SKINCOLOR_CRIMSON, SKINCOLOR_GARNET, SKINCOLOR_VOLCANIC
 }
+--[done?]TODO: fix clashing
+--[done?]TODO: fix guard parrying
 local function CheckForClash(p,me, p2,them, myattackpri)
 	local soap = p.soaptable
 	local B = CBW_Battle
 	if B
 		B.DoPriority(p, me) --seems like Tweaks requires we pass our mobj
 		B.DoSPriority(p, me) --or should it be theirs?
-		B.DoPriority(p2, them) --seems like Tweaks requires we pass our mobj
-		B.DoSPriority(p2, them) --or should it be theirs?
+		B.DoPriority(p2, them)
+		B.DoSPriority(p2, them)
 	else --lol
 		return
 	end
 	local apri = p2.battle_atk
 	local dpri = p2.battle_def
 	
+	-- doing this probably fixes parrying
+	if (p2.guard)
+		P_DamageMobj(them,me,me)
+		return false
+	end
+	
 	--Clash!
 	if (dpri ~= nil)
 	and dpri >= myattackpri
 		Soap_Hitlag.addHitlag(me, 12, false)
 		Soap_Hitlag.addHitlag(them, 12, false)
+		
+		local force = -(R_PointTo3DDist(0,0,0, me.momx,me.momy,me.momz) + R_PointTo3DDist(0,0,0, them.momx,them.momy,them.momz) + 16 * me.scale) / 2
+		local hang,vang = R_PointTo3DAngles(me.x,me.y,me.z + me.height/2, them.x,them.y,them.z + them.height/2)
+		P_3DThrust(me, hang,vang, force)
+		-- higher pri ignores knockback
+		if dpri == myattackpri
+			P_3DThrust(them, hang,vang, -force)
+		end
 		
 		S_StartSound(me,sfx_sp_pry)
 		S_StartSound(me,sfx_s259)
@@ -3845,6 +3865,7 @@ local function CheckForClash(p,me, p2,them, myattackpri)
 			sh.angle = sb.angle
 			sh.scale = $ * 4
 		end
+		return true
 	end
 end
 
@@ -3883,7 +3904,12 @@ local function CheckHitbox(tempatk, p,me,soap, from, range,fakerange, power, max
 		and Soap_CanHurtPlayer(p,found.player, soap.inBattle)
 			local p2 = found.player
 			
-			if CheckForClash(p,me, p2,found, tempatk or 0) then return end
+			local clashres = CheckForClash(p,me, p2,found, tempatk or 0)
+			if clashres == true -- clashed
+				return
+			elseif clashres == false -- we got parried
+				return true -- stop searching
+			end
 			
 			Soap_ImpactVFX(found, me, nil,scalemul, true)
 			Soap_SpawnBumpSparks(found, me, nil,false, found.scale * 3/2, true)
@@ -3933,7 +3959,7 @@ local function CheckHitbox(tempatk, p,me,soap, from, range,fakerange, power, max
 	return enemyhit
 end
 
---TODO: soap should get his own "special" action in his
+--[done]TODO: soap should get his own "special" action in his
 --		battle skin defs, so that p.canguard can be set
 rawset(_G, "Soap_Combat", function(p)
 	local me = p.realmo
@@ -4013,7 +4039,7 @@ rawset(_G, "Soap_Combat", function(p)
 			wind.topwind = true
 			wind.dontdrawforviewmobj = me
 			wind.offsetz = FixedMul(offsetz,me.scale)
-			wind.offset = range * i
+			wind.offset = FixedMul(range,me.scale) * i
 			wind.movedir = angle
 			P_SetMobjStateNF(wind, S_SOAP_SPEEDLINE)
 			
@@ -4100,9 +4126,9 @@ rawset(_G, "Soap_Combat", function(p)
 				0,
 				MT_THOK
 			)
-			P_SetOrigin(thok, thok.x,thok.y,thok.z)
 			thok.radius = 45*me.scale
-			thok.height = 90*me.scale
+			thok.height = 120*me.scale
+			P_SetOrigin(thok, thok.x+me.momx,thok.y+me.momy, me.z + me.height/2 - thok.height/2 + me.momz)
 			thok.scale = me.scale
 			thok.fuse = 2
 			thok.flags2 = $|MF2_DONTDRAW
@@ -4147,7 +4173,7 @@ rawset(_G, "Soap_Combat", function(p)
 			
 			P_InstaThrust(me, me.angle, 45*me.scale)
 			P_SetObjectMomZ(me, 5*FU)
-			p.pflags = $|PF_THOKKED
+			p.pflags = $|PF_THOKKED &~PF_NOJUMPDAMAGE
 			
 			S_StartSound(me, sfx_thok)
 			S_StartSound(me, sfx_zoom)
@@ -4218,9 +4244,9 @@ rawset(_G, "Soap_Combat", function(p)
 			0,
 			MT_THOK
 		)
-		P_SetOrigin(thok, thok.x,thok.y,thok.z)
 		thok.radius = 37*me.scale
 		thok.height = 74*me.scale
+		P_SetOrigin(thok, thok.x+me.momx,thok.y+me.momy, me.z + me.height/2 - thok.height/2 + me.momz)
 		thok.scale = me.scale
 		thok.fuse = 2
 		thok.flags2 = $|MF2_DONTDRAW

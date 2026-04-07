@@ -1224,7 +1224,7 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 				local events = event_t.events
 				for i = 1, event_t.numhooks
 					local new_t, new_min, new_max = Takis_Hook.tryRunHook("Char_OnMove", events[i], p, "airdash", thrust,min_speed,max_speed)
-
+					
 					if new_t ~= nil
 					and type(new_t) == "number"
 						thrust = abs(new_t)
@@ -3472,7 +3472,13 @@ addHook("MobjDamage", function(me,inf,sor,dmg,dmgt)
 	--printf("damage:\n%f\n%f", power, inf_speed)
 	-- we check for this cause these effects
 	-- have most likely been ran already
-	if (inf.skin ~= SOAP_SKIN)
+	local dovfx = true
+	if (inf.skin == SOAP_SKIN)
+	and (inf.player and inf.player.soaptable.calledvfxthistic)
+		dovfx = false
+	end
+	
+	if dovfx
 		Soap_DamageSfx(me, inf_speed, 30*me.scale, dmgt, {
 			ultimate = (not soap.inBattle) and true or false,
 			nosfx = true,
@@ -3488,7 +3494,7 @@ addHook("MobjDamage", function(me,inf,sor,dmg,dmgt)
 	me.state = S_PLAY_PAIN
 	if not G_IsSpecialStage()
 	and not me.hitlag
-	and (inf.skin ~= SOAP_SKIN)
+	and dovfx
 		Soap_Hitlag.addHitlag(me, 10 + (inf_speed/FU/2), true, false)
 	end
 end,MT_PLAYER)
@@ -3597,6 +3603,7 @@ Takis_Hook.addHook("PostThinkFrame",function(p)
 	
 	soap.damagedealtthistic = 0
 	soap.iwashitthistic = false
+	soap.calledvfxthistic = false
 	if me.skin ~= SOAP_SKIN then return end
 	local usejumpspin = (not (p.charflags & SF_NOJUMPSPIN)) or (lunge.angle ~= nil)
 	if (mariomode)
@@ -3805,6 +3812,9 @@ Takis_Hook.addHook("PostThinkFrame",function(p)
 	end
 end)
 
+-- theres a bug with this where if you use the punch taunt on someone,
+-- and they get hit by an egg robo, youll take the knockback as well
+-- its pretty funny so i dont see why i should fix it lol
 states[mobjinfo[MT_EGGROBO1].meleestate].action = function(mo)
 	local me = mo.target
 	if not (me and me.valid and me.player and me.player.valid) then return end

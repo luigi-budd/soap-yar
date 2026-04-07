@@ -145,6 +145,7 @@ rawset(_G, "Soap_InitTable", function(p)
 		--if this gets too big in 1 tic, dont process any pvp
 		damagedealtthistic = 0,
 		iwashitthistic = false,
+		calledvfxthistic = false,
 		--the leveltime we were hurt so we dont keep calling hooks
 		hurtframe = 0,
 		trydamageframe = 0, --ditto, but for ShouldDamage
