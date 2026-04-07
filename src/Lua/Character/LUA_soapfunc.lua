@@ -2022,6 +2022,7 @@ rawset(_G,"Soap_DeathThinker",function(p,me,soap)
 	or (me.soap_knockout))
 	and not me.health
 	and not (soap.deathtype == DMG_DEATHPIT or P_CheckDeathPitCollide(me) or P_CheckPredictedPitCollide(p, me, me.z + me.momz))
+	and not (me.hitlag)
 	--and (me.soap_deadtimer <= TR/3)
 		if me.sprite2 ~= SPR2_MSC2
 		and not (soap.onGround and me.soap_deadtimer > 3)

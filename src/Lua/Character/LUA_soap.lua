@@ -66,6 +66,21 @@ local soap_rdashwind_base = SKINCOLOR_SAPPHIRE
 local soap_rdashwind_dest = SKINCOLOR_YELLOW
 local soap_rdashwind_inc = (soap_rdashwind_dest - soap_rdashwind_base)
 
+local function playknockout_kbsfx(p,me,soap)
+	local speed = FixedMul(soap.accspeed, me.scale)
+	if me.soap_damagevar
+		speed = max($, me.soap_damagevar.speed)
+	end
+	if speed <= 15 * me.scale then return end
+	
+	local sound = sfx_sp_kb0 + clamp(0,
+		FixedMul(2*FU, FixedDiv(speed - 30*FU, 10*FU)),
+		2*FU
+	)/FU
+	S_StartSound(me, sound)
+	S_StartSound(me, sound)
+end
+
 local function playknockoutsfx(p,me,soap)
 	if abs(leveltime - soap.kotic) < TR*3/2 then return end
 	soap.kotic = leveltime
@@ -76,18 +91,12 @@ local function playknockoutsfx(p,me,soap)
 		sound = sfx_sp_ow2
 	end
 	S_StartSound(me,sound)
-
-	local speed = soap.accspeed
-	if me.soap_damagevar
-		speed = max($, me.soap_damagevar.speed)
-	end
-
-	sound = sfx_sp_kb0 + clamp(0,
-		FixedMul(2*FU, FixedDiv(speed - 30*FU, 10*FU)),
-		2*FU
-	)/FU
-	S_StartSound(me, sound)
-	S_StartSound(me, sound)
+end
+local function doknockback(p,me,soap)
+	me.state = S_PLAY_DEAD
+	me.frame = A|($ &~FF_FRAMEMASK)
+	me.sprite2 = SPR2_MSC2
+	me.tics = -1
 end
 
 local sfx_armacharge = sfx_s3k84
@@ -2305,8 +2314,13 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 		soap.paintime = $ + 1
 		
 		--DAMMIT!!!
-		if me.soap_damagevar ~= nil
+		if (me.soap_damagevar ~= nil)
+		and not (me.hitlag)
 			P_Thrust(me, me.soap_damagevar.ang, me.soap_damagevar.speed)
+			if me.soap_damagevar.momz
+				P_SetObjectMomZ(me, me.soap_damagevar.momz / 4)
+			end
+			playknockout_kbsfx(p,me,soap)
 			if me.soap_damagevar.speed >= 30*me.scale
 				playknockoutsfx(p,me,soap)
 				
@@ -2325,14 +2339,11 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 				nosfx = true
 			})
 			
+			playknockout_kbsfx(p,me,soap)
 			playknockoutsfx(p,me,soap)
 			S_StartSound(me,sfx_sp_dm0)
 			soap.hud.painsurge = 6
-			
-			me.state = S_PLAY_DEAD
-			me.frame = A|($ &~FF_FRAMEMASK)
-			me.sprite2 = SPR2_MSC2
-			me.tics = -1
+			doknockback(p,me,soap)
 		end
 	else
 		soap.paintime = 0
@@ -3443,6 +3454,9 @@ addHook("MobjDamage", function(me,inf,sor,dmg,dmgt)
 		)
 	end
 	
+	me.soap_inf = inf
+	me.soap_sor = sor
+	
 	if (inf and inf.valid)
 		--default speeds
 		inf_speed = get_inf_speed(me,inf,sor)
@@ -3450,6 +3464,7 @@ addHook("MobjDamage", function(me,inf,sor,dmg,dmgt)
 		
 		me.soap_damagevar = {
 			ang = R_PointToAngle2(inf.x,inf.y, me.x,me.y),
+			momz = abs(inf.momz),
 			speed = inf_speed
 		}
 		if inf_speed >= 30*me.scale
@@ -3473,7 +3488,8 @@ addHook("MobjDamage", function(me,inf,sor,dmg,dmgt)
 	-- we check for this cause these effects
 	-- have most likely been ran already
 	local dovfx = true
-	if (inf.skin == SOAP_SKIN)
+	if (inf and inf.valid)
+	and (inf.skin == SOAP_SKIN)
 	and (inf.player and inf.player.soaptable.calledvfxthistic)
 		dovfx = false
 	end
@@ -3837,6 +3853,7 @@ states[mobjinfo[MT_EGGROBO1].meleestate].action = function(mo)
 	Soap_Hitlag.addHitlag(me, 16, true)
 	me.soap_damagevar = {
 		ang = mo.movedir,
+		momz = 12 * mo.scale,
 		speed = 64*mo.scale
 	}
 end
