@@ -4135,7 +4135,7 @@ rawset(_G, "Soap_Combat", function(p)
 			thok.flags2 = $|MF2_DONTDRAW
 			thok.angle = ang
 			
-			CheckHitbox(tempatk, p,me,soap, thok, thok.radius,128*FU, 2*FU, 3*FU,nil, 8)
+			CheckHitbox(tempatk, p,me,soap, thok, thok.radius,128*FU, 2*FU, 3*FU,nil, 12)
 		end
 		me.soap_uppercuttics = $ + 1
 		
@@ -4254,7 +4254,7 @@ rawset(_G, "Soap_Combat", function(p)
 		thok.angle = ang
 		
 		tempatk = 2
-		CheckHitbox(tempatk, p,me,soap, thok, thok.radius,128*FU, 2*FU, 3*FU,nil, 12, true)
+		CheckHitbox(tempatk, p,me,soap, thok, thok.radius,128*FU, 9*FU, 10*FU,nil, 12, true)
 	else
 		me.soap_spiketics = nil
 	end

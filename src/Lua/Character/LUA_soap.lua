@@ -3462,9 +3462,15 @@ addHook("MobjDamage", function(me,inf,sor,dmg,dmgt)
 		inf_speed = get_inf_speed(me,inf,sor)
 		power = FU + FixedDiv(inf_speed, 30*me.scale)
 		
+		local momz = abs(inf.momz)
+		if soap.taunt.tics
+			inf_speed = $ * 4
+			momz = $ * 8 -- x8 to revert the / 4 from um
+		end
+		
 		me.soap_damagevar = {
 			ang = R_PointToAngle2(inf.x,inf.y, me.x,me.y),
-			momz = abs(inf.momz),
+			momz = momz,
 			speed = inf_speed
 		}
 		if inf_speed >= 30*me.scale
