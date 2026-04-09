@@ -93,6 +93,7 @@ local function playknockoutsfx(p,me,soap)
 	end
 	if Soap_IsCompGamemode()
 		chance = P_RandomChance(FU/10)
+		S_StartSoundAtVolume(me, sfx_s3k61, 255 * 3/4)
 	end
 	if not chance then return end
 	S_StartSound(me,sound)

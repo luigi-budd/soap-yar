@@ -202,6 +202,7 @@ local function SetCompat()
 				end
 				
 				if me.soap_noguarding
+				or (soap.toptics)
 					p.canguard = false
 					me.soap_noguarding = false
 				end
@@ -409,6 +410,11 @@ local function SetCompat()
 				end
 				
 				if not B.PlayerCanBeDamaged(p2)
+					return false
+				end
+				
+				if (p2.airdodge)
+				or (p2.intangible)
 					return false
 				end
 				

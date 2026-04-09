@@ -1415,9 +1415,9 @@ rawset(_G,"Soap_SpawnBumpSparks",function(me, thing, line, followme, scale, floo
 			MT_SOAP_WALLBUMP
 		)
 		if floor
-			P_InstaThrust(spark, angle + my_ang, speed)
+			P_InstaThrustEvenIn2D(spark, angle + my_ang, speed)
 		else
-			P_InstaThrust(spark, angle, FixedMul(cos(my_ang), speed))
+			P_InstaThrustEvenIn2D(spark, angle, FixedMul(cos(my_ang), speed))
 			spark.momz = FixedMul(sin(my_ang), speed)
 		end
 		
@@ -1894,9 +1894,13 @@ rawset(_G,"Soap_DeathThinker",function(p,me,soap)
 			me.momx = FixedMul($, soap_airfric)
 			me.momy = FixedMul($, soap_airfric)
 		end
+		if (me.momz*soap.gravflip <= -5 * me.scale)
+		and Soap_IsCompGamemode()
+			me.state = S_PLAY_FALL
+		end
 		
 		--lmao handle this here too
-		if soap.onGround
+		if (soap.onGround)
 		and me.health
 			me.state = S_PLAY_SOAP_KNOCKOUT
 			me.sprite2 = SPR2_MSC4
@@ -1907,6 +1911,7 @@ rawset(_G,"Soap_DeathThinker",function(p,me,soap)
 	elseif me.soap_kickme
 		if (not me.health)
 		or (soap.inPain)
+		or (p.guard or p.airdodge)
 			me.soap_kickme = nil
 		end
 		if me.state ~= S_PLAY_SOAP_KNOCKOUT
@@ -3894,7 +3899,7 @@ local function CheckHitbox(tempatk, p,me,soap, from, range,fakerange, power, max
 			enemyhit = true
 		elseif Soap_CanDamageEnemy(p, found,MF_ENEMY|MF_BOSS|MF_MONITOR|MF_SHOOTABLE)
 			Soap_ImpactVFX(found, me, nil,scalemul, true)
-			Soap_SpawnBumpSparks(found, me, nil,false, found.scale * 3/2, true)
+			Soap_SpawnBumpSparks(found, me, nil,false, found.scale * 3/2, false)
 			Soap_DamageSfx(found, power, maxpower)
 			P_DamageMobj(found,me,me, damage)
 			Soap_Hitlag.addHitlag(found, hitlagtics, true)
@@ -3914,7 +3919,7 @@ local function CheckHitbox(tempatk, p,me,soap, from, range,fakerange, power, max
 			end
 			
 			Soap_ImpactVFX(found, me, nil,scalemul, true)
-			Soap_SpawnBumpSparks(found, me, nil,false, found.scale * 3/2, true)
+			Soap_SpawnBumpSparks(found, me, nil,false, found.scale * 3/2, false)
 			Soap_DamageSfx(found, power, maxpower,nil, {vol = spike and 255/2 or nil})
 			
 			local wasgrounded = P_IsObjectOnGround(found)
@@ -3944,7 +3949,10 @@ local function CheckHitbox(tempatk, p,me,soap, from, range,fakerange, power, max
 					s.anim_duration = $ + halftic + offset
 				end
 				if not wasgrounded
-					Soap_ZLaunch(found, -12 * me.scale)
+				and (abs(found.z - found.floorz) >= 50*found.scale)
+					Soap_ZLaunch(found, -14 * me.scale)
+					found.momx = $ / 2
+					found.momy = $ / 2
 				end
 			end
 			
@@ -3969,9 +3977,11 @@ rawset(_G, "Soap_Combat", function(p)
 	if not (soap.noability & SNOABIL_COMBAT) then return end
 	
 	local tempatk = 0
+	local noabil = (me.sprite2 == SPR2_MSC2 or me.state == S_PLAY_SOAP_KNOCKOUT)
 	
 	--c2 specials
 	if (soap.c2)
+	and not noabil
 		
 		-- lunge
 		if (soap.c2 == 1)
@@ -4075,6 +4085,7 @@ rawset(_G, "Soap_Combat", function(p)
 	
 	-- c1 specials
 	if (soap.c1)
+	and not noabil
 		
 		-- uppercut
 		if (soap.c1 == 1)
@@ -4160,6 +4171,7 @@ rawset(_G, "Soap_Combat", function(p)
 
 	-- spin specials
 	if soap.use
+	and not noabil
 		
 		-- thok lol
 		if (soap.use == 1)
@@ -4255,7 +4267,7 @@ rawset(_G, "Soap_Combat", function(p)
 		thok.angle = ang
 		
 		tempatk = 2
-		CheckHitbox(tempatk, p,me,soap, thok, thok.radius,128*FU, 9*FU, 10*FU,nil, 12, true)
+		CheckHitbox(tempatk, p,me,soap, thok, thok.radius,128*FU, 9*FU, 10*FU,nil, 12, me.soap_spiketics >= 4)
 	else
 		me.soap_spiketics = nil
 	end
