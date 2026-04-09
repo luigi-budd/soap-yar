@@ -69,7 +69,7 @@ local soap_rdashwind_inc = (soap_rdashwind_dest - soap_rdashwind_base)
 local function playknockout_kbsfx(p,me,soap)
 	local speed = FixedMul(soap.accspeed, me.scale)
 	if me.soap_damagevar
-		speed = max($, me.soap_damagevar.speed)
+		speed = max($, me.soap_damagevar.threshold)
 	end
 	if speed <= 15 * me.scale then return end
 	
@@ -85,11 +85,16 @@ local function playknockoutsfx(p,me,soap)
 	if abs(leveltime - soap.kotic) < TR*3/2 then return end
 	soap.kotic = leveltime
 	
+	local chance = true
 	local sound = P_RandomChance(FU/50) and sfx_sp_em1 or P_RandomRange(sfx_sp_ow0,sfx_sp_ow1)
-	if R_PointToDist(me.x,me.y) >= 1024*FU
+	if R_PointToDist(me.x,me.y) >= 1024*FU * 4
 	and (p ~= displayplayer)
 		sound = sfx_sp_ow2
 	end
+	if Soap_IsCompGamemode()
+		chance = P_RandomChance(FU/10)
+	end
+	if not chance then return end
 	S_StartSound(me,sound)
 end
 local function doknockback(p,me,soap)
@@ -2321,7 +2326,7 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 				P_SetObjectMomZ(me, me.soap_damagevar.momz / 4)
 			end
 			playknockout_kbsfx(p,me,soap)
-			if me.soap_damagevar.speed >= 30*me.scale
+			if me.soap_damagevar.threshold >= 30*me.scale
 				playknockoutsfx(p,me,soap)
 				
 				me.state = S_PLAY_DEAD
@@ -3409,7 +3414,9 @@ local function get_inf_speed(me,inf,sor)
 	elseif inf.type == MT_TNTBARREL or inf.type == MT_PROXIMITYTNT
 		default = 70 * inf.scale
 	end
-	return max(default, R_PointTo3DDist(0,0,0,inf.momx,inf.momy,inf.momz))
+	--return max(default, R_PointTo3DDist(0,0,0,inf.momx,inf.momy,inf.momz))
+	-- mmmaybe dont factor momz if we're using it now...
+	return max(default, R_PointToDist2(0,0,0,inf.momx,inf.momy)), R_PointTo3DDist(0,0,0,inf.momx,inf.momy,inf.momz)
 end
 
 --handle soap damage
@@ -3444,7 +3451,7 @@ addHook("MobjDamage", function(me,inf,sor,dmg,dmgt)
 	p.pflags = $ &~(PF_THOKKED|PF_JUMPED|PF_SHIELDABILITY)
 	
 	local power = 0
-	local inf_speed = 0
+	local inf_speed, threshold = 0
 	--S_StartSoundAtVolume(me,sfx_sp_smk,255*3/4)
 	S_StartSound(me,sfx_sp_dmg)
 	if Soap_IsLocalPlayer(p)
@@ -3459,7 +3466,7 @@ addHook("MobjDamage", function(me,inf,sor,dmg,dmgt)
 	
 	if (inf and inf.valid)
 		--default speeds
-		inf_speed = get_inf_speed(me,inf,sor)
+		inf_speed, threshold = get_inf_speed(me,inf,sor)
 		power = FU + FixedDiv(inf_speed, 30*me.scale)
 		
 		local momz = abs(inf.momz)
@@ -3471,7 +3478,8 @@ addHook("MobjDamage", function(me,inf,sor,dmg,dmgt)
 		me.soap_damagevar = {
 			ang = R_PointToAngle2(inf.x,inf.y, me.x,me.y),
 			momz = momz,
-			speed = inf_speed
+			speed = inf_speed,
+			threshold = threshold
 		}
 		if inf_speed >= 30*me.scale
 			soap.hud.painsurge = 6

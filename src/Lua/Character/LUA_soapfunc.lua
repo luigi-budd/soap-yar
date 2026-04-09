@@ -3804,7 +3804,8 @@ local SWEEP_DIST = 55*FU
 local UPPER_START = 6
 local UPPER_MOMZ = 55*FU
 local UPPER_AIRMOMZ = 40*FU
-local UPPER_DRAG = FU * 6/7
+local UPPER_XYDRAG = FU * 8/9
+local UPPER_ZDRAG = FU * 6/7
 
 local SPIKE_START = 7
 local armacolors = {
@@ -4101,7 +4102,7 @@ rawset(_G, "Soap_Combat", function(p)
 	and me.health
 		me.soap_noguarding = true
 		me.soap_uppercutstart = $ - 1
-		me.momz = FixedMul($, UPPER_DRAG)
+		me.momz = FixedMul($, UPPER_ZDRAG)
 		if me.soap_uppercutstart == 0
 			me.soap_uppercuttics = 0
 			Soap_ZLaunch(me, soap.onGround and UPPER_MOMZ or UPPER_AIRMOMZ)
@@ -4119,7 +4120,7 @@ rawset(_G, "Soap_Combat", function(p)
 		me.soap_noguarding = true
 		if me.soap_uppercuttics <= 8
 			tempatk = 2
-			local dist = 45*FU
+			local dist = 60*FU
 			local ang = me.angle
 			local thok = P_SpawnMobjFromMobj(me,
 				P_ReturnThrustX(nil,ang,dist),
@@ -4127,7 +4128,7 @@ rawset(_G, "Soap_Combat", function(p)
 				0,
 				MT_THOK
 			)
-			thok.radius = 45*me.scale
+			thok.radius = 50*me.scale
 			thok.height = 120*me.scale
 			P_SetOrigin(thok, thok.x+me.momx,thok.y+me.momy, me.z + me.height/2 - thok.height/2 + me.momz)
 			thok.scale = me.scale
@@ -4139,9 +4140,9 @@ rawset(_G, "Soap_Combat", function(p)
 		end
 		me.soap_uppercuttics = $ + 1
 		
-		me.momx = FixedMul($, UPPER_DRAG)
-		me.momy = FixedMul($, UPPER_DRAG)
-		me.momz = FixedMul($, UPPER_DRAG)
+		me.momx = FixedMul($, UPPER_XYDRAG)
+		me.momy = FixedMul($, UPPER_XYDRAG)
+		me.momz = FixedMul($, UPPER_ZDRAG)
 		me.state = S_PLAY_MELEE
 		soap.afterimage = true
 		
