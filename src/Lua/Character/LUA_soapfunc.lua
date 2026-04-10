@@ -764,16 +764,18 @@ rawset(_G,"Soap_ImpactVFX",function(src,inf, distmul, scalemul, forcesplat, nosp
 		end
 	end
 
-	for i = 0,P_RandomRange(1,3)
-		local shck = P_SpawnMobjFromMobj(top_layer, 0,0,0, MT_PARTICLE)
-		shck.state = S_SOAP_HITM_SSHK0 + i
-		shck.spritexscale = top_layer.spritexscale + Soap_RandomFixedSigned() / 4
-		shck.spriteyscale = shck.spritexscale
-		shck.renderflags = $|rflags|RF_ALWAYSONTOP|(P_RandomChance(FU/2) and RF_HORIZONTALFLIP or 0)
-		shck.color = top_layer.color
-		shck.colorized = top_layer.colorized
-		--shck.destscale = shck.scale * 2
-		--P_SetObjectMomZ(shck, -4*FU)
+	if (inf and inf.valid) and inf.soap_supervfx
+		for i = 0,P_RandomRange(1,3)
+			local shck = P_SpawnMobjFromMobj(top_layer, 0,0,0, MT_PARTICLE)
+			shck.state = S_SOAP_HITM_SSHK0 + i
+			shck.spritexscale = top_layer.spritexscale + Soap_RandomFixedSigned() / 4
+			shck.spriteyscale = shck.spritexscale
+			shck.renderflags = $|rflags|RF_ALWAYSONTOP|(P_RandomChance(FU/2) and RF_HORIZONTALFLIP or 0)
+			shck.color = top_layer.color
+			shck.colorized = top_layer.colorized
+			--shck.destscale = shck.scale * 2
+			--P_SetObjectMomZ(shck, -4*FU)
+		end
 	end
 
 	if forcesplat or nosparklag then return end
@@ -3005,6 +3007,7 @@ rawset(_G, "Soap_SuperThinker",function(p,me,soap)
 	--spacedrown is different from water
 	*/
 	
+	me.soap_supervfx = soap.doSuperBuffs
 	if not soap.doSuperBuffs then return end
 	
 	p.powers[pw_underwater] = 0
