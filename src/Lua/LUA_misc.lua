@@ -350,6 +350,30 @@ local function FreezeInHitlag(mo)
 	if me.hitlag
 		return true
 	end
+	
+	if mo.ghosttype
+		P_MoveOrigin(mo,
+			me.x + mo.xoffset,
+			me.y + mo.yoffset,
+			me.z + (mo.zoffset or 0)
+		)
+		mo.zoffset = $ + FixedMul(mo.zchange, mo.scale)
+		if (soap.gravflip == -1)
+			mo.z = me.z + me.height - mo.height - (mo.zoffset or 0)
+			mo.eflags = $|MFE_VERTICALFLIP
+		else
+			mo.eflags = $ &~MFE_VERTICALFLIP
+		end
+		
+		if mo.fuse <= 6
+			/*
+			local tics = 7 - mo.fuse
+			mo.spritexscale = $ - (FU/16) * tics
+			mo.spriteyscale = $ + (FU/11) * tics
+			*/
+			mo.alpha = P_Lerp(FixedDiv(7 - mo.fuse, 6), FU, 0)
+		end
+	end
 end
 addHook("MobjThinker",FreezeInHitlag,MT_SOAP_FREEZEGFX)
 

@@ -145,7 +145,7 @@ local function Soap_SuperReady(player)
 	and not player.powers[pw_invulnerability]
 	and not player.powers[pw_tailsfly]
 	and (player.charflags & SF_SUPER)
-	and (player.pflags & PF_JUMPED)
+	--and (player.pflags & PF_JUMPED)
 	-- and !(player->powers[pw_shield] & SH_NOSTACK) (lol)
 	and not (maptol & TOL_NIGHTS)
 	and All7Emeralds(emeralds)
@@ -838,6 +838,7 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 		end
 		
 		--super transformation
+		/*
 		if (p.pflags & (PF_JUMPED|PF_THOKKED) == PF_JUMPED)
 		and (soap.c2 == 1)
 		and Soap_SuperReady(p)
@@ -845,6 +846,7 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 		and (lunge.angle == nil)
 			P_DoSuperTransformation(p)
 		end
+		*/
 		
 		if (soap.inBattle and CBW_Battle)
 		and (p.powers[pw_shield] & SH_NOSTACK == SH_ARMAGEDDON)
@@ -897,35 +899,31 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 	end
 	
 	soap.topcooldown = max($-1, 0)
+	local transforming = false
 	--c3 specials
-	/*
 	if (soap.c3)
 		
-		local candotop = false
-		local incoop = (CV.FindVar("friendlyfire").value and not Soap_IsCompGamemode()) and (multiplayer or netgame)
-		
-		--spininng top
-		if ((soap.c3 == 1)
-		or (soap.topcooldown == 0))
-		and ((G_RingSlingerGametype()
-		and (p.rings == 0))
-		or incoop)
-			candotop = true
-			
-			if gametyperules & GTR_TAG
-			and (p.pflags & PF_TAGIT == 0)
-				candotop = false
-			end
-		end
-		
-		if candotop
-		and not soap.topcooldown
-			SoapST_Start(p)
-			soap.topcooldown = SOAP_TOPCOOLDOWN
-			setstate = true
+		-- super transformation
+		if (soap.c3)
+		and Soap_SuperReady(p)
+			transforming = true
 		end
 	end
-	*/
+	
+	if transforming
+		soap.supertranstime = $ + 1
+		if soap.supertranstime == 2*TR
+			P_DoSuperTransformation(p)
+		end
+		
+		if not S_SoundPlaying(me, sfx_sp_trn)
+			S_StartSound(me,sfx_sp_trn, p)
+		end
+	else
+		soap.supertranstime = 0
+		S_StopSoundByID(me,sfx_sp_trn)
+	end
+	print(soap.supertranstime)
 	
 	local waslunging = soap.lunge.lunged
 	if soap.lunge.lunged
@@ -3840,6 +3838,30 @@ Takis_Hook.addHook("PostThinkFrame",function(p)
 	end
 	if soap.topspin ~= false
 		p.drawangle = me.angle - FixedAngle(soap.topspin)
+	end
+	
+	-- aura handled down here for state changes n stuff
+	if (soap.doSuperBuffs)
+	and (leveltime % 2 == 0)
+	and not (me.state >= S_PLAY_SUPER_TRANS1 and me.state <= S_PLAY_SUPER_TRANS6)
+		local g = P_SpawnGhostMobj(me) --ez
+		g.colorized = true
+		g.renderflags = RF_FULLBRIGHT
+		g.tracer = me
+		g.blendmode = AST_ADD
+		g.dispoffset = -200
+		g.type = MT_SOAP_FREEZEGFX
+		g.ghosttype = true
+		g.zoffset = 0
+		
+		local dist = 8 * me.scale
+		g.xoffset = Soap_RandomFixedRange(-dist,dist)
+		g.yoffset = Soap_RandomFixedRange(-dist,dist)
+		g.zchange = Soap_RandomFixedRange(FU, 10*FU) * soap.gravflip
+		
+		g.fuse = TR/2 + P_RandomRange(-5,5)
+		g.destscale = g.scale / 3
+		g.scalespeed = FixedDiv(g.scale - g.destscale, g.fuse * FU)
 	end
 end)
 

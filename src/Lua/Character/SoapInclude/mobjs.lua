@@ -287,3 +287,13 @@ states[S_SOAP_HITM_SHCKW] = {
 	var2 = 1,
 	tics = 7,
 }
+-- yum
+for i = 0,3
+	states[SafeFreeslot("S_SOAP_HITM_SSHK"..i)] = {
+	    sprite = SPR_SOAP_HITMARK,
+	    frame = (44 + (5*i))|FF_FULLBRIGHT|FF_ANIMATE,
+		var1 = 4,
+		var2 = 2,
+		tics = (5*2),
+	}
+end
