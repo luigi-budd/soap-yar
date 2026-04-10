@@ -4187,7 +4187,7 @@ rawset(_G, "Soap_Combat", function(p)
 			soap.lunge.angle = me.angle
 			
 			P_InstaThrust(me, me.angle, 45*me.scale)
-			P_SetObjectMomZ(me, 5*FU)
+			P_SetObjectMomZ(me, 2*FU)
 			p.pflags = $|PF_THOKKED &~PF_NOJUMPDAMAGE
 			
 			S_StartSound(me, sfx_thok)

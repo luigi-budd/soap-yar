@@ -402,7 +402,7 @@ SOAP_TAUNTS[SOAP_SKIN] = {
 		name = "Punch",
 		
 		run = function(p, me, soap, taunt)
-			me.state = S_PLAY_SOAP_SPTOP
+			me.state = S_PLAY_SOAP_PREPUNCH
 			
 			me.tempangle = me.angle
 			me.punchwindup = 20
@@ -570,7 +570,7 @@ SOAP_TAUNTS[SOAP_SKIN] = {
 		end,
 		postthink = function(p, me, soap, taunt)
 			if me.tempangle == nil then return end
-			p.drawangle = me.tempangle + FixedAngle(36*FU * me.punchwindup)
+			p.drawangle = me.tempangle --+ FixedAngle(36*FU * me.punchwindup)
 		end,
 		drawer = function(v,i, x,y, selected)
 			chardrawer(v,i, x,y, {

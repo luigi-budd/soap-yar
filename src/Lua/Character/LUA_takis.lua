@@ -531,12 +531,6 @@ Takis_Hook.addHook("Takis_Thinker",function(p)
 					if thrust > 0
 						P_InstaThrust(me,ang,thrust)
 					end
-					-- i wish it didnt have to come to this
-					if (soap.accspeed >= 40*FU)
-					and (clutch.time)
-						me.momx = $ * 6/8
-						me.momy = $ * 6/8
-					end
 				end
 				
 				me.state = S_PLAY_SOAP_SLIP

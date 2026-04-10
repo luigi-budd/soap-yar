@@ -230,6 +230,9 @@ rawset(_G,"Takis_DoClutch",function(p,riding)
 		me.movefactor = $/2
 		thrust = 0
 	end
+	if (p.pflags & PF_SPINNING)
+		thrust = 0
+	end
 	
 	thrust = FixedMul(thrust,me.scale)
 	p.pflags = $ &~PF_SPINNING
