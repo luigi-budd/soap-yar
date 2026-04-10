@@ -697,6 +697,7 @@ rawset(_G,"Soap_ImpactVFX",function(src,inf, distmul, scalemul, forcesplat, nosp
 	local spr_scale = FixedMul(orig_scale, scalemul)
 	local rflags = RF_FULLBRIGHT|RF_NOCOLORMAPS
 	local applycolor = ((multiplayer or netgame) and (gametyperules & GTR_FRIENDLY == 0))
+	local supervfx = (inf and inf.valid) and inf.soap_supervfx
 	
 	if distmul ~= nil
 		off.x = FixedMul($, distmul)
@@ -744,14 +745,16 @@ rawset(_G,"Soap_ImpactVFX",function(src,inf, distmul, scalemul, forcesplat, nosp
 	end
 	
 	local adjust = P_RandomChance(FU/2)
+	local shockscale = supervfx and FU * 7/5 or FU
 	for i = (adjust and 2 or 0), ((not adjust) and 2 or 0), (adjust and -1 or 1)
 		local shck = P_SpawnMobjFromMobj(top_layer, 0,0,0, MT_PARTICLE)
 		shck.state = (P_RandomChance(FU/6) and S_SOAP_HITM_FSHK0 or S_SOAP_HITM_SHK0) + i
-		shck.spritexscale = top_layer.spritexscale + Soap_RandomFixedSigned() / 4
+		shck.spritexscale = FixedMul(top_layer.spritexscale + Soap_RandomFixedSigned() / 4, shockscale)
 		shck.spriteyscale = shck.spritexscale
 		shck.renderflags = $|rflags|RF_ALWAYSONTOP
 		shck.color = top_layer.color
 		shck.colorized = top_layer.colorized
+		shck.translation = (supervfx) and "AllBlack" or nil
 		if P_RandomChance(FU/2)
 			local shock = P_SpawnMobjFromMobj(top_layer, 0,0,0, MT_PARTICLE)
 			shock.state = shck.state
@@ -761,10 +764,11 @@ rawset(_G,"Soap_ImpactVFX",function(src,inf, distmul, scalemul, forcesplat, nosp
 			shock.color = top_layer.color
 			shock.colorized = top_layer.colorized
 			shock.renderflags = shck.renderflags
+			shock.translation = (supervfx) and "AllBlack" or nil
 		end
 	end
 
-	if (inf and inf.valid) and inf.soap_supervfx
+	if supervfx
 		for i = 0,P_RandomRange(1,3)
 			local shck = P_SpawnMobjFromMobj(top_layer, 0,0,0, MT_PARTICLE)
 			shck.state = S_SOAP_HITM_SSHK0 + i
@@ -781,7 +785,7 @@ rawset(_G,"Soap_ImpactVFX",function(src,inf, distmul, scalemul, forcesplat, nosp
 	if forcesplat or nosparklag then return end
 	
 	local damagecolor = damagecolors[P_RandomRange(1, #damagecolors)]
-	local irad = 40*src.scale
+	local irad = 40*scalemul
 	local offset = 3
 	for i = 1,16
 		-- caches less angles
@@ -793,7 +797,7 @@ rawset(_G,"Soap_ImpactVFX",function(src,inf, distmul, scalemul, forcesplat, nosp
 			off.y + FixedMul(irad, v.y),
 			-- 40 pixels are how much the red spark are offset
 			-- from 128
-			off.z + FixedMul(irad, v.z) + 40*FU,
+			off.z + FixedMul(irad, v.z) + 40*scalemul,
 			MT_PARTICLE --MT_SOAP_FREEZEGFX
 		)
 		s.state = S_SOAP_IMPACT_LINE2
