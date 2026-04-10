@@ -1095,6 +1095,7 @@ rawset(_G, "Soap_WindLines", function(me,rmomz,color,forceang,forceside)
 		me.z + (height) + Soap_RandomFixedRange(-height,height),
 		MT_SOAP_SPEEDLINE
 	)
+	wind.renderflags = $|RF_NOCOLORMAPS
 	
 	wind.scale = me.scale
 	if forceang == nil
