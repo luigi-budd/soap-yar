@@ -732,6 +732,7 @@ rawset(_G,"Soap_ImpactVFX",function(src,inf, distmul, scalemul, forcesplat, nosp
 	top_layer.startinghitlag = (src.hitlag or 0)
 	top_layer.distmul = distmul
 	top_layer.scalemul = scalemul
+	top_layer.soap_supervfx = supervfx
 
 	if inf and inf.valid
 		top_layer.vfx_mom = {inf.momx, inf.momy, inf.momz}
@@ -745,7 +746,7 @@ rawset(_G,"Soap_ImpactVFX",function(src,inf, distmul, scalemul, forcesplat, nosp
 	end
 	
 	local adjust = P_RandomChance(FU/2)
-	local shockscale = supervfx and FU * 7/5 or FU
+	local shockscale = supervfx and FU*3/2 or FU
 	for i = (adjust and 2 or 0), ((not adjust) and 2 or 0), (adjust and -1 or 1)
 		local shck = P_SpawnMobjFromMobj(top_layer, 0,0,0, MT_PARTICLE)
 		shck.state = (P_RandomChance(FU/6) and S_SOAP_HITM_FSHK0 or S_SOAP_HITM_SHK0) + i

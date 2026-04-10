@@ -158,6 +158,13 @@ local damagecolors = {
 	SKINCOLOR_YELLOW,
 	SKINCOLOR_SAPPHIRE
 }
+local super_damagecolors = {
+	SKINCOLOR_JET,
+	SKINCOLOR_RED,
+	SKINCOLOR_ORANGE,
+	SKINCOLOR_YELLOW,
+	SKINCOLOR_SAPPHIRE
+}
 
 local RED_OFFSET = 16*FU
 local RED_STAROFFSET = 8*FU
@@ -167,6 +174,7 @@ local function TryVFXStars(v)
 	if v.sentstars then return end
 	v.sentstars = true
 
+	local colorlist = (v.soap_supervfx) and super_damagecolors or damagecolors
 	for i = 0, 5
 		local star = P_SpawnMobjFromMobj(v,
 			Soap_RandomFixedRange(-RED_STAROFFSET, RED_STAROFFSET),
@@ -176,7 +184,7 @@ local function TryVFXStars(v)
 		)
 		star.state = S_SOAP_HITM_STAR
 		star.soap_newvfx = true
-		star.color = damagecolors[P_RandomRange(1, #damagecolors)]
+		star.color = colorlist[P_RandomRange(1, #colorlist)]
 		star.scale = $ * 2
 		star.spritexscale = v.spritexscale / 4
 		star.spriteyscale = star.spritexscale
@@ -187,6 +195,9 @@ local function TryVFXStars(v)
 		star.momx = $ + v.vfx_mom[1]
 		star.momy = $ + v.vfx_mom[2]
 		star.momz = $ + v.vfx_mom[3] * 3/4
+		if v.soap_supervfx
+			star.frame = ($ &~FF_FRAMEMASK)|64
+		end
 	end
 	local wave = P_SpawnMobjFromMobj(v,0,0,0,MT_PARTICLE)
 	wave.spritexscale = v.spritexscale * 3/4

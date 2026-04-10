@@ -2766,6 +2766,8 @@ addHook("FollowMobj",function(p, m_peel) --master peel
 	local mycolor = me.color
 	local mycolorized = me.colorized
 	local myrollangle = me.rollangle
+	local myalpha = me.alpha
+	local myscale = me.scale
 	
 	local pitchroll = 0
 	local pitch = me.pitch
@@ -2848,7 +2850,7 @@ addHook("FollowMobj",function(p, m_peel) --master peel
 			peel.frame = $|frame_R
 		end
 		peel.renderflags = $|RF_PAPERSPRITE
-		peel.destscale = me.scale
+		peel.destscale = myscale
 		peel.scalespeed = peel.destscale + 1
 		peel.flags2 = ($ &~MF2_DONTDRAW)|(me.flags2 & MF2_DONTDRAW)
 		peel.color = mycolor
@@ -2857,6 +2859,7 @@ addHook("FollowMobj",function(p, m_peel) --master peel
 		peel.spriteyscale = sprysc
 		peel.pitch,peel.roll = 0,0
 		peel.translation = mytrans
+		peel.alpha = myalpha
 		
 		peel.rollangle = myrollangle
 		side = $ - sidemove
