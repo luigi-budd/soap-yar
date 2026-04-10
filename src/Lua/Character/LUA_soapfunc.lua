@@ -769,9 +769,11 @@ rawset(_G,"Soap_ImpactVFX",function(src,inf, distmul, scalemul, forcesplat, nosp
 		shck.state = S_SOAP_HITM_SSHK0 + i
 		shck.spritexscale = top_layer.spritexscale + Soap_RandomFixedSigned() / 4
 		shck.spriteyscale = shck.spritexscale
-		shck.renderflags = $|rflags|RF_ALWAYSONTOP
+		shck.renderflags = $|rflags|RF_ALWAYSONTOP|(P_RandomChance(FU/2) and RF_HORIZONTALFLIP or 0)
 		shck.color = top_layer.color
 		shck.colorized = top_layer.colorized
+		--shck.destscale = shck.scale * 2
+		--P_SetObjectMomZ(shck, -4*FU)
 	end
 
 	if forcesplat or nosparklag then return end
