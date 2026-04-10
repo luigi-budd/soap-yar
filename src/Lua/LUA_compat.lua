@@ -203,6 +203,7 @@ local function SetCompat()
 				
 				if me.soap_noguarding
 				or (soap.toptics)
+				or (me.sprite2 == SPR2_MSC2 or me.state == S_PLAY_SOAP_KNOCKOUT)
 					p.canguard = false
 					me.soap_noguarding = false
 				end
