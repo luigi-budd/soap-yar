@@ -769,6 +769,8 @@ rawset(_G,"Soap_ImpactVFX",function(src,inf, distmul, scalemul, forcesplat, nosp
 		end
 	end
 
+	if forcesplat or nosparklag then return end
+	
 	if supervfx
 		for i = 0,P_RandomRange(1,3)
 			local shck = P_SpawnMobjFromMobj(top_layer, 0,0,0, MT_PARTICLE)
@@ -778,13 +780,12 @@ rawset(_G,"Soap_ImpactVFX",function(src,inf, distmul, scalemul, forcesplat, nosp
 			shck.renderflags = $|rflags|RF_ALWAYSONTOP|(P_RandomChance(FU/2) and RF_HORIZONTALFLIP or 0)
 			shck.color = top_layer.color
 			shck.colorized = top_layer.colorized
+			shck.dispoffset = 170
 			--shck.destscale = shck.scale * 2
 			--P_SetObjectMomZ(shck, -4*FU)
 		end
 	end
 
-	if forcesplat or nosparklag then return end
-	
 	local damagecolor = damagecolors[P_RandomRange(1, #damagecolors)]
 	local irad = 40*scalemul
 	local offset = 3
