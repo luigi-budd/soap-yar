@@ -219,7 +219,7 @@ states[S_SOAP_LUNGEVFX] = {
 SafeFreeslot("S_SOAP_IMPACT_LINE")
 states[S_SOAP_IMPACT_LINE] = {
     sprite = SPR_SOAP_GFX,
-    frame = 54|FF_ANIMATE|FF_PAPERSPRITE|FF_FULLBRIGHT,
+    frame = 26|FF_ANIMATE|FF_PAPERSPRITE|FF_FULLBRIGHT,
 	var1 = 4,
 	var2 = 2,
 	tics = (4*2),
@@ -227,7 +227,7 @@ states[S_SOAP_IMPACT_LINE] = {
 SafeFreeslot("S_SOAP_IMPACT_LINE2")
 states[S_SOAP_IMPACT_LINE2] = {
     sprite = SPR_SOAP_GFX,
-    frame = 58|FF_ANIMATE|FF_PAPERSPRITE|FF_FULLBRIGHT,
+    frame = 30|FF_ANIMATE|FF_PAPERSPRITE|FF_FULLBRIGHT,
 	var1 = 4,
 	var2 = 2,
 	tics = (4*2),

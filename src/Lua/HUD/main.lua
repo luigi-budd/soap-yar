@@ -49,7 +49,7 @@ addHook("HUD",function(v,p, cam)
 	if cam.chase
 		if not result.onscreen then return end
 		
-		scale = abs(result.scale) * 8/5
+		scale = abs(FixedMul(result.scale, me.scale)) * 8/5
 		x = result.x + 40 * scale
 		y = result.y
 	end

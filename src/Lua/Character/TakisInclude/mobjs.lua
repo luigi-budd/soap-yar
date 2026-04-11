@@ -1,7 +1,7 @@
 SafeFreeslot("S_TAKIS_CDUST1")
 states[S_TAKIS_CDUST1] = {
 	sprite = SPR_SOAP_GFX,
-	frame = 32|FF_PAPERSPRITE|FF_ANIMATE,
+	frame = 4|FF_PAPERSPRITE|FF_ANIMATE,
 	var1 = 8,
 	var2 = 2,
 	tics = 8*2,
@@ -13,7 +13,7 @@ states[S_TAKIS_CDUST1] = {
 SafeFreeslot("S_TAKIS_CDUST2")
 states[S_TAKIS_CDUST2] = {
 	sprite = SPR_SOAP_GFX,
-	frame = 40|FF_PAPERSPRITE|FF_ANIMATE|FF_FULLBRIGHT,
+	frame = 12|FF_PAPERSPRITE|FF_ANIMATE|FF_FULLBRIGHT,
 	var1 = 6,
 	var2 = 2,
 	tics = 6*2,
@@ -22,7 +22,7 @@ states[S_TAKIS_CDUST2] = {
 SafeFreeslot("S_TAKIS_SLINGFX")
 states[S_TAKIS_SLINGFX] = {
 	sprite = SPR_SOAP_GFX,
-	frame = 46|FF_PAPERSPRITE|FF_ANIMATE|FF_FULLBRIGHT,
+	frame = 18|FF_PAPERSPRITE|FF_ANIMATE|FF_FULLBRIGHT,
 	var1 = 6,
 	var2 = 1,
 	tics = 7,

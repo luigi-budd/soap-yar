@@ -44,6 +44,7 @@ local function FuckIt(me, homing, target)
 	fuck.spritexscale = FU*2
 	fuck.spriteyscale = fuck.spritexscale
 	fuck.touchlist = {}
+	fuck.soap_supervfx = true
 	me.fuckimmunity = 15
 	
 	if homing

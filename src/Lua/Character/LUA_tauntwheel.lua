@@ -102,7 +102,7 @@ local sixseven_callback = function(spark)
 	spark.tics = 12
 	spark.frame = A
 	spark.sprite = SPR_SOAP_GFX
-	spark.frame = 62|FF_PAPERSPRITE
+	spark.frame = 34|FF_PAPERSPRITE
 	spark.momz = 0
 	spark.renderflags = $|RF_NOCOLORMAPS|RF_FULLBRIGHT|(P_RandomChance(FU/2) and RF_HORIZONTALFLIP or 0)
 	P_ThrustEvenIn2D(spark, spark.angle - ANGLE_90, 8*FU)
@@ -397,6 +397,13 @@ SOAP_TAUNTS[SOAP_SKIN] = {
 				frame = 3, angle = 0
 			}, selected)
 		end,
+		canceled = function(p,me,soap)
+			me.sixseveeeen = nil
+			me.sixsev_adjust = nil
+			me.sixsev_super = nil
+			
+			me.colorized = false
+		end
 	},
 	[6] = {
 		name = "Punch",
@@ -877,7 +884,7 @@ addHook("HUD",function(v,p)
 	for i = 0, avail - 1
 		local ang = ANGLE_MAX - FixedAngle(angstep * i)
 		v.drawScaled(160*FU,100*FU, FU/2,
-			v.getSpritePatch(SPR_SOAP_GFX, 53, 0, ang),
+			v.getSpritePatch(SPR_SOAP_GFX, 25, 0, ang),
 			0
 		)
 		ang = ($ - ANGLE_90) + ANGLE_180 - FixedAngle(angstep / 2)
