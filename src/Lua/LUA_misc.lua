@@ -198,6 +198,7 @@ local function TryVFXStars(v)
 		if v.soap_supervfx
 			star.frame = ($ &~FF_FRAMEMASK)|64
 		end
+		star.renderflags = $|RF_FULLBRIGHT|RF_NOCOLORMAPS
 	end
 	local wave = P_SpawnMobjFromMobj(v,0,0,0,MT_PARTICLE)
 	wave.spritexscale = v.spritexscale * 3/4

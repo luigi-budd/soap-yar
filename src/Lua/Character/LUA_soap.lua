@@ -923,7 +923,6 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 		soap.supertranstime = 0
 		S_StopSoundByID(me,sfx_sp_trn)
 	end
-	print(soap.supertranstime)
 	
 	local waslunging = soap.lunge.lunged
 	if soap.lunge.lunged

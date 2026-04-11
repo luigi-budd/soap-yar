@@ -514,7 +514,8 @@ SOAP_TAUNTS[SOAP_SKIN] = {
 								if P_IsObjectOnGround(found)
 									found.z = $ + P_MobjFlip(found)
 								end
-								P_Thrust(found, ang, 12 * me.scale)
+								local speed = (p2.soaptable.taunt.tics) and 30*me.scale or 12*me.scale
+								P_Thrust(found, ang, speed)
 								P_SetObjectMomZ(found, 30*me.scale, true)
 								p2.powers[pw_flashing] = flashingtics
 							end
