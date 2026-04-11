@@ -726,6 +726,7 @@ rawset(_G,"Soap_ImpactVFX",function(src,inf, distmul, scalemul, forcesplat, nosp
 	else
 		top_layer.sentstars = true
 		top_layer.nosparks = true
+		top_layer.vfx_tospawn = 0
 	end
 	top_layer.tracer = inf
 	top_layer.target = src
