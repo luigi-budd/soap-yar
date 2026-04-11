@@ -2414,7 +2414,7 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 		cart.rdashed = nil
 		
 		if (cart.health and me.health)
-		and (soap.c1)
+		and (soap.c2)
 			p.powers[pw_carry] = CR_NONE
 			
 			p.mo.momx,p.mo.momy = cart.momx,cart.momy
