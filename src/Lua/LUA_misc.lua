@@ -51,6 +51,16 @@ end,MT_SOAP_SPEEDLINE)
 addHook("MobjThinker",function(bump)
 	if not (bump and bump.valid) then return end
 	
+	if bump.sixseveneffect
+		if bump.fuse <= 20
+			bump.alpha = $ - (FU/20)
+			bump.momx = $ * 9/10
+			bump.momy = $ * 9/10
+			bump.spriteyscale = ease.outquad(FU - ((FU/20)*bump.fuse), FU, 0)
+		end
+		return
+	end
+	
 	local me = bump.target
 	if (me and me.valid)
 		if me.hitlag
@@ -77,7 +87,9 @@ addHook("MobjThinker",function(bump)
 		return
 	end
 	
-	bump.momz = $ + P_GetMobjGravity(bump)
+	if not (bump.flags & MF_NOGRAVITY)
+		bump.momz = $ + P_GetMobjGravity(bump)
+	end
 	if CV.rotations.value
 		bump.rollangle = $ + (bump.random or 0)
 	end

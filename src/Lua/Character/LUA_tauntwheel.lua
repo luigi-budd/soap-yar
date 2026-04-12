@@ -834,6 +834,7 @@ rawset(_G, "Soap_TauntWheelThink", function(p)
 		if SOAP_TAUNTS[me.skin] == nil
 		or (me.skin ~= soap.last.skin)
 		or not (me.health)
+		or (me.state >= S_PLAY_SUPER_TRANS1 and me.state <= S_PLAY_SUPER_TRANS6)
 			local taunt_t = SOAP_TAUNTS[soap.last.skin][taunt.num]
 			if taunt_t.canceled
 				taunt_t.canceled(p, me, soap, taunt)

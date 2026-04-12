@@ -1165,6 +1165,11 @@ rawset(_G, "Soap_WindLines", function(me,rmomz,color,forceang,forceside)
 	if mocolor == nil and color == nil
 		mocolor = SKINCOLOR_SAPPHIRE
 	end
+	if (p and p.valid)
+	and (p.powers[pw_super])
+	and (mocolor == SKINCOLOR_SAPPHIRE)
+		mocolor = me.color
+	end
 	wind.color = mocolor
 	if CV.rotations.value
 		wind.rollangle = zangle

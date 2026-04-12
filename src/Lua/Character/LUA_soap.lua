@@ -53,6 +53,7 @@ rawset(_G,"SOAP_EXTRADASH", 21*FU)
 --spinning top
 rawset(_G,"SOAP_TOPCOOLDOWN", 4*TR)
 rawset(_G,"SOAP_MAXDAMAGETICS", 10)
+local SOAP_TRANSFORMTIME = TR * 3/2
 
 local soap_baseuppercutturn = (360 + 180)*FU
 local soap_pound_factor = tofixed("0.75")
@@ -116,6 +117,15 @@ end
 local armacolors = {
 	SKINCOLOR_KETCHUP, SKINCOLOR_PEPPER, SKINCOLOR_CRIMSON, SKINCOLOR_GARNET, SKINCOLOR_VOLCANIC
 }
+local emeraldcolors = {
+	SKINCOLOR_EMERALD,
+	SKINCOLOR_SIBERITE,
+	SKINCOLOR_SAPPHIRE,
+	SKINCOLOR_SKY,
+	SKINCOLOR_TOPAZ,
+	SKINCOLOR_FLAME,
+	SKINCOLOR_SLATE
+}
 
 local function dust_type(me)
 	return (me.eflags & (MFE_UNDERWATER|MFE_TOUCHWATER)) and P_RandomRange(MT_SMALLBUBBLE,MT_MEDIUMBUBBLE) or MT_SOAP_DUST
@@ -124,15 +134,64 @@ local function dust_noviewmobj(dust, me)
 	dust.dontdrawforviewmobj = me
 end
 local function sixseven_callback(spark, me)
-	spark.tics = 10
+	spark.tics = (me.soap_supertemp) and TR or 10
 	spark.frame = A
 	spark.sprite = SPR_SOAP_GFX
-	spark.frame = 34|FF_PAPERSPRITE|FF_ADD|FF_TRANS30
+	spark.frame = 34|FF_PAPERSPRITE|FF_ADD
 	spark.momz = 0
 	spark.renderflags = $|RF_NOCOLORMAPS|RF_FULLBRIGHT|(P_RandomChance(FU/2) and RF_HORIZONTALFLIP or 0)
-	P_ThrustEvenIn2D(spark, spark.angle - ANGLE_90, 8*FU)
+	local frac = FixedDiv(me.player.soaptable.supertranstime, SOAP_TRANSFORMTIME)
+	local speed = 8
+	if (me.soap_supertemp)
+		frac = FU
+		speed = 12
+		spark.type = MT_SOAP_WALLBUMP
+		spark.sixseveneffect = true
+		spark.fuse = spark.tics
+	end
+	P_ThrustEvenIn2D(spark, spark.angle - ANGLE_90, speed*frac)
 	spark.momx = $ + me.momx
 	spark.momy = $ + me.momy
+	spark.alpha = min(frac * 2, FU)
+end
+local function transformvfx(p,me,soap)
+	local scale = 2*FU
+	local limit = 28
+	for i = 0, 31
+		local spark = P_SpawnMobjFromMobj(me,
+			Soap_RandomFixedRange(-24*FU, 24*FU),
+			Soap_RandomFixedRange(-24*FU, 24*FU),
+			Soap_RandomFixedRange(0, 64*FU), MT_SOAP_WALLBUMP
+		)
+		P_SetScale(spark,scale / 10, true)
+		spark.destscale = scale
+		--5 tics
+		spark.scalespeed = FixedDiv(scale - (scale / 10), 5*FU)
+		spark.color = emeraldcolors[P_RandomRange(1,7)]
+		spark.colorized = true
+		--spark.mirrored = P_RandomChance(FU/2)
+		spark.fuse = 3 * TR
+		spark.startfuse = spark.fuse
+		spark.flags = $|MF_NOGRAVITY
+		spark.angle = FixedAngle(P_RandomRange(0,360)*FU)
+		
+		local speed = P_RandomRange(5, 20) * me.scale
+		local ha,va = spark.angle, FixedAngle(P_RandomRange(-20,160)*FU)
+		P_3DThrust(spark, ha,va, speed)
+		
+		spark.random = P_RandomRange(-limit,limit) * ANG1
+	end
+	
+	me.soap_supertemp = true
+	Soap_DustRing(me,
+		MT_PARTICLE, 16,
+		{me.x,me.y,me.z},
+		8*FU, 10*FU,
+		me.scale / 10,
+		me.scale * 6,
+		false, sixseven_callback
+	)
+	me.soap_supertemp = nil
 end
 
 local function P_PitchRoll(me, frac)
@@ -911,33 +970,67 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 	
 	soap.topcooldown = max($-1, 0)
 	local transforming = false
+	local detransforming = false
 	--c3 specials
 	if (soap.c3)
 		
 		-- super transformation
 		if (soap.c3)
-		and Soap_SuperReady(p)
-			transforming = true
+			if not (p.powers[pw_super])
+			and Soap_SuperReady(p)
+			and not soap.superlockout
+				transforming = true
+			elseif (p.powers[pw_super])
+			and not soap.desuperlockout
+				detransforming = true
+			end
 		end
+	else
+		soap.desuperlockout = false
+		soap.superlockout = false
 	end
 	
 	if transforming
 		soap.supertranstime = $ + 1
-		if soap.supertranstime == 2*TR
+		if soap.supertranstime == SOAP_TRANSFORMTIME
 			P_DoSuperTransformation(p)
+			transformvfx(p,me,soap)
+			soap.desuperlockout = true
 		end
 		
 		if soap.onGround
 		and (leveltime % 4 == 0)
+			local frac = FixedDiv(soap.supertranstime, SOAP_TRANSFORMTIME)
 			Soap_DustRing(me,
 				MT_PARTICLE, 16,
 				{me.x,me.y,me.z},
-				8*FU, 8*FU,
+				8*FU, 8*frac,
 				me.scale / 10,
-				me.scale * 4,
+				FixedMul(me.scale * 4, frac),
 				false, sixseven_callback
 			)
 		end
+		local scale = FU
+		local limit = 28
+		local spark = P_SpawnMobjFromMobj(me,
+			Soap_RandomFixedRange(-24*FU, 24*FU),
+			Soap_RandomFixedRange(-24*FU, 24*FU),
+			Soap_RandomFixedRange(0, 64*FU), MT_SOAP_WALLBUMP
+		)
+		P_SetScale(spark,scale / 10, true)
+		spark.destscale = scale
+		--5 tics
+		spark.scalespeed = FixedDiv(scale - (scale / 10), 5*FU)
+		spark.color = emeraldcolors[P_RandomRange(1,7)]
+		spark.colorized = true
+		--spark.mirrored = P_RandomChance(FU/2)
+		spark.fuse = TR / 2
+		spark.startfuse = spark.fuse
+		spark.flags = $|MF_NOGRAVITY
+		spark.momx = me.momx
+		spark.momy = me.momy
+		spark.momz = Soap_RandomFixedRange(2*me.scale,8*me.scale) * soap.gravflip
+		spark.random = P_RandomRange(-limit,limit) * ANG1
 		
 		if not S_SoundPlaying(me, sfx_sp_trn)
 			S_StartSound(me,sfx_sp_trn, p)
@@ -945,6 +1038,41 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 	else
 		soap.supertranstime = 0
 		S_StopSoundByID(me,sfx_sp_trn)
+	end
+	
+	if detransforming
+		me.soap_detransforming = true
+		local timer = SOAP_TRANSFORMTIME - soap.c3
+		local flashtime = 1 << (timer * 3/5)
+		flashtime = $ * 3/5
+		flashtime = min(8, max($ >> 4, 2))
+		if (timer % flashtime ~= 0)
+			me.translation = nil
+		else
+			me.translation = "AllWhite"
+		end
+		
+		if soap.c3 == SOAP_TRANSFORMTIME
+			me.translation = nil
+			P_SpawnGhostMobj(me)
+			p.powers[pw_super] = 0
+			p.powers[pw_flashing] = flashingtics - 1
+			soap.superlockout = true
+			S_StartSound(me, sfx_mario8)
+			
+			if (p.powers[pw_shield] & SH_STACK) == SH_FIREFLOWER
+				me.color = SKINCOLOR_WHITE
+			else
+				me.color = p.skincolor
+			end
+			me.state = me.state
+			
+			P_RestoreMusic(p)
+			P_SpawnShieldOrb(p)
+		end
+	elseif me.soap_detransforming
+		me.soap_detransforming = nil
+		me.translation = nil
 	end
 	
 	local waslunging = soap.lunge.lunged

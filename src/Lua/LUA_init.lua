@@ -142,6 +142,8 @@ rawset(_G, "Soap_InitTable", function(p)
 		allowdeathanims = true,
 		linebump = 0,
 		supertranstime = 0,
+		superlockout = false,
+		desuperlockout = false,
 		
 		--if this gets too big in 1 tic, dont process any pvp
 		damagedealtthistic = 0,
