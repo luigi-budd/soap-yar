@@ -1,0 +1,79 @@
+// Pivot around tip
+Sprite SOAP_HITMARK {
+	Frame S	{
+		XPivot 16
+		YPivot 16
+	}
+	Frame T {
+		XPivot 12
+		YPivot 19
+	}
+	Frame U {
+		XPivot 14
+		YPivot 57
+	}
+	Frame V {
+		XPivot 29
+		YPivot 73
+	}
+	Frame W {
+		XPivot 32
+		YPivot 73
+	}
+	Frame X {
+		XPivot 34
+		YPivot 77
+	}
+	Frame Y {
+		XPivot 36
+		YPivot 77
+	}
+	Frame Z {
+		XPivot 27
+		YPivot -2
+	}
+	Frame 0 {
+		XPivot 55
+		YPivot -4
+	}
+	Frame 1 {
+		XPivot 63
+		YPivot -11
+	}
+	Frame 2 {
+		XPivot 68
+		YPivot -12
+	}
+	Frame 3 {
+		XPivot 64
+		YPivot -12
+	}
+	Frame 4 {
+		XPivot 63
+		YPivot -11
+	}
+	Frame 5 {
+		XPivot 0
+		YPivot 1
+	}
+	Frame 6 {
+		XPivot -8
+		YPivot 8
+	}
+	Frame 7 {
+		XPivot -12
+		YPivot 5
+	}
+	Frame 8 {
+		XPivot -20
+		YPivot 4
+	}
+	Frame 9 {
+		XPivot 25
+		YPivot 4
+	}
+	Frame a {
+		XPivot -36
+		YPivot 4
+	}
+}

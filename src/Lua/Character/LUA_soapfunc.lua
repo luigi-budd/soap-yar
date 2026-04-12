@@ -753,6 +753,7 @@ rawset(_G,"Soap_ImpactVFX",function(src,inf, distmul, scalemul, forcesplat, nosp
 		shck.state = (P_RandomChance(FU/6) and S_SOAP_HITM_FSHK0 or S_SOAP_HITM_SHK0) + i
 		shck.spritexscale = FixedMul(top_layer.spritexscale + Soap_RandomFixedSigned() / 4, shockscale)
 		shck.spriteyscale = shck.spritexscale
+		shck.spriteyoffset = 40*FU
 		shck.renderflags = $|rflags|RF_ALWAYSONTOP
 		shck.color = top_layer.color
 		shck.colorized = top_layer.colorized
@@ -762,7 +763,9 @@ rawset(_G,"Soap_ImpactVFX",function(src,inf, distmul, scalemul, forcesplat, nosp
 			shock.state = shck.state
 			shock.spritexscale = (shck.spritexscale * 6/5) + Soap_RandomFixedSigned() / 4
 			shock.spriteyscale = shock.spritexscale
+			shock.spriteyoffset = 40*FU
 			shock.rollangle = ANGLE_90
+			--shock.renderflags = $|RF_HORIZONTALFLIP|RF_VERTICALFLIP
 			shock.color = top_layer.color
 			shock.colorized = top_layer.colorized
 			shock.renderflags = shck.renderflags
@@ -988,9 +991,10 @@ rawset(_G,"Soap_DustRing",function(src,
 		P_SetOrigin(dust, dust.x,dust.y,dust.z)
 		--Sure
 		dust.alpha = src.alpha
+		dust.tracer = src
 		
 		if callback ~= nil
-			callback(dust)
+			callback(dust, src)
 		end
 	end
 end)

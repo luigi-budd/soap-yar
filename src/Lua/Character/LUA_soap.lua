@@ -120,8 +120,19 @@ local armacolors = {
 local function dust_type(me)
 	return (me.eflags & (MFE_UNDERWATER|MFE_TOUCHWATER)) and P_RandomRange(MT_SMALLBUBBLE,MT_MEDIUMBUBBLE) or MT_SOAP_DUST
 end
-local function dust_noviewmobj(dust)
+local function dust_noviewmobj(dust, me)
 	dust.dontdrawforviewmobj = me
+end
+local function sixseven_callback(spark, me)
+	spark.tics = 10
+	spark.frame = A
+	spark.sprite = SPR_SOAP_GFX
+	spark.frame = 34|FF_PAPERSPRITE|FF_ADD|FF_TRANS30
+	spark.momz = 0
+	spark.renderflags = $|RF_NOCOLORMAPS|RF_FULLBRIGHT|(P_RandomChance(FU/2) and RF_HORIZONTALFLIP or 0)
+	P_ThrustEvenIn2D(spark, spark.angle - ANGLE_90, 8*FU)
+	spark.momx = $ + me.momx
+	spark.momy = $ + me.momy
 end
 
 local function P_PitchRoll(me, frac)
@@ -914,6 +925,18 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 		soap.supertranstime = $ + 1
 		if soap.supertranstime == 2*TR
 			P_DoSuperTransformation(p)
+		end
+		
+		if soap.onGround
+		and (leveltime % 4 == 0)
+			Soap_DustRing(me,
+				MT_PARTICLE, 16,
+				{me.x,me.y,me.z},
+				8*FU, 8*FU,
+				me.scale / 10,
+				me.scale * 4,
+				false, sixseven_callback
+			)
 		end
 		
 		if not S_SoundPlaying(me, sfx_sp_trn)
