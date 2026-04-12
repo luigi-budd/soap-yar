@@ -208,7 +208,27 @@ local function TryVFXStars(v)
 		star.momy = $ + v.vfx_mom[2]
 		star.momz = $ + v.vfx_mom[3] * 3/4
 		if v.soap_supervfx
-			star.frame = ($ &~FF_FRAMEMASK)|64
+			--star.frame = ($ &~FF_FRAMEMASK)|64
+			if (v.origin and v.origin.valid and v.origin.player and v.origin.skin == SOAP_SKIN)
+				star.type = MT_SOAP_AMP
+				
+				star.tracer = v.origin
+				if star.tracer.soap_amps == nil
+					star.tracer.soap_amps = 0
+					star.tracer.soap_totalamps = 0
+					star.tracer.soap_amplevel = 0
+				end
+				star.tracer.soap_amps = $ + 1
+				star.tracer.soap_totalamps = $ + 1
+				if star.tracer.soap_totalamps % 10 == 0
+					star.tracer.soap_amplevel = min($ + 1, 6)
+				end
+				
+				star.ticker = 0
+				local off = i * 3
+				star.wait = 12 + (off)
+				star.tics = $ + off
+			end
 		end
 		star.renderflags = $|RF_FULLBRIGHT|RF_NOCOLORMAPS
 	end
@@ -445,3 +465,63 @@ addHook("MobjThinker",function(rock)
 		rock.takis_flingme = true
 	end
 end,MT_ROLLOUTROCK)
+
+local amp_tics = TR
+local amp_frac = (FU / amp_tics)
+local amp_drag = FU * 6/7
+addHook("MobjThinker",function(amp)
+	if amp.wait
+		amp.wait = $ - 1
+		if FreezeInHitlag(amp) then return true end
+		return
+	end
+	local me = amp.tracer
+	if not (me and me.valid) then return end
+	if me.hitlag or me.flags & MF_NOTHINK
+		return true
+	end
+	
+	if not amp.init
+		amp.init = true
+		amp.flags = $|MF_NOCLIP|MF_NOCLIPHEIGHT|MF_NOGRAVITY
+		amp.startx = amp.x
+		amp.starty = amp.y
+		amp.startz = amp.z
+		amp.soap_newvfx = false
+		amp.tics = -1
+		amp.fuse = -1
+	end
+	amp.ticker = $ + 1
+	
+	amp.momx = FixedMul($, amp_drag)
+	amp.momy = FixedMul($, amp_drag)
+	amp.momz = FixedMul($, amp_drag)
+	amp.startx = $ + amp.momx
+	amp.starty = $ + amp.momy
+	amp.startz = $ + amp.momz
+	
+	local frac = min(amp_frac * amp.ticker, FU)
+	P_MoveOrigin(amp,
+		ease.inexpo(frac, amp.startx, me.x),
+		ease.inexpo(frac, amp.starty, me.y),
+		ease.inexpo(frac, amp.startz, me.z + me.height / 2)
+	)
+	amp.rollangle = $ + FixedAngle(ease.inexpo(frac, 0, 60*FU))
+	
+	if amp.ticker == amp_tics + 1
+		if me.soap_lifetimeamps == nil then me.soap_lifetimeamps = 0 end
+		if (me.soap_lifetimeamps % 2 == 0)
+			me.player.rings = $ + 1
+		end
+		me.soap_lifetimeamps = $ + 1
+		
+		S_StartSoundAtVolume(me, sfx_itemup, 255 * 4/5, p)
+		me.soap_amps = $ - 1
+		if me.soap_amps == 0
+			S_StartSound(me, sfx_sp_ap0 + me.soap_amplevel, p)
+			me.soap_amplevel = 0
+			me.soap_totalamps = 0
+		end
+		P_RemoveMobj(amp)
+	end
+end,MT_SOAP_AMP)

@@ -127,3 +127,11 @@ sfxinfo[sfx_sp_bsm].caption = "/"
 -- Bananza
 SafeFreeslot("sfx_sp_trn")
 sfxinfo[sfx_sp_trn].caption = "/"
+
+-- amps
+for i = 0, 6
+	SafeFreeslot("sfx_sp_ap"..i)
+	sfxinfo[sfx_sp_ap0 + i] = {
+		--caption = "/",
+	}
+end

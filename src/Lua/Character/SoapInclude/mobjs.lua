@@ -297,3 +297,12 @@ for i = 0,3
 		tics = (5*2),
 	}
 end
+
+SafeFreeslot("MT_SOAP_AMP")
+mobjinfo[MT_SOAP_AMP] = {
+	doomednum = -1,
+	spawnstate = S_THOK,
+	radius = 8*FRACUNIT,
+	height = 16*FRACUNIT,
+	flags = MF_NOCLIPTHING|MF_NOCLIPHEIGHT|MF_NOGRAVITY
+}

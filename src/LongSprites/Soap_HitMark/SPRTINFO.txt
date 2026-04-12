@@ -76,4 +76,8 @@ Sprite SOAP_HITMARK {
 		XPivot -36
 		YPivot 4
 	}
+	Frame b {
+		XPivot 16
+		YPivot 16
+	}
 }

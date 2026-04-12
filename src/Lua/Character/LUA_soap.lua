@@ -1056,7 +1056,7 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 			me.translation = nil
 			P_SpawnGhostMobj(me)
 			p.powers[pw_super] = 0
-			p.powers[pw_flashing] = flashingtics - 1
+			p.powers[pw_flashing] = (flashingtics/2)
 			soap.superlockout = true
 			S_StartSound(me, sfx_mario8)
 			

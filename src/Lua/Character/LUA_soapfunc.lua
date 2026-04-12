@@ -730,6 +730,7 @@ rawset(_G,"Soap_ImpactVFX",function(src,inf, distmul, scalemul, forcesplat, nosp
 	end
 	top_layer.tracer = inf
 	top_layer.target = src
+	top_layer.origin = inf
 	top_layer.startinghitlag = (src.hitlag or 0)
 	top_layer.distmul = distmul
 	top_layer.scalemul = scalemul
