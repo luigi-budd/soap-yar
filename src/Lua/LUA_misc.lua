@@ -218,6 +218,10 @@ local function TryVFXStars(v)
 					star.tracer.soap_totalamps = 0
 					star.tracer.soap_amplevel = 0
 				end
+				if not star.tracer.soap_amps
+					star.tracer.soap_startingamps = star.tracer.soap_lifetimeamps or 0
+				end
+				
 				star.tracer.soap_amps = $ + 1
 				star.tracer.soap_totalamps = $ + 1
 				if star.tracer.soap_totalamps % 10 == 0
@@ -225,7 +229,7 @@ local function TryVFXStars(v)
 				end
 				
 				star.ticker = 0
-				local off = i * 3
+				local off = (i * 3) --+ max(star.tracer.soap_amps - i, 0)*3
 				star.wait = 12 + (off)
 				star.tics = $ + off
 			end
@@ -292,8 +296,10 @@ local function NewVFXThink(v)
 		or (v.z + 16*v.spritexscale + v.momx >= v.ceilingz))
 		and not (v.extravalue1)
 			v.momz = -$
-			v.extravalue1 = 1
-			v.flags = $|MF_NOCLIPHEIGHT
+			if (v.type ~= MT_SOAP_AMP)
+				v.extravalue1 = 1
+				v.flags = $|MF_NOCLIPHEIGHT
+			end
 		end
 		
 		P_ZMovement(v)
@@ -510,17 +516,21 @@ addHook("MobjThinker",function(amp)
 	
 	if amp.ticker == amp_tics + 1
 		if me.soap_lifetimeamps == nil then me.soap_lifetimeamps = 0 end
-		if (me.soap_lifetimeamps % 2 == 0)
+		if (me.soap_lifetimeamps % 4 == 0)
 			me.player.rings = $ + 1
+			S_StartSoundAtVolume(me, sfx_itemup, 255 * 4/5, p)
 		end
 		me.soap_lifetimeamps = $ + 1
 		
-		S_StartSoundAtVolume(me, sfx_itemup, 255 * 4/5, p)
+		S_StartSound(me, sfx_sp_amp, p)
 		me.soap_amps = $ - 1
 		if me.soap_amps == 0
 			S_StartSound(me, sfx_sp_ap0 + me.soap_amplevel, p)
 			me.soap_amplevel = 0
 			me.soap_totalamps = 0
+			
+			me.soap_amppayout = ((me.soap_lifetimeamps - me.soap_startingamps) / 4)
+			me.soap_amppayouttime = leveltime + TR * 3/2
 		end
 		P_RemoveMobj(amp)
 	end

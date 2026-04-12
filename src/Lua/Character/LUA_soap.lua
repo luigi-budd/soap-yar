@@ -3413,6 +3413,20 @@ local function try_damage_cases(me,thing, p,soap,DealDamage)
 		Soap_SpawnBumpSparks(me, thing, nil, true)
 		return true
 	end
+	
+	-- just so you wont miss out on amps
+	if (p.powers[pw_super])
+		Soap_ImpactVFX(thing,me, nil, FU/3)
+		Soap_DamageSfx(thing, FU/3, 2*FU)
+		Soap_SpawnBumpSparks(me, thing, nil, true)
+		
+		DealDamage(thing, me,me)
+		if (thing and thing.valid and thing.flags & MF_BOSS and (thing.health <= 0))
+			S_StartSound(me, sfx_sp_kco)
+			soap.hud.painsurge = 6
+		end
+		return true
+	end
 end
 
 local function try_pvp_collide(me,thing)
@@ -4006,6 +4020,7 @@ Takis_Hook.addHook("PostThinkFrame",function(p)
 		g.type = MT_SOAP_FREEZEGFX
 		g.ghosttype = true
 		g.zoffset = 0
+		g.translation = nil
 		
 		local dist = 8 * me.scale
 		g.xoffset = Soap_RandomFixedRange(-dist,dist)
