@@ -3418,6 +3418,7 @@ local function try_damage_cases(me,thing, p,soap,DealDamage)
 	-- just so you wont miss out on amps
 	if (p.powers[pw_super])
 	and not (thing.player and thing.player.valid)
+	and not (thing == me.target or thing == me.tracer)
 		Soap_ImpactVFX(thing,me, nil, FU/3)
 		Soap_DamageSfx(thing, FU/3, 2*FU)
 		Soap_SpawnBumpSparks(me, thing, nil, true)
