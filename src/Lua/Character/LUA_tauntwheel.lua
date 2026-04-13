@@ -489,6 +489,10 @@ SOAP_TAUNTS[SOAP_SKIN] = {
 						if (topheight < botheight) then return end
 						
 						if (found.type == MT_TNTBARREL)
+							Soap_ImpactVFX(found, me, nil,nil, true)
+							Soap_SpawnBumpSparks(found, me, nil,false, found.scale * 3/2, true)
+							Soap_DamageSfx(found, FU, 2*FU)
+							
 							S_StartSound(found, found.info.attacksound)
 							P_3DThrust(found, ang, ANG20, 25 * me.scale)
 							found.flags = $|MF_MISSILE|MF_NOBLOCKMAP

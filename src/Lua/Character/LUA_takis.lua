@@ -729,7 +729,7 @@ Takis_Hook.addHook("Takis_Thinker",function(p)
 				cart.momy = $*99/100
 			end
 			
-			if (soap.c1)
+			if (soap.c2)
 				p.powers[pw_carry] = CR_NONE
 				
 				p.mo.momx,p.mo.momy = cart.momx,cart.momy
