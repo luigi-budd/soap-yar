@@ -1525,6 +1525,7 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 		and (p.powers[pw_carry] == CR_NONE)
 		and not (soap.noability & (SNOABIL_UPPERCUT|SNOABIL_COMBAT))
 			soap.uppercut_spin = soap_baseuppercutturn
+			soap.lunge.lockout = 0
 			
 			local thrust = soap.nerfed and 10*FU or 13*FU
 			local shield = p.powers[pw_shield] & SH_NOSTACK
@@ -3416,6 +3417,7 @@ local function try_damage_cases(me,thing, p,soap,DealDamage)
 	
 	-- just so you wont miss out on amps
 	if (p.powers[pw_super])
+	and not (thing.player and thing.player.valid)
 		Soap_ImpactVFX(thing,me, nil, FU/3)
 		Soap_DamageSfx(thing, FU/3, 2*FU)
 		Soap_SpawnBumpSparks(me, thing, nil, true)
@@ -3467,6 +3469,9 @@ local function try_pvp_collide(me,thing)
 			thing.player.soaptable.iwashitthistic = true
 			DealDamage = P_DamageMobj
 		end
+	end
+	if (thing.type == MT_ROLLOUTROCK)
+		DealDamage = P_DamageMobj -- never kill rollout rocks
 	end
 	if not candamagemobj then return end
 	
@@ -3559,6 +3564,7 @@ end)
 local function get_inf_speed(me,inf,sor)
 	local default = 0
 	if (inf.flags & MF_MISSILE)
+	and (inf.type ~= MT_TNTBARREL)
 		if ((inf.flags2 & MF2_SCATTER) and sor)
 			local dist = FixedHypot(FixedHypot(sor.x - me.x, sor.y - me.y),sor.z - me.z)
 			dist = 128*inf.scale - dist/4
@@ -3582,7 +3588,7 @@ local function get_inf_speed(me,inf,sor)
 	end
 	--return max(default, R_PointTo3DDist(0,0,0,inf.momx,inf.momy,inf.momz))
 	-- mmmaybe dont factor momz if we're using it now...
-	return max(default, R_PointToDist2(0,0,0,inf.momx,inf.momy)), R_PointTo3DDist(0,0,0,inf.momx,inf.momy,inf.momz)
+	return max(default, R_PointToDist2(0,0,0,inf.momx,inf.momy)), max(default, R_PointTo3DDist(0,0,0,inf.momx,inf.momy,inf.momz))
 end
 
 --handle soap damage

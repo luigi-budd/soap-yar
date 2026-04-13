@@ -489,7 +489,11 @@ SOAP_TAUNTS[SOAP_SKIN] = {
 						if (topheight < botheight) then return end
 						
 						if (found.type == MT_TNTBARREL)
-							P_KillMobj(found,me,me)
+							S_StartSound(found, found.info.attacksound)
+							P_3DThrust(found, ang, ANG20, 25 * me.scale)
+							found.flags = $|MF_MISSILE|MF_NOBLOCKMAP
+							found.state = found.info.missilestate
+							
 							enemyhit = true
 						elseif Soap_CanDamageEnemy(p, found,MF_ENEMY|MF_BOSS|MF_MONITOR|MF_SHOOTABLE)
 							Soap_ImpactVFX(found, me, nil,nil, true)
@@ -508,24 +512,21 @@ SOAP_TAUNTS[SOAP_SKIN] = {
 							Soap_SpawnBumpSparks(found, me, nil,false, found.scale * 3/2, true)
 							Soap_DamageSfx(found, 25*FU, 30*me.scale)
 							
-							if Soap_CanHurtPlayer(p,p2)	
-								P_DamageMobj(found,me,me, DMG_INSTAKILL)
-							else
-								found.soap_tumble = true
-								found.soap_tumble_oldmomz = found.momz
-								
-								P_ResetPlayer(p2)
-								found.state = S_PLAY_PAIN
-								p2.drawangle = ang + ANGLE_180
-								
-								if P_IsObjectOnGround(found)
-									found.z = $ + P_MobjFlip(found)
-								end
-								local speed = (p2.soaptable.taunt.tics) and 30*me.scale or 12*me.scale
-								P_Thrust(found, ang, speed)
-								P_SetObjectMomZ(found, 30*me.scale, true)
-								p2.powers[pw_flashing] = flashingtics
+							found.soap_tumble = true
+							found.soap_tumble_oldmomz = found.momz
+							
+							P_ResetPlayer(p2)
+							found.state = S_PLAY_PAIN
+							p2.drawangle = ang + ANGLE_180
+							
+							if P_IsObjectOnGround(found)
+								found.z = $ + P_MobjFlip(found)
 							end
+							local speed = (p2.soaptable.taunt.tics) and 30*me.scale or 12*me.scale
+							P_Thrust(found, ang, speed)
+							P_SetObjectMomZ(found, 30*me.scale, true)
+							p2.powers[pw_flashing] = flashingtics
+							
 							Soap_Hitlag.addHitlag(found, 12, true)
 							Soap_Hitlag.addHitlag(me, 12, false)
 							Soap_StartQuake(10*FU, 12, {me.x, me.y, me.z}, 512*me.scale)
