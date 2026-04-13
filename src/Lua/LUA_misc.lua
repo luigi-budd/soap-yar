@@ -367,7 +367,7 @@ local function FreezeInHitlag(mo)
 			ang = p.drawangle
 		end
 		if (mo.state == S_TAKIS_SLINGFX)
-			ang = mo.firstangle + ANGLE_90
+			ang = (mo.firstangle or 0) + ANGLE_90
 		end
 		
 		mo.dispoffset = me.dispoffset - 1

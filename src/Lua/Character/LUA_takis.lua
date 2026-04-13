@@ -120,13 +120,8 @@ local function generic_slingshot(p,me,takis, stop_ang)
 			follow.firstangle = follow.angle
 			follow.spritexscale = $ * 3/2
 			follow.spriteyscale = follow.spritexscale
-			takis.fx.dash_aura = follow
-		else
-			takis.fx.dash_aura.state = S_TAKIS_SLINGFX
+			follow.dist = 20*FU
 		end
-		local aura = takis.fx.dash_aura
-		
-		aura.dist = 20*me.scale
 		didit = true
 	else 
 		takis.afterimaging = false
