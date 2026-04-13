@@ -4066,6 +4066,7 @@ states[mobjinfo[MT_EGGROBO1].meleestate].action = function(mo)
 	me.soap_damagevar = {
 		ang = mo.movedir,
 		momz = 12 * mo.scale,
-		speed = 64*mo.scale
+		speed = 64*mo.scale,
+		threshold = 64*mo.scale,
 	}
 end
