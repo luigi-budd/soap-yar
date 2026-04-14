@@ -3324,8 +3324,8 @@ local function try_damage_cases(me,thing, p,soap,DealDamage)
 	
 	--r-dashing but too slow to deal damage
 	if canBumpAtAll(p)
+	and not basicdamage
 		if handleBump(p,me,thing)
-		and not basicdamage
 			return false
 		end
 		return
