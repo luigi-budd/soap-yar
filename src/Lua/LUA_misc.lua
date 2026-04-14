@@ -207,32 +207,30 @@ local function TryVFXStars(v)
 		star.momx = $ + v.vfx_mom[1]
 		star.momy = $ + v.vfx_mom[2]
 		star.momz = $ + v.vfx_mom[3] * 3/4
-		if v.soap_supervfx
-			--star.frame = ($ &~FF_FRAMEMASK)|64
-			if (v.origin and v.origin.valid and v.origin.player and v.origin.skin == SOAP_SKIN)
-				star.type = MT_SOAP_AMP
-				
-				star.tracer = v.origin
-				if star.tracer.soap_amps == nil
-					star.tracer.soap_amps = 0
-					star.tracer.soap_totalamps = 0
-					star.tracer.soap_amplevel = 0
-				end
-				if not star.tracer.soap_amps
-					star.tracer.soap_startingamps = star.tracer.soap_lifetimeamps or 0
-				end
-				
-				star.tracer.soap_amps = $ + 1
-				star.tracer.soap_totalamps = $ + 1
-				if star.tracer.soap_totalamps % 10 == 0
-					star.tracer.soap_amplevel = min($ + 1, 6)
-				end
-				
-				star.ticker = 0
-				local off = (i * 3) --+ max(star.tracer.soap_amps - i, 0)*3
-				star.wait = 12 + (off)
-				star.tics = $ + off
+		if (v.origin and v.origin.valid and v.origin.player and v.origin.skin == SOAP_SKIN)
+			star.type = MT_SOAP_AMP
+			
+			star.tracer = v.origin
+			if star.tracer.soap_amps == nil
+				star.tracer.soap_amps = 0
+				star.tracer.soap_totalamps = 0
+				star.tracer.soap_amplevel = 0
 			end
+			if not star.tracer.soap_amps
+				star.tracer.soap_startingamps = star.tracer.soap_lifetimeamps or 0
+			end
+			
+			star.tracer.soap_amps = $ + 1
+			star.tracer.soap_totalamps = $ + 1
+			if star.tracer.soap_totalamps % 10 == 0
+				star.tracer.soap_amplevel = min($ + 1, 6)
+			end
+			
+			star.ticker = 0
+			local off = (i * 3) --+ max(star.tracer.soap_amps - i, 0)*3
+			star.wait = 12 + (off)
+			star.tics = $ + off
+			star.awardrings = v.soap_supervfx or (star.tracer.player.powers[pw_invulnerability])
 		end
 		star.renderflags = $|RF_FULLBRIGHT|RF_NOCOLORMAPS
 	end
@@ -517,20 +515,29 @@ addHook("MobjThinker",function(amp)
 	if amp.ticker == amp_tics + 1
 		if me.soap_lifetimeamps == nil then me.soap_lifetimeamps = 0 end
 		if (me.soap_lifetimeamps % 4 == 0)
-			me.player.rings = $ + 1
-			S_StartSoundAtVolume(me, sfx_itemup, 255 * 4/5, p)
+			if (amp.awardrings)
+				me.player.rings = $ + 1
+				S_StartSoundAtVolume(me, sfx_itemup, 255 * 4/5, p)
+			elseif not Soap_IsCompGamemode()
+				P_AddPlayerScore(me.player, 50)
+			end
 		end
 		me.soap_lifetimeamps = $ + 1
 		
-		S_StartSound(me, sfx_sp_amp, p)
+		if (amp.awardrings)
+			S_StartSound(me, sfx_sp_amp, p)
+		end
 		me.soap_amps = $ - 1
 		if me.soap_amps == 0
 			S_StartSound(me, sfx_sp_ap0 + me.soap_amplevel, p)
-			me.soap_amplevel = 0
-			me.soap_totalamps = 0
 			
+			me.soap_amppayoutlevel = me.soap_amplevel
+			me.soap_amppayoutringmode = amp.awardrings
 			me.soap_amppayout = ((me.soap_lifetimeamps - me.soap_startingamps) / 4)
 			me.soap_amppayouttime = leveltime + TR * 3/2
+			
+			me.soap_amplevel = 0
+			me.soap_totalamps = 0
 		end
 		P_RemoveMobj(amp)
 	end

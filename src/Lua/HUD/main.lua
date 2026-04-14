@@ -8,6 +8,15 @@ local amp_levels = {
 	[4] = V_PERIDOTMAP,
 	[5] = V_GREENMAP,
 }
+local amp_combo = {
+	[0] = "Okay",
+	[1] = "Better",
+	[2] = "Good!",
+	[3] = "Cool!",
+	[4] = "Sick!!",
+	[5] = "Amazing!!",
+	[6] = "AWESOME!!!",
+}
 local rainbow_clr = {
 	[0] = V_REDMAP,
 	[1] = V_ORANGEMAP,
@@ -72,14 +81,27 @@ addHook("HUD",function(v,p, cam)
 		and (leveltime < me.soap_amppayouttime)
 			local flags = 0
 			local off = 0
-			if abs(me.soap_amppayouttime - leveltime) > (TR*3/2) - 4
-				local ticker = abs(me.soap_amppayouttime - leveltime) - (TR*3/2 - 4)
+			local time = abs(me.soap_amppayouttime - leveltime)
+			if time > (TR*3/2) - 4
+				local ticker = time - (TR*3/2 - 4)
 				flags = V_YELLOWMAP
-				off = ticker*FU
+				off = ticker*FU*2
+			elseif time < 10
+				flags = (10 - time) << V_ALPHASHIFT
 			end
 			
 			v.dointerp(15432)
-			v.drawString(x - off,y+8*FU, "+"..(me.soap_amppayout).." ring"..(me.soap_amppayout ~= 1 and "s" or ""), V_ALLOWLOWERCASE|flags, "thin-fixed")
+			local str = ""
+			if me.soap_amppayoutringmode
+				str = "+"..(me.soap_amppayout).." ring"..(me.soap_amppayout ~= 1 and "s" or "")
+			else
+				str = amp_combo[me.soap_amppayoutlevel or 0]
+				if not Soap_IsCompGamemode()
+					str = $ .. " (+"..(me.soap_amppayout*50)..")"
+				end
+			end
+			
+			v.drawString(x - off,y+8*FU, str, V_ALLOWLOWERCASE|flags, "thin-fixed")
 		end
 		v.dointerp(false)
 	end
