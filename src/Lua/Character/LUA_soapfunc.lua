@@ -3154,6 +3154,8 @@ rawset(_G, "Soap_SuperThinker",function(p,me,soap)
 	end
 	*/
 	
+	--TODO:
+	/*
 	if (soap.firenormal)
 		P_SPMAngle(me, MT_REDRING, me.angle, 1, 0)
 		local drag = FU * 93/100
@@ -3162,6 +3164,7 @@ rawset(_G, "Soap_SuperThinker",function(p,me,soap)
 		me.momz = FixedMul($, drag)
 		p.drawangle = me.angle
 	end
+	*/
 end)
 
 local SOAP_GRAB_ACTIONSTATE = 9999
