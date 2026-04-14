@@ -7,10 +7,12 @@ local CV = SOAP_CV
 	mobj->nohitlagforme: mobj will not get hitlag
 */
 
+hl.numhitlagged = 0
 hl.hitlagged = {}
-hl.hitlagTranslation = "Soap_AI2" --"Soap_Hitlag" is too long to be parsed lmao
+hl.hitlagTranslation = "Soap_AI2"
 
 --lets handle stunned enemies here too
+hl.numstunned = 0
 hl.stunned = {}
 
 local hlt_pv = {MIN = 0, /*off*/ MAX = 9001} --its over 9
@@ -39,12 +41,25 @@ local function dust_type(me)
 	return (me.eflags & (MFE_UNDERWATER|MFE_TOUCHWATER)) and P_RandomRange(MT_SMALLBUBBLE,MT_MEDIUMBUBBLE) or MT_SOAP_DUST
 end
 
+hl.removeFromHitlagged = function(index)
+	table.remove(hl.hitlagged, index)
+	hl.numhitlagged = $ - 1
+end
+hl.removeFromStunned = function(index)
+	table.remove(hl.stunned, index)
+	hl.numstunned = $ - 1
+end
+
 hl.iterateHitlagged = function()
-	for k,v in ipairs(hl.hitlagged)
+	local hitlagged = hl.hitlagged
+	for k = hl.numhitlagged, 0, -1
+		if k == 0 then break end
+		local v = hitlagged[k]
+		
 		local mo = v[1]
 		local lastflags = v[2]
 		if not (mo and mo.valid)
-			table.remove(hl.hitlagged,k)
+			hl.removeFromHitlagged(k)
 			continue
 		end
 		
@@ -135,17 +150,20 @@ hl.iterateHitlagged = function()
 				end
 			end
 			S_StopSoundByID(mo, sfx_kc38)
-			table.remove(hl.hitlagged,k)
+			hl.removeFromHitlagged(k)
 			continue
 		end
 	end
-
+	
 	local stunned_hook = Takis_Hook.events["Soap_StunnedThink"]
-	for k,v in ipairs(hl.stunned)
+	local stunned = hl.stunned
+	for k = hl.numstunned, 0, -1
+		if k == 0 then break end
+		local v = stunned[k]
 		local mo = v[1]
 		local lastflags = v[2]
 		if not (mo and mo.valid)
-			table.remove(hl.stunned,k)
+			hl.removeFromStunned(k)
 			continue
 		end
 		
@@ -210,11 +228,11 @@ hl.iterateHitlagged = function()
 			P_XYMovement(mo)
 			if (mo and mo.valid)
 				if not P_ZMovement(mo)
-					table.remove(hl.stunned,k)
+					hl.removeFromStunned(k)
 					continue
 				end
 			else
-				table.remove(hl.stunned,k)
+				hl.removeFromStunned(k)
 				continue
 			end
 			P_ButteredSlope(mo)
@@ -300,7 +318,7 @@ hl.iterateHitlagged = function()
 			end
 			mo.soap_setvfx = nil
 			S_StopSoundByID(mo, sfx_kc38)
-			table.remove(hl.stunned,k)
+			hl.removeFromStunned(k)
 			continue
 		end
 	end
@@ -308,9 +326,12 @@ end
 
 --visuals mostly
 hl.iterateHitlaggedPostThink = function()
-	for k,v in ipairs(hl.hitlagged)
+	local hitlagged = hl.hitlagged
+	for k = hl.numhitlagged, 0, -1
+		if k == 0 then break end
+		local v = hitlagged[k]
 		local mo = v[1]
-		if not (mo and mo.valid) then table.remove(hl.hitlagged,k); continue end
+		if not (mo and mo.valid) then hl.removeFromHitlagged(k); continue end
 		
 		if mo.hitlag
 			
@@ -400,12 +421,14 @@ hl.addHitlag = function(
 		end
 	end
 	
-	for k,v in ipairs(hl.hitlagged)
-		if v[1] == mo
+	local hitlagged = hl.hitlagged
+	for i = 1,hl.numhitlagged
+		if hitlagged[i][1] == mo
 			return
 		end
 	end
-	table.insert(hl.hitlagged, {
+	-- nothing here is named idk why im so sorry
+	table.insert(hitlagged, {
 		mo,
 		mo.flags,
 		(mo.player and mo.player.valid) and mo.player.drawangle,
@@ -413,10 +436,12 @@ hl.addHitlag = function(
 		mo.state, mo.sprite, mo.frame, mo.sprite2, mo.momx,mo.momy, -- indexes 9 and 10 are saved for old momx/y
 		(mo.player and mo.player.valid) and (mo.player.pflags & PF_SPINNING) or 0 --save PF_SPINNING
 	})
+	hl.numhitlagged = $ + 1
 end
 
 hl.stunEnemy = function(mo,tics)
 	if not (mo and mo.valid) then return end
+	if not (mo.health) then return end
 	if mo.nohitlagforme or mo.foolhardy then return end
 	if mo.soap_stunned == nil then mo.soap_stunned = 0 end
 	--save us the trouble
@@ -448,19 +473,14 @@ hl.stunEnemy = function(mo,tics)
 	mo.soap_stunned = $+tics
 	local oldflags = mo.flags
 	mo.flags = $|MF_NOTHINK|MF_SLIDEME &~(MF_SPECIAL|MF_ENEMY|MF_FLOAT|MF_NOGRAVITY|MF_PAIN)
-	/*
-	if mo.soap_stunned > hl.cv_hitlagtics.value
-		mo.soap_stunned = hl.cv_hitlagtics.value
-	end
-	*/
 	
-	
-	for k,v in ipairs(hl.stunned)
-		if v[1] == mo
+	local stunned = hl.stunned
+	for i = 1,hl.numstunned
+		if stunned[i][1] == mo
 			return
 		end
 	end
-	table.insert(hl.stunned, {
+	table.insert(stunned, {
 		mo,
 		oldflags,
 		(mo.player and mo.player.valid) and mo.player.drawangle,
@@ -470,6 +490,7 @@ hl.stunEnemy = function(mo,tics)
 		
 		tics = 0,
 	})
+	hl.numstunned = $ + 1
 	S_StartSound(mo,sfx_kc38)
 end
 
@@ -492,5 +513,7 @@ end,MT_PLAYER)
 addHook("NetVars",function(n)
 	hl.hitlagged = n($)
 	hl.stunned = n($)
+	hl.numhitlagged = n($)
+	hl.numstunned = n($)
 	hl.hitlagTranslation = n($)
 end)
