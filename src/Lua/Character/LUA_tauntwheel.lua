@@ -510,26 +510,33 @@ SOAP_TAUNTS[SOAP_SKIN] = {
 							
 							enemyhit = true
 						elseif (found.player and found.player.valid)
+						and not (found.player.powers[pw_flashing] or found.player.powers[pw_invulnerability])
 							local p2 = found.player
 							
 							Soap_ImpactVFX(found, me, nil,nil, true)
 							Soap_SpawnBumpSparks(found, me, nil,false, found.scale * 3/2, true)
 							Soap_DamageSfx(found, 25*FU, 30*me.scale)
 							
-							found.soap_tumble = true
-							found.soap_tumble_oldmomz = found.momz
-							
-							P_ResetPlayer(p2)
-							found.state = S_PLAY_PAIN
-							p2.drawangle = ang + ANGLE_180
-							
-							if P_IsObjectOnGround(found)
-								found.z = $ + P_MobjFlip(found)
+							if CV.tauntinterference.value
+								found.soap_tumble = true
+								found.soap_tumble_oldmomz = found.momz
+								
+								P_ResetPlayer(p2)
+								found.state = S_PLAY_PAIN
+								p2.drawangle = ang + ANGLE_180
+								
+								if P_IsObjectOnGround(found)
+									found.z = $ + P_MobjFlip(found)
+								end
+								local speed = (p2.soaptable.taunt.tics) and 30*me.scale or 12*me.scale
+								P_Thrust(found, ang, speed)
+								P_SetObjectMomZ(found, 30*me.scale, true)
+								p2.powers[pw_flashing] = flashingtics
+							else --lol
+								P_DoPlayerPain(p2, me,me)
+								found.momx = 0
+								found.momy = 0
 							end
-							local speed = (p2.soaptable.taunt.tics) and 30*me.scale or 12*me.scale
-							P_Thrust(found, ang, speed)
-							P_SetObjectMomZ(found, 30*me.scale, true)
-							p2.powers[pw_flashing] = flashingtics
 							
 							Soap_Hitlag.addHitlag(found, 12, true)
 							Soap_Hitlag.addHitlag(me, 12, false)

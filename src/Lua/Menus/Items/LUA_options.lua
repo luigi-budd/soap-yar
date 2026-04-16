@@ -91,7 +91,7 @@ SOAP_MENUS.buttontoggle = function(v, x,y, width, props)
 			menu_tooltip = props.tooltip
 		end
 		SOAP_MENUS.drawRounded(v, left + 1 + (bhalf*cv.value), y + 2, 10, "SMALL", v.getColormap(TC_DEFAULT,cv.value and SKINCOLOR_GREEN or SKINCOLOR_RED))
-		v.drawString(left+3 + ((bhalf+7)*(1-cv.value)),y+3, cv.value and "On" or "Off", V_ALLOWLOWERCASE,cv.value and "thin" or "thin-right")
+		v.drawString(left+3 + ((bhalf+7)*(1-cv.value)),y+3, cv.value and "On" or "Off", V_ALLOWLOWERCASE|V_YELLOWMAP,cv.value and "thin" or "thin-right")
 	elseif cv_type == "custom"
 	and CV.PossibleValues[cv_name] ~= nil
 		local options = CV.PossibleValues[cv_name].values
@@ -99,7 +99,7 @@ SOAP_MENUS.buttontoggle = function(v, x,y, width, props)
 		local wid = (items * widths["SMALL"]) + 2
 		local left = (x + width) - (wid + 2)
 		
-		local cv_str = '"'..cv.string..'"'
+		local cv_str = cv.string
 		local strwid = v.stringWidth(cv_str,0,"thin")+6
 		
 		local hover = false
@@ -134,7 +134,7 @@ SOAP_MENUS.buttontoggle = function(v, x,y, width, props)
 		end
 		for i = 0, items - 1
 			if i == cv.value
-				SOAP_MENUS.drawRounded(v, left + 1 + (8*i), y + 2, 8, "SMALL", v.getColormap(TC_DEFAULT,SKINCOLOR_GREEN))
+				SOAP_MENUS.drawRounded(v, left + 1 + (8*i), y + 2, 8, "SMALL", v.getColormap(TC_DEFAULT,(cv.string == "Off") and SKINCOLOR_RED or SKINCOLOR_GREEN))
 			else
 				v.drawFill(left + 4 + (8*i), y + 5, 2,2, 22)
 			end
@@ -151,6 +151,8 @@ SOAP_MENUS.buttontoggle = function(v, x,y, width, props)
 			hover = ML.mouseInZone(right-w, y, w,10) and not sld_grabbed
 			local c = 0
 			if hover and canPress
+				menu_tooltip = {"Click to input a value"}
+				
 				c = (ML.client.mouseHeld > 0) and 4 or 2
 				ML.client.canPressSomething = true
 				if (ML.client.mouseHeld == -1)
@@ -205,7 +207,7 @@ SOAP_MENUS.buttontoggle = function(v, x,y, width, props)
 				sld_display.tics = consoleplayer.cmd.latency + 1
 				sld_display.progress = FixedDiv(sld_lastvalue - MIN, MAX - MIN)
 				if not fixed then sld_lastvalue = $/FU; end
-				ML.client.commandbuffer = cv_name.." "..(fixed and "%f" or "%d"):format(sld_lastvalue)
+				ML.client.commandbuffer = cv_name.." "..(fixed and "%.1f" or "%d"):format(sld_lastvalue)
 				sld_grabid = -1
 			end
 			
@@ -237,6 +239,7 @@ SOAP_MENUS.buttontoggle = function(v, x,y, width, props)
 		v.drawFill(right - slider_w - 1 - strw, y, slider_w+strw + 1, slider_h, 28)
 		if hovering
 		or (sld_grabbed and sld_grabid == sld_id)
+			menu_tooltip = {"Click and drag to move the slider"}
 			for i = 1,10
 				local x = right - slider_w - 1 - strw - widths["MEDIUM"]/2
 				local w = slider_w+strw + 1 + widths["MEDIUM"]/2
@@ -338,7 +341,7 @@ ML.addMenu({
 	stringId = "soap_options",
 	title = "Soap Options",
 	width = 290,
-	height = 170,
+	height = 184,
 	ms_flags = MS_NOANIM,
 	drawer = function(v,ML,menu, props)
 		local cx = props.corner_x + 2
@@ -402,12 +405,12 @@ ML.addMenu({
 			cv_type = "custom", tooltip = {"Change which direction Soap's B-Rush will send you."}
 		})
 		SOAP_MENUS.buttontoggle(v, cx,cy+52, menu.width - 4, {
-			cv_name = "soap_spriterot", name = "Sprite Rotation",
-			cv_type = "custom", tooltip = {"Toggles sprite rotations for certain VFX."}
-		})
-		SOAP_MENUS.buttontoggle(v, cx,cy+65, menu.width - 4, {
 			cv_name = "soap_boomboxsfx", name = "Boombox Audio",
 			cv_type = "custom", tooltip = {"Adjusts the audio from Soap's boomboxes."}
+		})
+		SOAP_MENUS.buttontoggle(v, cx,cy+65, menu.width - 4, {
+			cv_name = "soap_spriterot", name = "Sprite Rotation",
+			cv_type = "boolean", tooltip = {"Toggles sprite rotations for certain VFX."}
 		})
 		cy = $ + 78
 		
@@ -423,6 +426,10 @@ ML.addMenu({
 		SOAP_MENUS.buttontoggle(v, cx,cy+13, menu.width - 4, {
 			cv_name = "soap_maxhitlagtics", name = "Max Hitlag Tics",
 			cv_type = "slider", adminonly = true
+		})
+		SOAP_MENUS.buttontoggle(v, cx,cy+26, menu.width - 4, {
+			cv_name = "soap_tauntinterference", name = "Taunt Interference",
+			cv_type = "boolean", tooltip = {"Toggles whether taunts can interfere with other players."}
 		})
 		
 		local workx = props.corner_x + (menu.width - 1)

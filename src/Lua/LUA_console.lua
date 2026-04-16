@@ -103,7 +103,7 @@ CV.rotations = CV_RegisterVar({
 	name = "soap_spriterot",
 	defaultvalue = "On",
 	flags = CV_SHOWMODIF,
-	PossibleValue = rotations_pv,
+	PossibleValue = CV_OnOff,
 })
 CV.PossibleValues["soap_spriterot"] = {values = rotations_pv, length = 2}
 
@@ -144,3 +144,11 @@ CV.forcecombatmode = CV_RegisterVar({
 	flags = CV_SHOWMODIF|CV_NETVAR,
 	PossibleValue = CV_OnOff,
 })
+
+CV.tauntinterference = CV_RegisterVar({
+	name = "soap_tauntinterference",
+	defaultvalue = "On",
+	flags = CV_SHOWMODIF|CV_NETVAR,
+	PossibleValue = CV_OnOff,
+})
+CV.PossibleValues["soap_tauntinterference"] = {values = rotations_pv, length = 2}
