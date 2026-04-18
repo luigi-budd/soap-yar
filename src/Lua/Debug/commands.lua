@@ -686,6 +686,15 @@ CMDConstructor("warp", {prefix = SOAP_DEVPREFIX, func = function(p,...)
 	TPEffects(p, p.realmo, p.realmo.angle)
 end, unsafe = true})
 
+CMDConstructor("rings", {prefix = SOAP_DEVPREFIX, func = function(p,...)
+	local args = {...}
+	local rings = args[1]
+	rings = tonumber($)
+	if rings == nil then return end
+	
+	p.rings = rings
+end})
+
 /*
 CMDConstructor("togglehook", {prefix = SOAP_DEVPREFIX, func = function(p,...)
 	local args = {...}

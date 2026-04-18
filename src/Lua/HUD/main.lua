@@ -29,6 +29,12 @@ local rainbow_clr = {
 	[8] = V_ROSYMAP,
 }
 
+local supernotif = {
+	seen = false,
+	lastrings = 0,
+	tics = 0,
+}
+
 addHook("HUD",function(v,p, cam)
 	local soap = p.soaptable
 	if not soap then return end
@@ -36,6 +42,17 @@ addHook("HUD",function(v,p, cam)
 	local hud = soap.hud
 	local me = p.realmo
 	if not (me and me.valid) then return end
+	
+	if All7Emeralds(emeralds)
+	and not supernotif.seen
+		if (p.rings >= 50)
+		and (supernotif.lastrings < 50)
+			supernotif.seen = true
+			supernotif.tics = 3*TR
+			S_StartSound(nil, sfx_sp_amp)
+		end
+		supernotif.lastrings = p.rings
+	end
 	
 	if hud.painsurge
 		local frame = (7 - hud.painsurge)
@@ -58,6 +75,7 @@ addHook("HUD",function(v,p, cam)
 	
 	if me.soap_totalamps
 	or (leveltime < (me.soap_amppayouttime or 0))
+	or (supernotif.tics)
 		local x,y = 200*FU, 150*FU
 		local scale = FU
 		local result = K_GetScreenCoords(v,p,cam, me, {anglecliponly = true})
@@ -69,6 +87,22 @@ addHook("HUD",function(v,p, cam)
 			y = result.y
 		end
 		
+		if (supernotif.tics)
+			local flags = 0
+			local off = 0
+			local time = supernotif.tics
+			if time > (TR*3) - 4
+				local ticker = time - (TR*3 - 4)
+				flags = V_YELLOWMAP
+				off = ticker*FU*2
+			elseif time < 10
+				flags = (10 - time) << V_ALPHASHIFT
+			end
+			
+			v.dointerp(15430)
+			v.drawString(x + off,y-16*FU, "Hold C3 to", V_ALLOWLOWERCASE|flags, "thin-fixed")
+			v.drawString(x + off,y-8*FU,  "transform!", V_ALLOWLOWERCASE|flags, "thin-fixed")
+		end
 		if me.soap_totalamps
 			local clr = amp_levels[me.soap_amplevel or 0]
 			if clr == nil
@@ -104,6 +138,10 @@ addHook("HUD",function(v,p, cam)
 			v.drawString(x - off,y+8*FU, str, V_ALLOWLOWERCASE|flags, "thin-fixed")
 		end
 		v.dointerp(false)
+	end
+	
+	if supernotif.tics
+		supernotif.tics = $ - 1
 	end
 end,"game")
 

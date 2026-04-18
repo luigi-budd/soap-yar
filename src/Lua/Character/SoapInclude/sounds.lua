@@ -127,6 +127,8 @@ sfxinfo[sfx_sp_bsm].caption = "/"
 -- Bananza
 SafeFreeslot("sfx_sp_trn")
 sfxinfo[sfx_sp_trn].caption = "/"
+SafeFreeslot("sfx_sp_dtn")
+sfxinfo[sfx_sp_dtn].caption = "/"
 
 -- amps
 SafeFreeslot("sfx_sp_amp")

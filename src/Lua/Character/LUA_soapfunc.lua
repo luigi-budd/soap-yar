@@ -232,6 +232,7 @@ rawset(_G,"Soap_Booleans", function(p)
 	end
 	
 	soap.notCarried = (p.powers[pw_carry] == CR_NONE and not soap.isSliding)
+	soap.isTransforming = (me.state >= S_PLAY_SUPER_TRANS1) and (me.state <= S_PLAY_SUPER_TRANS6)
 end)
 
 --came full circle
@@ -1861,8 +1862,7 @@ rawset(_G,"Soap_HandleNoAbils", function(p)
 		na = $|SNOABIL_ALL &~SNOABIL_BOTHTAUNTS
 	end
 	
-	if (me.state >= S_PLAY_SUPER_TRANS1)
-	and (me.state <= S_PLAY_SUPER_TRANS6)
+	if (soap.isTransforming)
 	or (me.punchtarget and me.punchtarget.valid)
 	or (me.punchsource and me.punchsource.valid)
 	or (me.soap_kickme or me.sprite2 == SPR2_MSC2 or me.state == S_PLAY_SOAP_KNOCKOUT)
@@ -1890,6 +1890,7 @@ rawset(_G,"Soap_HandleNoAbils", function(p)
 			end
 		end
 	end
+	soap.noability = na
 end)
 
 local soap_airfric = tofixed("0.96")
@@ -2400,6 +2401,7 @@ rawset(_G,"Soap_ResetState",function(p)
 	if P_PlayerInPain(p) then return end
 	if not (me.health) then return end
 	if p.tumble then return end
+	if (p.soaptable.isTransforming) then return end
 	
 	local onground = P_IsObjectOnGround(me)
 	local issuper = p.powers[pw_super]

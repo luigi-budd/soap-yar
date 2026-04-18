@@ -978,7 +978,7 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 		if (soap.c3)
 			if not (p.powers[pw_super])
 			and Soap_SuperReady(p)
-			and not soap.superlockout
+			and not (soap.superlockout or soap.pounding)
 				transforming = true
 			elseif (p.powers[pw_super])
 			and not soap.desuperlockout
@@ -1070,9 +1070,14 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 			P_RestoreMusic(p)
 			P_SpawnShieldOrb(p)
 		end
+		
+		if not S_SoundPlaying(me, sfx_sp_dtn)
+			S_StartSound(me,sfx_sp_dtn, p)
+		end
 	elseif me.soap_detransforming
 		me.soap_detransforming = nil
 		me.translation = nil
+		S_StopSoundByID(me,sfx_sp_dtn)
 	end
 	
 	local waslunging = soap.lunge.lunged
@@ -1515,14 +1520,14 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 	if (soap.c1)
 		
 		--uppercut
-		if soap.c1 == 1
+		if (soap.c1 == 1
 		and soap.canuppercut
 		and not soap.inPain
 		and me.health
 		-- and not soap.taunttime
 		and not soap.pounding
 		and not soap.uppercut_cooldown
-		and (p.powers[pw_carry] == CR_NONE)
+		and (p.powers[pw_carry] == CR_NONE))
 		and not (soap.noability & (SNOABIL_UPPERCUT|SNOABIL_COMBAT))
 			soap.uppercut_spin = soap_baseuppercutturn
 			soap.lunge.lockout = 0
@@ -1765,6 +1770,7 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 		
 		if (me.sprite2 == SPR2_MLEE and not soap.onGround)
 		and not (soap.inPain or P_PlayerInPain(p) or me.soap_uppercutbattle)
+		and not (soap.isTransforming)
 			me.state = (me.momz * soap.gravflip > 0) and S_PLAY_SPRING or S_PLAY_FALL
 		end
 	end
@@ -2067,9 +2073,11 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 	local was_pounding = soap.pounding
 	
 	if (soap.noability & (SNOABIL_POUND|SNOABIL_COMBAT))
+	or (soap.isTransforming)
 		soap.pounding = false
 		if me.state == S_PLAY_MELEE
 		and (me.sprite2 ~= SPR2_MLEE)
+		and not soap.isTransforming
 			me.state = S_PLAY_ROLL
 		end
 	end
@@ -2212,6 +2220,7 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 		soap.poundtime = 0
 		if me.state == S_PLAY_MELEE
 		and (me.sprite2 ~= SPR2_MLEE)
+		and not soap.isTransforming
 			me.state = S_PLAY_ROLL
 			P_MovePlayer(p)
 			
@@ -4020,7 +4029,7 @@ Takis_Hook.addHook("PostThinkFrame",function(p)
 	-- aura handled down here for state changes n stuff
 	if (soap.doSuperBuffs)
 	and (leveltime % 2 == 0)
-	and not (me.state >= S_PLAY_SUPER_TRANS1 and me.state <= S_PLAY_SUPER_TRANS6)
+	and not soap.isTransforming
 		local g = P_SpawnGhostMobj(me) --ez
 		g.colorized = true
 		g.renderflags = RF_FULLBRIGHT

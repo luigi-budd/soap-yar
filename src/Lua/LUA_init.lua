@@ -99,6 +99,7 @@ rawset(_G, "Soap_InitTable", function(p)
 		
 		noability = 0,
 		
+		-- booleans
 		onGround = false,
 		inPain = false,
 		inWater = false,
@@ -112,6 +113,7 @@ rawset(_G, "Soap_InitTable", function(p)
 		doSuperBuffs = false,
 		isElevated = false,
 		notCarried = false,
+		isTransforming = false, --transformation states
 		
 		accspeed = 0,
 		gravflip = 1,
