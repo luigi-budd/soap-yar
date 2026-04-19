@@ -88,7 +88,6 @@ addHook("PlayerThink",function(p)
 			end
 		end
 		
-		local micros = getTimeMicros()
 		if me.skin == SOAP_SKIN
 			local event_t = Takis_Hook.events["Soap_Thinker"]
 			if (event_t.numhooks)

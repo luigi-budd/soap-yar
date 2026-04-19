@@ -1,6 +1,7 @@
 /*
-	Special Thanks/Credits:
+	Credits:
 	- GLideKS : let me use all the effects in the 'NWF_Winds/' folder lol
+	- SuperColors Revamp: "Toxin" skincolor lifted from here
 */
 /*
 	Collaborators:
