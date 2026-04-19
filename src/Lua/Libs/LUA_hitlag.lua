@@ -375,6 +375,17 @@ hl.iterateHitlaggedPostThink = function()
 		
 		mo.flags2 = $ &~MF2_DONTDRAW
 	end
+	
+	if modeattacking
+		for player in players.iterate
+			if not (player.realmo and player.realmo.valid) then continue end
+			if player.hitlag_totaltics == nil then continue end
+			if (player.realmo.hitlag)
+				player.hitlag_totaltics = $ + 1
+			end
+			player.realtime = $ - player.hitlag_totaltics
+		end
+	end
 end
 
 hl.addHitlag = function(
@@ -420,6 +431,11 @@ hl.addHitlag = function(
 			mo.player.powers[pw_flashing] = max($,flashingtics)
 		else
 			mo.damageinhitlag = true
+		end
+		if (modeattacking)
+			if mo.player.hitlag_totaltics == nil
+				mo.player.hitlag_totaltics = 0
+			end
 		end
 	end
 	
