@@ -10,7 +10,7 @@ addHook("MobjThinker",function(ai)
 	
 	ai.frame = (ai.takis_frame or A)
 	
-	if SOAP_CV.ai_style.value == 3 then
+	if CV.ai_style.value == 3 then
 		if (leveltime/4) & 1 then
 			ai.flags2 = $|MF2_DONTDRAW
 		else
@@ -510,7 +510,9 @@ addHook("MobjThinker",function(amp)
 		ease.inexpo(frac, amp.starty, me.y),
 		ease.inexpo(frac, amp.startz, me.z + me.height / 2)
 	)
-	amp.rollangle = $ + FixedAngle(ease.inexpo(frac, 0, 60*FU))
+	if CV.rotations.value
+		amp.rollangle = $ + FixedAngle(ease.inexpo(frac, 0, 60*FU))
+	end
 	
 	if amp.ticker == amp_tics + 1
 		if me.soap_lifetimeamps == nil then me.soap_lifetimeamps = 0 end

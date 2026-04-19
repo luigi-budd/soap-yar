@@ -1,0 +1,19 @@
+Sprite2 JSKI
+{
+	Skin soapthehedge
+	Frame A
+	{
+		XPivot 217
+		YPivot 358
+	}
+	Frame B
+	{
+		XPivot 217
+		YPivot 358
+	}
+	Frame C
+	{
+		XPivot 217
+		YPivot 358
+	}
+}
