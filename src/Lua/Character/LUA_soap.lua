@@ -3830,6 +3830,7 @@ Takis_Hook.addHook("PostThinkFrame",function(p)
 	end
 	
 	if me.sprite2 == SPR2_NFLY
+		me.sprite2 = SPR2_NFL2
 		me.pitch,me.roll = 0,0
 		
 		local ang = (p.anotherflyangle) % 360

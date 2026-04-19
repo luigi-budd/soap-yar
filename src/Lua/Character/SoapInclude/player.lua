@@ -4,6 +4,7 @@ SafeFreeslot("SPR2_BRDA")
 SafeFreeslot("SPR2_OOF_")
 SafeFreeslot("SPR2_SLID")
 SafeFreeslot("SPR2_JSKI") -- :ajlooking:
+SafeFreeslot("SPR2_NFL2") -- ugh also
 
 spr2defaults[SPR2_APOS] = SPR2_STND
 spr2defaults[SPR2_FLEX] = SPR2_STND
