@@ -53,7 +53,8 @@ rawset(_G,"SOAP_EXTRADASH", 21*FU)
 --spinning top
 rawset(_G,"SOAP_TOPCOOLDOWN", 4*TR)
 rawset(_G,"SOAP_MAXDAMAGETICS", 10)
-local SOAP_TRANSFORMTIME = TR * 3/2
+local SOAP_TRANSFORMTIME = TR * 2
+local SOAP_DETRANSFORMTIME = TR * 3/2
 
 local soap_baseuppercutturn = (360 + 180)*FU
 local soap_pound_factor = tofixed("0.75")
@@ -994,6 +995,8 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 		soap.supertranstime = $ + 1
 		if soap.supertranstime == SOAP_TRANSFORMTIME
 			P_DoSuperTransformation(p)
+			S_StartSound(me, sfx_s3k9f)
+			S_StartSound(me, sfx_sp_tr2)
 			transformvfx(p,me,soap)
 			soap.desuperlockout = true
 		end
@@ -1042,17 +1045,17 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 	
 	if detransforming
 		me.soap_detransforming = true
-		local timer = SOAP_TRANSFORMTIME - soap.c3
+		local timer = SOAP_DETRANSFORMTIME - soap.c3
 		local flashtime = 1 << (timer * 3/5)
 		flashtime = $ * 3/5
 		flashtime = min(8, max($ >> 4, 2))
 		if (timer % flashtime ~= 0)
 			me.translation = nil
 		else
-			me.translation = "AllWhite"
+			me.translation = "Invert"
 		end
 		
-		if soap.c3 == SOAP_TRANSFORMTIME
+		if soap.c3 == SOAP_DETRANSFORMTIME
 			me.translation = nil
 			P_SpawnGhostMobj(me)
 			p.powers[pw_super] = 0

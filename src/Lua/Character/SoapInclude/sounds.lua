@@ -129,6 +129,11 @@ SafeFreeslot("sfx_sp_trn")
 sfxinfo[sfx_sp_trn].caption = "/"
 SafeFreeslot("sfx_sp_dtn")
 sfxinfo[sfx_sp_dtn].caption = "/"
+SafeFreeslot("sfx_sp_tr2")
+sfxinfo[sfx_sp_tr2] = {
+	flags = SF_X8AWAYSOUND,
+	caption = "/"
+}
 
 -- amps
 SafeFreeslot("sfx_sp_amp")

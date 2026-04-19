@@ -1167,6 +1167,9 @@ rawset(_G, "Soap_WindLines", function(me,rmomz,color,forceang,forceside)
 	if mocolor == nil and color == nil
 		mocolor = SKINCOLOR_SAPPHIRE
 	end
+	-- use super color as default
+	-- this does support supercolors, you just gotta
+	-- add it before soap
 	if (p and p.valid)
 	and (p.powers[pw_super])
 	and (mocolor == SKINCOLOR_SAPPHIRE)
