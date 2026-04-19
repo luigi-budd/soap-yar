@@ -140,3 +140,51 @@ states[S_PLAY_SOAP_SIXSEV] = {
 	tics = -1,
 	nextstate = S_PLAY_SOAP_SIXSEV,
 }
+
+-- super color from supercolorsrevamp
+SafeFreeslot("SKINCOLOR_SUPER_TOXIN1")
+SafeFreeslot("SKINCOLOR_SUPER_TOXIN2")
+SafeFreeslot("SKINCOLOR_SUPER_TOXIN3")
+SafeFreeslot("SKINCOLOR_SUPER_TOXIN4")
+SafeFreeslot("SKINCOLOR_SUPER_TOXIN5")
+
+skincolors[SKINCOLOR_SUPER_TOXIN1] = {
+    name = "Super Toxin 1",
+    ramp = {80,88,96,97,112,113,113,114,115,116,116,117,118,119,111,31},
+    invcolor = SKINCOLOR_ORANGE,
+    invshade = 9,
+    chatcolor = V_GREENMAP,
+    accessible = false
+}
+skincolors[SKINCOLOR_SUPER_TOXIN2] = {
+    name = "Super Toxin 2",
+    ramp = {80,89,98,99,100,100,114,115,115,116,117,117,118,119,111,31},
+    invcolor = SKINCOLOR_ORANGE,
+    invshade = 9,
+    chatcolor = V_GREENMAP,
+    accessible = false
+}
+skincolors[SKINCOLOR_SUPER_TOXIN3] = {
+    name = "Super Toxin 3",
+    ramp = {80,89,90,91,101,103,104,105,107,107,108,109,119,110,111,31},
+    invcolor = SKINCOLOR_ORANGE,
+    invshade = 9,
+    chatcolor = V_GREENMAP,
+    accessible = false
+}
+skincolors[SKINCOLOR_SUPER_TOXIN4] = {
+    name = "Super Toxin 4",
+    ramp = {0,89,90,91,92,93,94,94,94,95,95,109,109,110,111,31},
+    invcolor = SKINCOLOR_ORANGE,
+    invshade = 9,
+    chatcolor = V_GREENMAP,
+    accessible = false
+}
+skincolors[SKINCOLOR_SUPER_TOXIN5] = {
+    name = "Super Toxin 5",
+    ramp = {0,5,11,16,22,23,24,25,26,26,27,28,29,29,30,31},
+    invcolor = SKINCOLOR_ORANGE,
+    invshade = 9,
+    chatcolor = V_GREENMAP,
+    accessible = false
+}

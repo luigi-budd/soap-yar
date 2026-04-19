@@ -3737,7 +3737,7 @@ rawset(_G, "Soap_DoLunge",function(p, fromjump)
 	local ghost = P_SpawnGhostMobj(me)
 	ghost.scale = 3*me.scale/2
 	ghost.destscale = FixedMul(me.scale,2)
-	ghost.color = SKINCOLOR_SAPPHIRE
+	ghost.color = (soap.doSuperBuffs) and SKINCOLOR_LIME or SKINCOLOR_SAPPHIRE
 	ghost.colorized = true
 	ghost.frame = $|TR_TRANS50
 	ghost.blendmode = AST_ADD

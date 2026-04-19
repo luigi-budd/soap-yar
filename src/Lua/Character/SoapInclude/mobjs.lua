@@ -211,6 +211,10 @@ states[S_SOAP_LUNGEVFX] = {
 		if mo.fuse < 3
 			mo.alpha = $ - (FU/3)
 		end
+		
+		if (me.player.powers[pw_super])
+			mo.frame = ($ &~FF_FRAMEMASK)|35
+		end
 	end,
 	nextstate = S_SOAP_LUNGEVFX
 }

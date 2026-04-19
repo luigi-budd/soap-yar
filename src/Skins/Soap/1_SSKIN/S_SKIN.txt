@@ -10,7 +10,7 @@ ability = 100
 ability2 = 100
 
 prefcolor = Galaxy
-Supercolor = Purple
+Supercolor = Toxin
 
 height = 57
 highresscale = 0.25
