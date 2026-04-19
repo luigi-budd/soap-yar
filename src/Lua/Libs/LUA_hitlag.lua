@@ -1,3 +1,5 @@
+if rawget(_G, "Soap_Hitlag") then return end
+
 rawset(_G,"Soap_Hitlag",{})
 local hl = Soap_Hitlag
 local CV = SOAP_CV

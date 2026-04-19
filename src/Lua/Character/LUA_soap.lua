@@ -3713,6 +3713,7 @@ addHook("MobjDamage", function(me,inf,sor,dmg,dmgt)
 	if not G_IsSpecialStage()
 	and not me.hitlag
 	and dovfx
+	and not (dmgt & DMG_DEATHMASK)
 		Soap_Hitlag.addHitlag(me, 10 + (inf_speed/FU/2), true, false)
 	end
 end,MT_PLAYER)
