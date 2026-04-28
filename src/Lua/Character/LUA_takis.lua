@@ -388,8 +388,14 @@ Takis_Hook.addHook("Takis_Thinker",function(p)
 				10*skins["takisthefox"].jumpfactor
 			)
 			
-			me.state = S_PLAY_MELEE
-			me.tics = -1
+			me.state = S_PLAY_TAKIS_HSTART
+			Soap_SquashMacro(p, {
+				ease_func = "inquad",
+				ease_time = 10,
+				x = -FU * 1/5,
+				y = -FU/4,
+				singular = true
+			})
 			--P_SetObjectMomZ(me,-9*FU)
 		end
 	end

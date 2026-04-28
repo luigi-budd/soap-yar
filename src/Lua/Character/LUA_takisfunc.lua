@@ -669,7 +669,7 @@ rawset(_G,"Takis_HammerBlastHitbox",function(p)
 			P_KillMobj(found,me,me)
 		elseif (found.flags & MF_SPRING)
 		and (found.info.painchance ~= 3)
-			Soap_ImpactVFX(found, me, nil,nil, true)
+			Soap_ImpactVFX(found, me, nil,nil, true, true)
 			P_DoSpring(found,me)
 		elseif (found.player and found.player.valid)
 			local p2 = found.player
@@ -880,7 +880,7 @@ rawset(_G,"Takis_AbilityHelpers",{
 		me.roll = FixedMul($,FU*3/4)
 		
 		if me.state ~= S_PLAY_MELEE
-		and not takis.inPain
+		and not (takis.inPain or me.state == S_PLAY_TAKIS_HSTART)
 			me.state = S_PLAY_MELEE
 		end
 		
