@@ -239,6 +239,9 @@ hl.iterateHitlagged = function()
 			end
 			P_ButteredSlope(mo)
 			
+			mo.momx = FixedMul($, FU * 95/100)
+			mo.momy = FixedMul($, FU * 95/100)
+			
 			if (v.tics % 16 == 0)
 			--and not S_SoundPlaying(mo, sfx_kc38)
 				S_StartSoundAtVolume(mo, sfx_kc38, 255)
