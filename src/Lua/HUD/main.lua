@@ -80,11 +80,13 @@ addHook("HUD",function(v,p, cam)
 		local x,y = 200*FU, 150*FU
 		local scale = FU
 		local result = K_GetScreenCoords(v,p,cam, me, {anglecliponly = true})
+		local align = (skins[p.skin].name == TAKIS_SKIN) and "-right" or ""
+		local sign = (skins[p.skin].name == TAKIS_SKIN) and -1 or 1
 		if cam.chase
 			if not result.onscreen then return end
 			
 			scale = abs(FixedMul(result.scale, me.scale)) * 8/5
-			x = result.x + 25 * scale
+			x = result.x + (skins[p.skin].name == TAKIS_SKIN and -25 or 25) * scale
 			y = result.y
 		end
 		
@@ -101,8 +103,8 @@ addHook("HUD",function(v,p, cam)
 			end
 			
 			v.dointerp(15430)
-			v.drawString(x + off,y-16*FU, "Hold C3 to", V_ALLOWLOWERCASE|flags, "thin-fixed")
-			v.drawString(x + off,y-8*FU,  "transform!", V_ALLOWLOWERCASE|flags, "thin-fixed")
+			v.drawString(x + off*sign,y-16*FU, "Hold C3 to", V_ALLOWLOWERCASE|flags, "thin-fixed"..align)
+			v.drawString(x + off*sign,y-8*FU,  "transform!", V_ALLOWLOWERCASE|flags, "thin-fixed"..align)
 		end
 		if me.soap_totalamps
 			local clr = amp_levels[me.soap_amplevel or 0]
@@ -110,7 +112,7 @@ addHook("HUD",function(v,p, cam)
 				clr = rainbow_clr[(leveltime/2) % 9]
 			end
 			v.dointerp(15431)
-			v.drawString(x,y, "x"..(me.soap_totalamps / 5).." COMBO", V_ALLOWLOWERCASE|clr, "thin-fixed")
+			v.drawString(x,y, "x"..(me.soap_totalamps / 5).." COMBO", V_ALLOWLOWERCASE|clr, "thin-fixed"..align)
 		end
 		if (me.soap_amppayouttime)
 		and (leveltime < me.soap_amppayouttime)
@@ -136,7 +138,7 @@ addHook("HUD",function(v,p, cam)
 				end
 			end
 			
-			v.drawString(x - off,y+8*FU, str, V_ALLOWLOWERCASE|flags, "thin-fixed")
+			v.drawString(x - off*sign,y+8*FU, str, V_ALLOWLOWERCASE|flags, "thin-fixed"..align)
 		end
 		v.dointerp(false)
 	end

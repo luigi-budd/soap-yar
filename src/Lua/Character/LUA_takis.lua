@@ -1512,6 +1512,23 @@ local function try_pvp_collide(me,thing)
 		thinghit = true
 	end
 
+	-- just so you wont miss out on amps
+	local basicdamage = (p.powers[pw_super] or p.powers[pw_invulnerability] or (p.pflags & PF_SPINNING))
+		and not (thing.player and thing.player.valid)
+		and not (thing == me.target or thing == me.tracer)
+	if basicdamage
+		Soap_ImpactVFX(thing,me, nil, FU/3)
+		Soap_DamageSfx(thing, FU/3, 2*FU)
+		Soap_SpawnBumpSparks(me, thing, nil, true)
+		
+		DealDamage(thing, me,me)
+		if (thing and thing.valid and thing.flags & MF_BOSS and (thing.health <= 0))
+			S_StartSound(me, sfx_sp_kco)
+			soap.hud.painsurge = 6
+		end
+		thinghit = true
+	end
+	
 	if thinghit and thing.type == MT_ROLLOUTROCK
 		thing.soap_flingcooldown = max((thing.hitlag or 0)* 2, 10)
 		thing.takis_flingme = false

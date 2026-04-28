@@ -207,7 +207,7 @@ local function TryVFXStars(v)
 		star.momx = $ + v.vfx_mom[1]
 		star.momy = $ + v.vfx_mom[2]
 		star.momz = $ + v.vfx_mom[3] * 3/4
-		if (v.origin and v.origin.valid and v.origin.player and v.origin.skin == SOAP_SKIN)
+		if (v.origin and v.origin.valid and v.origin.player and (v.origin.skin == SOAP_SKIN or v.origin.skin == TAKIS_SKIN))
 			star.type = MT_SOAP_AMP
 			
 			star.tracer = v.origin
