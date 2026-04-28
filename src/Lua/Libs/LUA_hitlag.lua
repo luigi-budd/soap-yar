@@ -186,7 +186,7 @@ hl.iterateHitlagged = function()
 						stunstate
 					)
 				end
-				local spinout = clamp(8, mo.soap_stunned/8, 1) * ANGLE_11hh
+				local spinout = FixedAngle(45 * min(FixedDiv(mo.soap_stunned, 40), FU))
 				mo.angle = $ - spinout
 			end
 			
@@ -276,6 +276,7 @@ hl.iterateHitlagged = function()
 				end
 			end
 			
+			/*
 			if hl.cv_hitlagtics.value
 			and mo.soap_stunned > hl.cv_hitlagtics.value
 				mo.soap_stunned = ease.incubic(
@@ -283,6 +284,7 @@ hl.iterateHitlagged = function()
 					$,hl.cv_hitlagtics.value
 				)
 			end
+			*/
 			mo.soap_stunned = max($ - 1, 0)
 			
 			if not (mo.soap_stunned)
@@ -398,6 +400,7 @@ hl.addHitlag = function(
 	if hl.cv_hitlagmulti.value ~= FU
 		tics = FixedMul($, hl.cv_hitlagmulti.value)
 	end
+	print("hitlag",tics)
 	
 	mo.hitlag = $+tics
 	if mo.hitlag > hl.cv_hitlagtics.value
@@ -461,6 +464,7 @@ hl.stunEnemy = function(mo,tics)
 	if hl.cv_hitlagmulti.value ~= FU
 		tics = FixedMul($, hl.cv_hitlagmulti.value)
 	end
+	print("stunned",tics,mo.soap_stunned)
 	
 	local stunned_hook = Takis_Hook.events["Soap_OnStunEnemy"]
 	if (stunned_hook.numhooks)
