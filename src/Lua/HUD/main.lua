@@ -45,6 +45,7 @@ addHook("HUD",function(v,p, cam)
 	
 	if All7Emeralds(emeralds)
 	and not supernotif.seen
+	and (skins[p.skin].name == SOAP_SKIN)
 		if (p.rings >= 50)
 		and (supernotif.lastrings < 50)
 			supernotif.seen = true
