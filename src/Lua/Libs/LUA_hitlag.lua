@@ -400,7 +400,6 @@ hl.addHitlag = function(
 	if hl.cv_hitlagmulti.value ~= FU
 		tics = FixedMul($, hl.cv_hitlagmulti.value)
 	end
-	print("hitlag",tics)
 	
 	mo.hitlag = $+tics
 	if mo.hitlag > hl.cv_hitlagtics.value
@@ -464,7 +463,6 @@ hl.stunEnemy = function(mo,tics)
 	if hl.cv_hitlagmulti.value ~= FU
 		tics = FixedMul($, hl.cv_hitlagmulti.value)
 	end
-	print("stunned",tics,mo.soap_stunned)
 	
 	local stunned_hook = Takis_Hook.events["Soap_OnStunEnemy"]
 	if (stunned_hook.numhooks)

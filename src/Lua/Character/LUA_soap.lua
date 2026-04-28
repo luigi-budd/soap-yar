@@ -3141,6 +3141,14 @@ local function handleBump(p,me,thing)
 	local soap = p.soaptable
 	if (soap.doSuperBuffs or p.powers[pw_invulnerability]) then return end
 	if soap.nodamageforme > 2 then soap.nodamageforme = 10; return end
+	local dontbump = false
+	if thing.soap_lastbumptic
+		if (leveltime - thing.soap_lastbumptic) < 8
+			dontbump = true
+		end
+	end
+	thing.soap_lastbumptic = leveltime
+	if dontbump then return end
 	
 	local max_speed = (skins[p.skin].normalspeed + soap._maxdash)
 	local speed_add = FixedMul(
