@@ -56,12 +56,8 @@ local function CMDConstructor(name, props)
 		end
 		
 		local admin = (IsPlayerAdmin(p) or p == server)
-		if not admin
-		and (p.name == "Epix" and not mbrelease) --lol
-			admin = true
-		end
-		
 		local adminonly = checkadmin
+		
 		if (not props.noadmin)
 		and not checkadmin
 			adminonly = false
