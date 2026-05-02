@@ -473,7 +473,7 @@ end,MT_ROLLOUTROCK)
 local amp_tics = TR
 local amp_frac = (FU / amp_tics)
 local amp_drag = FU * 6/7
-local amp_dist = 1500 * FU
+local amp_dist = 1200 * FU
 addHook("MobjThinker",function(amp)
 	if amp.wait
 		amp.wait = $ - 1
@@ -492,9 +492,11 @@ addHook("MobjThinker",function(amp)
 			R_PointToDist2(me.x,me.y, amp.x,amp.y)
 		)
 		local cap = FixedMul(amp_dist, amp.scale)
+		local alpha = FU
 		if dist < cap
-			amp.alpha = FixedDiv(dist, cap)
+			alpha = FixedDiv(dist, cap)
 		end
+		amp.alpha = P_Lerp(FU/2, $, alpha)
 	end
 	
 	if me.hitlag or me.flags & MF_NOTHINK
@@ -507,6 +509,7 @@ addHook("MobjThinker",function(amp)
 		amp.startx = amp.x
 		amp.starty = amp.y
 		amp.startz = amp.z
+		amp.startscale = amp.spritexscale
 		amp.soap_newvfx = false
 		amp.tics = -1
 		amp.fuse = -1
@@ -528,6 +531,10 @@ addHook("MobjThinker",function(amp)
 	)
 	if CV.rotations.value
 		amp.rollangle = $ + FixedAngle(ease.inexpo(frac, 0, 60*FU))
+	end
+	if (amp.startscale ~= me.scale)
+		amp.spritexscale = ease.inexpo(frac, amp.startscale, me.scale / 2)
+		amp.spriteyscale = amp.spritexscale
 	end
 	
 	if amp.ticker == amp_tics + 1
