@@ -358,8 +358,15 @@ Takis_Hook.addHook("Takis_Thinker",function(p)
 	if (soap.use)
 		
 		--clutch
+		local clutchlen = soap.onGround or p.powers[pw_carry] == CR_ROLLOUT
+		local lenient = false
+		if abs(me.z - me.floorz) <= 22 * me.scale
+			clutchlen = true
+			lenient = true
+		end
+		
 		if (soap.use == 1)
-		and (soap.onGround or p.powers[pw_carry] == CR_ROLLOUT)
+		and (clutchlen)
 		--and not soap.taunttime
 		and me.health
 		and (me.state ~= S_PLAY_GASP)
@@ -367,6 +374,9 @@ Takis_Hook.addHook("Takis_Thinker",function(p)
 		and (p.powers[pw_carry] ~= CR_NIGHTSMODE)
 		and not (soap.noability & NOABIL_CLUTCH)
 		and not (soap.isSliding)
+			if lenient
+				P_SetObjectMomZ(me,-10*FU)
+			end
 			Takis_DoClutch(p)
 		end
 		
@@ -439,6 +449,10 @@ Takis_Hook.addHook("Takis_Thinker",function(p)
 			
 			local momz = FixedDiv(me.momz,me.scale)*soap.gravflip
 			local thrust = min((momz/2)+7*FU,18*FU)
+			if (p.powers[pw_shield] & SH_NOSTACK) == SH_WHIRLWIND
+				thrust = $ + 4*FU
+				S_StartSound(me, sfx_wdjump)
+			end
 			Soap_ZLaunch(me,thrust)
 			
 			p.drawangle = ang
@@ -828,7 +842,11 @@ Takis_Hook.addHook("Takis_Thinker",function(p)
 		else
 			p.drawangle = me.angle
 		end
-		p.thrustfactor = 2
+		if (p.powers[pw_shield] & SH_NOSTACK) == SH_WHIRLWIND
+			p.thrustfactor = 4
+		else
+			p.thrustfactor = 2
+		end
 		soap.setrolltrol = true
 		
 		-- jump out of a dive / cancel a dive
