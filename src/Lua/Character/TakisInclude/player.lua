@@ -11,8 +11,8 @@ SafeFreeslot("S_PLAY_TAKIS_HSTART")
 states[S_PLAY_TAKIS_HSTART] = {
     sprite = SPR_PLAY,
     frame = SPR2_SPIN|FF_ANIMATE,
-    tics = 8,
-	var1 = 8,
+    tics = 12,
+	var1 = 12,
 	var2 = 1,
 	nextstate = S_PLAY_MELEE
 }
