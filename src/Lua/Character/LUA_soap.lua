@@ -584,32 +584,35 @@ local discoranges = {
 
 Takis_Hook.addHook("PreThinkFrame",function(p)
 	local me = p.realmo
-	if (me.skin ~= SOAP_SKIN) then return end
 	local soap = p.soaptable
 	local lunge = soap.lunge
 	
+	if (me.skin == SOAP_SKIN)
+	or (me.skin == TAKIS_SKIN)
+		p.pflags = $ &~SF_NOSKID
+		if lunge.effect
+			p.charflags = $|SF_NOSKID
+			if not lunge.fromjump
+				p.cmd.buttons = $|BT_JUMP
+			end
+		elseif (lunge.angle ~= nil or lunge.keep)
+		and not lunge.fromjump
+			if (p.cmd.buttons & (BT_CUSTOM2|BT_CUSTOM1))
+				p.cmd.buttons = $|BT_JUMP
+				lunge.keep = true
+			else
+				lunge.fromjump = true
+				lunge.keep = false
+			end
+		else
+			lunge.keep = false
+		end
+	end
+	
+	if (me.skin ~= SOAP_SKIN) then return end
 	--ticked back here so any changes will be instant
 	--(also out of the way of hitlag)
 	Soap_HUDTicker(p,me,soap)
-	
-	p.pflags = $ &~SF_NOSKID
-	if lunge.effect
-		p.charflags = $|SF_NOSKID
-		if not lunge.fromjump
-			p.cmd.buttons = $|BT_JUMP
-		end
-	elseif (lunge.angle ~= nil or lunge.keep)
-	and not lunge.fromjump
-		if (p.cmd.buttons & BT_CUSTOM2)
-			p.cmd.buttons = $|BT_JUMP
-			lunge.keep = true
-		else
-			lunge.fromjump = true
-			lunge.keep = false
-		end
-	else
-		lunge.keep = false
-	end
 	
 	if soap.fakeskidtime
 	and not (p.charflags & SF_NOSKID)

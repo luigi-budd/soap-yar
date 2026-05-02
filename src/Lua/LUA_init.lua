@@ -352,6 +352,7 @@ rawset(_G, "Soap_InitTable", function(p)
 		},
 		
 		dived = false,
+		divewhirl = 0, -- vfx (34 - 0)
 		canceltime = 0,
 		lastbumper = 0, -- for nights clutches
 		nadotime = 0,

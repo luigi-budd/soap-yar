@@ -1,5 +1,7 @@
 local CV = SOAP_CV
 
+local TAKIS_WDIVEVFX = TR - 1
+
 local function dust_type(me)
 	return (me.eflags & (MFE_UNDERWATER|MFE_TOUCHWATER)) and P_RandomRange(MT_SMALLBUBBLE,MT_MEDIUMBUBBLE) or MT_SOAP_DUST
 end
@@ -156,6 +158,18 @@ local function playknockoutsfx(p,me,soap)
 	)/FU
 	S_StartSound(me, sound)
 	S_StartSound(me, sound)
+end
+
+local function winddivevfx(p,me,soap, angle,offangle,dist,frac)
+	local dust = P_SpawnMobjFromMobj(me,
+		P_ReturnThrustX(nil, angle, FixedMul(cos(offangle), dist)),
+		P_ReturnThrustY(nil, angle, FixedMul(cos(offangle), dist)),
+		FixedDiv(me.height,me.scale)/2 + FixedMul(sin(offangle), dist),
+		MT_SOAP_DUST
+	)
+	dust.alpha = frac
+	dust.destscale = 0
+	P_SetObjectMomZ(dust, FU)
 end
 
 Takis_Hook.addHook("PreThinkFrame",function(p)
@@ -449,10 +463,6 @@ Takis_Hook.addHook("Takis_Thinker",function(p)
 			
 			local momz = FixedDiv(me.momz,me.scale)*soap.gravflip
 			local thrust = min((momz/2)+7*FU,18*FU)
-			if (p.powers[pw_shield] & SH_NOSTACK) == SH_WHIRLWIND
-				thrust = $ + 4*FU
-				S_StartSound(me, sfx_wdjump)
-			end
 			Soap_ZLaunch(me,thrust)
 			
 			p.drawangle = ang
@@ -494,7 +504,7 @@ Takis_Hook.addHook("Takis_Thinker",function(p)
 			Soap_SquashMacro(p, {ease_func = "outsine", ease_time = 12, x = -FU*7/10, y = -FU*3/10})
 			Soap_RemoveSquash(p, "jumpeffect")
 			
-			p.pflags = $|PF_JUMPED|PF_THOKKED &~(PF_SPINNING)
+			p.pflags = $|PF_JUMPED|PF_THOKKED|PF_JUMPDOWN &~(PF_SPINNING)
 			soap.dived = true
 			soap.sprung = false
 			soap.noability = $|NOABIL_SLIDE
@@ -843,7 +853,7 @@ Takis_Hook.addHook("Takis_Thinker",function(p)
 			p.drawangle = me.angle
 		end
 		if (p.powers[pw_shield] & SH_NOSTACK) == SH_WHIRLWIND
-			p.thrustfactor = 4
+			p.thrustfactor = 7
 		else
 			p.thrustfactor = 2
 		end
@@ -855,7 +865,17 @@ Takis_Hook.addHook("Takis_Thinker",function(p)
 		and not (soap.use)
 			me.state = S_PLAY_SOAP_SLIP
 			p.pflags = $ &~PF_JUMPED
+			local prevspeed = soap.accspeed - 20*FU
 			Soap_DoLunge(p, false)
+			if (p.powers[pw_shield] & SH_NOSTACK) == SH_WHIRLWIND
+				local thrust = 4 * FU
+				thrust = $ + (11 * clamp(0, FixedDiv(prevspeed, 50*FU), FU))
+				
+				P_SetObjectMomZ(me, thrust, true)
+				S_StartSound(me, sfx_wdjump)
+				soap.divewhirl = TAKIS_WDIVEVFX
+				p.pflags = $|PF_STARTJUMP|PF_JUMPDOWN
+			end
 			soap.noability = $|NOABIL_DIVE
 			soap.setrolltrol = false
 			soap.canceltime = TR/2
@@ -1160,6 +1180,20 @@ Takis_Hook.addHook("Takis_Thinker",function(p)
 		was_pounding = washammering,
 		halfsquish = washammering or hammer.down
 	})
+	-- ...?
+	if (soap.divewhirl)
+		local angle = R_PointToAngle2(0,0, me.momx,me.momy) + ANGLE_90
+		local frac = FixedDiv(soap.divewhirl*FU, TAKIS_WDIVEVFX*FU)
+		local offangle = FixedAngle(360 * FixedMul(frac, frac * 8/6))
+		
+		frac = ease.outquart($, 0, FU)
+		local dist = 60 * frac
+		winddivevfx(p,me,soap, angle,offangle,dist,frac)
+		winddivevfx(p,me,soap, angle,offangle + FixedAngle(120*FU),dist,frac)
+		winddivevfx(p,me,soap, angle,offangle + FixedAngle(240*FU),dist,frac)
+		
+		soap.divewhirl = $ - 1
+	end
 	Soap_DeathThinker(p,me,soap)
 end)
 
