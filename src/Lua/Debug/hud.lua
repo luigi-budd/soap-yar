@@ -282,7 +282,7 @@ addHook("HUD",function(v,p)
 		for etype, event_t in pairs(Takis_Hook.events)
 			local starty = y
 			local totaltime = 0
-
+			
 			x = $ + 4
 			y = $ + 4
 			for key,hook_t in pairs(event_t.events)
@@ -296,7 +296,7 @@ addHook("HUD",function(v,p)
 					path = path:sub(strlen - STR_CAP, strlen)
 				end
 				local clr = hook_t.activity and "\x80" or "\x86"
-
+				
 				v.drawString(x,y, "\x82["..tostring(key)..","..tostring(hook_t.id).."] - \x86"..path.." = "..clr..tostring(hook_t.us_taken).."us", flags, "small")
 				if (hook_t.activity > 0)
 					hook_t.activity = max($ - 1, 0)
@@ -305,7 +305,7 @@ addHook("HUD",function(v,p)
 				elseif (hook_t.activity < 0)
 					hook_t.activity = 0
 				end
-
+				
 				y = $ + 4
 			end
 			x = $ - 4
@@ -316,13 +316,50 @@ addHook("HUD",function(v,p)
 		end
 		y = $ + 4
 		v.drawString(x,y, "Frame time taken: "..(frametime).."us", flags|V_YELLOWMAP, "small")
-
+		
 	elseif oldflags & DEBUG_HOOKS
 		for k,v in pairs(oldstr)
 			if v
 				hud.enable(k)
 			end
 		end
+	end
+	
+	if (SOAP_DEBUG & DEBUG_SPEEDOMETER)
+	and (takis_custombuild)
+		v_width = (v.width() / v.dupx())*FU
+		v_height = (v.height() / v.dupy())*FU
+		
+		local rad = 30*FU
+		local tinyrad = 5*FU
+		local x = hudinfo[HUD_LIVES].x*FU + rad
+		local y = hudinfo[HUD_LIVES].y*FU - 20*FU
+		local flags = hudinfo[HUD_LIVES].f|V_HUDTRANS
+		local speed = soap.accspeed
+		local speedcap = 200*FU
+		
+		for i = 0, 10
+			local angle = FixedAngle(180*FU + 180*FixedDiv(i*FU,10*FU))
+			angle = InvAngle($)
+			
+			drawLine(v, 
+				x+FixedMul((rad - tinyrad), cos(angle)),
+				y-FixedMul((rad - tinyrad), sin(angle)),
+				2, angle,
+				tinyrad/FU, 28|flags
+			)
+		end
+		v.drawString(x+FU,y - (rad + 10*FU), "100", flags, "thin-fixed-center")
+		v.drawString(x+FU+rad+3*FU,y - 3*FU, "200", flags, "thin-fixed")
+		
+		local ang = InvAngle(FixedAngle(180*FU + 180*FixedDiv(speed, speedcap)))
+		drawLine(v, x, y, 3, ang,
+			rad/FU, 26|flags
+		)
+		drawLine(v,x,y,2, ang,
+			rad/FU, 3|flags
+		)
+		v.drawString(x - rad, y + 8*FU, string.format("%.9f",speed), flags, "thin-fixed")
 	end
 	
 	oldflags = SOAP_DEBUG
