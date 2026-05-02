@@ -231,7 +231,6 @@ local function TryVFXStars(v)
 			star.wait = 12 + (off)
 			star.tics = $ + off
 			star.awardrings = v.soap_supervfx or (star.tracer.player.powers[pw_invulnerability])
-			star.drawonlyforplayer = star.tracer.player
 		end
 		star.renderflags = $|RF_FULLBRIGHT|RF_NOCOLORMAPS
 	end
@@ -474,6 +473,7 @@ end,MT_ROLLOUTROCK)
 local amp_tics = TR
 local amp_frac = (FU / amp_tics)
 local amp_drag = FU * 6/7
+local amp_dist = 1500 * FU
 addHook("MobjThinker",function(amp)
 	if amp.wait
 		amp.wait = $ - 1
@@ -482,6 +482,21 @@ addHook("MobjThinker",function(amp)
 	end
 	local me = amp.tracer
 	if not (me and me.valid) then return end
+
+	if (displayplayer and displayplayer.valid)
+	and (displayplayer ~= me.player)
+		local dp = displayplayer
+		local me = dp.realmo
+		local dist = min(
+			R_PointToDist(amp.x,amp.y),
+			R_PointToDist2(me.x,me.y, amp.x,amp.y)
+		)
+		local cap = FixedMul(amp_dist, amp.scale)
+		if dist < cap
+			amp.alpha = FixedDiv(dist, cap)
+		end
+	end
+	
 	if me.hitlag or me.flags & MF_NOTHINK
 		return true
 	end
