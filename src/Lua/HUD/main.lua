@@ -86,7 +86,7 @@ addHook("HUD",function(v,p, cam)
 			if not result.onscreen then return end
 			
 			scale = abs(FixedMul(result.scale, me.scale)) * 8/5
-			x = result.x + (skins[p.skin].name == TAKIS_SKIN and -25 or 25) * scale
+			x = result.x + (25 * scale * sign)
 			y = result.y
 		elseif (sign == -1)
 			x = 120*FU
