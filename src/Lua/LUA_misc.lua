@@ -231,6 +231,7 @@ local function TryVFXStars(v)
 			star.wait = 12 + (off)
 			star.tics = $ + off
 			star.awardrings = v.soap_supervfx or (star.tracer.player.powers[pw_invulnerability])
+			star.drawonlyforplayer = star.tracer.player
 		end
 		star.renderflags = $|RF_FULLBRIGHT|RF_NOCOLORMAPS
 	end
