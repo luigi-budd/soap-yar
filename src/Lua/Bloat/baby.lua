@@ -130,10 +130,10 @@ local function Baby_Init(baby)
 	baby.enraged = false
 	baby.rangecount = 0
 	
-	baby.base_charge_wait = (TR * 3/4) + 3
+	baby.base_charge_wait = TR * 46/100
 	baby.base_charge_dist = 2450*FU
-	baby.base_charge_time = TR*8/5
-	baby.base_charge_cool = 2*TR - baby.base_charge_time
+	baby.base_charge_time = TR * 19/10
+	baby.base_charge_cool = (2*TR - baby.base_charge_time) * 4/5
 	Baby_SetBaseStats(baby)
 
 	baby.rage_charge_wait = TR * 46/100
