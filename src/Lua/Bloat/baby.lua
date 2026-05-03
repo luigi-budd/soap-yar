@@ -117,11 +117,12 @@ local function Baby_SetRageStats(baby)
 	baby.enraged = true
 	baby.color = SKINCOLOR_PEPPER
 	baby.colorized = true
-	baby.rangecount = 5
+	baby.rangecount = RAGE_DASHES
 	
 	S_StartSound(baby, sfx_nb_4)
 end
 
+local RAGE_DASHES = 7
 local function Baby_Init(baby)
 	baby.aiming = 0
 	baby.tics = -1
@@ -155,6 +156,19 @@ local function Baby_Init(baby)
 	
 	baby.init = true
 	baby.renderflags = RF_FULLBRIGHT|RF_NOCOLORMAPS|RF_ALWAYSONTOP
+end
+
+local function Baby_TryRubberBand(baby)
+	if not baby.enraged then return end
+	local me = baby.target
+	
+	local basedist = baby.rage_charge_dist / 4
+	local maxdist = baby.rage_charge_dist * 3
+	local dist = R_PointTo3DDist(baby.x,baby.y,baby.z, me.x,me.y,me.z)
+	baby.charge_dist = P_Lerp(
+		clamp(0, FixedDiv(dist, maxdist), FU),
+		basedist, maxdist
+	)
 end
 
 local TELE_DOTS = 52
@@ -322,6 +336,7 @@ addHook("MobjThinker",function(b)
 	end
 
 	if b.chargewind > 1
+		Baby_TryRubberBand(b)
 		Baby_Telegraph(b, b.angle,b.aiming, b.charge_dist, b.chargewind - 1)
 		b.chargewind = $ - 1
 	elseif b.chargewind == 1 -- charge
@@ -339,16 +354,20 @@ addHook("MobjThinker",function(b)
 			b.target = nil
 			
 			local dist = R_PointTo3DDist(b.x,b.y,b.z, me.x,me.y,me.z)
-			local distcap = b.charge_dist*4/5 + 524*FU
+			local distcap = b.charge_dist + 524*FU
 			if not b.enraged
-			and (dist >= distcap)
-				Baby_SetRageStats(b)
-				b.rangecount = 5
+				if (dist >= distcap)
+					Baby_SetRageStats(b)
+					b.rangecount = RAGE_DASHES
+				end
 			elseif b.enraged
-			and (dist < distcap)
-				b.rangecount = $ - 1
-				if not b.rangecount
-					Baby_SetBaseStats(b)
+				if (dist < distcap)
+					b.rangecount = $ - 1
+					if not b.rangecount
+						Baby_SetBaseStats(b)
+					end
+				else
+					b.rangecount = RAGE_DASHES
 				end
 			end
 		end
@@ -403,13 +422,14 @@ addHook("TouchSpecial",function(f, mo)
 		play.drawangle = f.angle + ANGLE_180
 		
 		dotumble(play)
-		P_Thrust(mo, f.angle, FixedMul(100*FU, f.scale))
+		P_Thrust(mo, f.angle, FixedMul(140*FU, f.scale))
 		if P_IsObjectOnGround(mo)
 			mo.z = $ + P_MobjFlip(mo)
 		end
-		P_SetObjectMomZ(mo, 75*FU, true)
+		P_SetObjectMomZ(mo, 46*FU, true)
 		play.powers[pw_flashing] = flashingtics
-		Soap_Hitlag.addHitlag(mo, TR/2, true)
+		Soap_Hitlag.addHitlag(mo, TR * 3/4, true)
+		Soap_Hitlag.addHitlag(f, TR * 3/4, false)
 		
 		if Soap_IsLocalPlayer(play)
 			Soap_StartQuake(15*FU, TR/2,
