@@ -336,7 +336,6 @@ rawset(_G,"Takis_DoClutch",function(p,riding)
 				s.angle = fx.angle
 				s.rollangle = FixedAngle(angrot * j)
 				s.tracer = inf
-				s.renderflags = $|RF_ALWAYSONTOP
 				s.momx,s.momy = mo.momx/2,mo.momy/2
 			end
 		end

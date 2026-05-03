@@ -228,6 +228,7 @@ states[S_SOAP_IMPACT_LINE] = {
 	var2 = 2,
 	tics = (4*2),
 }
+-- colorized
 SafeFreeslot("S_SOAP_IMPACT_LINE2")
 states[S_SOAP_IMPACT_LINE2] = {
     sprite = SPR_SOAP_GFX,
@@ -235,6 +236,14 @@ states[S_SOAP_IMPACT_LINE2] = {
 	var1 = 4,
 	var2 = 2,
 	tics = (4*2),
+}
+SafeFreeslot("S_SOAP_IMPACT_LINE2F")
+states[S_SOAP_IMPACT_LINE2F] = {
+    sprite = SPR_SOAP_GFX,
+    frame = 30|FF_ANIMATE|FF_PAPERSPRITE|FF_FULLBRIGHT,
+	var1 = 4,
+	var2 = 1,
+	tics = 4,
 }
 
 -- these are for the new impact vfx

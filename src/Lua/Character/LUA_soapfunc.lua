@@ -25,6 +25,9 @@ end
 local function dust_noviewmobj(dust)
 	dust.dontdrawforviewmobj = me
 end
+local armacolors = {
+	SKINCOLOR_KETCHUP, SKINCOLOR_PEPPER, SKINCOLOR_CRIMSON, SKINCOLOR_GARNET, SKINCOLOR_VOLCANIC
+}
 
 local function spawnbubble(p,me,soap)
 	local h = FixedDiv(me.height, me.scale)
@@ -1166,6 +1169,10 @@ rawset(_G, "Soap_WindLines", function(me,rmomz,color,forceang,forceside)
 	local mocolor = color
 	if mocolor == nil and color == nil
 		mocolor = SKINCOLOR_SAPPHIRE
+		if (me.skin == TAKIS_SKIN)
+		and (p.powers[pw_shield] & SH_NOSTACK == SH_FLAMEAURA)
+			mocolor = armacolors[P_RandomRange(1, #armacolors)]
+		end
 	end
 	-- use super color as default
 	-- this does support supercolors, you just gotta
@@ -3854,9 +3861,6 @@ local UPPER_XYDRAG = FU * 8/9
 local UPPER_ZDRAG = FU * 6/7
 
 local SPIKE_START = 7
-local armacolors = {
-	SKINCOLOR_KETCHUP, SKINCOLOR_PEPPER, SKINCOLOR_CRIMSON, SKINCOLOR_GARNET, SKINCOLOR_VOLCANIC
-}
 --[done?]TODO: fix clashing
 --[done?]TODO: fix guard parrying
 local function CheckForClash(p,me, p2,them, myattackpri)
