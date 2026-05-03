@@ -56,6 +56,16 @@ mobjinfo[MT_NSBABY] = {
 	flags = MF_NOCLIP|MF_NOCLIPHEIGHT|MF_NOGRAVITY,
 }
 
+SafeFreeslot("S_NSBABY_PROBLEM")
+states[S_NSBABY_PROBLEM] = {
+	sprite = SPR_NSBABY,
+	frame = 34|FF_ANIMATE|FF_FULLBRIGHT,
+	var1 = 6,
+	var2 = 2,
+	tics = (7*2),
+	nextstate = S_NSBABY_PROBLEM
+}
+
 -- alarm
 sfxinfo[SafeFreeslot("sfx_nb_0")] = {
 	caption = "/",
@@ -91,6 +101,12 @@ sfxinfo[SafeFreeslot("sfx_nb_5")] = {
 sfxinfo[SafeFreeslot("sfx_nb_6")] = {
 	caption = "/",
 	flags = SF_X2AWAYSOUND
+}
+
+-- problem alert
+sfxinfo[SafeFreeslot("sfx_nb_7")] = {
+	caption = "/",
+	flags = SF_X4AWAYSOUND
 }
 
 local function Baby_SetBaseStats(baby)
@@ -130,6 +146,7 @@ local function Baby_Init(baby)
 	baby.touchlist = {}
 	baby.enraged = false
 	baby.rangecount = 0
+	baby.problem = false
 	
 	baby.base_charge_wait = TR * 46/100
 	baby.base_charge_dist = 2450*FU
@@ -223,7 +240,9 @@ local function Baby_Telegraph(baby, angle,aim, dist, tics)
 		top_layer.spriteyoffset = -20*FU
 		top_layer.fuse = top_layer.tics
 		
-		baby.state = S_NSBABY_LOCKON
+		if not baby.problem
+			baby.state = S_NSBABY_LOCKON
+		end
 	end
 end
 
@@ -235,8 +254,18 @@ local function Baby_DoLunge(baby, angle,aim, dist, tics)
 	local adjtics = baby.charge_time - tics
 	local vec = SphereToCartesian(angle,aim)
 	if adjtics == 0
-		S_StartSound(baby, (baby.enraged) and sfx_nb_3 or sfx_nb_1)
-		baby.state = S_NSBABY_TOCHASE
+		local sound = sfx_nb_1
+		if baby.enraged
+			sound = sfx_nb_3
+		end
+		if baby.problem
+			sound = sfx_nb_2
+		end
+		
+		S_StartSound(baby, sound)
+		if not baby.problem
+			baby.state = S_NSBABY_TOCHASE
+		end
 		
 		baby.start_x = baby.x
 		baby.start_y = baby.y
@@ -273,7 +302,8 @@ local function Baby_DoLunge(baby, angle,aim, dist, tics)
 		)
 		
 		-- this isnt in vanilla nullscape but i think it looks nice
-		if baby.enraged
+		if baby.enraged or baby.state == S_NSBABY_PROBLEM
+			if (baby.state == S_NSBABY_PROBLEM and (i or (leveltime % 4))) then continue end
 			local g = P_SpawnGhostMobj(baby)
 			P_SetOrigin(g,
 				g.x + Soap_RandomFixedRange(-lunge_random, lunge_random),
@@ -281,7 +311,7 @@ local function Baby_DoLunge(baby, angle,aim, dist, tics)
 				g.z + Soap_RandomFixedRange(-lunge_random, lunge_random)
 			)
 			
-			g.blendmode = AST_ADD
+			g.blendmode = (baby.state == S_NSBABY_PROBLEM) and AST_SUBTRACT or AST_ADD
 			g.destscale = 0
 			g.renderflags = $ &~RF_ALWAYSONTOP
 		end
@@ -333,6 +363,16 @@ addHook("MobjThinker",function(b)
 		b.chargewind = b.charge_wait + 1
 		b.angle,b.aiming = R_PointTo3DAngles(b.x,b.y,b.z, me.x,me.y,me.z)
 		S_StartSound(b, sfx_nb_0)
+		
+		local feign = false
+		if not b.enraged
+		and not b.problem
+			feign = P_RandomChance(FU/2)
+		end
+		if feign
+			b.chargewind = $ * 7/5
+			b.problem = true
+		end
 	end
 
 	if b.chargewind > 1
@@ -340,13 +380,28 @@ addHook("MobjThinker",function(b)
 		Baby_Telegraph(b, b.angle,b.aiming, b.charge_dist, b.chargewind - 1)
 		b.chargewind = $ - 1
 	elseif b.chargewind == 1 -- charge
-		b.chargecooldown = b.charge_time + b.charge_cool
-		b.chargingtics = b.charge_time
-		b.chargewind = 0
+		if not b.problem
+		or b.extravalue1 == 1
+			b.chargecooldown = b.charge_time + b.charge_cool
+			b.chargingtics = b.charge_time
+			b.chargewind = 0
+		elseif b.extravalue1 == 0
+			S_StartSound(b, sfx_nb_7)
+			
+			b.charge_time = $ * 5/7
+			
+			b.chargewind = b.charge_wait + 1
+			b.angle,b.aiming = R_PointTo3DAngles(b.x,b.y,b.z, me.x,me.y,me.z)
+			b.extravalue1 = 1
+			b.state = S_NSBABY_PROBLEM
+		end
 	end
 	
 	if b.chargingtics
 		Baby_DoLunge(b, b.angle,b.aiming, b.charge_dist, b.chargingtics)
+		b.problem = false
+		b.extravalue1 = 0
+		
 		b.chargingtics = $ - 1
 		if not b.chargingtics
 			b.state = S_NSBABY_TOIDLE
@@ -359,6 +414,8 @@ addHook("MobjThinker",function(b)
 				if (dist >= distcap)
 					Baby_SetRageStats(b)
 					b.rangecount = RAGE_DASHES
+				else
+					b.charge_time = b.base_charge_time
 				end
 			elseif b.enraged
 				if (dist < distcap)
