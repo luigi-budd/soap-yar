@@ -320,7 +320,7 @@ end
 
 local function Baby_SearchForPlayers(baby)
 	local closest_player = nil
-	local closest_dist = INT32_MAX
+	local closest_dist = nil
 	
 	baby.target = nil
 	for p in players.iterate
@@ -329,7 +329,8 @@ local function Baby_SearchForPlayers(baby)
 		if not (me and me.valid and me.health) then continue end
 		
 		local dist = R_PointTo3DDist(baby.x,baby.y,baby.z, me.x,me.y,me.z)
-		if dist < closest_dist
+		if (closest_dist == nil)
+		or dist < closest_dist
 			closest_player = p
 			closest_dist = dist
 		end
@@ -359,6 +360,14 @@ addHook("MobjThinker",function(b)
 	
 	if not b.charging
 	and not b.chargewind
+		if R_PointTo3DDist(b.x,b.y,b.z, me.x,me.y,me.z) >= 8192*FU
+			P_SetOrigin(b,
+				me.x + P_RandomRange(-128, 128)*FU,
+				me.y + P_RandomRange(-128, 128)*FU,
+				me.z + P_RandomRange(-128, 128)*FU
+			)
+		end
+		
 		b.charging = true
 		b.chargewind = b.charge_wait + 1
 		b.angle,b.aiming = R_PointTo3DAngles(b.x,b.y,b.z, me.x,me.y,me.z)
@@ -367,7 +376,7 @@ addHook("MobjThinker",function(b)
 		local feign = false
 		if not b.enraged
 		and not b.problem
-			feign = P_RandomChance(FU/2)
+			feign = P_RandomChance(FU/5)
 		end
 		if feign
 			b.chargewind = $ * 7/5
