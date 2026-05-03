@@ -39,7 +39,6 @@ rawset(_G,"CA2_SOAPMOVE", 100)
 
 local includes = {
 	"mobjs.lua",
-	"funny.lua",
 	"sounds.lua",
 	"player.lua",
 	"boombox.lua",
