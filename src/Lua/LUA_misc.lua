@@ -56,7 +56,9 @@ addHook("MobjThinker",function(bump)
 			bump.alpha = $ - (FU/20)
 			bump.momx = $ * 9/10
 			bump.momy = $ * 9/10
-			bump.spriteyscale = ease.outquad(FU - ((FU/20)*bump.fuse), FU, 0)
+			if (bump.frame & FF_FRAMEMASK == 34)
+				bump.spriteyscale = ease.outquad(FU - ((FU/20)*bump.fuse), FU, 0)
+			end
 		end
 		return
 	end

@@ -1,6 +1,9 @@
 local CV = SOAP_CV
 
 local TAKIS_WDIVEVFX = TR - 1
+local armacolors = {
+	SKINCOLOR_KETCHUP, SKINCOLOR_PEPPER, SKINCOLOR_CRIMSON, SKINCOLOR_GARNET, SKINCOLOR_VOLCANIC
+}
 
 local function dust_type(me)
 	return (me.eflags & (MFE_UNDERWATER|MFE_TOUCHWATER)) and P_RandomRange(MT_SMALLBUBBLE,MT_MEDIUMBUBBLE) or MT_SOAP_DUST
@@ -167,8 +170,16 @@ local function winddivevfx(p,me,soap, angle,offangle,dist,frac)
 		FixedDiv(me.height,me.scale)/2 + FixedMul(sin(offangle), dist),
 		MT_SOAP_DUST
 	)
+	dust.fuse = (7 + 6 + 4 + 3) -- S_SPINDUST1-4 ...
+	if (p.powers[pw_shield] & SH_NOSTACK == SH_FLAMEAURA)
+		dust.state = S_FLAME
+		dust.fuse = dust.tics / 2
+	end
 	dust.alpha = frac
 	dust.destscale = 0
+	dust.scalespeed = FixedDiv(dust.scale, dust.fuse*FU)
+	dust.momx = $ + me.momx * 3/4
+	dust.momy = $ + me.momy * 3/4
 	P_SetObjectMomZ(dust, FU)
 end
 
@@ -458,6 +469,15 @@ Takis_Hook.addHook("Takis_Thinker",function(p)
 			local speed = soap.accspeed
 			if soap.accspeed < 20*FU
 				speed = 20*FU
+			end
+			if (p.powers[pw_shield] & SH_NOSTACK == SH_FLAMEAURA)
+				if soap.accspeed < 38*FU
+					speed = 38*FU
+				elseif soap.accspeed <= 60*FU
+					speed = $ + 8*FU
+				end
+				S_StartSound(me,sfx_s3k43)
+				p.pflags = $|PF_SHIELDABILITY
 			end
 			P_InstaThrust(me,ang,FixedMul(speed,me.scale))
 			
@@ -857,6 +877,61 @@ Takis_Hook.addHook("Takis_Thinker",function(p)
 		else
 			p.thrustfactor = 2
 		end
+		if (p.powers[pw_shield] & SH_NOSTACK == SH_FLAMEAURA)
+			soap.noairdrag = max($, 4)
+			me.momz = $ - P_GetMobjGravity(me) / 3
+			
+			local angle,vertang = R_PointTo3DAngles(0,0,0, me.momx,me.momy,me.momz)
+			local frontpush = FixedDiv(me.radius,me.scale) * 2
+			local sidepush = Soap_RandomFixedRange(-frontpush/3, frontpush/3)
+			local toppush = FixedDiv(me.height,me.scale) / 2
+			
+			local s = P_SpawnMobjFromMobj(me,
+				P_ReturnThrustX(nil, angle, frontpush) + P_ReturnThrustX(nil, angle+ANGLE_90, sidepush),
+				P_ReturnThrustY(nil, angle, frontpush) + P_ReturnThrustY(nil, angle+ANGLE_90, sidepush),
+				toppush + FixedMul(sin(vertang), toppush), MT_PARTICLE
+			)
+			s.scale = FixedMul($ * 3/4, FU + Soap_RandomFixedRange(-FU/3,FU/3))
+			s.state = P_RandomChance(FU/2) and S_SOAP_IMPACT_LINE2F or S_SOAP_IMPACT_LINE2
+			s.angle = angle + ANGLE_180 + FixedAngle(Soap_RandomFixedRange(-45*FU,45*FU))
+			s.rollangle = InvAngle(vertang) + FixedAngle(Soap_RandomFixedRange(-22*FU,22*FU))
+			s.color = armacolors[P_RandomRange(1,#armacolors)]
+			s.tracer = inf
+			s.momx = $ + me.momx
+			s.momy = $ + me.momy
+			s.momz = $ + me.momz
+			
+			s = P_SpawnMobjFromMobj(me,
+				P_RandomRange(-16,16)*FU,
+				P_RandomRange(-16,16)*FU,
+				P_RandomRange(-8,8)*FU,
+				MT_FLAMEPARTICLE
+			)
+			s.momx = $ + me.momx / 2
+			s.momy = $ + me.momy / 2
+			s.momz = $ + me.momz / 2
+			
+			if (leveltime % 6 == 0)
+				s = P_SpawnMobjFromMobj(me,
+					0,0,toppush, MT_SOAP_WALLBUMP
+				)
+				s.frame = 36|FF_PAPERSPRITE|FF_FULLBRIGHT
+				s.angle = angle + ANGLE_90
+				s.color = SKINCOLOR_KETCHUP
+				s.blendmode = AST_ADD
+				
+				s.tics = 12
+				s.fuse = 12
+				s.sixseveneffect = true
+				
+				s.destscale = 0
+				s.scalespeed = FixedDiv(s.scale, s.tics*FU)
+				
+				s.momx = $ + me.momx / 5
+				s.momy = $ + me.momy / 5
+				s.momz = $ + me.momz / 5
+			end
+		end
 		soap.setrolltrol = true
 		
 		-- jump out of a dive / cancel a dive
@@ -864,7 +939,7 @@ Takis_Hook.addHook("Takis_Thinker",function(p)
 		and not (soap.noability & NOABIL_SLIDE)
 		and not (soap.use)
 			me.state = S_PLAY_SOAP_SLIP
-			p.pflags = $ &~PF_JUMPED
+			p.pflags = $ &~(PF_JUMPED|PF_SHIELDABILITY)
 			local prevspeed = soap.accspeed - 20*FU
 			Soap_DoLunge(p, false)
 			if (p.powers[pw_shield] & SH_NOSTACK) == SH_WHIRLWIND
