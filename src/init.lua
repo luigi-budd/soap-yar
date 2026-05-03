@@ -28,6 +28,10 @@ local filetree = {
 	-- boombox's captioning
 	"character/LUA_tauntwheel.lua",
 	
+	"bloat/spiderman.lua",
+	"bloat/sexmodv2.lua",
+	"bloat/riders.lua",
+	
 	"LUA_main.lua",
 	
 	"character/LUA_soap.lua",
