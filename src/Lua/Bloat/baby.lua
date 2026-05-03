@@ -176,7 +176,7 @@ local function Baby_Telegraph(baby, angle,aim, dist, tics)
 		)
 		vfx.frame = A
 		vfx.sprite = SPR_SOAP_GFX
-		vfx.frame = 36
+		vfx.frame = 37
 		vfx.flags = $|MF_NOCLIP|MF_NOGRAVITY|MF_NOCLIPHEIGHT
 		
 		vfx.color = SKINCOLOR_RED
