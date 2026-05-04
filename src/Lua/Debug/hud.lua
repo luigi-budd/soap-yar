@@ -154,6 +154,10 @@ local function WRAP_buttons(v,p,c, me,soap)
 		)
 	end
 	
+	v.drawString(x+00,y-18,
+		string.format("%.2f", AngleFixed(me.angle)).." degrees",
+		flags,"thin"
+	)
 	v.drawString(x+00,y-10,
 		string.format("(%.2f,\t%.2f,\t", me.x,me.y) .. string.format("%.2f)", me.z),
 		flags,"thin"
