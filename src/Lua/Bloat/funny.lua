@@ -1,3 +1,4 @@
+-- dont delete cause it handles the tumble!!!
 local mbrelease = dofile("Vars/mbrelease.lua")
 
 SafeFreeslot("SPR_TRIPMINEEXPLOSION")
