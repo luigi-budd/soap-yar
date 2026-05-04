@@ -1,5 +1,121 @@
 local mbrelease = dofile("Vars/mbrelease.lua")
 
+SafeFreeslot("SPR_TRIPMINEEXPLOSION")
+SafeFreeslot("S_MM_TRIPMINE_EXPLODE")
+states[S_MM_TRIPMINE_EXPLODE] = {
+	sprite = SPR_TRIPMINEEXPLOSION,
+	frame = A|FF_ANIMATE|FF_FULLBRIGHT,
+	action = function(mo)
+		if (mo.ticker == nil) then mo.ticker = 0 end
+		
+		if not mo.set
+			mo.radius,mo.height = 6*mo.scale,6*mo.scale
+			mo.flags = MF_NOGRAVITY|MF_NOCLIP|MF_NOCLIPTHING|MF_RUNSPAWNFUNC|MF_NOBLOCKMAP|MF_NOCLIPHEIGHT
+			mo.anim_duration = 2
+			mo.fuse = 22
+			mo.set = true
+			mo.flags2 = $ &~MF2_DONTDRAW
+			mo.shadowscale = 0
+			mo.mirrored = P_RandomChance(FU/2)
+		else
+			local oldframe = mo.frame &~FF_FRAMEMASK
+			mo.frame = (mo.ticker/2)|oldframe
+		end
+		
+		if mo.oldfx
+			mo.flags = $ &~(MF_NOGRAVITY|MF_NOCLIP|MF_NOCLIPHEIGHT)
+			mo.momz = $ + P_GetMobjGravity(mo)*3/2
+			mo.frame = A|($ &~(FF_ANIMATE|FF_FRAMEMASK))
+		end
+		mo.ticker = $+1
+		
+		if leveltime % 3 == 0
+		and mo.thought
+		and mo.oldfx
+			local new = P_SpawnMobjFromMobj(mo,0,0,0,MT_THOK)
+			new.flags = MF_NOGRAVITY|MF_NOCLIP|MF_NOCLIPTHING|MF_RUNSPAWNFUNC
+			new.state = S_MM_TRIPMINE_EXPLODE
+			new.momz = 0
+			new.flags2 = $ &~MF2_DONTDRAW
+			new.color = mo.color
+			new.colorized = mo.colorized
+		else
+		
+		end
+		mo.thought = true
+	end,
+	var1 = 13,
+	var2 = 2,
+	tics = 1,
+	nextstate = S_MM_TRIPMINE_EXPLODE,
+}
+sfxinfo[SafeFreeslot("sfx_mmdie0")] = {
+	flags = SF_X4AWAYSOUND,
+	caption = "Dying"
+}
+
+local function SpawnExplosions(mine, doquake, docount)
+	if doquake
+		P_StartQuake(60*FU, TICRATE*2,
+			{mine.x, mine.y, mine.z},
+			550*mine.scale
+		)
+	end
+	
+	local radius = 32*FU
+	local minz = 10
+	local maxz = 30
+	
+	local count = docount
+    if count == nil then count = 25 end
+
+	local anglecount = FixedDiv(360*FU,count*FU)
+	for i = 0,count
+		local fa = FixedAngle(anglecount*i)
+        -- adjusted fixed angle
+        local afa = fa + P_RandomRange(-360, 360)*ANG1
+
+		local mobj = P_SpawnMobjFromMobj(mine,
+			FixedMul(cos(afa),radius + P_RandomRange(0,10)*FU),
+			FixedMul(sin(afa),radius + P_RandomRange(0,10)*FU),
+			0, --FU - FixedMul(mobjinfo[type].height,tracer.scale)/2,
+			MT_THOK
+		)
+		mobj.flags = MF_NOGRAVITY|MF_NOCLIP|MF_NOCLIPTHING|MF_RUNSPAWNFUNC
+		mobj.state = S_MM_TRIPMINE_EXPLODE
+		mobj.momz = 0
+		--mobj.spritexscale,mobj.spriteyscale = FU*2,FU*2
+		mobj.flags2 = $ &~MF2_DONTDRAW
+		
+		mobj.angle = R_PointToAngle2(mobj.x,mobj.y, mine.x,mine.y)
+		mobj.scale = $+(P_RandomFixed()*((P_RandomChance(FU/2)) and 1 or -1))
+		
+		P_Thrust(mobj, mobj.angle,
+			-6*mobj.scale
+		)
+		P_SetObjectMomZ(mobj,P_RandomRange(minz,maxz)*FU)
+		mobj.oldfx = true
+		
+		local static = P_SpawnMobjFromMobj(mine,
+			FixedMul(cos(fa),radius + P_RandomRange(0,10)*FU),
+			FixedMul(sin(fa),radius + P_RandomRange(0,10)*FU),
+			0,
+			MT_THOK
+		)
+		static.flags = MF_NOGRAVITY|MF_NOCLIP|MF_NOCLIPTHING|MF_RUNSPAWNFUNC
+		static.state = S_MM_TRIPMINE_EXPLODE
+		static.momz = 0
+		static.flags2 = $ &~MF2_DONTDRAW
+		
+		static.angle = R_PointToAngle2(mobj.x,mobj.y, mine.x,mine.y)
+		static.scale = $+(P_RandomFixed()*((P_RandomChance(FU/2)) and 1 or -1))
+		
+		P_Thrust(static, static.angle,
+			-6*static.scale
+		)
+	end
+end
+
 SafeFreeslot("sfx_sp_em0")
 sfxinfo[sfx_sp_em0] = {
 	flags = SF_X2AWAYSOUND,
@@ -369,9 +485,24 @@ addHook("PostThinkFrame",do
 		
 		if me.hitlag then me.wasinhitlag = true; continue end
 		if me.wasinhitlag
-			S_StartSound(me, sfx_sp_top)
-			me.wasinhitlag = nil
-			me.tumble_effect = TR / 2
+			if not me.soap_tumble_markedfordeathanim
+				S_StartSound(me, sfx_sp_top)
+				me.wasinhitlag = nil
+				me.tumble_effect = TR / 2
+			else
+				P_KillMobj(me)
+				me.soap_tumble = nil
+				me.soap_tumble_oldmomz = nil
+				me.soap_tumble_down = nil
+				me.rollangle = 0
+				
+				SpawnExplosions(me, true)
+				S_StartSound(me, sfx_mmdie0)
+				for i = 0,4
+					Soap_ImpactVFX(me,me, 4*FU, 2*FU, true,true)
+				end
+				return
+			end
 		end
 		if me.tumble_effect
 			Soap_WindLines(me)
@@ -428,6 +559,18 @@ addHook("PostThinkFrame",do
 			end
 			if not P_IsObjectOnGround(me)
 				me.momx,me.momy = $1/2, $2/2
+			end
+			
+			if me.soap_tumble_markedfordeath
+				me.momx,me.momy,me.momz = 0,0,0
+				Soap_Hitlag.addHitlag(me, TR / 2, true)
+				P_FlashPal(p, PAL_INVERT, TR / 2)
+				S_StartSound(me, sfx_buzz3)
+				me.soap_tumble_markedfordeathanim = true
+				
+				for i = 0,4
+					Soap_ImpactVFX(me,me, 4*FU, 2*FU, true,false)
+				end
 			end
 		end
 		if me.momz * P_MobjFlip(me) < -5 * me.scale

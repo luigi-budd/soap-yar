@@ -1,3 +1,11 @@
+local CV = SOAP_CV
+CV.babykills = CV_RegisterVar({
+	name = "soap_babykills",
+	defaultvalue = "Off",
+	flags = CV_SHOWMODIF|CV_NETVAR,
+	PossibleValue = CV_OnOff,
+})
+
 SafeFreeslot("SPR_NSBABY")
 SafeFreeslot("S_NSBABY_IDLE")
 states[S_NSBABY_IDLE] = {
@@ -464,6 +472,7 @@ local function dotumble(p)
 	local me = p.mo
 	me.soap_tumble = true
 	me.soap_tumble_oldmomz = me.momz
+	me.soap_tumble_markedfordeath = CV.babykills.value == 1
 end
 addHook("TouchSpecial",function(f, mo)
 	if not (f and f.valid) then return false; end
