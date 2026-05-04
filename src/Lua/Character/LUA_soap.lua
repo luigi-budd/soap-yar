@@ -3841,6 +3841,7 @@ Takis_Hook.addHook("PostThinkFrame",function(p)
 	end
 	
 	if me.sprite2 == SPR2_NFLY
+	or me.sprite2 == SPR2_NFL2
 		me.sprite2 = SPR2_NFL2
 		me.pitch,me.roll = 0,0
 		
@@ -3867,9 +3868,12 @@ Takis_Hook.addHook("PostThinkFrame",function(p)
 		end
 		
 		local flip = (ang > 90 and ang <= 270)
+		me.mirrored = false
 		me.renderflags = ($ &~RF_HORIZONTALFLIP)|(flip and RF_HORIZONTALFLIP or 0)
 		me.frame = ($ &~FF_FRAMEMASK)|frame
 		me.wasnfly = true
+		
+		print(me.renderflags & RF_HORIZONTALFLIP)
 	elseif me.wasnfly
 		me.renderflags = $ &~RF_HORIZONTALFLIP
 		me.wasnfly = nil
