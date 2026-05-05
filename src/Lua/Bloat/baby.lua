@@ -117,6 +117,10 @@ sfxinfo[SafeFreeslot("sfx_nb_7")] = {
 	flags = SF_X4AWAYSOUND
 }
 
+local function Baby_Sound(baby, sfx)
+	S_StartSoundAtVolume(baby, sfx, 255 * 3/5)
+end
+
 local function Baby_SetBaseStats(baby)
 	baby.charge_wait = baby.base_charge_wait
 	baby.charge_dist = baby.base_charge_dist
@@ -130,7 +134,7 @@ local function Baby_SetBaseStats(baby)
 	
 	S_StopSoundByID(baby, sfx_nb_4)
 	S_StopSoundByID(baby, sfx_nb_5)
-	S_StartSound(baby, sfx_nb_6)
+	Baby_Sound(baby, sfx_nb_6)
 end
 local function Baby_SetRageStats(baby)
 	baby.charge_wait = baby.rage_charge_wait
@@ -143,7 +147,7 @@ local function Baby_SetRageStats(baby)
 	baby.colorized = true
 	baby.rangecount = RAGE_DASHES
 	
-	S_StartSound(baby, sfx_nb_4)
+	Baby_Sound(baby, sfx_nb_4)
 end
 
 local RAGE_DASHES = 7
@@ -270,7 +274,7 @@ local function Baby_DoLunge(baby, angle,aim, dist, tics)
 			sound = sfx_nb_2
 		end
 		
-		S_StartSound(baby, sound)
+		Baby_Sound(baby, sound)
 		if not baby.problem
 			baby.state = S_NSBABY_TOCHASE
 		end
@@ -379,7 +383,7 @@ addHook("MobjThinker",function(b)
 		b.charging = true
 		b.chargewind = b.charge_wait + 1
 		b.angle,b.aiming = R_PointTo3DAngles(b.x,b.y,b.z, me.x,me.y,me.z)
-		S_StartSound(b, sfx_nb_0)
+		Baby_Sound(b, sfx_nb_0)
 		
 		local feign = false
 		if not b.enraged
@@ -403,7 +407,7 @@ addHook("MobjThinker",function(b)
 			b.chargingtics = b.charge_time
 			b.chargewind = 0
 		elseif b.extravalue1 == 0
-			S_StartSound(b, sfx_nb_7)
+			Baby_Sound(b, sfx_nb_7)
 			
 			b.charge_time = $ * 5/7
 			
@@ -457,7 +461,7 @@ addHook("MobjThinker",function(b)
 	if b.enraged
 		if not S_SoundPlaying(b, sfx_nb_4)
 		and not S_SoundPlaying(b, sfx_nb_5)
-			S_StartSound(b, sfx_nb_5)
+			Baby_Sound(b, sfx_nb_5)
 		end
 	end
 end,MT_NSBABY)
