@@ -3872,8 +3872,6 @@ Takis_Hook.addHook("PostThinkFrame",function(p)
 		me.renderflags = ($ &~RF_HORIZONTALFLIP)|(flip and RF_HORIZONTALFLIP or 0)
 		me.frame = ($ &~FF_FRAMEMASK)|frame
 		me.wasnfly = true
-		
-		print(me.renderflags & RF_HORIZONTALFLIP)
 	elseif me.wasnfly
 		me.renderflags = $ &~RF_HORIZONTALFLIP
 		me.wasnfly = nil
