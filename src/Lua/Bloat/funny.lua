@@ -589,11 +589,14 @@ addHook("PostThinkFrame",do
 		end
 		
 		if me.skin == SOAP_SKIN
+		or (me.skin == TAKIS_SKIN)
 			me.state = S_PLAY_DEAD
 			me.frame = A|($ &~FF_FRAMEMASK)
 			me.sprite2 = SPR2_MSC2
 			me.tics = -1
-			me.rollangle = 0
+			if (me.skin == SOAP_SKIN)
+				me.rollangle = 0
+			end
 			p.drawangle = me.angle
 		else
 			me.state = S_PLAY_PAIN

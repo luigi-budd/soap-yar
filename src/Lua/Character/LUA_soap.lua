@@ -3808,14 +3808,21 @@ addHook("JumpSpecial", function(p)
 	
 	if not soap then return end
 	
-	if soap.jump > 1 then return end
-	if (p.pflags & PF_THOKKED) then return end
-	if (soap.jumptime > 0) then return end
-	if p.inkart then return end
-	if (p.pflags & PF_JUMPSTASIS) then return end
-	if (p.pflags & (PF_JUMPED|PF_STARTJUMP) == PF_JUMPED) then return end
-	if (p.jumpfactor <= 0) then return end
-	if (me.ceilingz - me.floorz <= me.height - 1) then return end
+	local candoeffect = true
+	if soap.jump > 1 then candoeffect = false; end
+	if (p.pflags & PF_THOKKED) then candoeffect = false; end
+	if (soap.jumptime > 0) then candoeffect = false; end
+	if p.inkart then candoeffect = false; end
+	if (p.pflags & PF_JUMPSTASIS) then candoeffect = false; end
+	if (p.pflags & (PF_JUMPED|PF_STARTJUMP) == PF_JUMPED) then candoeffect = false; end
+	if (p.jumpfactor <= 0) then candoeffect = false; end
+	if (me.ceilingz - me.floorz <= me.height - 1) then candoeffect = false; end
+	
+	if me.soap_forcejumpeffect
+		me.soap_forcejumpeffect = nil
+		candoeffect = true
+	end
+	if not candoeffect then return end
 	
 	if soap.onGround
 	or me.soap_jumpeffect
@@ -4090,7 +4097,7 @@ states[mobjinfo[MT_EGGROBO1].meleestate].action = function(mo)
 	Soap_DamageSfx(me, FU,FU, nil,{
 		forcesound = sfx_sp_dm2
 	})
-	Soap_ImpactVFX(mo,me, nil, FU*3/2)
+	Soap_ImpactVFX(me,mo, nil, FU*3/2)
 	Soap_Hitlag.addHitlag(mo, 16, false)
 	Soap_Hitlag.addHitlag(me, 16, true)
 	me.soap_damagevar = {

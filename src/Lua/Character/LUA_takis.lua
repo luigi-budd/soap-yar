@@ -218,25 +218,7 @@ Takis_Hook.addHook("Takis_Thinker",function(p)
 	else
 		S_StopSoundByID(me,skins[TAKIS_SKIN].soundsid[SKSSKID])
 	end
-	
-	if (me.state == S_PLAY_WAIT)
-	and (me.sprite2 == SPR2_WAIT)
-		if (soap.last.anim.state == S_PLAY_STND)
-			soap.waitframe = P_RandomRange(A, skins[p.skin].sprites[SPR2_WAIT].numframes - 1)
-		end
-		soap.waittics = $+1
-		me.frame = soap.waitframe
-		me.tics = -1
-		me.anim_duration = 0
 		
-		if soap.waittics >= TR + P_RandomRange(0,TR)
-			me.state = S_PLAY_STND
-			me.tics = $ + P_RandomRange(TR,8*TR)
-		end
-	else
-		soap.waittics = 0
-	end
-	
 	--momentum speedslop msv6
 	do
 		local topspeed = p.normalspeed
@@ -283,6 +265,7 @@ Takis_Hook.addHook("Takis_Thinker",function(p)
 		if not soap.noairdrag
 			if not soap.onGround
 			and soap.accspeed >= TAKIS_AIRDRAGCAP
+			and not (me.soap_tumble)
 				local newspeed = soap.accspeed - FixedMul(soap.accspeed - TAKIS_AIRDRAGCAP, TAKIS_AIRDRAGFRAC)
 				me.momx = FixedMul(FixedDiv(me.momx,soap.accspeed), newspeed)
 				me.momy = FixedMul(FixedDiv(me.momy,soap.accspeed), newspeed)
@@ -1306,14 +1289,21 @@ addHook("JumpSpecial", function(p)
 	
 	if not soap then return end
 	
-	if soap.jump > 1 then return end
-	if (p.pflags & PF_THOKKED) then return end
-	if (soap.jumptime > 0) then return end
-	if p.inkart then return end
-	if (p.pflags & PF_JUMPSTASIS) then return end
-	if (p.pflags & (PF_JUMPED|PF_STARTJUMP) == PF_JUMPED) then return end
-	if (p.jumpfactor <= 0) then return end
-	if (me.ceilingz - me.floorz <= me.height - 1) then return end
+	local candoeffect = true
+	if soap.jump > 1 then candoeffect = false; end
+	if (p.pflags & PF_THOKKED) then candoeffect = false; end
+	if (soap.jumptime > 0) then candoeffect = false; end
+	if p.inkart then candoeffect = false; end
+	if (p.pflags & PF_JUMPSTASIS) then candoeffect = false; end
+	if (p.pflags & (PF_JUMPED|PF_STARTJUMP) == PF_JUMPED) then candoeffect = false; end
+	if (p.jumpfactor <= 0) then candoeffect = false; end
+	if (me.ceilingz - me.floorz <= me.height - 1) then candoeffect = false; end
+	
+	if me.soap_forcejumpeffect
+		me.soap_forcejumpeffect = nil
+		candoeffect = true
+	end
+	if not candoeffect then return end
 	
 	if soap.onGround
 	or me.soap_jumpeffect
@@ -1872,5 +1862,23 @@ Takis_Hook.addHook("PostThinkFrame",function(p)
 	
 	if me.sprite2 == SPR2_STUN
 		p.drawangle = $ - ANG15
+	end
+
+	if (me.state == S_PLAY_WAIT)
+	and (me.sprite2 == SPR2_WAIT)
+		if not takis.waittics
+			takis.waitframe = P_RandomRange(A, skins[p.skin].sprites[SPR2_WAIT].numframes - 1)
+		end
+		takis.waittics = $+1
+		me.tics = -1
+		me.anim_duration = 0
+		me.frame = ($ &~FF_FRAMEMASK)|takis.waitframe
+		
+		if takis.waittics >= TR + P_RandomRange(0,TR)
+			me.state = S_PLAY_STND
+			me.tics = $ + P_RandomRange(TR,8*TR)
+		end
+	else
+		takis.waittics = 0
 	end
 end)
