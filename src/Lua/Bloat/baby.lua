@@ -185,6 +185,8 @@ local function Baby_Init(baby)
 	
 	baby.init = true
 	baby.renderflags = RF_FULLBRIGHT|RF_NOCOLORMAPS|RF_ALWAYSONTOP
+	
+	baby.shadowscale = FU
 end
 
 local function Baby_TryRubberBand(baby)
@@ -491,6 +493,23 @@ addHook("TouchSpecial",function(f, mo)
 	f.touchlist[mo] = true
 	local play = mo.player
 	if (play and play.valid)
+	and not (play.powers[pw_flashing])
+		if (play.powers[pw_shield])
+			S_StartSound(mo, sfx_shldls)
+			if (play.powers[pw_shield] & SH_FORCE)
+				if (play.powers[pw_shield] & 255 == 0) -- no hp
+					P_RemoveShield(play)
+				else
+					play.powers[pw_shield] = (($ & 255) - 1)|SH_FORCE
+				end
+			else
+				P_RemoveShield(play)
+			end
+			play.powers[pw_flashing] = flashingtics - 1
+			
+			return unfuck(f,mo)
+		end
+		
 		Soap_DamageSfx(mo,FU*3/4,FU)
 		Soap_ImpactVFX(mo, f)
 		
