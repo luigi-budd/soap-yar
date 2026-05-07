@@ -1942,12 +1942,19 @@ rawset(_G,"Soap_DeathThinker",function(p,me,soap)
 			me.state = S_PLAY_FALL
 		end
 		
+		if (me.skin == TAKIS_SKIN)
+			local speed = R_PointTo3DDist(0,0,0, me.momx,me.momy,me.momz)
+			p.drawangle = $ + FixedAngle(speed / 2)
+			me.rollangle = $ + FixedAngle(speed / 2)
+		end
+		
 		--lmao handle this here too
 		if (soap.onGround)
 		and me.health
 			me.state = S_PLAY_SOAP_KNOCKOUT
 			me.sprite2 = SPR2_MSC4
 			me.tics = -1
+			me.rollangle = 0
 			
 			me.soap_kickme = true
 		end
@@ -1982,7 +1989,11 @@ rawset(_G,"Soap_DeathThinker",function(p,me,soap)
 		if soap.onGround
 			if soap.jump == 1
 				me.soap_kickme = nil
+				me.soap_forcejumpeffect = true
 				P_DoJump(p,true,false)
+				soap.stasistic = 0
+				
+				p.pflags = $|PF_JUMPDOWN|PF_JUMPED
 			end
 			if R_PointToDist2(0,0,me.momx,me.momy) >= 3*me.scale
 				P_SpawnSkidDust(p,me.radius,true)
@@ -2749,23 +2760,25 @@ local function VFX_LandDust(p,me,soap, props)
 		)
 		
 		--Yeah
-		local ease_time = 8 + max(
-			momz/2 - 5*FU,
-			0
-		)/2 / FU
-		local ease_func = "insine"
-		local strength = (FU/3) + min(max(momz/2 - 5*FU, 0)/6, (FU - (FU/3))*5/6)
-		Soap_AddSquash(p, {
-			ease_func = ease_func,
-			start_v = strength,
-			end_v = 0,
-			time = ease_time
-		}, {
-			ease_func = ease_func,
-			start_v = -strength*3/4,
-			end_v = 0,
-			time = ease_time
-		}, "landeffect")
+		if not me.soap_tumble
+			local ease_time = 8 + max(
+				momz/2 - 5*FU,
+				0
+			)/2 / FU
+			local ease_func = "insine"
+			local strength = (FU/3) + min(max(momz/2 - 5*FU, 0)/6, (FU - (FU/3))*5/6)
+			Soap_AddSquash(p, {
+				ease_func = ease_func,
+				start_v = strength,
+				end_v = 0,
+				time = ease_time
+			}, {
+				ease_func = ease_func,
+				start_v = -strength*3/4,
+				end_v = 0,
+				time = ease_time
+			}, "landeffect")
+		end
 		S_StartSoundAtVolume(me,sfx_s3k4c,255/2)
 		
 		local grav = -(FU + (FU - abs(FixedDiv(P_GetMobjGravity(me), me.scale/2)))/2 )
