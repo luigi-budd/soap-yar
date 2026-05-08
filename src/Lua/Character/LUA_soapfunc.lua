@@ -1826,7 +1826,7 @@ rawset(_G,"Soap_HandleNoAbils", function(p)
 			noaction = true
 		end
 		
-		soap.noability = $|SNOABIL_COMBAT
+		na = $|SNOABIL_COMBAT
 		if (p.tumble)
 		or P_PlayerInPain(p)
 		--or not CBW_Battle.CanDoAction(p)
@@ -1838,7 +1838,7 @@ rawset(_G,"Soap_HandleNoAbils", function(p)
 		end
 	end
 	if CV.forcecombatmode.value
-		soap.noability = $|SNOABIL_COMBAT
+		na = $|SNOABIL_COMBAT
 	end
 	
 	--Gametypes
@@ -1889,6 +1889,7 @@ rawset(_G,"Soap_HandleNoAbils", function(p)
 		na = $|SNOABIL_RDASH|SNOABIL_AIRDASH
 	end
 	
+	local hadcombat = (na & SNOABIL_COMBAT)
 	--return value: new noabilities field (absolute)
 	local event_t = Takis_Hook.events["Char_NoAbility"]
 	if (event_t.numhooks)
@@ -1900,7 +1901,7 @@ rawset(_G,"Soap_HandleNoAbils", function(p)
 			end
 		end
 	end
-	soap.noability = na
+	soap.noability = na|hadcombat
 end)
 
 local soap_airfric = tofixed("0.96")
