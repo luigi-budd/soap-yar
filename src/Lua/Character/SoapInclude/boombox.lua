@@ -25,6 +25,22 @@ sfxinfo[sfx_sp_ant] = {
 	caption = "\x89".."ANTONYMPH Jam\x80"
 }
 
+SafeFreeslot("sfx_sp_gns")
+sfxinfo[sfx_sp_gns] = {
+	flags = SF_X2AWAYSOUND|SF_NOMULTIPLESOUND,
+	caption = "\x89".."Gangnam Jam\x80"
+}
+SafeFreeslot("sfx_sp_hsk")
+sfxinfo[sfx_sp_hsk] = {
+	flags = SF_X2AWAYSOUND|SF_NOMULTIPLESOUND,
+	caption = "\x89".."Husk Jam\x80"
+}
+SafeFreeslot("sfx_sp_tac")
+sfxinfo[sfx_sp_tac] = {
+	flags = SF_X2AWAYSOUND|SF_NOMULTIPLESOUND,
+	caption = "\x89".."Taco Jam\x80"
+}
+
 local S_CLIPPING_DIST = (1536*FU)
 local set_musvol = false
 local this_musvol = 100
@@ -62,6 +78,54 @@ local larpyjam_captions = {
 	[28*TR + (TR*1/10)] = {"Don't care if you think it\'s cringe", "because its not your life"},
 	[29*TR] = {""},
 }
+local gangnamjam_bpm = 150*FU
+local huskjam_bpm = 140*FU
+local tacojam_bpm = 138*FU
+local tacojam_captions = {
+	-- [timestamp] = {"multi-line", "captions"} 
+	[1] = {"It's raining tacos!"},
+	[2*TR] = {""},
+	[2*TR + (TR*8/10)] = {"From out of the sky"},
+	[4*TR + (TR*3/10)] = {""},
+	[4*TR + (TR*8/10)] = {"Tacos,"},
+	[6*TR + (TR*3/10)] = {"Tacos, no need to ask why"},
+	[8*TR] = {"Just open your mouth,"},
+	[9*TR + (TR*6/10)] = {"Just open your mouth,", "and close your eyes"},
+	[12*TR + (TR*2/10)] = {"It's raining tacos!"},
+	[15*TR + (TR*7/10)] = {""},
+	[16*TR + (TR*9/10)] = {"Out on the street"},
+	[18*TR] = {""},
+	[18*TR + (TR*7/10)] = {"Tacos,"},
+	[20*TR + (TR*4/10)] = {"Tacos, all you can eat"},
+	[21*TR + (TR*3/10)] = {""},
+	[22*TR + (TR*2/10)] = {"Lettuce and shells,"},
+	[23*TR + (TR*9/10)] = {"Lettuce and shells,", "cheese and meat!"},
+	[25*TR] = {""},
+	[26*TR + (TR*1/10)] = {"It's raining tacos!"},
+	[28*TR + (TR*3/10)] = {"It's raining tacos!", "Yum yum yum-yum yummity yum,"},
+	[31*TR + (TR*3/10)] = {"It's like a dreeaaam"},
+	[35*TR + (TR*2/10)] = {"Yum yum yum-yum yummity yum,"},
+	[38*TR + (TR*3/10)] = {"Yum yum yum-yum yummity yum,", "bring your sour creeaaam!"},
+	[43*TR] = {""},
+	
+	[46*TR + (TR*5/10)] = {"Shell"},
+	[47*TR + (TR*4/10)] = {"Shell", "Meat"},
+	[48*TR + (TR*3/10)] = {"Shell", "Meat", "Lettuce"},
+	[49*TR + (TR*1/10)] = {"Shell", "Meat", "Lettuce", "Cheese"},
+	
+	[50*TR] = {"Shell"},
+	[50*TR + (TR*9/10)] = {"Shell", "Meat"},
+	[51*TR + (TR*7/10)] = {"Shell", "Meat", "Lettuce"},
+	[52*TR + (TR*6/10)] = {"Shell", "Meat", "Lettuce", "Cheese"},
+	
+	[53*TR + (TR*5/10)] = {"Shell"},
+	[54*TR + (TR*3/10)] = {"Shell", "Meat"},
+	[55*TR + (TR*2/10)] = {"Shell", "Meat", "Cheese"},
+	[55*TR + (TR*6/10)] = {"Shell", "Meat", "Cheese Cheese"},
+	[56*TR] = {"Shell", "Meat", "Cheese Cheese Cheese"},
+	[56*TR + (TR*5/10)] = {"Shell", "Meat", "Cheese Cheese Cheese Cheese"},
+	[56*TR + (TR*9/10)] = {"Shell", "Meat", "Cheese Cheese Cheese Cheese Cheese"},
+}
 
 --should be fine if we dont synch this
 -- credits = {"song name", "artist"}
@@ -71,6 +135,9 @@ rawset(_G, "SOAP_BOOMBOXJAMS", {
 	[3] = {sfx = sfx_sp_mul, bpm = mulejam_bpm, fadeto = 0, credits = {"M.U.L.E.", "Seth Sternberger, Michelle Sternberger"}},
 	[4] = {sfx = sfx_sp_rto, bpm = retrojam_bpm, fadeto = 0},
 	[5] = {sfx = sfx_sp_ant, bpm = larpyjam_bpm, fadeto = 0, credits = {"ANTONYMPH", "Vylet Pony"}, captions = larpyjam_captions},
+	[6] = {sfx = sfx_sp_gns, bpm = gangnamjam_bpm, fadeto = 0, credits = {"Gangnam Style", "NULLSCAPE, @digital_dsc"}},
+	[7] = {sfx = sfx_sp_hsk, bpm = huskjam_bpm, fadeto = 0, credits = {"Husk", "NULLSCAPE"}},
+	[8] = {sfx = sfx_sp_tac, bpm = tacojam_bpm, fadeto = 0, credits = {"Raining Tacos", "Parry Gripp & BooneBum"}, captions = tacojam_captions},
 })
 rawset(_G, "Soap_MakeJamCrochet",function(fixed_bpm)
 	return FixedDiv(60*TR*FU, fixed_bpm)
@@ -294,7 +361,7 @@ mobjinfo[MT_SOAP_BOOMBOX] = {
 	height = 28*FRACUNIT,
 	radius = 14*FRACUNIT,
 	flags = MF_NOCLIPTHING,
-	painchance = FU / 6 -- special tune chance
+	painchance = FU, --FU / 6 -- special tune chance
 }
 addHook("ShouldDamage",function(mo,_,_,_,dmgt)
 	if dmgt == DMG_DEATHPIT
