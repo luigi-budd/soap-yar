@@ -195,10 +195,12 @@ addHook("PlayerThink",function(p)
 			
 			me.bell_hits = 0
 			me.bell_ticker = 0
-
-			SpawnExplosions(me, true)
-			for i = 0,4
-				Soap_ImpactVFX(me,me, 4*FU, 2*FU, true,true)
+			
+			if not me.health
+				SpawnExplosions(me, true)
+				for i = 0,4
+					Soap_ImpactVFX(me,me, 4*FU, 2*FU, true,true)
+				end
 			end
 		end
 	else
@@ -206,17 +208,22 @@ addHook("PlayerThink",function(p)
 	end
 	
 	if (me.bell_effect)
+		if me.bell_effect == (BELL_EFFECT - 4)
+			p.flashpal = PAL_INVERT
+		end
+		
 		me.bell_effect = $ - 1
 		local frac = FU - FixedDiv(me.bell_effect, BELL_EFFECT)
 		
-		p.fovadd = ease.inquad(frac, -30*FU, 0)
+		p.fovadd = ease.inquad(frac, -25*FU, 0)
 		local ang = ease.inoutcubic(frac, 60*FU, 0)
 		ang = FixedMul($, sin(FixedAngle(1080*frac)))
 		
 		if Soap_IsLocalPlayer(p)
-			camera.momx = $ / 4
-			camera.momy = $ / 4
-			camera.momz = $ / 4
+			local cfrac = FU - ease.incubic(frac, FU * 5/6, 0)
+			camera.momx = FixedMul($, cfrac)
+			camera.momy = FixedMul($, cfrac)
+			camera.momz = FixedMul($, cfrac)
 		end
 		p.viewrollangle = FixedAngle(ang)
 	end
@@ -227,6 +234,8 @@ addHook("PlayerThink",function(p)
 		me.momy = $ * 3/4
 		
 		if me.bell_deathanim == 0
+			P_FlashPal(p, PAL_WHITE, 2)
+			
 			P_KillMobj(me)
 			me.fuse = 3*TR
 			p.deadtimer = 3*TR
@@ -243,14 +252,47 @@ end)
 addHook("HUD",function(v,p)
 	local me = p.realmo
 	if not (me and me.valid) then return end
-	if not (me.bell_overtuned) then return end
 	
-	local vignetteFlags = V_MODULATE|V_80TRANS
+	if (me.bell_overtuned)
+	or (me.bell_effect and (BELL_EFFECT - me.bell_effect < 12))
+		local vignetteFlags = V_MODULATE|V_80TRANS
+		
+		local scale = FU
+		local wid = (v.width() / v.dupx()) + 1
+		local hei = (v.height() / v.dupy()) + 1
+		local p_w = 320
+		local p_h = 200
+		
+		local X_STR = FixedMul(FixedDiv(wid * FU, p_w * FU), scale)
+		local Y_STR = FixedMul(FixedDiv(hei * FU, p_h * FU), scale)
+		
+		v.drawStretched(0,0, X_STR,Y_STR, v.cachePatch("VIGNTOP"),
+			vignetteFlags|V_SNAPTOTOP|V_SNAPTOLEFT
+		)
+		v.drawStretched(0,200*FU, X_STR,Y_STR, v.cachePatch("VIGNBOTT"),
+			vignetteFlags|V_SNAPTOBOTTOM|V_SNAPTOLEFT
+		)
+		
+		v.drawStretched(320*FU,0, X_STR,Y_STR, v.cachePatch("VIGNTOP"),
+			vignetteFlags|V_SNAPTOTOP|V_SNAPTORIGHT|V_FLIP
+		)
+		v.drawStretched(320*FU,200*FU, X_STR,Y_STR, v.cachePatch("VIGNBOTT"),
+			vignetteFlags|V_SNAPTOBOTTOM|V_SNAPTORIGHT|V_FLIP
+		)
+	end
 	
-	v.draw(0,0,v.cachePatch("VIGNTOP"),vignetteFlags|V_SNAPTOTOP|V_SNAPTOLEFT)
-	v.draw(0,0,v.cachePatch("VIGNBOTT"),vignetteFlags|V_SNAPTOBOTTOM|V_SNAPTOLEFT)
-	v.draw(320,0,v.cachePatch("VIGNTOP"),vignetteFlags|V_SNAPTOTOP|V_SNAPTORIGHT|V_FLIP)
-	v.draw(320,0,v.cachePatch("VIGNBOTT"),vignetteFlags|V_SNAPTOBOTTOM|V_SNAPTORIGHT|V_FLIP)
+	/*
+	if (me.bell_effect)
+		local tick = (BELL_EFFECT - me.bell_effect) / 2
+		if (tick >= 10) then return end
+		local flag = V_MODULATE|(tick << V_ALPHAMASK)
+		
+		v.draw(0,0,v.cachePatch("VIGNTOP"),flag|V_SNAPTOTOP|V_SNAPTOLEFT)
+		v.draw(0,0,v.cachePatch("VIGNBOTT"),flag|V_SNAPTOBOTTOM|V_SNAPTOLEFT)
+		v.draw(320,0,v.cachePatch("VIGNTOP"),flag|V_SNAPTOTOP|V_SNAPTORIGHT|V_FLIP)
+		v.draw(320,0,v.cachePatch("VIGNBOTT"),flag|V_SNAPTOBOTTOM|V_SNAPTORIGHT|V_FLIP)
+	end
+	*/
 end,"game")
 
 local function unfuck(f, mo)
@@ -261,6 +303,16 @@ end
 local function doringing(bell, p)
 	bell.state = S_NSBELL_RING
 	bell.bell_cooldown = TR
+	
+	local top_layer = P_SpawnMobjFromMobj(bell, 0,0,0, MT_PARTICLE)
+	top_layer.state = S_SOAP_HITM_RSPRK
+	top_layer.spritexscale = $ * 6
+	top_layer.spriteyscale = top_layer.spritexscale
+	top_layer.renderflags = $|RF_ALWAYSONTOP|RF_FULLBRIGHT|RF_NOCOLORMAPS
+	top_layer.spriteyoffset = -20*FU
+	top_layer.fuse = top_layer.tics
+	top_layer.translation = "AllWhite"
+	
 	local mo = p.mo
 	
 	mo.soap_tumble = true
@@ -295,7 +347,7 @@ local function doringing(bell, p)
 	
 	for play in players.iterate
 		play.realmo.bell_effect = BELL_EFFECT
-		P_FlashPal(play, PAL_INVERT, 16)
+		P_FlashPal(play, PAL_WHITE, 16)
 		if Soap_IsLocalPlayer(play)
 			Soap_StartQuake(30*FU, 12,
 				nil,
