@@ -1,0 +1,335 @@
+local function SpawnExplosions(mine, doquake, docount)
+	if doquake
+		P_StartQuake(60*FU, TICRATE*2,
+			{mine.x, mine.y, mine.z},
+			550*mine.scale
+		)
+	end
+	
+	local radius = 32*FU
+	local minz = 10
+	local maxz = 30
+	
+	local count = docount
+    if count == nil then count = 25 end
+
+	local anglecount = FixedDiv(360*FU,count*FU)
+	for i = 0,count
+		local fa = FixedAngle(anglecount*i)
+        -- adjusted fixed angle
+        local afa = fa + P_RandomRange(-360, 360)*ANG1
+
+		local mobj = P_SpawnMobjFromMobj(mine,
+			FixedMul(cos(afa),radius + P_RandomRange(0,10)*FU),
+			FixedMul(sin(afa),radius + P_RandomRange(0,10)*FU),
+			0, --FU - FixedMul(mobjinfo[type].height,tracer.scale)/2,
+			MT_THOK
+		)
+		mobj.flags = MF_NOGRAVITY|MF_NOCLIP|MF_NOCLIPTHING|MF_RUNSPAWNFUNC
+		mobj.state = S_MM_TRIPMINE_EXPLODE
+		mobj.momz = 0
+		--mobj.spritexscale,mobj.spriteyscale = FU*2,FU*2
+		mobj.flags2 = $ &~MF2_DONTDRAW
+		
+		mobj.angle = R_PointToAngle2(mobj.x,mobj.y, mine.x,mine.y)
+		mobj.scale = $+(P_RandomFixed()*((P_RandomChance(FU/2)) and 1 or -1))
+		
+		P_Thrust(mobj, mobj.angle,
+			-6*mobj.scale
+		)
+		P_SetObjectMomZ(mobj,P_RandomRange(minz,maxz)*FU)
+		mobj.oldfx = true
+		
+		local static = P_SpawnMobjFromMobj(mine,
+			FixedMul(cos(fa),radius + P_RandomRange(0,10)*FU),
+			FixedMul(sin(fa),radius + P_RandomRange(0,10)*FU),
+			0,
+			MT_THOK
+		)
+		static.flags = MF_NOGRAVITY|MF_NOCLIP|MF_NOCLIPTHING|MF_RUNSPAWNFUNC
+		static.state = S_MM_TRIPMINE_EXPLODE
+		static.momz = 0
+		static.flags2 = $ &~MF2_DONTDRAW
+		
+		static.angle = R_PointToAngle2(mobj.x,mobj.y, mine.x,mine.y)
+		static.scale = $+(P_RandomFixed()*((P_RandomChance(FU/2)) and 1 or -1))
+		
+		P_Thrust(static, static.angle,
+			-6*static.scale
+		)
+	end
+end
+
+local CV = SOAP_CV
+
+SafeFreeslot("SPR_TRC1")
+SafeFreeslot("SPR_NSBELL")
+SafeFreeslot("S_NSBELL_IDLE")
+states[S_NSBELL_IDLE] = {
+	sprite = SPR_NSBELL,
+	frame = 0|FF_ANIMATE|FF_FULLBRIGHT,
+	var1 = 34,
+	var2 = 2,
+	tics = (34*2),
+	nextstate = S_NSBELL_IDLE
+}
+
+SafeFreeslot("S_NSBELL_RING")
+states[S_NSBELL_RING] = {
+	sprite = SPR_NSBELL,
+	frame = 35|FF_ANIMATE|FF_FULLBRIGHT,
+	var1 = 23,
+	var2 = 2,
+	tics = (23*2),
+	nextstate = S_NSBELL_IDLE
+}
+
+SafeFreeslot("S_NSBELL_OVERTUNED")
+states[S_NSBELL_OVERTUNED] = {
+	sprite = SPR_TRC1,
+	frame = A|FF_FULLBRIGHT|FF_ADD,
+	tics = 1,
+	nextstate = S_NSBELL_OVERTUNED,
+	action = function(v)
+		local me = v.target
+		if not (me and me.valid and me.health and me.bell_overtuned)
+			P_RemoveMobj(v)
+			return
+		end
+		
+		v.frame = ($ &~FF_FRAMEMASK)|(leveltime % 5)
+		P_MoveOrigin(v, me.x,me.y,me.z)
+	end
+}
+
+sfxinfo[SafeFreeslot("sfx_nbl_0")].caption = "Bell rings"
+sfxinfo[SafeFreeslot("sfx_nbl_1")].caption = "Bell rings"
+sfxinfo[SafeFreeslot("sfx_nbl_2")].caption = "Bell rings"
+sfxinfo[SafeFreeslot("sfx_nbl_3")].caption = "Bell rings"
+
+sfxinfo[SafeFreeslot("sfx_nbl_4")].caption = "/"
+sfxinfo[SafeFreeslot("sfx_nbl_5")].caption = "/"
+sfxinfo[SafeFreeslot("sfx_nbl_6")].caption = "/"
+sfxinfo[SafeFreeslot("sfx_nbl_7")].caption = "/"
+
+SafeFreeslot("MT_NSBELL")
+mobjinfo[MT_NSBELL] = {
+	doomednum = -1,
+	spawnstate = S_NSBELL_IDLE,
+	deathstate = S_NSBELL_IDLE,
+	height = 134*FU,
+	radius = 67*FU, --lol
+	spawnhealth = 1,
+	flags = MF_NOCLIP|MF_NOCLIPHEIGHT|MF_NOGRAVITY|MF_SPECIAL,
+}
+
+addHook("MobjThinker",function(b)
+	if not (b and b.valid) then return end
+	
+	if not (b.bell_init)
+		b.bell_init = true
+		
+		b.soap_supervfx = true
+		b.bell_cooldown = 0
+	end
+	
+	if b.bell_cooldown
+		b.bell_cooldown = $ - 1
+		if not b.bell_cooldown
+			b.flags = $|MF_SPECIAL
+		end
+	end
+	
+	if not S_SoundPlaying(b, sfx_nbl_4)
+		S_StartSound(b, sfx_nbl_4)
+	end
+end,MT_NSBELL)
+
+local BELL_EFFECT = 2*TR + TR/2
+addHook("PlayerThink",function(p)
+	local me = p.realmo
+	if not (me and me.valid) then return end
+	
+	if me.bell_init == nil
+		me.bell_hits = 0
+		me.bell_ticker = 0
+		me.bell_overtuned = false
+		me.bell_overtunevfx = false
+		me.bell_overtuneticker = 0
+		me.bell_effect = 0
+		
+		me.bell_init = true
+	end
+	
+	if me.bell_ticker
+	and not me.bell_overtuned
+		me.bell_ticker = $ - 1
+		if me.bell_ticker == 0
+			me.bell_hits = max($ - 1, 0)
+			if me.bell_hits
+				-- holy nesting
+				me.bell_ticker = 10*TR
+			end
+		end
+	end
+	
+	if me.bell_overtuned
+		if not me.bell_overtunevfx
+			me.bell_overtunevfx = true
+			local vfx = P_SpawnMobjFromMobj(me, 0,0,0,MT_PARTICLE)
+			vfx.target = me
+			vfx.state = S_NSBELL_OVERTUNED
+			vfx.scale = $ * 4/5
+		end
+		
+		if not S_SoundPlaying(me, sfx_nbl_5)
+			S_StartSound(me, sfx_nbl_5, p)
+		end
+		me.bell_overtuneticker = $ - 1
+		if not me.bell_overtuneticker
+		or not me.health
+			me.bell_overtuneticker = 0
+			me.bell_overtuned = false
+			S_StopSoundByID(me, sfx_nbl_5)
+			S_StartSound(me, sfx_nbl_6)
+			
+			me.bell_hits = 0
+			me.bell_ticker = 0
+
+			SpawnExplosions(me, true)
+			for i = 0,4
+				Soap_ImpactVFX(me,me, 4*FU, 2*FU, true,true)
+			end
+		end
+	else
+		me.bell_overtunevfx = false
+	end
+	
+	if (me.bell_effect)
+		me.bell_effect = $ - 1
+		local frac = FU - FixedDiv(me.bell_effect, BELL_EFFECT)
+		
+		p.fovadd = ease.inquad(frac, -30*FU, 0)
+		local ang = ease.inoutcubic(frac, 60*FU, 0)
+		ang = FixedMul($, sin(FixedAngle(1080*frac)))
+		
+		if Soap_IsLocalPlayer(p)
+			camera.momx = $ / 4
+			camera.momy = $ / 4
+			camera.momz = $ / 4
+		end
+		p.viewrollangle = FixedAngle(ang)
+	end
+	
+	if me.bell_deathanim
+		me.bell_deathanim = $ - 1
+		me.momx = $ * 3/4
+		me.momy = $ * 3/4
+		
+		if me.bell_deathanim == 0
+			P_KillMobj(me)
+			me.fuse = 3*TR
+			p.deadtimer = 3*TR
+			p.soaptable.deadtimer = 3*TR
+			
+			me.soap_tumble = nil
+			me.flags = $|MF_NOGRAVITY
+			me.momx,me.momy,me.momz = 0,0,0
+			me.flags2 = $|MF2_DONTDRAW
+		end
+	end
+end)
+
+addHook("HUD",function(v,p)
+	local me = p.realmo
+	if not (me and me.valid) then return end
+	if not (me.bell_overtuned) then return end
+	
+	local vignetteFlags = V_MODULATE|V_80TRANS
+	
+	v.draw(0,0,v.cachePatch("VIGNTOP"),vignetteFlags|V_SNAPTOTOP|V_SNAPTOLEFT)
+	v.draw(0,0,v.cachePatch("VIGNBOTT"),vignetteFlags|V_SNAPTOBOTTOM|V_SNAPTOLEFT)
+	v.draw(320,0,v.cachePatch("VIGNTOP"),vignetteFlags|V_SNAPTOTOP|V_SNAPTORIGHT|V_FLIP)
+	v.draw(320,0,v.cachePatch("VIGNBOTT"),vignetteFlags|V_SNAPTOBOTTOM|V_SNAPTORIGHT|V_FLIP)
+end,"game")
+
+local function unfuck(f, mo)
+	if not (f and f.valid) then return end
+	f.health = mobjinfo[f.type].spawnhealth
+	return true
+end
+local function doringing(bell, p)
+	bell.state = S_NSBELL_RING
+	bell.bell_cooldown = TR
+	local mo = p.mo
+	
+	mo.soap_tumble = true
+	mo.soap_tumble_oldmomz = mo.momz
+	mo.soap_tumble_markedfordeath = mo.bell_overtuned
+	
+	local ang = FixedAngle(P_RandomRange(0,720)*FU)
+	mo.state = S_PLAY_PAIN
+	p.drawangle = ang + ANGLE_180
+	
+	if P_IsObjectOnGround(mo)
+		mo.z = $ + P_MobjFlip(mo)
+	end
+	P_Thrust(mo, ang, 15*bell.scale)
+	P_SetObjectMomZ(mo, (mo.bell_overtuned and 50 or 22)*bell.scale)
+	
+	S_StartSound(nil, sfx_nbl_0 + mo.bell_hits)
+	S_StartSound(nil, sfx_nbl_0 + mo.bell_hits)
+	
+	if mo.bell_overtuned
+		mo.bell_deathanim = TR
+		S_StartSound(nil, sfx_nbl_7, play)
+		S_StartSound(nil, sfx_nbl_7, play)
+	end
+	mo.bell_hits = $ + 1
+	mo.bell_ticker = 10 * TR
+	if mo.bell_hits == 3
+		mo.bell_overtuned = true
+		mo.bell_overtuneticker = 20*TR
+	end
+	Soap_Hitlag.addHitlag(mo, 12, true)
+	
+	for play in players.iterate
+		play.realmo.bell_effect = BELL_EFFECT
+		P_FlashPal(play, PAL_INVERT, 16)
+		if Soap_IsLocalPlayer(play)
+			Soap_StartQuake(30*FU, 12,
+				nil,
+				512*mo.scale
+			)
+		end
+	end
+end
+addHook("TouchSpecial",function(f, mo)
+	if not (f and f.valid) then return false; end
+	if not (mo and mo.valid) then return false; end
+	--if not (mo.health) then return end
+	if (mo == f.tracer and mo.fuckimmunity) then return unfuck(f,mo); end
+	if (f.bell_cooldown) then return unfuck(f,mo); end
+	if not (f and f.valid) then return false; end
+	--if (mo.hitlag or mo.orbitbonk) then return end
+	--if not Soap_ZCollide(f,mo, true) then return false; end
+	
+	local play = mo.player
+	if (play and play.valid)
+	and not (play.powers[pw_flashing])
+		Soap_DamageSfx(mo,FU*3/4,FU)
+		Soap_ImpactVFX(mo, f, nil, 3*FU)
+		
+		play.powers[pw_flashing] = 0
+		P_ResetPlayer(play)
+		mo.state = S_PLAY_PAIN
+		
+		doringing(f, play)
+		
+		return unfuck(f,mo)
+	end
+	if Soap_CanDamageEnemy(nil, mo)
+		P_KillMobj(mo,f, f.tracer)
+	end
+	return unfuck(f,mo)
+end,MT_NSBELL)

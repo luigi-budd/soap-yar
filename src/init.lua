@@ -33,6 +33,7 @@ local filetree = {
 	"bloat/gtop.lua",
 	"bloat/riders.lua",
 	"bloat/baby.lua",
+	"bloat/nsbell.lua",
 	
 	"LUA_main.lua",
 	
