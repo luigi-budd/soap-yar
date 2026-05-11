@@ -1148,7 +1148,7 @@ rawset(_G, "Soap_WindLines", function(me,rmomz,color,forceang,forceside)
 	distance = FixedMul($, abs(sin(zangle)))
 	sidex = P_ReturnThrustX(nil,wind.angle, distance)
 	sidey = P_ReturnThrustY(nil,wind.angle, distance)
-	local speed = Soap_RandomFixedRange(2*FU,7*FU)
+	local speed = Soap_RandomFixedRange(4*FU,10*FU)
 	P_SetOrigin(wind,
 		me.x + P_ReturnThrustX(nil,pushangle,pushdist) + sidex + offx,
 		me.y + P_ReturnThrustY(nil,pushangle,pushdist) + sidey + offy,
