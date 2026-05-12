@@ -262,6 +262,7 @@ end
 
 local base_easefunc = ease.outquint
 local rage_easefunc = ease.outquad -- ease.inoutsine
+local feign_easefunc = ease.linear
 local lunge_steps = 10
 local lunge_random = 64 * FU
 local function Baby_DoLunge(baby, angle,aim, dist, tics)
@@ -294,6 +295,9 @@ local function Baby_DoLunge(baby, angle,aim, dist, tics)
 	end
 	
 	local easefunc = (baby.enraged) and rage_easefunc or base_easefunc
+	if (baby.state == S_NSBABY_PROBLEM)
+		easefunc = feign_easefunc
+	end
 	local prevfrac = max(FixedDiv(adjtics - 1, baby.charge_time), 0)
 	local nextfrac = FixedDiv(adjtics, baby.charge_time)
 	-- for collision...
