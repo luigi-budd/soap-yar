@@ -148,12 +148,12 @@ hl.iterateHitlagged = function()
 				and not (v[12])
 					mo.state = v[5]
 				end
-				if not (mo.health)
-					mo.state = S_PLAY_DEAD
-				end
 				if (v[12])
 					mo.state = S_PLAY_PAIN
 					p.pflags = $ &~PF_SPINNING
+				end
+				if not (mo.health)
+					mo.state = S_PLAY_DEAD
 				end
 			end
 			S_StopSoundByID(mo, sfx_kc38)
