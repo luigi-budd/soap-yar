@@ -141,14 +141,19 @@ hl.iterateHitlagged = function()
 				end
 				p.pflags = $|v[11] &~PF_STARTJUMP
 				P_MovePlayer(p)
-				if not (mo.state == S_PLAY_PAIN)
+				if not (mo.state == S_PLAY_PAIN or v[12])
 					p.powers[pw_flashing] = 0
 				end
 				if (p.pflags & PF_SPINNING)
+				and not (v[12])
 					mo.state = v[5]
 				end
 				if not (mo.health)
 					mo.state = S_PLAY_DEAD
+				end
+				if (v[12])
+					mo.state = S_PLAY_PAIN
+					p.pflags = $ &~PF_SPINNING
 				end
 			end
 			S_StopSoundByID(mo, sfx_kc38)
@@ -385,17 +390,19 @@ end
 hl.addHitlag = function(
 	mo,tics,
 	fromdamage,
-	allowdamage --Players only
+	allowdamage, --Players only
 )
 	if mo == nil then return end
-	if mo.hitlag == nil then mo.hitlag = 0 end
 	if mo.nohitlagforme then return end
-	
 	--hitlag off
 	if hl.cv_hitlagtics.value == 0
-		mo.hitlag = 0
+		if mo.hitlag
+			mo.hitlag = 0
+		end
 		return
 	end
+	if mo.hitlag == nil then mo.hitlag = 0 end
+	
 	
 	if hl.cv_hitlagmulti.value ~= FU
 		tics = FixedMul($, hl.cv_hitlagmulti.value)
@@ -435,13 +442,15 @@ hl.addHitlag = function(
 		end
 	end
 	-- nothing here is named idk why im so sorry
+	print("hitlagged", P_PlayerInPain(mo.player))
 	table.insert(hitlagged, {
 		mo,
 		mo.flags,
 		(mo.player and mo.player.valid) and mo.player.drawangle,
 		(mo.player and mo.player.valid) and mo.player.pflags,
 		mo.state, mo.sprite, mo.frame, mo.sprite2, mo.momx,mo.momy, -- indexes 9 and 10 are saved for old momx/y
-		(mo.player and mo.player.valid) and (mo.player.pflags & PF_SPINNING) or 0 --save PF_SPINNING
+		(mo.player and mo.player.valid) and (mo.player.pflags & PF_SPINNING) or 0, --save PF_SPINNING
+		(mo.player and mo.player.valid) and P_PlayerInPain(mo.player),
 	})
 	hl.numhitlagged = $ + 1
 end
