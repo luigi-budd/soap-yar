@@ -939,6 +939,10 @@ Takis_Hook.addHook("Takis_Thinker",function(p)
 			soap.canceltime = TR/2
 		end
 	end
+	if (me.sprite2 == SPR2_MSC0)
+	and (me.soap_bumpangle ~= nil)
+		p.drawangle = me.soap_bumpangle
+	end
 	
 	p.charflags = $ &~(SF_RUNONWATER|SF_NOSKID)|(soap.lunge.effect and SF_NOSKID or 0)
 	if not (soap.noability & NOABIL_AFTERIMAGE)
@@ -1414,9 +1418,38 @@ Takis_Hook.addHook("MoveBlocked",function(me,thing,line, goingup)
 			soap.noairdashforme = true
 		end
 		
+		local bonkeffect
 		if not soap.onGround
+			local wasgliding = (me.state == S_PLAY_GLIDE)
 			me.state = S_PLAY_FALL
-			soap.hammer.lockout = -1
+			
+			if wasgliding
+				-- TODO: these need unique sprites
+				me.sprite2 = SPR2_MSC0
+				P_MovePlayer(p) -- resets height
+				
+				soap.hammer.lockout = TR / 2
+				me.tics = soap.hammer.lockout
+				P_SetObjectMomZ(me, 7*FU)
+				
+				local spr_scale = FU * 7/6
+				local top_layer = P_SpawnMobjFromMobj(me, 0,0,0, MT_PARTICLE)
+				top_layer.state = S_SOAP_HITM_RSPRK
+				top_layer.spritexscale = FixedMul($, spr_scale)
+				top_layer.spriteyscale = top_layer.spritexscale
+				top_layer.renderflags = $|RF_NOCOLORMAPS|RF_FULLBRIGHT|(P_RandomChance(FU/2) and RF_HORIZONTALFLIP or 0)
+				top_layer.translation = "AllYellow"
+				
+				bonkeffect = P_SpawnMobjFromMobj(me, 0,0, FixedDiv(me.height, me.scale), MT_PARTICLE)
+				bonkeffect.scale = $ * 2
+				bonkeffect.spritexscale = FU / 2
+				bonkeffect.spriteyscale = bonkeffect.spritexscale
+				bonkeffect.flags = $ &~MF_NOGRAVITY
+				bonkeffect.state = S_TAKIS_BONKFX1
+				bonkeffect.drawonlyforplayer = p
+				bonkeffect.renderflags = $|RF_NOCOLORMAPS|RF_ALWAYSONTOP
+				P_SetObjectMomZ(bonkeffect, 4 * FU)
+			end
 		else
 			me.state = S_PLAY_WALK
 		end
@@ -1427,6 +1460,7 @@ Takis_Hook.addHook("MoveBlocked",function(me,thing,line, goingup)
 		S_StartSound(me, sfx_s3k49)
 		Soap_SpawnBumpSparks(me, thing, line)
 		
+		local bumped = false
 		if (line and line.valid)
 			local line_ang = R_PointToAngle2(
 				line.v1.x, line.v1.y, line.v2.x, line.v2.y
@@ -1436,13 +1470,15 @@ Takis_Hook.addHook("MoveBlocked",function(me,thing,line, goingup)
 				R_PointToDist2(0,0,me.momx,me.momy) * 3/4,
 				sin(line_ang - R_PointToAngle2(0,0,me.momx,me.momy))
 			))
-			
+			local ang = line_ang - ANGLE_90*(P_PointOnLineSide(me.x,me.y, line) and 1 or -1)
 			P_Thrust(me,
-				line_ang - ANGLE_90*(P_PointOnLineSide(me.x,me.y, line) and 1 or -1),
+				ang,
 				-speed
 			)
+			me.soap_bumpangle = ang
+			
 			soap.linebump = max($, 12)
-			return true
+			bumped = true
 		else
 			local ang = R_PointToAngle2(me.x,me.y, thing.x,thing.y)
 			local speed = R_PointToDist2(0,0,thing.momx,thing.momy) + FixedMul(
@@ -1450,9 +1486,15 @@ Takis_Hook.addHook("MoveBlocked",function(me,thing,line, goingup)
 			)
 			if soap.onGround then speed = FixedDiv($, me.friction) end
 			P_InstaThrust(me, ang, -speed)
+			me.soap_bumpangle = ang
+			
 			soap.linebump = max($, 12)
-			return true
+			bumped = true
 		end
+		if (bonkeffect and bonkeffect.valid)
+			P_Thrust(bonkeffect, me.soap_bumpangle + ANGLE_90, Soap_RandomFixedRange(-4 * me.scale, 4 * me.scale))
+		end
+		if bumped then return true end
 	end
 end)
 
