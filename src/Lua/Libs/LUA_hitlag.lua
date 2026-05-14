@@ -390,7 +390,7 @@ end
 hl.addHitlag = function(
 	mo,tics,
 	fromdamage,
-	allowdamage, --Players only
+	allowdamage --Players only
 )
 	if mo == nil then return end
 	if mo.nohitlagforme then return end
@@ -402,7 +402,6 @@ hl.addHitlag = function(
 		return
 	end
 	if mo.hitlag == nil then mo.hitlag = 0 end
-	
 	
 	if hl.cv_hitlagmulti.value ~= FU
 		tics = FixedMul($, hl.cv_hitlagmulti.value)
