@@ -441,7 +441,6 @@ hl.addHitlag = function(
 		end
 	end
 	-- nothing here is named idk why im so sorry
-	print("hitlagged", P_PlayerInPain(mo.player))
 	table.insert(hitlagged, {
 		mo,
 		mo.flags,
