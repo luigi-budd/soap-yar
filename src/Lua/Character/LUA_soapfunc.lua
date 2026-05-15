@@ -1947,6 +1947,7 @@ rawset(_G,"Soap_DeathThinker",function(p,me,soap)
 			local speed = R_PointTo3DDist(0,0,0, me.momx,me.momy,me.momz)
 			p.drawangle = $ + FixedAngle(speed / 2)
 			me.rollangle = $ + FixedAngle(speed / 2)
+			me.soap_wasinknockout = true
 		end
 		
 		--lmao handle this here too
@@ -1970,6 +1971,7 @@ rawset(_G,"Soap_DeathThinker",function(p,me,soap)
 			me.state = S_PLAY_SOAP_KNOCKOUT
 			me.sprite2 = SPR2_MSC4
 			me.tics = -1
+			me.rollangle = 0
 		end
 		soap.stasistic = max($, 2)
 		soap.allowjump = false
@@ -2000,6 +2002,10 @@ rawset(_G,"Soap_DeathThinker",function(p,me,soap)
 				P_SpawnSkidDust(p,me.radius,true)
 			end
 		end
+	-- ughhhh
+	elseif me.soap_wasinknockout
+		me.soap_wasinknockout = nil
+		me.rollangle = 0
 	end
 	
 	if p.playerstate ~= PST_DEAD

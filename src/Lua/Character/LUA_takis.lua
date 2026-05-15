@@ -369,6 +369,7 @@ Takis_Hook.addHook("Takis_Thinker",function(p)
 		local clutchlen = soap.onGround or p.powers[pw_carry] == CR_ROLLOUT
 		local lenient = false
 		if abs(me.z - me.floorz) <= 22 * me.scale
+		and (soap.notCarried)
 			clutchlen = true
 			lenient = true
 		end
