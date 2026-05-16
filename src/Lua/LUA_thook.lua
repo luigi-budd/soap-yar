@@ -63,7 +63,7 @@ states[S_ROSY_DEAD] = {
 		
 		P_SetObjectMomZ(dead, 7*FU)
 		mo.flags2 = $|MF2_DONTDRAW
-		P_RemoveMobj(mo)
+		mo.fuse = mo.tics
 	end
 }
 

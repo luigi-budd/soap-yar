@@ -1642,7 +1642,6 @@ local function try_pvp_collide(me,thing)
 		local hitlag_tics = 6
 		--P_Thrust(me, R_PointToAngle2(0,0,me.momx,me.momy), me.scale*8)
 		
-		DealDamage(thing, me,me)
 		if generic_slingshot(p,me,soap)
 			hitlag_tics = $ + FixedDiv(soap.accspeed, 50*FU) / FU
 			Soap_Hitlag.addHitlag(me, hitlag_tics, false)
@@ -1662,6 +1661,7 @@ local function try_pvp_collide(me,thing)
 				512*me.scale + power
 			)
 		end
+		DealDamage(thing, me,me)
 		
 		if (thing and thing.valid and thing.type == MT_ROLLOUTROCK)
 			hitlag_tics = $ / 2
@@ -1695,7 +1695,7 @@ local function try_pvp_collide(me,thing)
 		thinghit = true
 	end
 	
-	if thinghit and thing.type == MT_ROLLOUTROCK
+	if thinghit and (thing and thing.valid and thing.type == MT_ROLLOUTROCK)
 		thing.soap_flingcooldown = max((thing.hitlag or 0)* 2, 10)
 		thing.takis_flingme = false
 	end
