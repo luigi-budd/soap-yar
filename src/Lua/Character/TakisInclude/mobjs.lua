@@ -27,3 +27,17 @@ states[S_TAKIS_SLINGFX] = {
 	var2 = 1,
 	tics = 7,
 }
+
+SafeFreeslot("S_TAKIS_BONKFX1")
+SafeFreeslot("S_TAKIS_BONKFX2") -- bruh
+states[S_TAKIS_BONKFX1] = {
+	sprite = SPR_SOAP_GFX,
+	frame = 38|FF_FULLBRIGHT,
+	tics = 3,
+	nextstate = S_TAKIS_BONKFX2
+}
+states[S_TAKIS_BONKFX2] = {
+	sprite = SPR_SOAP_GFX,
+	frame = 39|FF_FULLBRIGHT,
+	tics = 3 * TR,
+}

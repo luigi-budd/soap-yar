@@ -3538,7 +3538,7 @@ local function try_pvp_collide(me,thing)
 		return false
 	end
 	
-	if thinghit and thing.type == MT_ROLLOUTROCK
+	if thinghit and (thing and thing.valid and thing.type == MT_ROLLOUTROCK)
 		thing.soap_flingcooldown = max((thing.hitlag or 0)* 2, 10)
 		thing.takis_flingme = false
 	end
