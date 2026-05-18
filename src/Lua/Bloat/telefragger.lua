@@ -47,6 +47,9 @@ end
 
 local function settimer(mo)
 	mo.extravalue1 = P_RandomRange(4*TR, 9*TR)
+	if not mo.extravalue2
+		mo.extravalue2 = P_RandomRange(2, 6)
+	end
 end
 addHook("MobjThinker",function(mo)
 	if not (mo and mo.valid) then return end
@@ -110,6 +113,37 @@ addHook("MobjThinker",function(mo)
 	P_3DInstaThrust(mo, ha,va, 4*mo.scale)
 	
 	if (mo.extravalue1)
+		if mo.extravalue1 == TR + 1
+			if not mo.extravalue2
+				local prevtarg = mo.target
+				if not Baby_SearchForPlayers(mo)
+					mo.target = prevtarg
+				end
+			end
+			
+			S_StartSound(me, sfx_ntf_0)
+		elseif mo.extravalue1 == 1
+			local dist = 400 * me.scale
+			P_SetOrigin(mo,
+				me.x + P_ReturnThrustX(me.player.drawangle, dist),
+				me.y + P_ReturnThrustY(me.player.drawangle, dist),
+				me.z
+			)
+			
+			local top_layer = P_SpawnMobjFromMobj(mo, 0,0,0, MT_PARTICLE)
+			top_layer.state = S_SOAP_HITM_RSPRK
+			top_layer.spritexscale = $ * 6
+			top_layer.spriteyscale = top_layer.spritexscale
+			top_layer.renderflags = $|RF_ALWAYSONTOP|RF_FULLBRIGHT|RF_NOCOLORMAPS
+			top_layer.spriteyoffset = -40*FU
+			top_layer.translation = "AllWhite"
+			top_layer.dispoffset = 400
+			top_layer.fuse = top_layer.tics
+			
+			if mo.extravalue2
+				mo.extravalue2 = $ - 1
+			end
+		end
 		if mo.extravalue1 <= TR + 1
 			for i = 0,1
 				local angle,vertang = FixedAngle(Soap_RandomFixedRange(0,360*FU)), FixedAngle(Soap_RandomFixedRange(0,360*FU))
@@ -130,27 +164,6 @@ addHook("MobjThinker",function(mo)
 				s.momz = $ + me.momz
 			end
 		end
-		
-		if mo.extravalue1 == TR + 1
-			S_StartSound(me, sfx_ntf_0)
-		elseif mo.extravalue1 == 1
-			local dist = 400 * me.scale
-			P_SetOrigin(mo,
-				me.x + P_ReturnThrustX(me.player.drawangle, dist),
-				me.y + P_ReturnThrustY(me.player.drawangle, dist),
-				me.z
-			)
-			
-			local top_layer = P_SpawnMobjFromMobj(mo, 0,0,0, MT_PARTICLE)
-			top_layer.state = S_SOAP_HITM_RSPRK
-			top_layer.spritexscale = $ * 6
-			top_layer.spriteyscale = top_layer.spritexscale
-			top_layer.renderflags = $|RF_ALWAYSONTOP|RF_FULLBRIGHT|RF_NOCOLORMAPS
-			top_layer.spriteyoffset = -40*FU
-			top_layer.translation = "AllWhite"
-			top_layer.dispoffset = 400
-			top_layer.fuse = top_layer.tics
-		end
 		mo.extravalue1 = $ - 1
 	else
 		settimer(mo)
@@ -166,7 +179,7 @@ local function dotumble(p)
 	local me = p.mo
 	me.soap_tumble = true
 	me.soap_tumble_oldmomz = me.momz
-	me.soap_tumble_markedfordeath = true
+	me.soap_tumble_markedfordeath = CV.babykills.value == 1
 end
 
 local function doringing(bell, p)
