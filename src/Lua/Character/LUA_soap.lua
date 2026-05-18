@@ -2467,6 +2467,7 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 		if soap.paintime >= TR/2
 		and (soap.jump == 1)
 		and (soap.notCarried)
+		and not (p.pflags & PF_JUMPSTASIS)
 		--not in match!
 		and not Soap_IsCompGamemode()
 			p.pflags = $ &~(PF_JUMPED|PF_THOKKED)
