@@ -534,7 +534,6 @@ addHook("TouchSpecial",function(f, mo)
 		Soap_Hitlag.addHitlag(f, TR * 3/4, false)
 		
 		if Soap_IsLocalPlayer(play)
-			P_FlashPal(p, PAL_INVERT, TR / 2)
 			Soap_StartQuake(15*FU, TR/2,
 				nil,
 				512*mo.scale
