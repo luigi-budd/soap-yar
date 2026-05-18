@@ -64,6 +64,8 @@ addHook("MobjThinker",function(mo)
 		vfx.fuse = vfx.tics
 		vfx.blendmode = AST_REVERSESUBTRACT
 		vfx.dispoffset = -300
+		mo.dispoffset = 100
+		mo.renderflags = $|RF_NOCOLORMAPS
 		mo.backingvfx = vfx
 	else
 		P_MoveOrigin(mo.backingvfx,
@@ -77,7 +79,7 @@ addHook("MobjThinker",function(mo)
 	if (leveltime % 3 == 0)
 		local vfx = P_SpawnMobjFromMobj(mo, 0,0, FixedDiv(mo.height,mo.scale)/2, MT_THOK)
 		vfx.sprite = SPR_NSTELEFRAGGER
-		vfx.frame = 2|FF_FULLDARK
+		vfx.frame = 2|(P_RandomChance(FU/2) and FF_FULLBRIGHT or FF_FULLDARK)
 		vfx.tics = 11
 		vfx.fuse = vfx.tics
 		vfx.scale = vfx.scale
@@ -85,6 +87,7 @@ addHook("MobjThinker",function(mo)
 		vfx.scalespeed = FixedDiv(vfx.destscale - vfx.scale, vfx.fuse*FU)
 		vfx.translation = "AllWhite"
 		vfx.blendmode = AST_SUBTRACT
+		vfx.dispoffset = -300
 		P_SetObjectMomZ(vfx, FU / 2)
 		vfx.momx = mo.momx
 		vfx.momy = mo.momy
@@ -129,6 +132,7 @@ addHook("MobjThinker",function(mo)
 				me.y + P_ReturnThrustY(me.player.drawangle, dist),
 				me.z
 			)
+			mo.state = S_NSTFRAG_WALK
 			
 			local top_layer = P_SpawnMobjFromMobj(mo, 0,0,0, MT_PARTICLE)
 			top_layer.state = S_SOAP_HITM_RSPRK
