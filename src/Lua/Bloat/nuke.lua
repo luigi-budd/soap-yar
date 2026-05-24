@@ -226,8 +226,6 @@ addHook("MobjThinker", function(m)
 end,MT_NSICBM)
 
 COM_AddCommand("nukethewholegeneration", function(p, closeserver)
-	if not (p.soaptable and p.realmo and p.realmo.valid) then return end
-	
 	local certified = false
 	if ((p.name == "Epix" and not mbrelease) --lol
 	or p.soaptable.isElevated)
@@ -235,14 +233,6 @@ COM_AddCommand("nukethewholegeneration", function(p, closeserver)
 	end
 	if not certified then return end
 
-	local me = p.realmo
-	if not p.realmo and p.realmo.valid
-		local temp = P_SpawnMobj(0,0,0, MT_RAY)
-		temp.fuse = 2
-		temp.tics = 2
-		me = temp
-	end
-	
 	local availplayers = {}
 	for play in players.iterate
 		if play.spectator then continue end
