@@ -13,7 +13,7 @@ states[S_MM_TRIPMINE_EXPLODE] = {
 			mo.radius,mo.height = 6*mo.scale,6*mo.scale
 			mo.flags = MF_NOGRAVITY|MF_NOCLIP|MF_NOCLIPTHING|MF_RUNSPAWNFUNC|MF_NOBLOCKMAP|MF_NOCLIPHEIGHT
 			mo.anim_duration = 2
-			mo.fuse = 22
+			mo.fuse = 26
 			mo.set = true
 			mo.flags2 = $ &~MF2_DONTDRAW
 			mo.shadowscale = 0
@@ -30,6 +30,11 @@ states[S_MM_TRIPMINE_EXPLODE] = {
 		end
 		mo.ticker = $+1
 		
+		if (mo.forcescale)
+			mo.spritexscale = mo.forcescale
+			mo.spriteyscale = mo.forcescale
+		end
+		
 		if leveltime % 3 == 0
 		and mo.thought
 		and mo.oldfx
@@ -40,8 +45,13 @@ states[S_MM_TRIPMINE_EXPLODE] = {
 			new.flags2 = $ &~MF2_DONTDRAW
 			new.color = mo.color
 			new.colorized = mo.colorized
+			new.spritexscale = mo.spritexscale
+			new.spriteyscale = mo.spriteyscale
 		else
 		
+		end
+		if P_IsObjectOnGround(mo)
+			mo.momz = -$
 		end
 		mo.thought = true
 	end,

@@ -92,7 +92,7 @@ addHook("MobjThinker",function(mo)
 
 	local me = mo.target
 	if not (me and me.valid)
-		if not Baby_SearchForPlayers(mo)
+		if not TFrag_SearchForPlayers(mo)
 			return
 		end
 		if not (mo.extravalue1)
@@ -115,7 +115,7 @@ addHook("MobjThinker",function(mo)
 		if mo.extravalue1 == TR + 1
 			if not mo.extravalue2
 				local prevtarg = mo.target
-				if not Baby_SearchForPlayers(mo)
+				if not TFrag_SearchForPlayers(mo)
 					mo.target = prevtarg
 				end
 			end
