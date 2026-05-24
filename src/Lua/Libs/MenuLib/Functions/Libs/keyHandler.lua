@@ -64,5 +64,4 @@ return function(key, buffer, callback)
 		buffer = buffer:sub(1,32)
 	end
 	return buffer or "", keydown
-	
 end

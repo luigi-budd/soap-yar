@@ -1,12 +1,19 @@
---MenuLib v0.6 written by luigi budd
+--MenuLib written by luigi budd
+local MY_VERSION = 200
+local replace = false
 
---TODO: check for versions and replace functions?
 if rawget(_G,"MenuLib")
-	print("\x82MenuLib already loaded, aborting...")
-	return
+	print("\x82MenuLib already loaded!")
+	replace = MenuLib.VERSION < MY_VERSION
+	if not replace
+		print("\x82Loading newer MenuLib version...")
+	end
 end
 
-rawset(_G, "MenuLib", {})
+if not rawget(_G,"MenuLib")
+	rawset(_G, "MenuLib", {})
+end
+MenuLib.replacing = replace
 
 rawset(_G, "BASEVIDWIDTH", BASEVIDWIDTH or 320)
 rawset(_G, "BASEVIDHEIGHT", BASEVIDHEIGHT or 200)
@@ -39,13 +46,12 @@ enumflags("PS_", {
 	--this popup wont fade the other menus behind it
 	"NOFADE",
 	
-	--this popup is purely visual, and will not be interactable
+	--this popup is purely visual, and will not be interactable / make layers below it uninteractable
 	"IRRELEVANT",
 	
 	--this popup will not slide in from the bottom
 	"NOSLIDEIN",
 	
-	--HOLY SHIT
 	--this popup cannot be closed with the escape key
 	"NOESCAPE",
 }, "flags")
@@ -57,6 +63,9 @@ enumflags("MS_", {
 	
 	--this menu will not do the expanding animation
 	"NOANIM",
+
+	--this menu cannot be closed with the escape key
+	"NOESCAPE",
 }, "flags")
 
 --Close-Reason enums
@@ -79,53 +88,58 @@ enumflags("IR_", {
 	"INITPOPUP",
 }, "enum")
 
-MenuLib.VERSION = 006
-MenuLib.SUBVERSION = 0
---dont forget the ending "/" (and "debug" from the file tree below!)
+MenuLib.VERSION = MY_VERSION
+--dont forget the ending "/"
+--example: "Libraries/MenuLib/"
 MenuLib.root = MENULIB_ROOT or ""
 
-MenuLib.templates = {}
+if not MenuLib.replacing
+	MenuLib.templates = {}
 
-MenuLib.client = {
-	
-	--Self explanatory
-	menuactive = false,
-	menuTime = 0,
-	
-	mouse_x = (BASEVIDWIDTH*FU) / 2,
-	mouse_y = (BASEVIDHEIGHT*FU) / 2,
-	mouse_graphic = nil,
-	
-	--the button ID that we're hovering over
-	hovering = -1,
-	canPressSomething = false,
-	
-	--menu ID
-	currentMenu = {
-		id = -1,
-		layers = {}
-	},
-	popups = {},
-	menuLayer = 0,
-	
-	--use this when detecting mouse presses
-	doMousePress = false,
-	mouseTime = -1,
-	mouseHeld = 0, -- 1 = JUST pressed down, 2 = held, -1 = let go, 0 = none
-	
-	--text input stuff (messy)
-	textbuffer = nil,
-	textbuffer_id = nil,
-	textbuffer_funcs = {},
-	text_shiftdown = false,
-	text_ctrldown = false,
-	text_capslock = false,
-	textbuffer_sfx = nil,
-	textbuffer_tooltip = nil,
-	
-	commandbuffer = nil,
-}
+	MenuLib.client = {
+		
+		--Self explanatory
+		menuactive = false,
+		menuTime = 0,
+		
+		mouse_x = (BASEVIDWIDTH*FU) / 2,
+		mouse_y = (BASEVIDHEIGHT*FU) / 2,
+		mouse_graphic = nil,
+		
+		--the button ID that we're hovering over
+		hovering = -1,
+		canPressSomething = false,
+		
+		--menu ID
+		currentMenu = {
+			id = -1,
+			layers = {}
+		},
+		popups = {},
+		menuLayer = 0,
+		
+		--use this when detecting mouse presses
+		doMousePress = false,
+		mouseTime = -1,
+		mouseHeld = 0, -- 1 = JUST pressed down, 2 = held, -1 = let go, 0 = none
+		
+		doEscapePress = false,
+		escapeTime = -1,
+		escapeHeld = 0, -- 1 = JUST pressed down, 2 = held, -1 = let go, 0 = none
 
+		--text input stuff (messy)
+		textbuffer = nil,
+		textbuffer_id = nil,
+		textbuffer_funcs = {},
+		text_shiftdown = false,
+		text_ctrldown = false,
+		text_capslock = false,
+		textbuffer_sfx = nil,
+		textbuffer_tooltip = nil,
+		
+		commandbuffer = nil,
+	}
+end
 
 local tree = {
 	"main",
@@ -137,3 +151,4 @@ local tree = {
 for k,file in ipairs(tree)
 	dofile(MenuLib.root .. file)
 end
+MenuLib.replacing = nil

@@ -1,6 +1,8 @@
 local ML = MenuLib
-ML.HUD.menu_fake_width = 1
-ML.HUD.menu_fake_height = 1
+if not ML.replacing
+	ML.HUD.menu_fake_width = 1
+	ML.HUD.menu_fake_height = 1
+end
 
 return function(v,ML)
 	if ML.client.currentMenu.id == -1 then
