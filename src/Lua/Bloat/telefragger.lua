@@ -24,8 +24,8 @@ mobjinfo[MT_NSTELEFRAGGER] = {
 }
 
 local function Baby_SearchForPlayers(baby)
-	local closest_player = nil
-	local closest_dist = nil
+	local availplayers = {}
+	local player = nil
 	
 	baby.target = nil
 	for p in players.iterate
@@ -33,15 +33,11 @@ local function Baby_SearchForPlayers(baby)
 		local me = p.mo
 		if not (me and me.valid and me.health) then continue end
 		
-		local dist = R_PointTo3DDist(baby.x,baby.y,baby.z, me.x,me.y,me.z)
-		if (closest_dist == nil)
-		or dist < closest_dist
-			closest_player = p
-			closest_dist = dist
-		end
+		table.insert(availplayers, p)
 	end
-	if not (closest_player and closest_player.valid) then return end
-	baby.target = closest_player.mo
+	if not (#availplayers) then return end
+	
+	baby.target = availplayers[P_RandomRange(1, #availplayers)].mo
 	return true
 end
 
