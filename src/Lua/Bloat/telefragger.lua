@@ -23,7 +23,7 @@ mobjinfo[MT_NSTELEFRAGGER] = {
 	flags = MF_NOCLIP|MF_NOCLIPHEIGHT|MF_NOGRAVITY|MF_SPECIAL,
 }
 
-local function Baby_SearchForPlayers(baby)
+local function TFrag_SearchForPlayers(baby)
 	local availplayers = {}
 	local player = nil
 	

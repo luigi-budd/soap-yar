@@ -1,3 +1,4 @@
+local CV = SOAP_CV
 local function SpawnExplosions(mine, doquake, docount)
 	if doquake
 		P_StartQuake(60*FU, TICRATE*2,
@@ -112,6 +113,9 @@ sfxinfo[SafeFreeslot("sfx_nbl_5")].caption = "/"
 sfxinfo[SafeFreeslot("sfx_nbl_6")].caption = "/"
 sfxinfo[SafeFreeslot("sfx_nbl_7")].caption = "/"
 
+sfxinfo[SafeFreeslot("sfx_nbl_8")].caption = "/"
+sfxinfo[SafeFreeslot("sfx_nbl_9")].caption = "/"
+
 SafeFreeslot("MT_NSBELL")
 mobjinfo[MT_NSBELL] = {
 	doomednum = -1,
@@ -123,6 +127,27 @@ mobjinfo[MT_NSBELL] = {
 	flags = MF_NOCLIP|MF_NOCLIPHEIGHT|MF_NOGRAVITY|MF_SPECIAL,
 }
 
+local function TFrag_SearchForPlayers(baby)
+	local availplayers = {}
+	local player = nil
+	
+	baby.target = nil
+	for p in players.iterate
+		if p.spectator then continue end
+		local me = p.mo
+		if not (me and me.valid) then continue end
+		
+		table.insert(availplayers, p)
+	end
+	if not (#availplayers) then return end
+	
+	baby.target = availplayers[P_RandomRange(1, #availplayers)].mo
+	return true
+end
+
+local function settptimer(b)
+	b.bell_teleporttime = P_RandomRange(6*TR, 20*TR)
+end
 addHook("MobjThinker",function(b)
 	if not (b and b.valid) then return end
 	
@@ -131,11 +156,102 @@ addHook("MobjThinker",function(b)
 		
 		b.soap_supervfx = true
 		b.bell_cooldown = 0
+		settptimer(b)
 	end
 	
 	if b.bell_cooldown
 		b.bell_cooldown = $ - 1
 		if not b.bell_cooldown
+			b.flags = $|MF_SPECIAL
+		end
+	end
+	
+	if (b.bell_teleporttime)
+	and not (b.bell_cooldown)
+		b.bell_teleporttime = $ - 1
+		if not b.bell_teleporttime
+			b.bell_teleportinanim = TR * 3/4
+			
+			local sfx = P_SpawnGhostMobj(b)
+			sfx.flags2 = $|MF2_DONTDRAW
+			sfx.fuse = 2 * TR
+			sfx.tics = sfx.fuse
+			S_StartSound(sfx, sfx_nbl_8)
+		end
+	end
+	
+	if (b.bell_teleportinanim)
+		b.flags = $ &~MF_SPECIAL
+		local frac = (FU / (TR*3/4))
+		
+		b.bell_teleportinanim = $ - 1
+		b.spritexscale = ease.inback(
+			FU - (frac * b.bell_teleportinanim),
+			FU, 0, 2*FU
+		)
+		b.spriteyscale = b.spritexscale
+		if CV.rotations.value
+			b.rollangle = FixedAngle(ease.inexpo(
+				FU - (frac * b.bell_teleportinanim),
+				0, 360*FU
+			))
+		end
+		
+		if not b.bell_teleportinanim
+			b.bell_teleportoutanim = TR / 2
+			
+			if TFrag_SearchForPlayers(b)
+				local me = b.target
+				local dist = Soap_RandomFixedRange(128*FU, 512*FU)
+				local angle = FixedAngle(Soap_RandomFixedRange(0,360*FU))
+				if P_RandomChance(FU/3)
+					angle = R_PointToAngle2(0,0, me.momx,me.momy)
+					local speed = R_PointToDist2(0,0, me.momx,me.momy)
+					dist = 128*FU + speed
+					if speed < FU
+						angle = me.angle
+					end
+				end
+				
+				P_SetOrigin(b,
+					me.x + P_ReturnThrustX(angle, dist),
+					me.y + P_ReturnThrustX(angle, dist),
+					me.z + Soap_RandomFixedRange(-256*FU, 256*FU)
+				)
+				b.z = clamp(b.floorz, $, b.ceilingz - b.height)
+				local top_layer = P_SpawnMobjFromMobj(b, 0,0,0, MT_PARTICLE)
+				top_layer.state = S_SOAP_HITM_RSPRK
+				top_layer.spritexscale = $ * 6
+				top_layer.spriteyscale = top_layer.spritexscale
+				top_layer.renderflags = $|RF_ALWAYSONTOP|RF_FULLBRIGHT|RF_NOCOLORMAPS
+				top_layer.spriteyoffset = -40*FU
+				top_layer.translation = "AllWhite"
+				top_layer.dispoffset = 400
+				top_layer.fuse = top_layer.tics
+			end
+			
+			S_StartSound(b, sfx_nbl_9)
+		end
+	end
+	if (b.bell_teleportoutanim)
+		b.flags = $ &~MF_SPECIAL
+		local frac = (FU / (TR/2))
+		
+		b.bell_teleportoutanim = $ - 1
+		b.spritexscale = ease.outback(
+			FU - (frac * b.bell_teleportoutanim),
+			0, FU, 2*FU
+		)
+		b.spriteyscale = b.spritexscale
+		if CV.rotations.value
+			b.rollangle = -FixedAngle(ease.outback(
+				FU - (frac * b.bell_teleportoutanim),
+				360*FU, 0, FU
+			))
+		end
+		
+		if not b.bell_teleportoutanim
+			settptimer(b)
 			b.flags = $|MF_SPECIAL
 		end
 	end
@@ -302,7 +418,7 @@ local function unfuck(f, mo)
 end
 local function doringing(bell, p)
 	bell.state = S_NSBELL_RING
-	bell.bell_cooldown = TR
+	bell.bell_cooldown = TR * 4/5
 	
 	local top_layer = P_SpawnMobjFromMobj(bell, 0,0,0, MT_PARTICLE)
 	top_layer.state = S_SOAP_HITM_RSPRK
