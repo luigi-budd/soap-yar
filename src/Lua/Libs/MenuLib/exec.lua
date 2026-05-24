@@ -4,9 +4,17 @@ local replace = false
 
 if rawget(_G,"MenuLib")
 	print("\x82MenuLib already loaded!")
+	if (MenuLib.VERSION == MY_VERSION)
+		print("\x82".."Aborting...")
+		return
+	end
+
 	replace = MenuLib.VERSION < MY_VERSION
-	if not replace
+	if replace
 		print("\x82Loading newer MenuLib version...")
+	else
+		print("\x82".."Aborting...")
+		return
 	end
 end
 
