@@ -484,7 +484,7 @@ addHook("MobjThinker",function(amp)
 		return
 	end
 	local me = amp.tracer
-	if not (me and me.valid) then return end
+	if not (me and me.valid) then P_RemoveMobj(amp); return end
 
 	if (displayplayer and displayplayer.valid)
 	and (displayplayer ~= me.player)
