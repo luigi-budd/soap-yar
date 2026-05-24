@@ -415,7 +415,7 @@ addHook("MobjThinker",function(b)
 		elseif b.extravalue1 == 0
 			Baby_Sound(b, sfx_nb_7)
 			
-			b.charge_time = $ * 5/7
+			b.charge_time = $ / 2
 			
 			b.chargewind = b.charge_wait + 1
 			b.angle,b.aiming = R_PointTo3DAngles(b.x,b.y,b.z, me.x,me.y,me.z)
