@@ -1,4 +1,11 @@
 local CV = SOAP_CV
+CV.belltumbles = CV_RegisterVar({
+	name = "soap_belltumbles",
+	defaultvalue = "On",
+	flags = CV_SHOWMODIF|CV_NETVAR,
+	PossibleValue = CV_OnOff,
+})
+
 local function SpawnExplosions(mine, doquake, docount)
 	if doquake
 		P_StartQuake(60*FU, TICRATE*2,
@@ -431,19 +438,32 @@ local function doringing(bell, p)
 	
 	local mo = p.mo
 	
-	mo.soap_tumble = true
-	mo.soap_tumble_oldmomz = mo.momz
-	mo.soap_tumble_markedfordeath = mo.bell_overtuned
-	
-	local ang = FixedAngle(P_RandomRange(0,720)*FU)
-	mo.state = S_PLAY_PAIN
-	p.drawangle = ang + ANGLE_180
-	
-	if P_IsObjectOnGround(mo)
-		mo.z = $ + P_MobjFlip(mo)
+	if (CV.belltumbles.value or mo.bell_overtuned)
+		Soap_DamageSfx(mo,FU*3/4,FU)
+		Soap_ImpactVFX(mo, bell, nil, 3*FU)
+		
+		p.powers[pw_flashing] = 0
+		P_ResetPlayer(p)
+		mo.state = S_PLAY_PAIN
+		
+		mo.soap_tumble = true
+		mo.soap_tumble_oldmomz = mo.momz
+		mo.soap_tumble_markedfordeath = mo.bell_overtuned
+		
+		local ang = FixedAngle(P_RandomRange(0,720)*FU)
+		mo.state = S_PLAY_PAIN
+		p.drawangle = ang + ANGLE_180
+		
+		if P_IsObjectOnGround(mo)
+			mo.z = $ + P_MobjFlip(mo)
+		end
+		P_Thrust(mo, ang, 15*bell.scale)
+		P_SetObjectMomZ(mo, (mo.bell_overtuned and 50 or 22)*bell.scale)
+	else
+		mo.momx = $ / 4
+		mo.momy = $ / 4
+		P_SetObjectMomZ(mo, 40 * bell.scale)
 	end
-	P_Thrust(mo, ang, 15*bell.scale)
-	P_SetObjectMomZ(mo, (mo.bell_overtuned and 50 or 22)*bell.scale)
 	
 	S_StartSound(nil, sfx_nbl_0 + mo.bell_hits)
 	S_StartSound(nil, sfx_nbl_0 + mo.bell_hits)
@@ -485,13 +505,6 @@ addHook("TouchSpecial",function(f, mo)
 	local play = mo.player
 	if (play and play.valid)
 	and not (play.powers[pw_flashing])
-		Soap_DamageSfx(mo,FU*3/4,FU)
-		Soap_ImpactVFX(mo, f, nil, 3*FU)
-		
-		play.powers[pw_flashing] = 0
-		P_ResetPlayer(play)
-		mo.state = S_PLAY_PAIN
-		
 		doringing(f, play)
 		
 		return unfuck(f,mo)
