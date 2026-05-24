@@ -210,11 +210,14 @@ local function spawn_grind_spark(top)
 end
 
 local function grinddown(top)
+	if (top.loose) then return false; end
+	
 	local me = top.target
 	local p = me.player
 	return (p.cmd.buttons & BT_SPIN)
 end
 local function isgrinding(top)
+	if (top.loose) then return false; end
 	if top.float > 0 then return false; end
 	if not P_IsObjectOnGround(top) then return false; end
 	return true
@@ -356,6 +359,7 @@ local function tilt(top)
 	local decay = ANG1 + ANG1
 	
 	if grinddown(top)
+	and (top.oldpangle ~= nil)
 		local tiltmax = ANGLE_22h
 		
 		tilt = $ + (me.angle - top.oldpangle) / 2
@@ -438,6 +442,9 @@ local function loose_think(top)
 	
 	local angle = top.angle
 	
+	top.spritexscale = FU
+	top.spriteyscale = top.spritexscale
+	
 	local g = P_SpawnGhostMobj(top)
 	g.color = SKINCOLOR_ISLAND
 	g.colorized = true
@@ -494,18 +501,12 @@ local function try_pvp_collide(top,thing)
 	if (top.lifetime == nil or top.lifetime < 3) then return end
 	
 	local me = top.target
-	-- if not (me and me.valid) then return end
-	-- if not (me.player and me.player.valid) then return end
 	
-	--??? why?
 	if not top.health then return end
-	-- if not me.health then return end
 	if not thing.health then return end
 	
-	--players only
-	-- if (me.type ~= MT_PLAYER) then return end
-	if thing == me and top.threshold then return false; end
 	if not Soap_ZCollide(top,thing) then return end
+	if thing == me and top.threshold then return false; end
 	
 	local p
 	if (me and me.valid)
@@ -517,6 +518,7 @@ local function try_pvp_collide(top,thing)
 		if not Soap_CanDamageEnemy(p, thing)
 			if (thing.flags & MF_SPECIAL)
 			and not (top.loose)
+			and not (thing.type == top.type)
 				P_TouchSpecialThing(thing, me)
 			end
 			
@@ -528,6 +530,18 @@ local function try_pvp_collide(top,thing)
 			if (thing.type == MT_SPIKE or thing.type == MT_WALLSPIKE)
 				P_KillMobj(thing, top, me)
 			end
+			if (thing.type == top.type)
+			and (thing.flags & MF_SPECIAL)
+				thing.loose = true
+				thing.momx = top.momx
+				thing.momy = top.momy
+				thing.momz = top.momz
+				thing.flags = $ &~MF_SPECIAL
+				thing.fuse = 10*TR
+				thing.movedir = top.movedir
+				thing.target = top.target
+			end
+			
 			return
 		end
 		
