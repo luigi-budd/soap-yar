@@ -1,5 +1,7 @@
 local ML = MenuLib
-ML.menus = {}
+if not ML.menus
+	ML.menus = {}
+end
 
 ML.templates.menu = {
 	title = "Menu",

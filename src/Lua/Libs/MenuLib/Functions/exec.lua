@@ -13,6 +13,7 @@ local tree = {
 	"initMenu",
 	"findMenu",
 	"initPopup",
+	"noMenuOpenAtAll",
 }
 
 for k, name in ipairs(tree)

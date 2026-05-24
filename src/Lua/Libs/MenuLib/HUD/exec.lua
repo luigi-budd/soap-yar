@@ -1,7 +1,9 @@
 local ML = MenuLib
-ML.HUD = {
-	items = {}
-}
+if not ML.HUD
+	ML.HUD = {
+		items = {}
+	}
+end
 
 --load functions
 do
@@ -47,13 +49,13 @@ table.sort(ML.HUD.items, function(a,b)
 	return (a.id < b.id)
 end)
 
-addHook("HUD",function(v)
+ML.mainDrawer = function(v)
 	ML.client.hovering = -1
 	ML.client.canPressSomething = false
 	ML.HUD.stage_item = nil
 	ML.HUD.stage_id = -1
 	
-	if ML.client.currentMenu.id == -1
+	if ML.noMenuOpenAtAll()
 		ML.HUD.menu_fake_width = 1
 		ML.HUD.menu_fake_height = 1
 		return
@@ -73,4 +75,9 @@ addHook("HUD",function(v)
 	end
 	ML.interpolate(v, false)
 	ML.client.mouse_graphic = nil
-end)
+end
+if not ML.replacing
+	addHook("HUD",function(v)
+		ML.mainDrawer(v)
+	end)
+end

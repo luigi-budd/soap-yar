@@ -29,16 +29,20 @@ return function(id)
 	input.ignoregameinputs = true
 	local layers = ML.client.currentMenu.layers
 	
+	-- changing menus in any way will destroy the keyhandler
+	if ML.client.textbuffer_id ~= nil
+		ML.stopTextInput()
+	end
+
 	--immediately close ALL menus
 	if id == -2
 		for i = #layers, 1, -1
 			local this_menu = ML.menus[layers[i]]
 			if this_menu ~= nil
 			and (this_menu.exit ~= nil)
-				this_menu.exit(CR_MENUEXITED|CR_FORCEDCLOSEALL)
+				this_menu.exit(CR_MENUEXITED|CR_FORCEDCLOSEALL, this_menu)
 			end
-		end
-		
+		end		
 		input.ignoregameinputs = false
 		
 		ML.client.mouse_x = (BASEVIDWIDTH*FU) / 2
