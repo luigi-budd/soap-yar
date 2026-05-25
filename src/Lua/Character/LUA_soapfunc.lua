@@ -74,17 +74,18 @@ local function btntic(p,tic,enum)
 		return 0
 	end
 	
+	local tableentry = BTtoTable[enum].."_R"
 	local btn = p.cmd.buttons
+	if p.soaptable[tableentry] > 0
+		p.soaptable[tableentry] = $-1
+	end
 	if btn & enum
 		if tic ~= 0
-			p.soaptable[BTtoTable[enum].."_R"] = 5 + p.cmd.latency
+			p.soaptable[tableentry] = 5 + p.cmd.latency
 		end
 		tic = $+1
 	else
 		tic = 0
-		if p.soaptable[BTtoTable[enum].."_R"] > 0
-			p.soaptable[BTtoTable[enum].."_R"] = $-1
-		end
 	end
 	return tic
 end
