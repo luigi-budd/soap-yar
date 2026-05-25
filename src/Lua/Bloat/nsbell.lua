@@ -479,7 +479,7 @@ local function doringing(bell, p)
 		mo.bell_overtuned = true
 		mo.bell_overtuneticker = 20*TR
 	end
-	Soap_Hitlag.addHitlag(mo, 12, true)
+	Soap_Hitlag.addHitlag(mo, 12, mo.soap_tumble)
 	
 	for play in players.iterate
 		play.realmo.bell_effect = BELL_EFFECT

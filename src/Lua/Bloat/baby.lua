@@ -601,7 +601,7 @@ local function thebaby(mo)
 		MT_NSBABY
 	)
 end
-COM_AddCommand("spawnbabyby", function(p, name)
+COM_AddCommand("spawnbabyby", function(p, node)
 	if not (p.soaptable and p.realmo and p.realmo.valid) then return end
 	
 	local certified = false
@@ -620,7 +620,6 @@ COM_AddCommand("spawnbabyby", function(p, name)
 	end
 	
 	if node == "@all"
-		local newspeed = tofixed(speed or "")
 		for p2 in players.iterate
 			if p2 == p then continue end
 			local mo = p2.realmo
@@ -633,6 +632,7 @@ COM_AddCommand("spawnbabyby", function(p, name)
 	
 	local p2 = GetPlayer(p,node or "")
 	if p2
+	and (node ~= nil)
 		local mo = p2.realmo
 		if not (mo and mo.valid)
 			CONS_Printf(p,"This person's object isn't valid.")
@@ -645,16 +645,3 @@ COM_AddCommand("spawnbabyby", function(p, name)
 	end
 	
 end)
-
-/*
-Takis_Hook.addHook("Soap_Thinker",function(p)
-	local me = p.realmo
-	local soap = p.soaptable
-	
-	if soap.c3 == 1
-		--Baby_Telegraph(me, me.angle,p.aiming, 1024*FU, TR)
-		P_SpawnMobjFromMobj(me,0,0,0,MT_NSBABY)
-		SOAP_DEBUG = $|DEBUG_SPEEDOMETER
-	end
-end)
-*/
