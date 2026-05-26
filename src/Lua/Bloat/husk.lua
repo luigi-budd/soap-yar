@@ -6,7 +6,7 @@ sfxinfo[SafeFreeslot("sfx_husk3")].caption = "/"
 -- sfx_sp_hsk
 
 
-local TIMELAG = TR / 2 --TR*6/5
+local TIMELAG = TR * 3/4 --TR*6/5
 local SPAWNTIME = (TR + (TR*7/10)) - TIMELAG
 local ANIM = (TR * 42/100)
 local function RemoveHusk(me)
