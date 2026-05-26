@@ -57,6 +57,7 @@ addHook("PostThinkFrame",do for p in players.iterate
 		husk.flags2 = $|MF2_DONTDRAW
 		husk.translation = "Husk"
 		husk.drawonlyforplayer = p
+		husk.dontdrawforviewmobj = me
 		husk.soap_supervfx = true
 		husk.rollangle = ANG20
 		me.husk_ind = husk

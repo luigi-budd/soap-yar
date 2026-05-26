@@ -105,8 +105,13 @@ states[S_NSBELL_OVERTUNED] = {
 			return
 		end
 		
+		local p = me.player
 		v.frame = ($ &~FF_FRAMEMASK)|(leveltime % 5)
-		P_MoveOrigin(v, me.x,me.y,me.z)
+		P_MoveOrigin(v, me.x,me.y,
+			me.z - (((P_GetPlayerHeight(p) - me.height)/3) + (me.scale*2))
+		)
+		v.spritexscale = p.shieldscale / 2
+		v.spriteyscale = v.spritexscale
 	end
 }
 
@@ -302,7 +307,8 @@ addHook("PlayerThink",function(p)
 			local vfx = P_SpawnMobjFromMobj(me, 0,0,0,MT_PARTICLE)
 			vfx.target = me
 			vfx.state = S_NSBELL_OVERTUNED
-			vfx.scale = $ * 4/5
+			vfx.scale = $
+			vfx.dispoffset = -100
 		end
 		
 		if not S_SoundPlaying(me, sfx_nbl_5)
