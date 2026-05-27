@@ -40,6 +40,11 @@ sfxinfo[sfx_sp_ow2] = {
 	flags = SF_X4AWAYSOUND|SF_X2AWAYSOUND,
 	caption = "\x85".."Auughhhh!\x80"
 }
+SafeFreeslot("sfx_sp_ow3")
+sfxinfo[sfx_sp_ow3] = {
+	flags = SF_X4AWAYSOUND|SF_X2AWAYSOUND,
+	caption = "\x85".."Ahhh!\x80"
+}
 
 SafeFreeslot("sfx_sp_grb")
 sfxinfo[sfx_sp_grb].caption = "Grab"
