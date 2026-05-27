@@ -54,7 +54,7 @@ end
 
 hl.iterateHitlagged = function()
 	local hitlagged = hl.hitlagged
-	for k = hl.numhitlagged, 0, -1
+	for k = hl.numhitlagged, 1, -1
 		if k == 0 then break end
 		local v = hitlagged[k]
 		
@@ -164,7 +164,7 @@ hl.iterateHitlagged = function()
 	
 	local stunned_hook = Takis_Hook.events["Soap_StunnedThink"]
 	local stunned = hl.stunned
-	for k = hl.numstunned, 0, -1
+	for k = hl.numstunned, 1, -1
 		if k == 0 then break end
 		local v = stunned[k]
 		local mo = v[1]
