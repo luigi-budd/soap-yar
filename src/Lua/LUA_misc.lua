@@ -487,19 +487,23 @@ addHook("MobjThinker",function(amp)
 	if not (me and me.valid) then P_RemoveMobj(amp); return end
 
 	if (displayplayer and displayplayer.valid)
-	and (displayplayer ~= me.player)
-		local dp = displayplayer
-		local me = dp.realmo
-		local dist = min(
-			R_PointToDist(amp.x,amp.y),
-			R_PointToDist2(me.x,me.y, amp.x,amp.y)
-		)
-		local cap = FixedMul(amp_dist, amp.scale)
-		local alpha = FU
-		if dist < cap
-			alpha = FixedDiv(dist, cap)
+		if (displayplayer ~= me.player)
+			local dp = displayplayer
+			local me = dp.realmo
+			local dist = min(
+				R_PointToDist(amp.x,amp.y),
+				R_PointToDist2(me.x,me.y, amp.x,amp.y)
+			)
+			local cap = FixedMul(amp_dist, amp.scale)
+			local alpha = FU
+			if dist < cap
+				alpha = FixedDiv(dist, cap)
+			end
+			amp.alpha = P_Lerp(FU/2, $, alpha)
+			amp.renderflags = $ &~RF_ALWAYSONTOP
+		else
+			amp.renderflags = $|RF_ALWAYSONTOP
 		end
-		amp.alpha = P_Lerp(FU/2, $, alpha)
 	end
 	
 	if me.hitlag or me.flags & MF_NOTHINK

@@ -90,8 +90,9 @@ local function playknockoutsfx(p,me,soap)
 	local chance = true
 	local sound = P_RandomChance(FU/50) and sfx_sp_em1 or P_RandomRange(sfx_sp_ow0,sfx_sp_ow1)
 	if R_PointToDist(me.x,me.y) >= 1024*FU * 4
+	and P_RandomChance(FU*3/4)
 	and (p ~= displayplayer)
-		sound = sfx_sp_ow2
+		sound = P_RandomRange(sfx_sp_ow2, sfx_sp_ow3)
 	end
 	if Soap_IsCompGamemode()
 		chance = P_RandomChance(FU/10)
@@ -3796,6 +3797,7 @@ addHook("MobjDeath", function(me,inf,sor,dmgt)
 	end
 	-- Intentional!
 	if (sor and sor.valid or inf and inf.valid)
+	and not (PTSR and PTSR.isPTSR()) -- seems to cause lag otherwise?
 		Soap_Hitlag.addHitlag(me, 10, true, false)
 	end
 end)
