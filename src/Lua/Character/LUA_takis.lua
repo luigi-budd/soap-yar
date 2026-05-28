@@ -1011,6 +1011,8 @@ Takis_Hook.addHook("Takis_Thinker",function(p)
 			end
 			
 			if (soap.accspeed >= skins[TAKIS_SKIN].normalspeed*2)
+				-- running on water makes you lose all traction basically
+				-- so you literally cant even run on water for long lol
 				p.charflags = $|SF_RUNONWATER
 			else
 				p.charflags = $ &~(SF_RUNONWATER)
@@ -1775,15 +1777,37 @@ addHook("MobjDamage", function(me,inf,sor,dmg,dmgt)
 	
 	if (inf and inf.valid)
 		--default speeds
-		inf_speed = get_inf_speed(me,inf,sor)
+		local dokb = true
+		inf_speed, threshold = get_inf_speed(me,inf,sor)
 		power = FU + FixedDiv(inf_speed, 30*me.scale)
+		if Soap_IsCompGamemode()
+			if (inf.flags & MF_MISSILE)
+				dokb = false
+			end
+		elseif (inf.player and inf.player.valid)
+			inf_speed = $ / 2
+		end
 		
-		me.soap_damagevar = {
-			ang = R_PointToAngle2(inf.x,inf.y, me.x,me.y),
-			speed = inf_speed
-		}
-		if inf_speed >= 30*me.scale
-			soap.hud.painsurge = 6
+		local momz = abs(inf.momz) + abs(inf_speed/2)
+		--							 ^^^
+		-- that part should probably adjust relative to momz
+		-- so that there wont be an excessive amount of upwards
+		-- knockback
+		if soap.taunt.tics
+			inf_speed = $ * 4
+			momz = $ * 8 -- x8 to revert the / 4 from um
+		end
+		
+		if dokb
+			me.soap_damagevar = {
+				ang = R_PointToAngle2(inf.x,inf.y, me.x,me.y),
+				momz = momz + 8*me.scale,
+				speed = inf_speed,
+				threshold = threshold
+			}
+			if inf_speed >= 30*me.scale
+				soap.hud.painsurge = 6
+			end
 		end
 	end
 	

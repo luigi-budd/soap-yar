@@ -1950,6 +1950,7 @@ rawset(_G,"Soap_DeathThinker",function(p,me,soap)
 			me.rollangle = $ + FixedAngle(speed / 2)
 			me.soap_wasinknockout = true
 		end
+		me.flags2 = $ &~MF2_DONTDRAW
 		
 		--lmao handle this here too
 		if (soap.onGround)
