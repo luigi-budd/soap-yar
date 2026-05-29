@@ -5,9 +5,7 @@
 /*
 	--TODO LIST
 	---------------------
-	-wolffang winds spawn a separate mobj
-	-death anims
-	-replace P_MovePlayer with TakisResetState
+	-weirdness with sliding and conveyors
 	
 	SPR2_MSC* list
 	- MSC0: pound ball
