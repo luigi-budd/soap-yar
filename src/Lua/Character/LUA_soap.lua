@@ -3,10 +3,6 @@
 --when making another lol
 
 /*
-	--TODO LIST
-	---------------------
-	-weirdness with sliding and conveyors
-	
 	SPR2_MSC* list
 	- MSC0: pound ball
 	- MSC1: spinning top
@@ -880,6 +876,10 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 					if not ((p.cmd.forwardmove) and (p.cmd.sidemove))
 					and soap.accspeed + thrust < 14*FU
 						P_InstaThrust(me,ang,15*me.scale)
+						me.momx = $ + p.cmomx
+						me.momy = $ + p.cmomy
+						p.rmomx = me.momx
+						p.rmomy = me.momy
 					end
 				end
 				Soap_SquashMacro(p, {ease_func = "insine", ease_time = 12, strength = (FU/3), name = "soap_slide"})

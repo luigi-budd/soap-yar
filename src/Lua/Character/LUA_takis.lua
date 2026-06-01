@@ -1,3 +1,8 @@
+-- same as soap.lua lol, mostly recycled code from
+-- the old takis version and soap's code.
+-- they both function mostly the same and have most of the same systems,
+-- so itd make sense for them to behave similarly too
+
 local CV = SOAP_CV
 
 local TAKIS_WDIVEVFX = TR - 1
@@ -541,7 +546,7 @@ Takis_Hook.addHook("Takis_Thinker",function(p)
 				--you can flop on your belly so you can lunge later
 				local wasspinning = (p.pflags & PF_SPINNING)
 				
-				local ang = R_PointToAngle2(0,0, me.momx,me.momy)
+				local ang = R_PointToAngle2(0,0, me.momx + p.cmomx, me.momy + p.cmomy)
 				local thrust
 				if not wasspinning
 					ang = Soap_ControlDir(p)
@@ -560,6 +565,10 @@ Takis_Hook.addHook("Takis_Thinker",function(p)
 					thrust = FixedMul($,me.scale)
 					if thrust > 0
 						P_InstaThrust(me,ang,thrust)
+						me.momx = $ + p.cmomx
+						me.momy = $ + p.cmomy
+						p.rmomx = me.momx
+						p.rmomy = me.momy
 					end
 				end
 				
@@ -570,6 +579,10 @@ Takis_Hook.addHook("Takis_Thinker",function(p)
 					if not ((p.cmd.forwardmove) and (p.cmd.sidemove))
 					and soap.accspeed + thrust < 14*FU
 						P_InstaThrust(me,ang,9*me.scale)
+						me.momx = $ + p.cmomx
+						me.momy = $ + p.cmomy
+						p.rmomx = me.momx
+						p.rmomy = me.momy
 					end
 				end
 				Soap_SquashMacro(p, {ease_func = "insine", ease_time = 12, strength = (FU/3), name = "soap_slide"})
