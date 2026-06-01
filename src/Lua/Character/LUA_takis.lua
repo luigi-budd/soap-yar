@@ -1778,7 +1778,7 @@ addHook("MobjDamage", function(me,inf,sor,dmg,dmgt)
 	p.pflags = $ &~(PF_THOKKED|PF_JUMPED|PF_SHIELDABILITY)
 	
 	local power = 0
-	local inf_speed = 0
+	local inf_speed,threshold = 0
 	--S_StartSoundAtVolume(me,sfx_sp_smk,255*3/4)
 	S_StartSound(me,sfx_sp_dmg)
 	if Soap_IsLocalPlayer(p)
