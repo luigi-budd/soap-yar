@@ -1016,6 +1016,8 @@ Takis_Hook.addHook("Takis_Thinker",function(p)
 			if Soap_DirBreak(p,me, R_PointToAngle2(0,0,me.momx,me.momy))
 			and not (p.pflags & PF_SPINNING)
 				generic_slingshot(p,me,soap)
+				Soap_Hitlag.addHitlag(me, 10, false)
+				Soap_DamageSfx(me, FU*3/4,FU,nil, {volume = 255/2})
 				--S_StartSound(me,sfx_takmcn)
 				Soap_StartQuake(20*FU, 19,
 					{me.x,me.y,me.z},

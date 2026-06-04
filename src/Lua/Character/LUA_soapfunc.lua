@@ -1012,6 +1012,7 @@ rawset(_G,"Soap_JostleThings",function(me, found, range)
 	if (found == me) then return end
 	--if not (found.health) then return end
 	if not P_IsObjectOnGround(found) then return end
+	if (found.flags & MF_MONITOR) then return end -- messes with gold monitors
 	if (me.player.powers[pw_carry] and found == me.tracer) then return end
 	
 	local dx = found.x - me.x
