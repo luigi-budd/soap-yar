@@ -375,7 +375,8 @@ Takis_Hook.addHook("Takis_Thinker",function(p)
 		local lenient = false
 		if abs(me.z - me.floorz) <= 22 * me.scale
 		and (soap.notCarried and (not p.boat))
-		and not (soap.jump_R or (me.eflags & MFE_GOOWATER))
+		-- not if we just left the floor this tic
+		and not (soap.jump_R or (me.eflags & MFE_GOOWATER) or soap.last.onground)
 			clutchlen = true
 			lenient = true
 		end
