@@ -25,8 +25,10 @@ hl.cv_hitlagtics = CV_RegisterVar({
 	flags = CV_NETVAR|CV_SHOWMODIF,
 	PossibleValue = hlt_pv
 })
-CV.hitlag_tics = hl.cv_hitlagtics
-CV.PossibleValues["soap_maxhitlagtics"] = {values = hlt_pv, min = 0, max = 10*TR} -- probably cap it in the menu
+if (CV)
+	CV.hitlag_tics = hl.cv_hitlagtics
+	CV.PossibleValues["soap_maxhitlagtics"] = {values = hlt_pv, min = 0, max = 10*TR} -- probably cap it in the menu
+end
 
 --lol
 local hlm_pv = {MIN = FU, MAX = 60*FU}
@@ -36,8 +38,10 @@ hl.cv_hitlagmulti = CV_RegisterVar({
 	flags = CV_NETVAR|CV_FLOAT|CV_SHOWMODIF,
 	PossibleValue = hlm_pv,
 })
-CV.hitlag_mul = hl.cv_hitlagmulti
-CV.PossibleValues["soap_hitlagmul"] = {values = hlt_pv, min = FU, max = 20*FU}
+if (CV)
+	CV.hitlag_mul = hl.cv_hitlagmulti
+	CV.PossibleValues["soap_hitlagmul"] = {values = hlt_pv, min = FU, max = 20*FU}
+end
 
 local function dust_type(me)
 	return (me.eflags & (MFE_UNDERWATER|MFE_TOUCHWATER)) and P_RandomRange(MT_SMALLBUBBLE,MT_MEDIUMBUBBLE) or MT_SOAP_DUST

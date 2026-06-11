@@ -78,6 +78,8 @@ local function playknockout_kbsfx(p,me,soap)
 end
 
 local function playknockoutsfx(p,me,soap)
+	if not me.health then return end
+	
 	if abs(leveltime - soap.kotic) < TR*3/2 then return end
 	soap.kotic = leveltime
 	
@@ -100,6 +102,33 @@ local function doknockback(p,me,soap)
 	me.frame = A|($ &~FF_FRAMEMASK)
 	me.sprite2 = SPR2_MSC2
 	me.tics = -1
+end
+local function handle_knockback(p,me,soap)
+	P_Thrust(me, me.soap_damagevar.ang, me.soap_damagevar.speed)
+	if me.soap_damagevar.momz
+		P_SetObjectMomZ(me, me.soap_damagevar.momz / 4)
+	end
+	playknockout_kbsfx(p,me,soap)
+	if me.soap_damagevar.threshold >= 30*me.scale
+		playknockoutsfx(p,me,soap)
+		
+		me.state = S_PLAY_DEAD
+		me.frame = A|($ &~FF_FRAMEMASK)
+		me.sprite2 = SPR2_MSC2
+		me.tics = -1
+	end
+	
+	if (SOAP_DEBUG and SOAP_DEBUG & DEBUG_KNOCKBACK)
+		printf(
+			"%s carried out knockback (%d)\n"..
+			"\tplayerspeed: %f",
+			
+			p.name, leveltime,
+			R_PointTo3DDist(0,0,0, me.momx,me.momy,me.momz)
+		)
+	end
+	
+	me.soap_damagevar = nil
 end
 
 local sfx_armacharge = sfx_s3k84
@@ -2486,20 +2515,7 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 		--DAMMIT!!!
 		if (me.soap_damagevar ~= nil)
 		and not (me.hitlag)
-			P_Thrust(me, me.soap_damagevar.ang, me.soap_damagevar.speed)
-			if me.soap_damagevar.momz
-				P_SetObjectMomZ(me, me.soap_damagevar.momz / 4)
-			end
-			playknockout_kbsfx(p,me,soap)
-			if me.soap_damagevar.threshold >= 30*me.scale
-				playknockoutsfx(p,me,soap)
-				
-				me.state = S_PLAY_DEAD
-				me.frame = A|($ &~FF_FRAMEMASK)
-				me.sprite2 = SPR2_MSC2
-				me.tics = -1
-			end
-			me.soap_damagevar = nil
+			handle_knockback(p,me,soap)
 		end
 		if soap.paintime == 1 and (soap.hud.painsurge == 0)
 		and (soap.accspeed >= 30*FU)
@@ -2773,6 +2789,9 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 	end
 	
 	Soap_DeathThinker(p,me,soap)
+	if (p.deadtimer == 1 and me.soap_damagevar)
+		handle_knockback(p,me,soap)
+	end
 	Soap_SuperThinker(p,me,soap)
 	me.nohitlagforme = (p.powers[pw_invulnerability] > 0)
 end)
@@ -3252,6 +3271,7 @@ local function try_damage_cases(me,thing, p,soap,DealDamage)
 			
 			local rad = FixedDiv(me.radius, me.scale)
 			local hei = FixedDiv(me.height, me.scale)
+			local extra = abs(FixedDiv(me.momz, 50*me.scale))
 			for i = 0, 32
 				local s = P_SpawnMobjFromMobj(me,
 					Soap_RandomFixedRange(-rad, rad),
@@ -3260,11 +3280,15 @@ local function try_damage_cases(me,thing, p,soap,DealDamage)
 					MT_PARTICLE
 				)
 				s.state = S_SOAP_IMPACT_LINE2
-				s.angle = me.angle - ANGLE_90
+				if (soap.in2D)
+					s.angle = 0
+				else
+					s.angle = me.angle - ANGLE_90
+				end
 				s.color = armacolors[P_RandomRange(1, #armacolors)]
 				s.rollangle = -ANGLE_90
 				s.renderflags = $|RF_ALWAYSONTOP
-				s.spriteyscale = $ * 3/2
+				s.spriteyscale = $ * 3/2 + extra
 				s.flags = $|MF_NOCLIPTHING|MF_NOCLIP|MF_NOCLIPHEIGHT|MF_NOBLOCKMAP
 				s.takis_flingme = false
 				local offset = P_RandomRange(-4, 8)
@@ -3615,7 +3639,7 @@ local function get_inf_speed(me,inf,sor)
 	end
 	--return max(default, R_PointTo3DDist(0,0,0,inf.momx,inf.momy,inf.momz))
 	-- mmmaybe dont factor momz if we're using it now...
-	return max(default, R_PointToDist2(0,0,0,inf.momx,inf.momy)), max(default, R_PointTo3DDist(0,0,0,inf.momx,inf.momy,inf.momz))
+	return max(default, R_PointToDist2(0,0,inf.momx,inf.momy)), max(default, R_PointTo3DDist(0,0,0,inf.momx,inf.momy,inf.momz))
 end
 
 --handle soap damage
@@ -3684,6 +3708,27 @@ addHook("MobjDamage", function(me,inf,sor,dmg,dmgt)
 		if soap.taunt.tics
 			inf_speed = $ * 4
 			momz = $ * 8 -- x8 to revert the / 4 from um
+			--				why are we dividing by 4 again?
+		end
+		if dokb and FixedHypot(inf_speed, momz) < 4 * inf.scale
+			dokb = false
+		end
+		
+		if (SOAP_DEBUG and SOAP_DEBUG & DEBUG_KNOCKBACK)
+			printf(
+				"%s suffered knockback: (%d)\n"..
+				"\tinf_speed: %f\n"..
+				"\tinf.momz:  %f\n"..
+				"\tknockback speed: %f\n"..
+				"\tknockback thres: %f\n"..
+				"\tknockback momz:  %f\n"..
+				"\tdo knockback? %s",
+				
+				p.name, leveltime,
+				inf_speed, inf.momz,
+				inf_speed, threshold, momz,
+				(dokb) and "yes" or "no"
+			)
 		end
 		
 		if dokb

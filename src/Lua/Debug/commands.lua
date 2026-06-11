@@ -24,6 +24,7 @@ enumflags("DEBUG_",{
 	"RDASH",
 	"HOOKS",
 	"SPEEDOMETER",
+	"KNOCKBACK",
 }, function(k,enum,val)
 	DEBUGTOENUM[val] = enum
 end)

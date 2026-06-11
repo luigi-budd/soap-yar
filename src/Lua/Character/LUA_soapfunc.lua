@@ -798,7 +798,7 @@ rawset(_G,"Soap_ImpactVFX",function(src,inf, distmul, scalemul, forcesplat, nosp
 
 	local damagecolor = damagecolors[P_RandomRange(1, #damagecolors)]
 	local irad = 40*scalemul
-	local offset = 3
+	local offset = 6
 	for i = 1,16
 		-- caches less angles
 		local ha = FixedAngle(P_RandomRange(0,36) * 10*FU)
@@ -808,11 +808,11 @@ rawset(_G,"Soap_ImpactVFX",function(src,inf, distmul, scalemul, forcesplat, nosp
 			off.x + FixedMul(irad, v.x),
 			off.y + FixedMul(irad, v.y),
 			-- 40 pixels are how much the red spark are offset
-			-- from 128
-			off.z + FixedMul(irad, v.z) + 40*scalemul,
+			-- from 128, which just so happens to be irad!
+			off.z + FixedMul(irad, v.z) + irad,
 			MT_PARTICLE --MT_SOAP_FREEZEGFX
 		)
-		s.state = S_SOAP_IMPACT_LINE2
+		s.state = P_RandomChance(FU/2) and S_SOAP_IMPACT_LINE2F or S_SOAP_IMPACT_LINE2
 		s.angle = ha
 		if CV.rotations.value
 			s.rollangle = va
@@ -825,6 +825,8 @@ rawset(_G,"Soap_ImpactVFX",function(src,inf, distmul, scalemul, forcesplat, nosp
 		s.tics = $ + offset
 		s.anim_duration = $ + offset
 		s.scale = $ / 2
+		s.spritexscale = max(scalemul, FU)
+		s.spriteyscale = s.spritexscale
 	end
 end)
 
