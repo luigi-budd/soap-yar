@@ -2830,6 +2830,7 @@ addHook("PlayerSpawn",function(p)
 	
 	soap.deathtype = 0
 	Soap_ResetLunge(p)
+	soap.squash = {}
 	
 	if skins[p.skin].name ~= SOAP_SKIN then return end
 	if mariomode

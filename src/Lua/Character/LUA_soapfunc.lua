@@ -1372,8 +1372,9 @@ rawset(_G, "Soap_TickSquashes",function(p,me,soap, donttick)
 	local yscale = soap.spriteyscale
 	
 	if squash_count
-		
-		for k,squash in ipairs(soap.squash)
+		for i = squash_count, 1, -1 --k,squash in ipairs(soap.squash)
+			local squash = soap.squash[i]
+			
 			local has_any_tics = false
 			if (squash.x and squash.x.tics < squash.x.timetake)
 			or (squash.y and squash.y.tics < squash.y.timetake)
@@ -1382,7 +1383,7 @@ rawset(_G, "Soap_TickSquashes",function(p,me,soap, donttick)
 			
 			if not has_any_tics
 			and not donttick
-				table.remove(soap.squash,k); continue
+				table.remove(soap.squash,i); continue
 			end
 			
 			if squash.x --and squash.x.tics ~= squash.x.timetake
