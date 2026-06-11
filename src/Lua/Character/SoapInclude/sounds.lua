@@ -149,3 +149,8 @@ for i = 0, 6
 		caption = "/",
 	}
 end
+
+/*
+SafeFreeslot("sfx_sp_rcg")
+sfxinfo[sfx_sp_rcg].caption = "Recharge"
+*/

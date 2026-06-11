@@ -1766,6 +1766,7 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 					follow.alpha = 0
 					follow.dist = 0
 					follow.zcorrect = true
+					follow.dispoffset = 40
 					soap.fx.uppercut_aura = follow
 				end
 				local aura = soap.fx.uppercut_aura

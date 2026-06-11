@@ -1277,6 +1277,7 @@ rawset(_G,"Soap_FXDestruct",function(p)
 		P_RemoveMobj(soap.fx.dash_aura)
 		soap.fx.dash_aura = nil
 	end
+	me.soap_supervfx = nil
 end)
 
 local function format_easestruct(input)

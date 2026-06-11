@@ -215,6 +215,9 @@ Takis_Hook.addHook("Takis_Thinker",function(p)
 	local washammering = hammer.down
 	soap.afterimage = false
 	p.powers[pw_strong] = $ &~(STR_SPIKE)
+	if (me.soap_supervfx)
+		me.soap_supervfx = nil
+	end
 	
 	--TODO: move this skid block somewhere else?
 	if (p.skidtime)
