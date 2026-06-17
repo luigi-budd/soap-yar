@@ -331,7 +331,7 @@ addHook("HUD",function(v,p)
 	end
 	
 	if (SOAP_DEBUG & DEBUG_SPEEDOMETER)
-	and (takis_custombuild)
+	and (Soap_CheckSRB2Edit())
 		v_width = (v.width() / v.dupx())*FU
 		v_height = (v.height() / v.dupy())*FU
 		

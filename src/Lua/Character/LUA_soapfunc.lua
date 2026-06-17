@@ -3644,7 +3644,7 @@ rawset(_G, "Soap_StartQuake", function(intensity, time, epicenter, radius)
 		intensity = $ * 2
 	end
 	
-	--Accept mobjs as epicenter points
+	--Accept mobjs as epicenter points (is this ever used?)
 	if type(epicenter) == "userdata" and userdataType(epicenter) == "mobj_t"
 		local temp = epicenter
 		epicenter = {temp.x,temp.y,temp.z}
@@ -4352,4 +4352,10 @@ rawset(_G, "Soap_Combat", function(p)
 			me.soap_thokimage = 0
 		end
 	end
+end)
+
+rawset(_G, "Soap_CheckSRB2Edit", function()
+	-- SRB2EDIT TODO: now that edit is officially called... srb2edit,
+	--				  all the takis_* variables should be renamed
+	return (takis_custombuild or gks_custombuild)
 end)

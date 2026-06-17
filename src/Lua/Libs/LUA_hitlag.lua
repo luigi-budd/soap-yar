@@ -110,13 +110,13 @@ hl.iterateHitlagged = function()
 				end
 				
 				--freeze in place
-				if Soap_IsLocalPlayer(p)
+				if (p == displayplayer or p == secondarydisplayplayer)
 					local cam = (p == displayplayer) and camera or camera2
 					cam.momx,cam.momy,cam.momz = 0,0,0
 				end
 				
 				--dont drain rings while in hitlag
-				if (p.powers[pw_super] or p.soaptable.isSolForm)
+				if (p.powers[pw_super] or (p.solchar and p.solchar.istransformed))
 				and ((leveltime % TICRATE == 0) and (not p.exiting))
 					p.rings = $ + 1
 				end

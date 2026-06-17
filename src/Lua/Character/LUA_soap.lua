@@ -2960,7 +2960,7 @@ addHook("FollowMobj",function(p, m_peel) --master peel
 	local pitch = me.pitch
 	local roll = me.roll
 	--we're awesome and have pitch/roll-tation
-	if takis_custombuild
+	if Soap_CheckSRB2Edit()
 	and (cv_pitchroll and cv_pitchroll.value)
 		pitchroll = FixedMul(pitch,r_sin) + FixedMul(roll,r_cos)
 	end
