@@ -65,8 +65,6 @@ events["MoveBlocked"] = {handler = handler_snapany} --runs for every skin
 
 events["Soap_Thinker"] = {}
 events["Soap_DashSpeeds"] = {handler = handler_snapany}
-events["Soap_OnStunEnemy"] = {typefor = typefor_mobj}
-events["Soap_StunnedThink"] = {typefor = typefor_mobj}
 
 events["Takis_Thinker"] = {}
 
@@ -75,6 +73,8 @@ events["Char_OnMove"] = {}
 events["Char_NoAbility"] = {handler = handler_snapany}
 events["Char_VFX"] = {handler = handler_snapany}
 events["Char_OnDamage"] = {handler = handler_snaptrue}
+events["Char_OnStunEnemy"] = {typefor = typefor_mobj}
+events["Char_StunnedThink"] = {typefor = typefor_mobj}
 
 local deprecated = {
 	["Soap_OnMove"] = {
@@ -91,6 +91,14 @@ local deprecated = {
 	},
 	["Takis_VFX"] = {
 		correct = "Char_VFX",
+		seen = false,
+	},
+	["Soap_OnStunEnemy"] = {
+		correct = "Char_OnStunEnemy",
+		seen = false,
+	},
+	["Soap_StunnedThink"] = {
+		correct = "Char_StunnedThink",
 		seen = false,
 	},
 }
