@@ -154,9 +154,10 @@ local function WRAP_buttons(v,p,c, me,soap)
 		)
 	end
 	
+	v.drawFill(x-1,y-19, 122,17, 31|V_30TRANS|(flags &~V_HUDTRANS))
 	v.drawString(x+00,y-18,
-		string.format("%.2f", AngleFixed(me.angle)).." degrees",
-		flags,"thin"
+		string.format("angle: %.2f (facing %.2f)", AngleFixed(me.angle), AngleFixed(p.drawangle)),
+		flags|V_ALLOWLOWERCASE,"thin"
 	)
 	v.drawString(x+00,y-10,
 		string.format("(%.2f,\t%.2f,\t", me.x,me.y) .. string.format("%.2f)", me.z),
@@ -330,7 +331,7 @@ addHook("HUD",function(v,p)
 	end
 	
 	if (SOAP_DEBUG & DEBUG_SPEEDOMETER)
-	and (takis_custombuild)
+	and (Soap_CheckSRB2Edit())
 		v_width = (v.width() / v.dupx())*FU
 		v_height = (v.height() / v.dupy())*FU
 		

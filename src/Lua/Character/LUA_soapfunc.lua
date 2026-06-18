@@ -798,7 +798,7 @@ rawset(_G,"Soap_ImpactVFX",function(src,inf, distmul, scalemul, forcesplat, nosp
 
 	local damagecolor = damagecolors[P_RandomRange(1, #damagecolors)]
 	local irad = 40*scalemul
-	local offset = 3
+	local offset = 6
 	for i = 1,16
 		-- caches less angles
 		local ha = FixedAngle(P_RandomRange(0,36) * 10*FU)
@@ -808,11 +808,11 @@ rawset(_G,"Soap_ImpactVFX",function(src,inf, distmul, scalemul, forcesplat, nosp
 			off.x + FixedMul(irad, v.x),
 			off.y + FixedMul(irad, v.y),
 			-- 40 pixels are how much the red spark are offset
-			-- from 128
-			off.z + FixedMul(irad, v.z) + 40*scalemul,
+			-- from 128, which just so happens to be irad!
+			off.z + FixedMul(irad, v.z) + irad,
 			MT_PARTICLE --MT_SOAP_FREEZEGFX
 		)
-		s.state = S_SOAP_IMPACT_LINE2
+		s.state = P_RandomChance(FU/2) and S_SOAP_IMPACT_LINE2F or S_SOAP_IMPACT_LINE2
 		s.angle = ha
 		if CV.rotations.value
 			s.rollangle = va
@@ -825,6 +825,8 @@ rawset(_G,"Soap_ImpactVFX",function(src,inf, distmul, scalemul, forcesplat, nosp
 		s.tics = $ + offset
 		s.anim_duration = $ + offset
 		s.scale = $ / 2
+		s.spritexscale = max(scalemul, FU)
+		s.spriteyscale = s.spritexscale
 	end
 end)
 
@@ -1012,6 +1014,7 @@ rawset(_G,"Soap_JostleThings",function(me, found, range)
 	if (found == me) then return end
 	--if not (found.health) then return end
 	if not P_IsObjectOnGround(found) then return end
+	if (found.flags & MF_MONITOR) then return end -- messes with gold monitors
 	if (me.player.powers[pw_carry] and found == me.tracer) then return end
 	
 	local dx = found.x - me.x
@@ -1274,6 +1277,7 @@ rawset(_G,"Soap_FXDestruct",function(p)
 		P_RemoveMobj(soap.fx.dash_aura)
 		soap.fx.dash_aura = nil
 	end
+	me.soap_supervfx = nil
 end)
 
 local function format_easestruct(input)
@@ -1368,8 +1372,9 @@ rawset(_G, "Soap_TickSquashes",function(p,me,soap, donttick)
 	local yscale = soap.spriteyscale
 	
 	if squash_count
-		
-		for k,squash in ipairs(soap.squash)
+		for i = squash_count, 1, -1 --k,squash in ipairs(soap.squash)
+			local squash = soap.squash[i]
+			
 			local has_any_tics = false
 			if (squash.x and squash.x.tics < squash.x.timetake)
 			or (squash.y and squash.y.tics < squash.y.timetake)
@@ -1378,7 +1383,7 @@ rawset(_G, "Soap_TickSquashes",function(p,me,soap, donttick)
 			
 			if not has_any_tics
 			and not donttick
-				table.remove(soap.squash,k); continue
+				table.remove(soap.squash,i); continue
 			end
 			
 			if squash.x --and squash.x.tics ~= squash.x.timetake
@@ -1950,6 +1955,7 @@ rawset(_G,"Soap_DeathThinker",function(p,me,soap)
 			me.rollangle = $ + FixedAngle(speed / 2)
 			me.soap_wasinknockout = true
 		end
+		me.flags2 = $ &~MF2_DONTDRAW
 		
 		--lmao handle this here too
 		if (soap.onGround)
@@ -3638,7 +3644,7 @@ rawset(_G, "Soap_StartQuake", function(intensity, time, epicenter, radius)
 		intensity = $ * 2
 	end
 	
-	--Accept mobjs as epicenter points
+	--Accept mobjs as epicenter points (is this ever used?)
 	if type(epicenter) == "userdata" and userdataType(epicenter) == "mobj_t"
 		local temp = epicenter
 		epicenter = {temp.x,temp.y,temp.z}
@@ -4346,4 +4352,10 @@ rawset(_G, "Soap_Combat", function(p)
 			me.soap_thokimage = 0
 		end
 	end
+end)
+
+rawset(_G, "Soap_CheckSRB2Edit", function()
+	-- SRB2EDIT TODO: now that edit is officially called... srb2edit,
+	--				  all the takis_* variables should be renamed
+	return (takis_custombuild or gks_custombuild)
 end)

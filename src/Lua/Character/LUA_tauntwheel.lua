@@ -711,7 +711,7 @@ addHook("KeyDown", function(key)
 			COM_BufInsertText(consoleplayer, "_soap_dotaunt "..cmd_sig.." "..(consoleplayer.soaptable.taunt.prev - 1))
 			StopMenu()
 			return true
-		elseif not menuactive
+		elseif not (menuactive or consoleplayer.spectator)
 			StartMenu()
 			return true
 		end

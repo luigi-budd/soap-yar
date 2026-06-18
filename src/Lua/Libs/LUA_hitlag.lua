@@ -25,8 +25,10 @@ hl.cv_hitlagtics = CV_RegisterVar({
 	flags = CV_NETVAR|CV_SHOWMODIF,
 	PossibleValue = hlt_pv
 })
-CV.hitlag_tics = hl.cv_hitlagtics
-CV.PossibleValues["soap_maxhitlagtics"] = {values = hlt_pv, min = 0, max = 10*TR} -- probably cap it in the menu
+if (CV)
+	CV.hitlag_tics = hl.cv_hitlagtics
+	CV.PossibleValues["soap_maxhitlagtics"] = {values = hlt_pv, min = 0, max = 10*TR} -- probably cap it in the menu
+end
 
 --lol
 local hlm_pv = {MIN = FU, MAX = 60*FU}
@@ -36,8 +38,10 @@ hl.cv_hitlagmulti = CV_RegisterVar({
 	flags = CV_NETVAR|CV_FLOAT|CV_SHOWMODIF,
 	PossibleValue = hlm_pv,
 })
-CV.hitlag_mul = hl.cv_hitlagmulti
-CV.PossibleValues["soap_hitlagmul"] = {values = hlt_pv, min = FU, max = 20*FU}
+if (CV)
+	CV.hitlag_mul = hl.cv_hitlagmulti
+	CV.PossibleValues["soap_hitlagmul"] = {values = hlt_pv, min = FU, max = 20*FU}
+end
 
 local function dust_type(me)
 	return (me.eflags & (MFE_UNDERWATER|MFE_TOUCHWATER)) and P_RandomRange(MT_SMALLBUBBLE,MT_MEDIUMBUBBLE) or MT_SOAP_DUST
@@ -106,13 +110,13 @@ hl.iterateHitlagged = function()
 				end
 				
 				--freeze in place
-				if Soap_IsLocalPlayer(p)
+				if (p == displayplayer or p == secondarydisplayplayer)
 					local cam = (p == displayplayer) and camera or camera2
 					cam.momx,cam.momy,cam.momz = 0,0,0
 				end
 				
 				--dont drain rings while in hitlag
-				if (p.powers[pw_super] or p.soaptable.isSolForm)
+				if (p.powers[pw_super] or (p.solchar and p.solchar.istransformed))
 				and ((leveltime % TICRATE == 0) and (not p.exiting))
 					p.rings = $ + 1
 				end
@@ -162,7 +166,10 @@ hl.iterateHitlagged = function()
 		end
 	end
 	
-	local stunned_hook = Takis_Hook.events["Soap_StunnedThink"]
+	local stunned_hook
+	if (rawget(_G, "Takis_Hook"))
+		stunned_hook = Takis_Hook.events["Soap_StunnedThink"]
+	end
 	local stunned = hl.stunned
 	for k = hl.numstunned, 1, -1
 		if k == 0 then break end
@@ -271,7 +278,7 @@ hl.iterateHitlagged = function()
 				mo.soap_setvfx = true
 			end
 			
-			if (stunned_hook.numhooks)
+			if (stunned_hook and stunned_hook.numhooks)
 				local events = stunned_hook.events
 				for i = 1, stunned_hook.numhooks
 					if stunned_hook.typefor ~= nil
@@ -471,16 +478,18 @@ hl.stunEnemy = function(mo,tics)
 		tics = FixedMul($, hl.cv_hitlagmulti.value)
 	end
 	
-	local stunned_hook = Takis_Hook.events["Soap_OnStunEnemy"]
-	if (stunned_hook.numhooks)
-		local events = stunned_hook.events
-		for i = 1, stunned_hook.numhooks
-			if stunned_hook.typefor ~= nil
-				if stunned_hook.typefor(mo, events[i].typedef) == false then continue end
+	if rawget(_G, "Takis_Hook")
+		local stunned_hook = Takis_Hook.events["Soap_OnStunEnemy"]
+		if (stunned_hook.numhooks)
+			local events = stunned_hook.events
+			for i = 1, stunned_hook.numhooks
+				if stunned_hook.typefor ~= nil
+					if stunned_hook.typefor(mo, events[i].typedef) == false then continue end
+				end
+				local res = Takis_Hook.tryRunHook("Soap_StunnedThink", events[i], mo,tics)
+				if res then return end
+				if not (mo and mo.valid) then return end
 			end
-			local res = Takis_Hook.tryRunHook("Soap_StunnedThink", events[i], mo,tics)
-			if res then return end
-			if not (mo and mo.valid) then return end
 		end
 	end
 	

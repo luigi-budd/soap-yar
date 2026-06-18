@@ -1,3 +1,8 @@
+-- same as soap.lua lol, mostly recycled code from
+-- the old takis version and soap's code.
+-- they both function mostly the same and have most of the same systems,
+-- so itd make sense for them to behave similarly too
+
 local CV = SOAP_CV
 
 local TAKIS_WDIVEVFX = TR - 1
@@ -210,6 +215,9 @@ Takis_Hook.addHook("Takis_Thinker",function(p)
 	local washammering = hammer.down
 	soap.afterimage = false
 	p.powers[pw_strong] = $ &~(STR_SPIKE)
+	if (me.soap_supervfx)
+		me.soap_supervfx = nil
+	end
 	
 	--TODO: move this skid block somewhere else?
 	if (p.skidtime)
@@ -370,7 +378,8 @@ Takis_Hook.addHook("Takis_Thinker",function(p)
 		local lenient = false
 		if abs(me.z - me.floorz) <= 22 * me.scale
 		and (soap.notCarried and (not p.boat))
-		and not (soap.jump_R or (me.eflags & MFE_GOOWATER))
+		-- not if we just left the floor this tic
+		and not (soap.jump_R or (me.eflags & MFE_GOOWATER) or soap.last.onground)
 			clutchlen = true
 			lenient = true
 		end
@@ -541,7 +550,7 @@ Takis_Hook.addHook("Takis_Thinker",function(p)
 				--you can flop on your belly so you can lunge later
 				local wasspinning = (p.pflags & PF_SPINNING)
 				
-				local ang = R_PointToAngle2(0,0, me.momx,me.momy)
+				local ang = R_PointToAngle2(0,0, me.momx + p.cmomx, me.momy + p.cmomy)
 				local thrust
 				if not wasspinning
 					ang = Soap_ControlDir(p)
@@ -560,6 +569,10 @@ Takis_Hook.addHook("Takis_Thinker",function(p)
 					thrust = FixedMul($,me.scale)
 					if thrust > 0
 						P_InstaThrust(me,ang,thrust)
+						me.momx = $ + p.cmomx
+						me.momy = $ + p.cmomy
+						p.rmomx = me.momx
+						p.rmomy = me.momy
 					end
 				end
 				
@@ -570,6 +583,10 @@ Takis_Hook.addHook("Takis_Thinker",function(p)
 					if not ((p.cmd.forwardmove) and (p.cmd.sidemove))
 					and soap.accspeed + thrust < 14*FU
 						P_InstaThrust(me,ang,9*me.scale)
+						me.momx = $ + p.cmomx
+						me.momy = $ + p.cmomy
+						p.rmomx = me.momx
+						p.rmomy = me.momy
 					end
 				end
 				Soap_SquashMacro(p, {ease_func = "insine", ease_time = 12, strength = (FU/3), name = "soap_slide"})
@@ -1003,6 +1020,8 @@ Takis_Hook.addHook("Takis_Thinker",function(p)
 			if Soap_DirBreak(p,me, R_PointToAngle2(0,0,me.momx,me.momy))
 			and not (p.pflags & PF_SPINNING)
 				generic_slingshot(p,me,soap)
+				Soap_Hitlag.addHitlag(me, 10, false)
+				Soap_DamageSfx(me, FU*3/4,FU,nil, {volume = 255/2})
 				--S_StartSound(me,sfx_takmcn)
 				Soap_StartQuake(20*FU, 19,
 					{me.x,me.y,me.z},
@@ -1011,6 +1030,8 @@ Takis_Hook.addHook("Takis_Thinker",function(p)
 			end
 			
 			if (soap.accspeed >= skins[TAKIS_SKIN].normalspeed*2)
+				-- running on water makes you lose all traction basically
+				-- so you literally cant even run on water for long lol
 				p.charflags = $|SF_RUNONWATER
 			else
 				p.charflags = $ &~(SF_RUNONWATER)
@@ -1763,7 +1784,7 @@ addHook("MobjDamage", function(me,inf,sor,dmg,dmgt)
 	p.pflags = $ &~(PF_THOKKED|PF_JUMPED|PF_SHIELDABILITY)
 	
 	local power = 0
-	local inf_speed = 0
+	local inf_speed,threshold = 0
 	--S_StartSoundAtVolume(me,sfx_sp_smk,255*3/4)
 	S_StartSound(me,sfx_sp_dmg)
 	if Soap_IsLocalPlayer(p)
@@ -1775,15 +1796,37 @@ addHook("MobjDamage", function(me,inf,sor,dmg,dmgt)
 	
 	if (inf and inf.valid)
 		--default speeds
-		inf_speed = get_inf_speed(me,inf,sor)
+		local dokb = true
+		inf_speed, threshold = get_inf_speed(me,inf,sor)
 		power = FU + FixedDiv(inf_speed, 30*me.scale)
+		if Soap_IsCompGamemode()
+			if (inf.flags & MF_MISSILE)
+				dokb = false
+			end
+		elseif (inf.player and inf.player.valid)
+			inf_speed = $ / 2
+		end
 		
-		me.soap_damagevar = {
-			ang = R_PointToAngle2(inf.x,inf.y, me.x,me.y),
-			speed = inf_speed
-		}
-		if inf_speed >= 30*me.scale
-			soap.hud.painsurge = 6
+		local momz = abs(inf.momz) + abs(inf_speed/2)
+		--							 ^^^
+		-- that part should probably adjust relative to momz
+		-- so that there wont be an excessive amount of upwards
+		-- knockback
+		if soap.taunt.tics
+			inf_speed = $ * 4
+			momz = $ * 8 -- x8 to revert the / 4 from um
+		end
+		
+		if dokb
+			me.soap_damagevar = {
+				ang = R_PointToAngle2(inf.x,inf.y, me.x,me.y),
+				momz = momz + 8*me.scale,
+				speed = inf_speed,
+				threshold = threshold
+			}
+			if inf_speed >= 30*me.scale
+				soap.hud.painsurge = 6
+			end
 		end
 	end
 	
