@@ -170,12 +170,12 @@ CMDConstructor("debug", {prefix = SOAP_DEVPREFIX, outoflevels = true, checksoap 
 	if not #args
 		prn(p, "Current flags enabled:")
 		local buf = ""
-		for i = 0,31
-			if SOAP_DEBUG & (1 << i)
-				buf = $ .. DEBUGTOENUM[(1 << i)] .."\t"
-			end
+		for i = 0, #DEBUGTOENUM
+			local text = DEBUGTOENUM[(1 << i)]
+			local clr = (SOAP_DEBUG & (1 << i)) and ("\x83") or ("\x86")
+			buf = $ .. clr..text .."\t"
 		end
-		if buf == "" then buf = "None" end
+		
 		prn(p, buf)
 		return
 	end
