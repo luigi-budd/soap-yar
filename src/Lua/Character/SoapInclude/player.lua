@@ -142,6 +142,14 @@ states[S_PLAY_SOAP_SIXSEV] = {
 	nextstate = S_PLAY_SOAP_SIXSEV,
 }
 
+SafeFreeslot("S_PLAY_SOAP_GANGNAM")
+states[S_PLAY_SOAP_GANGNAM] = {
+	sprite = SPR_PLAY,
+	frame = SPR2_SWIM|FF_ANIMATE,
+	tics = 3,
+	nextstate = S_PLAY_SOAP_GANGNAM,
+}
+
 -- super color from supercolorsrevamp
 SafeFreeslot("SKINCOLOR_SUPER_TOXIN1")
 SafeFreeslot("SKINCOLOR_SUPER_TOXIN2")

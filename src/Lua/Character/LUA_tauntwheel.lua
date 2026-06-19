@@ -117,6 +117,10 @@ SOAP_TAUNTS[SOAP_SKIN] = {
 			S_StartSound(me, (me.skin == TAKIS_SKIN) and sfx_tk_whp or sfx_flex)
 			me.state = S_PLAY_SOAP_FLEX
 			soap.stasistic = TR
+			if (me.skin == TAKIS_SKIN)
+				soap.stasistic = $ / 2
+				me.tics = $ / 2
+			end
 			taunt.tics = soap.stasistic
 			
 			me.momx,me.momy = p.cmomx,p.cmomy
@@ -267,7 +271,7 @@ SOAP_TAUNTS[SOAP_SKIN] = {
 		end,
 	},
 	[5] = {
-		name = "67",
+		name = "Six-Seven",
 		
 		run = function(p, me, soap, taunt)
 			soap.stasistic = max($, 2)
@@ -600,9 +604,84 @@ SOAP_TAUNTS[SOAP_SKIN] = {
 			}, selected)
 		end,
 	},
+	[7] = {
+		name = "Gangnam Style",
+		
+		run = function(p, me, soap, taunt)
+			me.state = S_PLAY_SOAP_GANGNAM
+			
+			soap.stasistic = max($, 2)
+			taunt.tics = 2
+			if Soap_IsLocalPlayer(p)
+				S_StopMusic(p)
+			end
+			
+			me.momx,me.momy = p.cmomx,p.cmomy
+		end,
+		think = function(p, me, soap, taunt)
+			if cancelConds(p)
+				if not (P_PlayerInPain(p) or me.state == S_PLAY_PAIN)
+					me.state = S_PLAY_WALK
+					P_MovePlayer(p)
+					Soap_ResetState(p)
+				end
+				P_RestoreMusic(p)
+				S_StopSoundByID(me, sfx_sp_em3)
+				soap.stasistic, taunt.tics = 0,0
+			else
+				soap.stasistic = max($, 2)
+				taunt.tics = 2
+				
+				soap.noability = SNOABIL_ALL
+				
+				if me.state ~= S_PLAY_SOAP_GANGNAM
+					me.state = S_PLAY_SOAP_GANGNAM
+				end
+				
+				local dontplay = false
+				local vol = 255
+				-- off
+				if CV.boomboxsfx.value == 0
+					dontplay = true
+				-- mineonly
+				elseif (CV.boomboxsfx.value == 2)
+				and (displayplayer and displayplayer.valid)
+					dontplay = (p ~= displayplayer)
+				-- on
+				elseif (displayplayer and displayplayer.valid)
+					local imtaunting = displayplayer.soaptable.taunt.num == 7 and (skins[displayplayer.skin].name == SOAP_SKIN)
+					-- if everyones taunt audio is on for us,
+					-- make other taunt volumes a little quieter
+					-- if we're also using the same taunt
+					if imtaunting and (displayplayer ~= p)
+						vol = 255 / 6
+					end
+				end
+				
+				if not S_SoundPlaying(me, sfx_sp_em3)
+				and not dontplay
+					S_StartSoundAtVolume(me, sfx_sp_em3, vol)
+				elseif dontplay
+					S_StopSoundByID(me, sfx_sp_em3)
+				end
+			end
+		end,
+		drawer = function(v,i, x,y, selected)
+			chardrawer(v,i, x,y, {
+				skin = skins[consoleplayer.skin].name,
+				spr2 = SPR2_SWIM,
+				frame = B, angle = 0
+			}, selected)
+		end,
+	},
 }
 SOAP_TAUNTS[TAKIS_SKIN] = {
-	[1] = SOAP_TAUNTS[SOAP_SKIN][1],
+	[1] = {
+		name = "Smugness",
+		run = SOAP_TAUNTS[SOAP_SKIN][1].run,
+		think = SOAP_TAUNTS[SOAP_SKIN][1].think,
+		drawer = SOAP_TAUNTS[SOAP_SKIN][1].drawer,
+	},
 	[2] = SOAP_TAUNTS[SOAP_SKIN][2],
 	[3] = SOAP_TAUNTS[SOAP_SKIN][3],
 	[4] = {

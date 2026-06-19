@@ -405,8 +405,8 @@ ML.addMenu({
 			cv_type = "custom", tooltip = {"Change which direction Soap's B-Rush will send you."}
 		})
 		SOAP_MENUS.buttontoggle(v, cx,cy+52, menu.width - 4, {
-			cv_name = "soap_boomboxsfx", name = "Boombox Audio",
-			cv_type = "custom", tooltip = {"Adjusts the audio from Soap's boomboxes."}
+			cv_name = "soap_boomboxsfx", name = "Taunt Audio",
+			cv_type = "custom", tooltip = {"Adjusts the audio from Soap's boomboxes and taunts."}
 		})
 		SOAP_MENUS.buttontoggle(v, cx,cy+65, menu.width - 4, {
 			cv_name = "soap_spriterot", name = "Sprite Rotation",
