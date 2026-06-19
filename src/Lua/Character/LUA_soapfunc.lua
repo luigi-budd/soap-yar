@@ -777,7 +777,7 @@ rawset(_G,"Soap_ImpactVFX",function(src,inf, distmul, scalemul, forcesplat, nosp
 		shck.colorized = top_layer.colorized
 		shck.translation = (supervfx) and "AllBlack" or nil
 		if (dmgt == DMG_ELECTRIC)
-			shck.color = SKINCOLOR_WAVE
+			shck.color = SKINCOLOR_GALAXY
 			shck.colorized = true
 		end
 		
@@ -799,7 +799,7 @@ rawset(_G,"Soap_ImpactVFX",function(src,inf, distmul, scalemul, forcesplat, nosp
 	-- what a mess...
 	local colorlist = damagecolors
 	if (dmgt == DMG_ELECTRIC)
-		top_layer.color = SKINCOLOR_GOLDENROD
+		top_layer.color = SKINCOLOR_ISLAND
 		top_layer.colorized = true
 		
 		if forcesplat or nosparklag then return end

@@ -7,6 +7,7 @@ SafeFreeslot("S_SOAP_NWF_WIND_FAST")
 SafeFreeslot("MT_SOAP_FREEZEGFX")
 
 local function WindThink(mo)
+	if mo.extravalue1 then return end
 	if mo.bigwind
 		mo.sprite = SPR_NWF_WIND
 	end

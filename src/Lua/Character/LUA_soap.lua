@@ -173,6 +173,11 @@ local function sixseven_callback(spark, me)
 		spark.type = MT_SOAP_WALLBUMP
 		spark.sixseveneffect = true
 		spark.fuse = spark.tics
+		if (me.soap_poundvfx)
+			spark.drawonlyforplayer = me.player
+			spark.fuse = 25
+			speed = 16
+		end
 	end
 	P_ThrustEvenIn2D(spark, spark.angle - ANGLE_90, speed*frac)
 	spark.momx = $ + me.momx
@@ -311,6 +316,7 @@ local function soap_poundonland(p,me,soap)
 				)
 				rock.flags = $|MF_NOCLIPTHING &~(MF_PAIN|MF_SPECIAL)
 				rock.state = S_ROCKCRUMBLEA+P_RandomRange(0, 3)
+				rock.drawonlyforplayer = p
 				P_SetObjectMomZ(rock, Soap_RandomFixedRange(10*FU,20*FU))
 				P_Thrust(rock, FixedAngle(ang * i), Soap_RandomFixedRange(3*FU,7*FU))
 				rock.fuse = TR*3
@@ -335,14 +341,29 @@ local function soap_poundonland(p,me,soap)
 					
 					spark.random = P_RandomRange(-limit,limit) * ANG1
 					spark.momz = Soap_RandomFixedRange(15*me.scale, 30*me.scale) * soap.gravflip
+					spark.drawonlyforplayer = p
 					dust_noviewmobj(spark)
 				end
 			)
+			
+			me.soap_supertemp = true
+			me.soap_poundvfx = true
+			Soap_DustRing(me,
+				MT_PARTICLE, 16,
+				{me.x,me.y,me.z},
+				8*FU, 10*FU,
+				me.scale / 10,
+				me.scale * 6,
+				false, sixseven_callback
+			)
+			me.soap_supertemp = nil
+			me.soap_poundvfx = nil
 		end
 		
 		if me.health
 			P_MovePlayer(p)
 			
+			-- a lil bit of goop!
 			if P_IsObjectInGoop(me)
 				me.state = S_PLAY_ROLL
 				P_SetObjectMomZ(me, 9*FU)
@@ -3296,8 +3317,6 @@ local function try_damage_cases(me,thing, p,soap,DealDamage)
 				local offset = P_RandomRange(-4, 8)
 				s.tics = $ + halftic + offset
 				s.anim_duration = $ + halftic + offset
-				-- stuff breaks if too many things have hitlag so watch out
-				--Soap_Hitlag.addHitlag(s, hitlag_tics / 2, false)
 			end
 		end
 		

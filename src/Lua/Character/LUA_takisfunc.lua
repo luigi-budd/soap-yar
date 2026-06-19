@@ -556,6 +556,9 @@ local function forcehambounce(p)
 end
 
 --hammerhitbox
+local armacolors = {
+	SKINCOLOR_KETCHUP, SKINCOLOR_PEPPER, SKINCOLOR_CRIMSON, SKINCOLOR_GARNET, SKINCOLOR_VOLCANIC
+}
 rawset(_G,"Takis_HammerBlastHitbox",function(p)
 	local me = p.realmo
 	local takis = p.soaptable
@@ -573,14 +576,36 @@ rawset(_G,"Takis_HammerBlastHitbox",function(p)
 		P_ReturnThrustX(nil,ang,dist) + FixedDiv(me.momx, me.scale),
 		P_ReturnThrustY(nil,ang,dist) + FixedDiv(me.momy, me.scale),
 		-TAKIS_HAMMERDISP + FixedDiv(me.momz * takis.gravflip, me.scale),
-		MT_THOK
+		MT_PARTICLE
 	)
 	P_SetOrigin(thok, thok.x,thok.y,thok.z)
 	thok.radius = 40*me.scale
 	thok.height = 60*me.scale
 	thok.scale = me.scale
 	thok.fuse = 2
-	thok.flags2 = $|MF2_DONTDRAW
+	thok.extravalue1 = 1
+	thok.renderflags = $|RF_SEMIBRIGHT
+	thok.state = S_SOAP_NWF_WIND
+	thok.sprite = SPR_NWF_TOPDOWN
+	thok.rollangle = ANGLE_180
+	thok.alpha = FU
+	thok.frame = ($ &~FF_FRAMEMASK)|(leveltime % F)
+	/*
+	local follow = P_SpawnMobjFromMobj(me,0,0,0,MT_SOAP_FREEZEGFX)
+	follow.tics = -1
+	follow.fuse = -1
+	follow.tracer = me
+	follow.topdown = true
+	follow.state = S_SOAP_NWF_WIND
+	follow.dontdrawforviewmobj = me
+	follow.spritexscale = spritemul
+	follow.spriteyscale = spritemul
+	follow.alpha = 0
+	follow.dist = 0
+	follow.zcorrect = true
+	soap.fx.pound_aura = follow
+	*/
+	--thok.flags2 = $|MF2_DONTDRAW
 	
 	if Soap_BreakFloors(p,thok)
 		didit = true
@@ -595,6 +620,7 @@ rawset(_G,"Takis_HammerBlastHitbox",function(p)
 	local fakerange = 250*FU
 	local range = thok.radius*3/2
 	local enemyhit = false
+	local strong = false
 	searchBlockmap("objects", function(ref, found)
 		if found == me then return end
 		if R_PointToDist2(found.x, found.y, thok.x, thok.y) > range + found.radius
@@ -623,7 +649,36 @@ rawset(_G,"Takis_HammerBlastHitbox",function(p)
 			local damage = 1
 			if abs(takis.last.momz) >= 60*me.scale
 				damage = 2
+				strong = true
 				S_StartSound(me,sfx_sp_dm4)
+				
+				local halftic = 8
+				local rad = FixedDiv(me.radius, me.scale)
+				local hei = FixedDiv(me.height, me.scale)
+				local extra = abs(FixedDiv(me.momz, 50*me.scale))
+				for i = 0, 32
+					local s = P_SpawnMobjFromMobj(thok,
+						Soap_RandomFixedRange(-rad, rad),
+						Soap_RandomFixedRange(-rad, rad),
+						Soap_RandomFixedRange(0, hei) + 256*FU,
+						MT_PARTICLE
+					)
+					s.state = S_SOAP_IMPACT_LINE2
+					if (takis.in2D)
+						s.angle = 0
+					else
+						s.angle = me.angle - ANGLE_90
+					end
+					s.color = armacolors[P_RandomRange(1, #armacolors)]
+					s.rollangle = -ANGLE_90
+					s.renderflags = $|RF_ALWAYSONTOP
+					s.spriteyscale = $ * 3/2 + extra
+					s.flags = $|MF_NOCLIPTHING|MF_NOCLIP|MF_NOCLIPHEIGHT|MF_NOBLOCKMAP
+					s.takis_flingme = false
+					local offset = P_RandomRange(-4, 8)
+					s.tics = $ + halftic + offset
+					s.anim_duration = $ + halftic + offset
+				end
 			end
 			
 			P_DamageMobj(found,me,me, damage)
@@ -699,11 +754,37 @@ rawset(_G,"Takis_HammerBlastHitbox",function(p)
 		forcehambounce(p)
 	end
 	if enemyhit
-		Soap_Hitlag.addHitlag(me, 4, false)
+		Soap_Hitlag.addHitlag(me, strong and 14 or 4, false)
 	end
 	return didit
 end)
 
+local function sixseven_callback(spark, me)
+	spark.tics = (me.soap_supertemp) and TR or 10
+	spark.frame = A
+	spark.sprite = SPR_SOAP_GFX
+	spark.frame = 34|FF_PAPERSPRITE|FF_ADD
+	spark.momz = 0
+	spark.renderflags = $|RF_NOCOLORMAPS|RF_FULLBRIGHT|(P_RandomChance(FU/2) and RF_HORIZONTALFLIP or 0)
+	local frac = FU
+	local speed = 8
+	if (me.soap_supertemp)
+		frac = FU
+		speed = 12
+		spark.type = MT_SOAP_WALLBUMP
+		spark.sixseveneffect = true
+		spark.fuse = spark.tics
+		if (me.soap_poundvfx)
+			spark.drawonlyforplayer = me.player
+			spark.fuse = 25
+			speed = 16
+		end
+	end
+	P_ThrustEvenIn2D(spark, spark.angle - ANGLE_90, speed*frac)
+	spark.momx = $ + me.momx
+	spark.momy = $ + me.momy
+	spark.alpha = min(frac * 2, FU)
+end
 rawset(_G,"Takis_DoHammerBlastLand",function(p,domoves)
 	local me = p.realmo
 	local takis = p.soaptable
@@ -764,6 +845,7 @@ rawset(_G,"Takis_DoHammerBlastLand",function(p,domoves)
 			)
 			rock.flags = $|MF_NOCLIPTHING &~(MF_PAIN|MF_SPECIAL)
 			rock.state = S_ROCKCRUMBLEA+P_RandomRange(0, 3)
+			rock.drawonlyforplayer = p
 			P_SetObjectMomZ(rock, Soap_RandomFixedRange(10*FU,20*FU))
 			P_Thrust(rock, FixedAngle(ang * i), Soap_RandomFixedRange(3*FU,7*FU))
 			rock.fuse = TR*3
@@ -788,9 +870,22 @@ rawset(_G,"Takis_DoHammerBlastLand",function(p,domoves)
 				
 				spark.random = P_RandomRange(-limit,limit) * ANG1
 				spark.momz = Soap_RandomFixedRange(15*me.scale, 30*me.scale) * takis.gravflip
+				spark.drawonlyforplayer = p
 				dust_noviewmobj(spark)
 			end
 		)
+		me.soap_supertemp = true
+		me.soap_poundvfx = true
+		Soap_DustRing(me,
+			MT_PARTICLE, 16,
+			{me.x,me.y,me.z},
+			8*FU, 10*FU,
+			me.scale / 10,
+			me.scale * 6,
+			false, sixseven_callback
+		)
+		me.soap_supertemp = nil
+		me.soap_poundvfx = nil
 	end
 	
 	S_StartSoundAtVolume(me, sfx_pstop,2*255/5)
