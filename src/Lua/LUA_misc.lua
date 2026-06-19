@@ -66,7 +66,9 @@ addHook("MobjThinker",function(bump)
 			bump.alpha = ease.inoutsine(frac, FU, 0)
 			bump.spritexscale = ease.inoutquad(frac, FU, FU*5/2)
 			bump.spriteyscale = bump.spritexscale
-			bump.rollangle = $ + ANG2*2
+			if CV.rotations.value
+				bump.rollangle = $ + ANG2*2
+			end
 		end
 		return
 	end

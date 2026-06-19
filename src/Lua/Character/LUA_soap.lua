@@ -66,6 +66,20 @@ local function playknockout_kbsfx(p,me,soap)
 	local speed = FixedMul(soap.accspeed, me.scale)
 	if me.soap_damagevar
 		speed = max($, me.soap_damagevar.threshold)
+		speed = max($, FixedHypot(me.soap_damagevar.speed, me.soap_damagevar.momz / 4))
+	end
+	if (SOAP_DEBUG and SOAP_DEBUG & DEBUG_KNOCKBACK)
+		printf(
+			"%s is playying knockback sound (%d)\n"..
+			"\tplayerspeed: %f\n"..
+			"\tthreshold:   %f\n"..
+			"\tworkspeed:   %f\n",
+			
+			p.name, leveltime,
+			soap.accspeed,
+			me.soap_damagevar.threshold,
+			speed
+		)
 	end
 	if speed <= 15 * me.scale then return end
 	
@@ -109,7 +123,8 @@ local function handle_knockback(p,me,soap)
 		P_SetObjectMomZ(me, me.soap_damagevar.momz / 4)
 	end
 	playknockout_kbsfx(p,me,soap)
-	if me.soap_damagevar.threshold >= 30*me.scale
+	local kb_speed = FixedHypot(me.soap_damagevar.speed, me.soap_damagevar.momz / 4)
+	if max(me.soap_damagevar.threshold, kb_speed) >= 30*me.scale
 		playknockoutsfx(p,me,soap)
 		
 		me.state = S_PLAY_DEAD

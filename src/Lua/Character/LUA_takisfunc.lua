@@ -383,7 +383,7 @@ rawset(_G,"Takis_HandleNoAbils", function(p)
 	if (p.exiting)
 	or (p.inkart)
 	or hiding or ((gametyperules & GTR_RACE) and p.realtime == 0)
-		na = $|NOABIL_ALL &~NOABIL_CLUTCH
+		na = $|NOABIL_ALL &~(NOABIL_CLUTCH|NOABIL_TAUNTS)
 		/*
 		if (p.exiting)
 		or (hiding or ((gametyperules & GTR_RACE) and p.realtime == 0))
@@ -392,14 +392,13 @@ rawset(_G,"Takis_HandleNoAbils", function(p)
 		*/
 	end
 	
+	if p.powers[pw_carry] == CR_ROPEHANG
+		na = $|NOABIL_HAMMER	
+	end
+	
 	/*
 	if (soap.isSliding)
 		na = $|SNOABIL_CROUCH|SNOABIL_RDASH|SNOABIL_AIRDASH|SNOABIL_POUND
-	end
-	if p.powers[pw_carry] == CR_ROPEHANG
-		na = $|SNOABIL_AIRDASH|SNOABIL_UPPERCUT	
-	elseif p.powers[pw_carry] == CR_MACESPIN
-		na = $|SNOABIL_AIRDASH|SNOABIL_CROUCH|SNOABIL_POUND|SNOABIL_UPPERCUT
 	end
 	
 	if soap.taunttime
@@ -424,7 +423,7 @@ rawset(_G,"Takis_HandleNoAbils", function(p)
 		or noaction
 			na = $|SNOABIL_ALL
 			if (CBW_Battle.Exiting or CBW_Battle.Timeout)
-				na = $ &~(SNOABIL_BOTHTAUNTS)
+				na = $ &~(NOABIL_TAUNTS)
 			end
 		end
 	end
@@ -444,12 +443,7 @@ rawset(_G,"Takis_HandleNoAbils", function(p)
 		end
 		
 		if not debugmode
-			na = $|SNOABIL_TAUNTSONLY|SNOABIL_BREAKDANCE
-		end
-		if gametype == GT_ZE2
-			if ZE2.game_ended
-				na = $ &~SNOABIL_BREAKDANCE
-			end
+			na = $|NOABIL_ALL &~NOABIL_TAUNTS
 		end
 	end
 	
@@ -457,7 +451,7 @@ rawset(_G,"Takis_HandleNoAbils", function(p)
 	or (soap.stasistic)
 	or (p.powers[pw_nocontrol] or me.reactiontime)
 	or (PSO)
-		na = $|SNOABIL_ALL &~SNOABIL_BOTHTAUNTS
+		na = $|NOABIL_ALL &~NOABIL_TAUNTS
 	end
 	
 	if (me.state >= S_PLAY_SUPER_TRANS1)
@@ -466,7 +460,7 @@ rawset(_G,"Takis_HandleNoAbils", function(p)
 	or (me.punchsource and me.punchsource.valid)
 	or (me.soap_kickme or me.sprite2 == SPR2_MSC2 or me.state == S_PLAY_SOAP_KNOCKOUT)
 	or (p.kart or p.inkart)
-		na = $|SNOABIL_ALL
+		na = $|NOABIL_ALL
 	end
 	
 	-- jump moves

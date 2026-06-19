@@ -148,6 +148,20 @@ local function playknockout_kbsfx(p,me,soap)
 	local speed = FixedMul(soap.accspeed, me.scale)
 	if me.soap_damagevar
 		speed = max($, me.soap_damagevar.threshold)
+		speed = max($, FixedHypot(me.soap_damagevar.speed, me.soap_damagevar.momz / 4))
+	end
+	if (SOAP_DEBUG and SOAP_DEBUG & DEBUG_KNOCKBACK)
+		printf(
+			"%s is playying knockback sound (%d)\n"..
+			"\tplayerspeed: %f\n"..
+			"\tthreshold:   %f\n"..
+			"\tworkspeed:   %f\n",
+			
+			p.name, leveltime,
+			soap.accspeed,
+			me.soap_damagevar.threshold,
+			speed
+		)
 	end
 	if speed <= 15 * me.scale then return end
 	
@@ -191,7 +205,8 @@ local function handle_knockback(p,me,soap)
 		P_SetObjectMomZ(me, me.soap_damagevar.momz / 4)
 	end
 	playknockout_kbsfx(p,me,soap)
-	if me.soap_damagevar.threshold >= 30*me.scale
+	local kb_speed = FixedHypot(me.soap_damagevar.speed, me.soap_damagevar.momz / 4)
+	if max(me.soap_damagevar.threshold, kb_speed) >= 30*me.scale
 		playknockoutsfx(p,me,soap)
 		
 		me.state = S_PLAY_DEAD
@@ -898,6 +913,10 @@ Takis_Hook.addHook("Takis_Thinker",function(p)
 				rock.spriteyoffset = 0
 			end
 		end
+	elseif (p.powers[pw_carry] == CR_ROPEHANG)
+		if soap.use
+			hammer.lockout = -2
+		end
 	end
 	
 	if not soap.notCarried
@@ -1009,6 +1028,7 @@ Takis_Hook.addHook("Takis_Thinker",function(p)
 	end
 	
 	p.charflags = $ &~(SF_RUNONWATER|SF_NOSKID)|(soap.lunge.effect and SF_NOSKID or 0)
+	local noafterimages = true
 	if not (soap.noability & NOABIL_AFTERIMAGE)
 		if clutch.time
 		/*
@@ -1027,6 +1047,7 @@ Takis_Hook.addHook("Takis_Thinker",function(p)
 		*/
 		--or (takis.transfo & TRANSFO_BALL and takis.accspeed >= 50*FU)
 		and ((me.health) or (p.playerstate == PST_LIVE))
+			noafterimages = false
 			clutch.time = $+1
 			soap.afterimage = true
 			p.powers[pw_strong] = $|STR_SPIKE
@@ -1122,14 +1143,9 @@ Takis_Hook.addHook("Takis_Thinker",function(p)
 				)
 			end
 			*/
-		else
-			if not p.inkart
-				p.charflags = $ &~(SF_RUNONWATER)
-				p.runspeed = skins[TAKIS_SKIN].runspeed/2
-			end
-			clutch.time = 0
 		end
-	else
+	end
+	if noafterimages
 		if not p.inkart
 			p.charflags = $ &~(SF_RUNONWATER)
 			p.runspeed = skins[TAKIS_SKIN].runspeed/2
@@ -1158,6 +1174,9 @@ Takis_Hook.addHook("Takis_Thinker",function(p)
 		hammer.lockout = $ - 1
 	elseif hammer.lockout == -1
 	and soap.onGround
+		hammer.lockout = 0
+	elseif hammer.lockout == -2
+	and not (soap.use)
 		hammer.lockout = 0
 	end
 	if hammer.jumped

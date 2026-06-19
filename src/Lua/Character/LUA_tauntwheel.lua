@@ -23,13 +23,14 @@ local function CheckTauntAvail(p)
 	if not (skins[p.skin].name == SOAP_SKIN or skins[p.skin].name == TAKIS_SKIN) then return false; end
 	local me = p.realmo
 	if not (me and me.valid) then return false; end
-
+	
+	local noabil_taunt = (skins[p.skin].name == TAKIS_SKIN) and NOABIL_TAUNTS or SNOABIL_TAUNTS
 	if (p.panim == PA_IDLE or p.panim == PA_RUN or soap.accspeed <= 5*FU)
 	and (P_IsObjectOnGround(me))
 	and not (taunt.active or taunt.tics)
 	and me.health
 	and (soap.notCarried)
-	and not (soap.noability & SNOABIL_TAUNTS)
+	and not (soap.noability & noabil_taunt)
 	and (SOAP_TAUNTS[me.skin] ~= nil and #SOAP_TAUNTS[me.skin])
 		return true
 	end
@@ -614,7 +615,7 @@ SOAP_TAUNTS[SOAP_SKIN] = {
 			soap.stasistic = max($, 2)
 			taunt.tics = 2
 			if Soap_IsLocalPlayer(p)
-				S_StopMusic(p)
+				S_FadeMusic(0, MUSICRATE/4, p)
 			end
 			
 			me.momx,me.momy = p.cmomx,p.cmomy
@@ -630,7 +631,9 @@ SOAP_TAUNTS[SOAP_SKIN] = {
 					P_MovePlayer(p)
 					Soap_ResetState(p)
 				end
-				P_RestoreMusic(p)
+				if Soap_IsLocalPlayer(p)
+					S_FadeMusic(100, MUSICRATE/4, p)
+				end
 				local sound = (me.skin == TAKIS_SKIN) and sfx_sp_em4 or sfx_sp_em3
 				S_StopSoundByID(me, sound)
 				soap.stasistic, taunt.tics = 0,0
@@ -705,6 +708,9 @@ SOAP_TAUNTS[SOAP_SKIN] = {
 		canceled = function(p, me, soap, taunt)
 			S_StopSoundByID(me, sfx_sp_em3)
 			S_StopSoundByID(me, sfx_sp_em4)
+			if Soap_IsLocalPlayer(p)
+				S_FadeMusic(100, MUSICRATE/4, p)
+			end
 		end
 	},
 }
