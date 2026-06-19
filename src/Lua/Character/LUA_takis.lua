@@ -1888,9 +1888,9 @@ addHook("MobjDamage", function(me,inf,sor,dmg,dmgt)
 		nosfx = true,
 		vol = 255
 	})
-	Soap_ImpactVFX(me, inf, nil, power)
+	Soap_ImpactVFX(me, inf, nil, power, nil,nil, dmgt)
 	while (power > FU)
-		Soap_ImpactVFX(me, inf, 2*FU, power)
+		Soap_ImpactVFX(me, inf, 2*FU, power, nil,nil, dmgt)
 		power = $ - FU/2
 	end
 	
@@ -1953,8 +1953,7 @@ Takis_Hook.addHook("PostThinkFrame",function(p)
 		if p.powers[pw_carry] == CR_NIGHTSMODE
 			if p.bumpertime > takis.lastbumper
 			and clutch.nights <= (TR/2) - 2
-				-- TODO: find the sound that replaced this
-				S_StartSoundAtVolume(me,sfx_cltch5,220)
+				S_StartSoundAtVolume(me,sfx_tk_cl3,220)
 			end
 			
 			if (me.state ~= S_PLAY_TAKIS_TORNADO)

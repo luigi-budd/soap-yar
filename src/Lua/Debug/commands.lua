@@ -227,6 +227,17 @@ CMDConstructor("killme", {prefix = SOAP_DEVPREFIX, func = function(p,...)
 	p.soaptable.deathtype = type
 end})
 
+CMDConstructor("hurtme", {prefix = SOAP_DEVPREFIX, func = function(p,...)
+	local args = {...}
+	local type = args[1]
+	if type == nil then return end
+	if not (p.realmo and p.realmo.valid) then return end
+	
+	type = string.upper($)
+	type = _G["DMG_"..type] or 0
+	P_DamageMobj(p.realmo,nil,nil,type)
+end})
+
 CMDConstructor("scale", {prefix = SOAP_DEVPREFIX, func = function(p,...)
 	local args = {...}
 	local scalemul = args[1]

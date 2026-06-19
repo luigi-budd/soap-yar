@@ -684,8 +684,19 @@ local damagecolors = {
 	SKINCOLOR_YELLOW,
 	SKINCOLOR_SAPPHIRE
 }
+local elec_sparkcolors = {
+	SKINCOLOR_CERULEAN, SKINCOLOR_COBALT, SKINCOLOR_MIDNIGHT, SKINCOLOR_SAPPHIRE,
+	SKINCOLOR_GALAXY, SKINCOLOR_VAPOR, SKINCOLOR_DUSK, SKINCOLOR_MAJESTY,
+}
+local damagecolors_elec = {
+	unpack(elec_sparkcolors),
+	SKINCOLOR_MINT, SKINCOLOR_SEAFOAM, SKINCOLOR_ISLAND, SKINCOLOR_BOTTLE,
+	SKINCOLOR_JADE, SKINCOLOR_MASTER,
+	SKINCOLOR_TOPAZ, SKINCOLOR_GOLDENROD, SKINCOLOR_PEAR, SKINCOLOR_LEMON,
+	SKINCOLOR_LIME, SKINCOLOR_PERIDOT, SKINCOLOR_HEADLIGHT, SKINCOLOR_CHARTREUSE
+}
 local vfxheight = 90*FU
-rawset(_G,"Soap_ImpactVFX",function(src,inf, distmul, scalemul, forcesplat, nosparklag)
+rawset(_G,"Soap_ImpactVFX",function(src,inf, distmul, scalemul, forcesplat, nosparklag, dmgt)
 	if (inf and inf.valid and inf.player and inf.skin == SOAP_SKIN)
 		inf.player.soaptable.calledvfxthistic = true
 	end
@@ -739,6 +750,7 @@ rawset(_G,"Soap_ImpactVFX",function(src,inf, distmul, scalemul, forcesplat, nosp
 	top_layer.startinghitlag = (src.hitlag or 0)
 	top_layer.distmul = distmul
 	top_layer.scalemul = scalemul
+	top_layer.dmgt = dmgt
 	top_layer.soap_supervfx = supervfx
 
 	if inf and inf.valid
@@ -764,6 +776,11 @@ rawset(_G,"Soap_ImpactVFX",function(src,inf, distmul, scalemul, forcesplat, nosp
 		shck.color = top_layer.color
 		shck.colorized = top_layer.colorized
 		shck.translation = (supervfx) and "AllBlack" or nil
+		if (dmgt == DMG_ELECTRIC)
+			shck.color = SKINCOLOR_WAVE
+			shck.colorized = true
+		end
+		
 		if P_RandomChance(FU/2)
 			local shock = P_SpawnMobjFromMobj(top_layer, 0,0,0, MT_PARTICLE)
 			shock.state = shck.state
@@ -772,13 +789,53 @@ rawset(_G,"Soap_ImpactVFX",function(src,inf, distmul, scalemul, forcesplat, nosp
 			shock.spriteyoffset = 40*FU
 			shock.rollangle = ANGLE_90
 			--shock.renderflags = $|RF_HORIZONTALFLIP|RF_VERTICALFLIP
-			shock.color = top_layer.color
-			shock.colorized = top_layer.colorized
+			shock.color = shck.color
+			shock.colorized = shck.colorized
 			shock.renderflags = shck.renderflags
-			shock.translation = (supervfx) and "AllBlack" or nil
+			shock.translation = shck.translation
 		end
 	end
-
+	
+	-- what a mess...
+	local colorlist = damagecolors
+	if (dmgt == DMG_ELECTRIC)
+		top_layer.color = SKINCOLOR_GOLDENROD
+		top_layer.colorized = true
+		
+		if forcesplat or nosparklag then return end
+		local num = (28 * scalemul)/FU
+		
+		local range = FixedMul(70*src.scale, scalemul)
+		for i = 0,num
+			local f = P_SpawnMobjFromMobj(src,
+				Soap_RandomFixedRange(-range,range),
+				Soap_RandomFixedRange(-range,range),
+				Soap_RandomFixedRange(0,range*2),
+				MT_PARTICLE
+			)
+			f.scale = scalemul * 2
+			f.spritexscale = $ + FixedMul(Soap_RandomFixedRange(-FU/4,FU/4), scalemul)
+			f.spriteyscale = f.spritexscale
+			f.state = S_SOAP_HITM_ESW
+			f.tics = P_RandomRange(0, 5 + (20*scalemul)/FU)
+			-- Theres 3 "stages" for these little spark particles,
+			-- each stage only has 2 frames so stronger attacks
+			-- will have sparks that last longer
+			f.extravalue1 = 1 + (2*scalemul)/FU
+			if P_RandomChance(FU/10) then
+				f.extravalue1 = $ * 2
+			end
+			f.renderflags = $|(P_RandomChance(FU/2) and RF_HORIZONTALFLIP or 0)
+			f.color = elec_sparkcolors[P_RandomRange(1, #elec_sparkcolors)]
+			
+			local lag = (src.hitlag or 0)
+			f.tics = $ + lag
+			f.anim_duration = $ + lag
+		end
+		
+		colorlist = damagecolors_elec
+	end
+	
 	if forcesplat or nosparklag then return end
 	
 	if supervfx
@@ -795,8 +852,8 @@ rawset(_G,"Soap_ImpactVFX",function(src,inf, distmul, scalemul, forcesplat, nosp
 			--P_SetObjectMomZ(shck, -4*FU)
 		end
 	end
-
-	local damagecolor = damagecolors[P_RandomRange(1, #damagecolors)]
+	
+	local damagecolor = colorlist[P_RandomRange(1, #colorlist)]
 	local irad = 40*scalemul
 	local offset = 6
 	for i = 1,16
@@ -822,8 +879,9 @@ rawset(_G,"Soap_ImpactVFX",function(src,inf, distmul, scalemul, forcesplat, nosp
 		s.color = damagecolor
 		s.tracer = inf
 		s.renderflags = $|RF_ALWAYSONTOP|rflags
-		s.tics = $ + offset
-		s.anim_duration = $ + offset
+		local rand = P_RandomRange(-3,5)
+		s.tics = $ + offset + rand
+		s.anim_duration = $ + offset + rand
 		s.scale = $ / 2
 		s.spritexscale = max(scalemul, FU)
 		s.spriteyscale = s.spritexscale
@@ -2932,6 +2990,7 @@ local function VFX_Lunge(p,me,soap, props)
 			}
 			roll.rollangle = FixedAngle(Soap_RandomFixedRange(0,360*FU))
 			roll.fuse = P_RandomRange(4,8)
+			roll.renderflags = $|RF_FULLBRIGHT|RF_NOCOLORMAPS
 			roll.state = S_SOAP_LUNGEVFX
 		end
 	end
@@ -3821,6 +3880,7 @@ rawset(_G, "Soap_DoLunge",function(p, fromjump)
 	ghost.colorized = true
 	ghost.frame = $|TR_TRANS50
 	ghost.blendmode = AST_ADD
+	ghost.renderflags = $|RF_FULLBRIGHT|RF_NOCOLORMAPS
 	ghost.state = S_PLAY_ROLL
 	ghost.tics = -1
 	

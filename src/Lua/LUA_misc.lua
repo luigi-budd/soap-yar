@@ -284,7 +284,7 @@ local function NewVFXThink(v)
 				shck.rollangle = P_RandomChance(FU/2) and ANGLE_90 or 0
 				*/
 				v.distmul = ($ or FU) + FU
-				Soap_ImpactVFX(v.target or v, v.tracer or v, v.distmul,v.scalemul, false, true)
+				Soap_ImpactVFX(v.target or v, v.tracer or v, v.distmul,v.scalemul, false, true, v.dmgt)
 			end
 		end
 	end

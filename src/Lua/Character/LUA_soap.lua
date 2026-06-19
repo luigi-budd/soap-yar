@@ -3774,10 +3774,10 @@ addHook("MobjDamage", function(me,inf,sor,dmg,dmgt)
 			nosfx = true,
 			vol = 255
 		})
-		Soap_ImpactVFX(me, inf, nil, power)
+		Soap_ImpactVFX(me, inf, nil, power, nil,nil, dmgt)
 	end
 	while (power > FU)
-		Soap_ImpactVFX(me, inf, 2*FU, power)
+		Soap_ImpactVFX(me, inf, 2*FU, power, nil,nil, dmgt)
 		power = $ - FU/2
 	end
 	

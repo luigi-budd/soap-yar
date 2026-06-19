@@ -701,6 +701,10 @@ SOAP_TAUNTS[SOAP_SKIN] = {
 				frame = (skins[consoleplayer.skin].name == SOAP_SKIN) and C or A, angle = 0
 			}, selected)
 		end,
+		canceled = function(p, me, soap, taunt)
+			S_StopSoundByID(me, sfx_sp_em3)
+			S_StopSoundByID(me, sfx_sp_em4)
+		end
 	},
 }
 SOAP_TAUNTS[TAKIS_SKIN] = {
@@ -765,6 +769,7 @@ SOAP_TAUNTS[TAKIS_SKIN] = {
 		run = SOAP_TAUNTS[SOAP_SKIN][7].run,
 		think = SOAP_TAUNTS[SOAP_SKIN][7].think,
 		drawer = SOAP_TAUNTS[SOAP_SKIN][7].drawer,
+		canceled = SOAP_TAUNTS[SOAP_SKIN][7].canceled,
 	},
 }
 

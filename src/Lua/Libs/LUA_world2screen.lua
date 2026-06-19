@@ -158,7 +158,7 @@ rawset(_G, "K_GetScreenCoords",function(vid,p,cam, point, props)
 		dist = R_PointToDist2(0, 0, R_PointToDist2(targx,targy,camPos.x,camPos.y), targz - camPos.z)
 	else
 		local fovratio = FixedDiv(90*FU, 180*FU - FixedMul(my_fov, 4*FU/3)-FU*-30)
-		y = FixedDiv(y, FixedMul(dist or 1,distfact))
+		y = FixedDiv(y or 1, FixedMul(dist or 1,distfact) or 1)
 		if srcflip
 			y = -y
 		end
