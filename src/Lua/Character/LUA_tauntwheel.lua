@@ -615,6 +615,7 @@ SOAP_TAUNTS[SOAP_SKIN] = {
 			soap.stasistic = max($, 2)
 			taunt.tics = 2
 			if Soap_IsLocalPlayer(p)
+			and CV.boomboxsfx.value
 				S_FadeMusic(0, MUSICRATE/4, p)
 			end
 			
