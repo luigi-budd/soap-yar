@@ -1768,6 +1768,7 @@ addHook("MobjCollide",try_pvp_collide,MT_PLAYER)
 local function get_inf_speed(me,inf,sor)
 	local default = 0
 	if (inf.flags & MF_MISSILE)
+	and (inf.type ~= MT_TNTBARREL)
 		if ((inf.flags2 & MF2_SCATTER) and sor)
 			local dist = FixedHypot(FixedHypot(sor.x - me.x, sor.y - me.y),sor.z - me.z)
 			dist = 128*inf.scale - dist/4
@@ -1789,7 +1790,9 @@ local function get_inf_speed(me,inf,sor)
 	elseif inf.type == MT_TNTBARREL or inf.type == MT_PROXIMITYTNT
 		default = 70 * inf.scale
 	end
-	return max(default, R_PointTo3DDist(0,0,0,inf.momx,inf.momy,inf.momz))
+	--return max(default, R_PointTo3DDist(0,0,0,inf.momx,inf.momy,inf.momz))
+	-- mmmaybe dont factor momz if we're using it now...
+	return max(default, R_PointToDist2(0,0,inf.momx,inf.momy)), max(default, R_PointTo3DDist(0,0,0,inf.momx,inf.momy,inf.momz))
 end
 
 --handle soap damage

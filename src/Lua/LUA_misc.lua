@@ -52,13 +52,20 @@ addHook("MobjThinker",function(bump)
 	if not (bump and bump.valid) then return end
 	
 	if bump.sixseveneffect
+		local frame = (bump.frame & FF_FRAMEMASK)
 		if bump.fuse <= 20
+		and frame ~= 40
 			bump.alpha = $ - (FU/20)
 			bump.momx = $ * 9/10
 			bump.momy = $ * 9/10
-			if (bump.frame & FF_FRAMEMASK == 34)
+			if (frame == 34)
 				bump.spriteyscale = ease.outquad(FU - ((FU/20)*bump.fuse), FU, 0)
 			end
+		elseif frame == 40
+			local frac = FU - FixedDiv(bump.fuse*FU, 12*FU)
+			bump.alpha = ease.inoutsine(frac, FU, 0)
+			bump.spritexscale = ease.inoutquad(frac, FU, FU*5/2)
+			bump.spriteyscale = bump.spritexscale
 		end
 		return
 	end

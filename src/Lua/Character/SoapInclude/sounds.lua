@@ -128,6 +128,11 @@ sfxinfo[sfx_sp_em3] = {
 	flags = SF_TOTALLYSINGLE,
 	caption = "\x89Gangnam Style\x80"
 }
+SafeFreeslot("sfx_sp_em4")
+sfxinfo[sfx_sp_em4] = {
+	flags = SF_TOTALLYSINGLE,
+	caption = "\x89".."Caramelldansen\x80"
+}
 
 SafeFreeslot("sfx_sp_bsl")
 sfxinfo[sfx_sp_bsl].caption = "/"

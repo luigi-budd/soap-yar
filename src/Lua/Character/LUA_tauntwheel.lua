@@ -618,17 +618,21 @@ SOAP_TAUNTS[SOAP_SKIN] = {
 			end
 			
 			me.momx,me.momy = p.cmomx,p.cmomy
+			me.temptics = 0
 		end,
 		think = function(p, me, soap, taunt)
 			if cancelConds(p)
 			or (P_PlayerInPain(p) or me.state == S_PLAY_PAIN)
+				me.temptics = nil
+				me.extravalue1 = 0
 				if not (P_PlayerInPain(p) or me.state == S_PLAY_PAIN)
 					me.state = S_PLAY_WALK
 					P_MovePlayer(p)
 					Soap_ResetState(p)
 				end
 				P_RestoreMusic(p)
-				S_StopSoundByID(me, sfx_sp_em3)
+				local sound = (me.skin == TAKIS_SKIN) and sfx_sp_em4 or sfx_sp_em3
+				S_StopSoundByID(me, sound)
 				soap.stasistic, taunt.tics = 0,0
 			else
 				soap.stasistic = max($, 2)
@@ -660,19 +664,41 @@ SOAP_TAUNTS[SOAP_SKIN] = {
 					end
 				end
 				
-				if not S_SoundPlaying(me, sfx_sp_em3)
+				local sound = (me.skin == TAKIS_SKIN) and sfx_sp_em4 or sfx_sp_em3
+				if not S_SoundPlaying(me, sound)
 				and not dontplay
-					S_StartSoundAtVolume(me, sfx_sp_em3, vol)
+					S_StartSoundAtVolume(me, sound, vol)
 				elseif dontplay
-					S_StopSoundByID(me, sfx_sp_em3)
+					S_StopSoundByID(me, sound)
 				end
+				
+				if (me.skin == TAKIS_SKIN)
+				and (me.temptics % (4*3) == 0)
+					local vfx = P_SpawnMobjFromMobj(me, 0,0, FixedDiv(me.height,me.scale)/2, MT_SOAP_WALLBUMP)
+					vfx.color = ColorOpposite(me.color)
+					vfx.blendmode = AST_ADD
+					vfx.renderflags = $|RF_FULLBRIGHT|(me.extravalue1 % 2 and RF_HORIZONTALFLIP or 0)
+					vfx.dispoffset = -200
+					vfx.flags = $|MF_NOGRAVITY
+					vfx.fuse = 12
+					vfx.tics = -1
+					vfx.sprite = SPR_SOAP_GFX
+					vfx.frame = 40
+					vfx.scale = $ / 2
+					--vfx.destscale = me.scale * 3/2
+					--vfx.scalespeed = FixedDiv(vfx.destscale - vfx.scale, vfx.fuse*FU)
+					vfx.sixseveneffect = true
+					
+					me.extravalue1 = $ + 1
+				end
+				me.temptics = $ + 1
 			end
 		end,
 		drawer = function(v,i, x,y, selected)
 			chardrawer(v,i, x,y, {
 				skin = skins[consoleplayer.skin].name,
 				spr2 = SPR2_SWIM,
-				frame = C, angle = 0
+				frame = (skins[consoleplayer.skin].name == SOAP_SKIN) and C or A, angle = 0
 			}, selected)
 		end,
 	},
@@ -734,6 +760,12 @@ SOAP_TAUNTS[TAKIS_SKIN] = {
 		end,
 	},
 	[5] = SOAP_TAUNTS[SOAP_SKIN][5],
+	[6] = {
+		name = "Caramelldansen",
+		run = SOAP_TAUNTS[SOAP_SKIN][7].run,
+		think = SOAP_TAUNTS[SOAP_SKIN][7].think,
+		drawer = SOAP_TAUNTS[SOAP_SKIN][7].drawer,
+	},
 }
 
 local cmd_sig = "iAmLua"..P_RandomFixed()

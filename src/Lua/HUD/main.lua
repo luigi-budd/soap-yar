@@ -169,7 +169,7 @@ addHook("HUD",function(v,p, cam)
 	
 	local x,y = 200*FU, 150*FU
 	local scale = FU
-	local result = K_GetScreenCoords(v,p,cam, me, {anglecliponly = true})
+	local result = K_GetScreenCoords(v,p,cam, me, {anglecliponly = true})d
 	if cam.chase
 		if not result.onscreen then return end
 		
