@@ -203,6 +203,7 @@ SOAP_TAUNTS[SOAP_SKIN] = {
 		think = function(p, me, soap, taunt)
 			if cancelConds(p)
 			or me.tempangle == nil
+			or (P_PlayerInPain(p) or me.state == S_PLAY_PAIN)
 				me.tempangle = nil
 				if not (P_PlayerInPain(p) or me.state == S_PLAY_PAIN)
 					me.state = S_PLAY_WALK
@@ -620,6 +621,7 @@ SOAP_TAUNTS[SOAP_SKIN] = {
 		end,
 		think = function(p, me, soap, taunt)
 			if cancelConds(p)
+			or (P_PlayerInPain(p) or me.state == S_PLAY_PAIN)
 				if not (P_PlayerInPain(p) or me.state == S_PLAY_PAIN)
 					me.state = S_PLAY_WALK
 					P_MovePlayer(p)
@@ -670,7 +672,7 @@ SOAP_TAUNTS[SOAP_SKIN] = {
 			chardrawer(v,i, x,y, {
 				skin = skins[consoleplayer.skin].name,
 				spr2 = SPR2_SWIM,
-				frame = B, angle = 0
+				frame = C, angle = 0
 			}, selected)
 		end,
 	},

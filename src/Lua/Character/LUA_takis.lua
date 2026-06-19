@@ -144,28 +144,73 @@ local function generic_slingshot(p,me,takis, stop_ang)
 	return didit
 end
 
-local function playknockoutsfx(p,me,soap)
-	if abs(leveltime - soap.kotic) < TR*3/2 then return end
-	soap.kotic = leveltime
-	
-	local sound = P_RandomChance(FU/50) and sfx_sp_em1 or P_RandomRange(sfx_sp_ow0,sfx_sp_ow1)
-	if R_PointToDist(me.x,me.y) >= 1024*FU
-	and (p ~= displayplayer)
-		sound = sfx_sp_ow2
-	end
-	S_StartSound(me,sound)
-
-	local speed = soap.accspeed
+local function playknockout_kbsfx(p,me,soap)
+	local speed = FixedMul(soap.accspeed, me.scale)
 	if me.soap_damagevar
-		speed = max($, me.soap_damagevar.speed)
+		speed = max($, me.soap_damagevar.threshold)
 	end
-
-	sound = sfx_sp_kb0 + clamp(0,
+	if speed <= 15 * me.scale then return end
+	
+	local sound = sfx_sp_kb0 + clamp(0,
 		FixedMul(2*FU, FixedDiv(speed - 30*FU, 10*FU)),
 		2*FU
 	)/FU
 	S_StartSound(me, sound)
 	S_StartSound(me, sound)
+end
+
+local function playknockoutsfx(p,me,soap)
+	if not me.health then return end
+	
+	if abs(leveltime - soap.kotic) < TR*3/2 then return end
+	soap.kotic = leveltime
+	
+	local chance = true
+	local sound = P_RandomChance(FU/50) and sfx_sp_em1 or P_RandomRange(sfx_sp_ow0,sfx_sp_ow1)
+	if R_PointToDist(me.x,me.y) >= 1024*FU * 4
+	and P_RandomChance(FU*3/4)
+	and (p ~= displayplayer)
+		sound = P_RandomRange(sfx_sp_ow2, sfx_sp_ow3)
+	end
+	if Soap_IsCompGamemode()
+		chance = P_RandomChance(FU/10)
+		S_StartSoundAtVolume(me, sfx_s3k61, 255 * 3/4)
+	end
+	if not chance then return end
+	S_StartSound(me,sound)
+end
+local function doknockback(p,me,soap)
+	me.state = S_PLAY_DEAD
+	me.frame = A|($ &~FF_FRAMEMASK)
+	me.sprite2 = SPR2_MSC2
+	me.tics = -1
+end
+local function handle_knockback(p,me,soap)
+	P_Thrust(me, me.soap_damagevar.ang, me.soap_damagevar.speed)
+	if me.soap_damagevar.momz
+		P_SetObjectMomZ(me, me.soap_damagevar.momz / 4)
+	end
+	playknockout_kbsfx(p,me,soap)
+	if me.soap_damagevar.threshold >= 30*me.scale
+		playknockoutsfx(p,me,soap)
+		
+		me.state = S_PLAY_DEAD
+		me.frame = A|($ &~FF_FRAMEMASK)
+		me.sprite2 = SPR2_MSC2
+		me.tics = -1
+	end
+	
+	if (SOAP_DEBUG and SOAP_DEBUG & DEBUG_KNOCKBACK)
+		printf(
+			"%s carried out knockback (%d)\n"..
+			"\tplayerspeed: %f",
+			
+			p.name, leveltime,
+			R_PointTo3DDist(0,0,0, me.momx,me.momy,me.momz)
+		)
+	end
+	
+	me.soap_damagevar = nil
 end
 
 local function winddivevfx(p,me,soap, angle,offangle,dist,frac)
@@ -1188,17 +1233,9 @@ Takis_Hook.addHook("Takis_Thinker",function(p)
 		soap.paintime = $ + 1
 
 		--DAMMIT!!!
-		if me.soap_damagevar ~= nil
-			P_Thrust(me, me.soap_damagevar.ang, me.soap_damagevar.speed)
-			if me.soap_damagevar.speed >= 30*me.scale
-				playknockoutsfx(p,me,soap)
-				
-				me.state = S_PLAY_DEAD
-				me.frame = A|($ &~FF_FRAMEMASK)
-				me.sprite2 = SPR2_MSC2
-				me.tics = -1
-			end
-			me.soap_damagevar = nil
+		if (me.soap_damagevar ~= nil)
+		and not (me.hitlag)
+			handle_knockback(p,me,soap)
 		end
 		if soap.paintime == 1 and (soap.hud.painsurge == 0)
 		and (soap.accspeed >= 30*FU)
@@ -1913,6 +1950,7 @@ Takis_Hook.addHook("PostThinkFrame",function(p)
 		if p.powers[pw_carry] == CR_NIGHTSMODE
 			if p.bumpertime > takis.lastbumper
 			and clutch.nights <= (TR/2) - 2
+				-- TODO: find the sound that replaced this
 				S_StartSoundAtVolume(me,sfx_cltch5,220)
 			end
 			

@@ -1911,6 +1911,15 @@ rawset(_G,"Soap_HandleNoAbils", function(p)
 end)
 
 local soap_airfric = tofixed("0.96")
+local sixseven_callback = function(spark)
+	spark.tics = 8
+	spark.frame = A
+	spark.sprite = SPR_SOAP_GFX
+	spark.frame = 34|FF_PAPERSPRITE
+	spark.momz = 0
+	spark.renderflags = $|RF_NOCOLORMAPS|RF_FULLBRIGHT|(P_RandomChance(FU/2) and RF_HORIZONTALFLIP or 0)
+	P_ThrustEvenIn2D(spark, spark.angle - ANGLE_90, 12*FU)
+end
 rawset(_G,"Soap_DeathThinker",function(p,me,soap)
 	if me.sprite2 == SPR2_MSC2
 		local sweat = P_SpawnMobjFromMobj(me,
@@ -1944,6 +1953,14 @@ rawset(_G,"Soap_DeathThinker",function(p,me,soap)
 			me.momx = FixedMul($, soap_airfric)
 			me.momy = FixedMul($, soap_airfric)
 		end
+		if (me.z + me.momz + me.height >= me.ceilingz)
+			me.momz = -$
+			if Soap_IsLocalPlayer(p)
+				Soap_StartQuake(abs(me.momz)*2, TR/4)
+			end
+			S_StartSound(me, sfx_s3k5d)
+			Soap_Hitlag.addHitlag(me, 14, true)
+		end
 		if (me.momz*soap.gravflip <= -5 * me.scale)
 		and Soap_IsCompGamemode()
 			me.state = S_PLAY_FALL
@@ -1960,12 +1977,41 @@ rawset(_G,"Soap_DeathThinker",function(p,me,soap)
 		--lmao handle this here too
 		if (soap.onGround)
 		and me.health
-			me.state = S_PLAY_SOAP_KNOCKOUT
-			me.sprite2 = SPR2_MSC4
-			me.tics = -1
-			me.rollangle = 0
-			
-			me.soap_kickme = true
+			if abs(me.momz) >= 30*me.scale -- ouch
+				me.momz = -($ * 4/10)
+				me.momx = FixedMul($, soap_airfric)
+				me.momy = FixedMul($, soap_airfric)
+				Soap_Hitlag.addHitlag(me, 14, true)
+				Soap_DustRing(me,
+					MT_PARTICLE, 10,
+					{me.x,me.y,me.z},
+					8*FU, 8*FU,
+					me.scale / 10,
+					me.scale * 4,
+					false, sixseven_callback
+				)
+				Soap_DustRing(me,
+					dust_type(me),
+					P_RandomRange(8,10),
+					{me.x,me.y,me.z},
+					32*me.scale,
+					me.scale*5,
+					me.scale,
+					me.scale/2,
+					false
+				)
+				if Soap_IsLocalPlayer(p)
+					Soap_StartQuake(abs(me.momz)*3, TR/3)
+				end
+				S_StartSound(me, sfx_s3k5f)
+			else
+				me.state = S_PLAY_SOAP_KNOCKOUT
+				me.sprite2 = SPR2_MSC4
+				me.tics = -1
+				me.rollangle = 0
+				
+				me.soap_kickme = true
+			end
 		end
 	elseif me.soap_kickme
 		if (not me.health)
@@ -4355,7 +4401,5 @@ rawset(_G, "Soap_Combat", function(p)
 end)
 
 rawset(_G, "Soap_CheckSRB2Edit", function()
-	-- SRB2EDIT TODO: now that edit is officially called... srb2edit,
-	--				  all the takis_* variables should be renamed
-	return (takis_custombuild or gks_custombuild)
+	return (takis_custombuild or edit_custombuild or gks_custombuild)
 end)

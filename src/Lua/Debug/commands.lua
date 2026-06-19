@@ -698,6 +698,46 @@ CMDConstructor("rings", {prefix = SOAP_DEVPREFIX, func = function(p,...)
 	p.rings = rings
 end})
 
+CMDConstructor("knockback", {prefix = SOAP_DEVPREFIX, func = function(p,...)
+	local args = {...}
+	local node = args[1]
+	if node == nil
+		prn(p, "knockback <name/node> <speed> <momz> [<angle>]: Forces a player to suffer knockback.")
+		return
+	end
+	
+	local speed = abs( tofixed(args[2] or "") or 30*FU )
+	local momz = abs( tofixed(args[3] or "") or 0 )
+	local angle = tofixed(args[4] or "")
+	local p2 = GetPlayer(p,node)
+	if p2
+		local mo = p2.realmo
+		if not (mo and mo.valid)
+			prn(p,"This person's object isn't valid.")
+			return
+		end
+		if angle == nil
+			angle = mo.angle + ANGLE_180
+		else
+			angle = FixedAngle($)
+		end
+		
+		p2.rings = max($, 1)
+		p2.powers[pw_flashing] = 0
+		P_DamageMobj(mo)
+		mo.soap_damagevar = {
+			ang = angle,
+			momz = (momz*4) + 8*mo.scale,
+			speed = speed,
+			threshold = speed
+		}
+		if speed >= 30*mo.scale
+			p2.soaptable.hud.painsurge = 6
+		end
+		
+	end	
+end, unsafe = true})
+
 /*
 CMDConstructor("togglehook", {prefix = SOAP_DEVPREFIX, func = function(p,...)
 	local args = {...}
