@@ -688,6 +688,7 @@ SOAP_TAUNTS[SOAP_SKIN] = {
 					--vfx.destscale = me.scale * 3/2
 					--vfx.scalespeed = FixedDiv(vfx.destscale - vfx.scale, vfx.fuse*FU)
 					vfx.sixseveneffect = true
+					vfx.dontdrawforviewmobj = me
 					
 					me.extravalue1 = $ + 1
 				end
@@ -697,7 +698,7 @@ SOAP_TAUNTS[SOAP_SKIN] = {
 		drawer = function(v,i, x,y, selected)
 			chardrawer(v,i, x,y, {
 				skin = skins[consoleplayer.skin].name,
-				spr2 = SPR2_SWIM,
+				spr2 = SPR2_CLNG,
 				frame = (skins[consoleplayer.skin].name == SOAP_SKIN) and C or A, angle = 0
 			}, selected)
 		end,
