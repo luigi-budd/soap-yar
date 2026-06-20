@@ -141,25 +141,6 @@ local function SetCompat()
 				p.actionstate = 0
 			end
 			
-			/*
-			if (soap.fire == 1)
-			and (p.guard ~= 0)
-			and not me.soap_grabcooldown
-				if not Soap_GrabHitbox(p)
-					if (me.health)
-					and not p.tumble
-						B.DoPlayerFlinch(p,
-							TR*3/2, p.drawangle,
-							-3 * me.scale,
-							false
-						)
-					end
-					me.soap_grabcooldown = TR*3/2
-				end
-				p.guard = 0
-			end
-			*/
-			
 			me.soap_oldsucked = me.beingsucked
 		end
 		
@@ -168,7 +149,6 @@ local function SetCompat()
 			weight = 125,
 			shields = 1,
 			guard_frame = 1,
-			--special = Shotgunify,
 			func_priority_ext = Priority,
 			special = function(me,doaction)
 				local p = me.player
@@ -208,169 +188,6 @@ local function SetCompat()
 					me.soap_noguarding = false
 				end
 			end,
-			--[[
-			func_precollide = function(
-				n1,n2, play, mobjs,
-				attacks, defenses, weights,
-				hurt, pains, grounded, thrusts, thrusts2,
-				colltype
-			)
-				local p = play[n1]
-				local p2 = play[n2]
-				if not (p2 and p2.valid) then return end
-				local me = p.mo
-				local mo = p2.mo
-				local soap = p.soaptable
-				local soap2 = p2.soaptable
-				
-				--store which moves we were doing for the postcollide
-				--formatting here is immaculate (maybe)
-				me.soap_bm_moves = {
-					uppercut	=	(soap.uppercutted
-									and (me.momz*soap.gravflip > 0)
-									and (me.sprite2 == SPR2_MLEE)),
-					pound		=	soap.pounding,
-					rush		= 	((soap.rdashing or soap.airdashed)
-									and (me.state == S_PLAY_DASH or me.state == S_PLAY_FLOAT_RUN)),
-					momz		=	me.momz,
-					damaged		=	false,
-					power		=	FU,
-					basepower	=	5*FU,
-				}
-			end,
-			func_collide = function(
-				n1,n2, play, mobjs,
-				attacks, defenses, weights,
-				hurt, pains, grounded, thrusts, thrusts2,
-				colltype
-			)
-				local p = play[n1]
-				local p2 = play[n2]
-				if not (p2 and p2.valid) then return end
-				local me = p.mo
-				local mo = p2.mo
-				local soap = p.soaptable
-				local soap2 = p2.soaptable
-				local last = me.soap_bm_moves
-				local last2 = mo.soap_bm_moves
-				local nodamage = false
-				
-				if soap.bm.intangible
-					return true
-				end
-				
-				if last.pound
-				and defenses[n2] < attacks[n1]
-				and (p2.guard == 0)
-					--if grounded, launch up maybe for a combo
-					if grounded[n2]
-						Soap_ZLaunch(mo, 14*me.scale)
-						
-						if (B.PriorityFunction[p.battle_sfunc](me,mo))
-							S_StartSound(mo, sfx_sp_dm4)
-						end
-					--Spike!
-					else
-						--super-resetplayer
-						B.ResetPlayerProperties(p2,false,false)
-						P_ResetPlayer(p2)
-						
-						mo.state = S_PLAY_PAIN
-						mo.momz = (-15*mo.scale) + abs(last.momz/2)
-						mo.momz = $ * P_MobjFlip(mo)
-						
-						--onlyy if this is actually a spike
-						if (B.PriorityFunction[p.battle_sfunc](me,mo))
-							S_StartSound(mo, sfx_sp_dm4)
-							
-							--tooomble
-							CBW_Battle.DoPlayerTumble(p2,TR*3/2,
-								R_PointToAngle2(me.x,me.y,
-									mo.x,mo.y
-								), 0
-							)
-							p2.tumble_nostunbreak = true
-							p2.airdodge_spin = 0
-							mo.momz = (-23*mo.scale) + abs(last.momz/2)
-							mo.momz = $ * P_MobjFlip(mo)
-						end
-					end
-					me.momz = $ / 2
-					me.soap_spikevfx = TR/3
-					
-					last.power = 5*FU + FixedDiv(abs(last.momz),me.scale*3)
-					last.basepower = 35*FU
-				end
-				if last.rush
-				and defenses[n2] < attacks[n1]
-				and (p2.guard == 0)
-					if (p2.pflags & (PF_SPINNING|PF_JUMPED))
-						P_ResetPlayer(p2)
-						mo.state = S_PLAY_FALL
-						p2.pflags = $|PF_NOJUMPDAMAGE &~PF_SPINNING
-					end
-				end
-				
-				if hurt == 1
-				or hurt == 2
-				and not nodamage
-					last.damaged = true
-				end
-			end,
-			func_postcollide = function(
-				n1,n2, play, mobjs,
-				attacks, defenses, weights,
-				hurt, pains, grounded, thrusts, thrusts2,
-				colltype
-			)
-				local p = play[n1]
-				local p2 = play[n2]
-				if not (p2 and p2.valid) then return end
-				local me = p.mo
-				local mo = p2.mo
-				local soap = p.soaptable
-				local soap2 = p2.soaptable
-				local last = me.soap_bm_moves
-				local last2 = mo.soap_bm_moves
-				
-				if last.pound
-					soap.pounding = false
-					me.state = S_PLAY_ROLL
-					P_SetObjectMomZ(me, 8*FU)
-					
-					soap.rdashing = false
-					soap.airdashed = false
-				end
-				if last.uppercut
-					soap.uppercutted = false
-					soap.uppercut_cooldown = TR
-					soap.canuppercut = true --?
-					me.state = S_PLAY_SPRING
-					
-					me.momz = last.momz * 4/5
-					
-					if defenses[n2] < attacks[n1]
-					and last.damaged
-						P_SetObjectMomZ(mo, 10*FU + last.momz/4)
-					end
-				end
-				
-				if last.damaged
-					Soap_ImpactVFX(mo, me)
-					Soap_DamageSfx(mo, last.power, last.basepower)
-					Soap_SpawnBumpSparks(me, mo)
-				end
-				
-				--we're done with this, free it
-				me.soap_bm_moves = nil
-			end,
-			]]--
-			/*
-			special = Titanium,
-			func_precollide = Titanium_PreCollide,
-			func_collide = Titanium_Collide,
-			func_postcollide = Titanium_PostCollide
-			*/
 		}
 		
 		local S = B.SkinVars

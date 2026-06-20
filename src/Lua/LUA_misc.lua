@@ -86,19 +86,6 @@ addHook("MobjThinker",function(bump)
 		bump.scalespeed = FixedDiv(bump.scale, bump.fuse*FU)
 	end
 	
-	if bump.grabmode
-		local ro = bump.rotate
-		local h_dist = FixedMul(cos(ro.va), ro.dist)
-		P_MoveOrigin(bump,
-			ro.x + P_ReturnThrustX(nil, ro.ha, h_dist),
-			ro.y + P_ReturnThrustY(nil, ro.ha, h_dist),
-			ro.z + FixedMul(sin(ro.va), ro.dist)
-		)
-		ro.va = $ + ANG20 * bump.sign
-		ro.dist = $ + 6*bump.scale
-		return
-	end
-	
 	if not (bump.flags & MF_NOGRAVITY)
 		bump.momz = $ + P_GetMobjGravity(bump)
 	end
@@ -364,6 +351,7 @@ local function FreezeInHitlag(mo)
 	local p = me.player
 	local soap = p.soaptable
 	
+	local eat = false
 	if (mo.state == S_SOAP_NWF_WIND)
 	or (mo.state == S_SOAP_NWF_WIND_FAST)
 	or (mo.state == S_TAKIS_SLINGFX)
@@ -406,11 +394,12 @@ local function FreezeInHitlag(mo)
 				mo.eflags = $ &~MFE_VERTICALFLIP
 			end
 		end
-		
+		eat = true
 	end
 	if me.hitlag
 		return true
 	end
+	if eat then return end
 	
 	if mo.ghosttype
 		P_MoveOrigin(mo,
@@ -433,6 +422,18 @@ local function FreezeInHitlag(mo)
 			mo.spriteyscale = $ + (FU/11) * tics
 			*/
 			mo.alpha = P_Lerp(FixedDiv(7 - mo.fuse, 6), FU, 0)
+		end
+		eat = true
+	end
+	if eat then return end
+	
+	if not (mo.nofxadjust)
+		P_MoveOrigin(mo, me.x,me.y,me.z)
+		if (soap.gravflip == -1)
+			mo.z = me.z + me.height - mo.height
+			mo.eflags = $|MFE_VERTICALFLIP
+		else
+			mo.eflags = $ &~MFE_VERTICALFLIP
 		end
 	end
 end

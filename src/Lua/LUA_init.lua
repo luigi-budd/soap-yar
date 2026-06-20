@@ -130,7 +130,6 @@ rawset(_G, "Soap_InitTable", function(p)
 		true_breakdance = 0,
 		boombox = nil,
 		afterimage = false,
-		nofreefall = false,
 		nerfed = false,
 		doublejumped = false,
 		rmomz = 0,
@@ -169,7 +168,6 @@ rawset(_G, "Soap_InitTable", function(p)
 		--this probably starts as false for a reason :p
 		canuppercut = false,
 		uppercutted = false,
-		uppercut_cooldown = 0,
 		uppercut_tc = false,
 		
 		--spinning top
@@ -236,19 +234,9 @@ rawset(_G, "Soap_InitTable", function(p)
 		},
 		
 		bm = {
-			intangible = 0,
-			--use if you want CanPlayerHurtPlayer
-			--to not always return false
-			damaging = false,
-			dmg_props = {
-				att = 0,
-				def = 0,
-				s_att = 0,
-				s_def = 0,
-				name = ""
-			},
-			
 			--player.lockmove
+			-- this is like the only thing that
+			-- battle compat uses now
 			lockmove = 0,
 		},
 		

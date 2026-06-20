@@ -64,7 +64,6 @@ events["PostThinkFrame"] = {}
 events["MoveBlocked"] = {handler = handler_snapany} --runs for every skin
 
 events["Soap_Thinker"] = {}
-events["Soap_DashSpeeds"] = {handler = handler_snapany}
 
 events["Takis_Thinker"] = {}
 

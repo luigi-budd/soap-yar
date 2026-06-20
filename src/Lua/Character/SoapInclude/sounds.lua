@@ -46,8 +46,6 @@ sfxinfo[sfx_sp_ow3] = {
 	caption = "\x85".."Ahhh!\x80"
 }
 
-SafeFreeslot("sfx_sp_grb")
-sfxinfo[sfx_sp_grb].caption = "Grab"
 SafeFreeslot("sfx_sp_pry")
 sfxinfo[sfx_sp_pry].caption = "Parry"
 SafeFreeslot("sfx_sp_cln")
@@ -160,7 +158,5 @@ for i = 0, 6
 	}
 end
 
-/*
 SafeFreeslot("sfx_sp_rcg")
 sfxinfo[sfx_sp_rcg].caption = "Recharge"
-*/
