@@ -3623,8 +3623,6 @@ local UPPER_XYDRAG = FU * 8/9
 local UPPER_ZDRAG = FU * 6/7
 
 local SPIKE_START = 7
---[done?]TODO: fix clashing
---[done?]TODO: fix guard parrying
 local function CheckForClash(p,me, p2,them, myattackpri)
 	local soap = p.soaptable
 	local B = CBW_Battle
@@ -3776,8 +3774,6 @@ local function CheckHitbox(tempatk, p,me,soap, from, range,fakerange, power, max
 	return enemyhit
 end
 
---[done]TODO: soap should get his own "special" action in his
---		battle skin defs, so that p.canguard can be set
 rawset(_G, "Soap_Combat", function(p)
 	local me = p.realmo
 	local soap = p.soaptable

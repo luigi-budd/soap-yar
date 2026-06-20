@@ -317,6 +317,7 @@ rawset(_G,"Takis_DoClutch",function(p,riding)
 		)
 		fx.angle = (ang - ANGLE_180) - (angoff/2)*i
 		fx.tracer = me
+		fx.nofxadjust = true
 		
 		-- original code used mo so it should probably stay that way
 		fx.momx,fx.momy = mo.momx/2,mo.momy/2
@@ -584,22 +585,6 @@ rawset(_G,"Takis_HammerBlastHitbox",function(p)
 	thok.rollangle = ANGLE_180
 	thok.alpha = FU
 	thok.frame = ($ &~FF_FRAMEMASK)|(leveltime % F)
-	/*
-	local follow = P_SpawnMobjFromMobj(me,0,0,0,MT_SOAP_FREEZEGFX)
-	follow.tics = -1
-	follow.fuse = -1
-	follow.tracer = me
-	follow.topdown = true
-	follow.state = S_SOAP_NWF_WIND
-	follow.dontdrawforviewmobj = me
-	follow.spritexscale = spritemul
-	follow.spriteyscale = spritemul
-	follow.alpha = 0
-	follow.dist = 0
-	follow.zcorrect = true
-	soap.fx.pound_aura = follow
-	*/
-	--thok.flags2 = $|MF2_DONTDRAW
 	
 	if Soap_BreakFloors(p,thok)
 		didit = true

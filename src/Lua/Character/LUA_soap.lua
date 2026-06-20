@@ -2075,7 +2075,7 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 					end
 				end
 				if soap.accspeed >= 3*FU
-					soap.dashangle = P_Lerp(FU/4, $, R_PointToAngle2(0,0,me.momx,me.momy))
+					soap.dashangle = P_Lerp((me.eflags & MFE_SPRUNG and FU or FU/4), $, R_PointToAngle2(0,0,me.momx,me.momy))
 					p.drawangle = soap.dashangle
 					--TODO: drifting vfx
 					setangle = true

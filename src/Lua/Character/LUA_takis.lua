@@ -489,7 +489,7 @@ Takis_Hook.addHook("Takis_Thinker",function(p)
 		end
 	end
 	
-	--c1 specials (TODO: taunts will go here enventually)
+	--c1 specials
 	if (soap.c1)
 		
 		--dive
@@ -685,6 +685,7 @@ Takis_Hook.addHook("Takis_Thinker",function(p)
 					fx.momx,fx.momy = me.momx/2,me.momy/2
 					fx.momz = soap.rmomz
 					fx.state = S_TAKIS_CDUST1
+					fx.nofxadjust = true
 				end
 			--auto-lunge / auto lunge
 			elseif me.state == S_PLAY_SOAP_SLIP
@@ -1075,6 +1076,7 @@ Takis_Hook.addHook("Takis_Thinker",function(p)
 							fx.momx,fx.momy = me.momx/4, me.momy/4
 							fx.momz = soap.rmomz
 							fx.state = S_TAKIS_CDUST1
+							fx.nofxadjust = true
 						end
 					end
 				end
