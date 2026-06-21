@@ -144,6 +144,12 @@ CV.forcecombatmode = CV_RegisterVar({
 	flags = CV_SHOWMODIF|CV_NETVAR,
 	PossibleValue = CV_OnOff,
 })
+CV.allowtop = CV_RegisterVar({
+	name = "soap_spinningtop",
+	defaultvalue = "Off",
+	flags = CV_SHOWMODIF|CV_NETVAR,
+	PossibleValue = CV_OnOff,
+})
 
 CV.tauntinterference = CV_RegisterVar({
 	name = "soap_tauntinterference",

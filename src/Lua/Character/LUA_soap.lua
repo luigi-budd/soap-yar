@@ -1054,9 +1054,11 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 			if not (p.powers[pw_super])
 			and Soap_SuperReady(p)
 			and not (soap.superlockout or soap.pounding)
+			and (me.health)
 				transforming = true
 			elseif (p.powers[pw_super])
 			and not soap.desuperlockout
+			and (me.health)
 				detransforming = true
 			end
 		end
@@ -1155,6 +1157,14 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 		me.soap_detransforming = nil
 		me.translation = nil
 		S_StopSoundByID(me,sfx_sp_dtn)
+	end
+	
+	-- due to popular demmand spinning top
+	-- can now be toggled in co-op
+	if (CV.allowtop.value and soap.fire)
+		if soap.fire == 1
+			SoapST_Start(p)
+		end
 	end
 	
 	local waslunging = soap.lunge.lunged
