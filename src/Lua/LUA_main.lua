@@ -4,8 +4,8 @@ local Soap_TauntWheelThink = Soap_TauntWheelThink
 local Soap_ButtonStuff = Soap_ButtonStuff
 local Soap_Booleans = Soap_Booleans
 
+local PreThinkFrame = Takis_Hook.events["PreThinkFrame"]
 addHook("PreThinkFrame",function()
-	local event_t = Takis_Hook.events["PreThinkFrame"]
 	for p in players.iterate
 		if not (p and p.valid) then continue end
 		
@@ -30,9 +30,9 @@ addHook("PreThinkFrame",function()
 		end
 		
 		soap.noability = 0
-		if (event_t.numhooks)
-			local events = event_t.events
-			for i = 1, event_t.numhooks
+		if (PreThinkFrame.numhooks)
+			local events = PreThinkFrame.events
+			for i = 1, PreThinkFrame.numhooks
 				Takis_Hook.tryRunHook("PreThinkFrame", events[i], p)
 			end
 		end
@@ -53,6 +53,8 @@ addHook("PreThinkFrame",function()
 	end
 end)
 
+local Soap_Thinker = Takis_Hook.events["Soap_Thinker"]
+local Takis_Thinker = Takis_Hook.events["Takis_Thinker"]
 addHook("PlayerThink",function(p)
 	if not (p and p.valid) then return end
 	if not p.soaptable
@@ -89,22 +91,18 @@ addHook("PlayerThink",function(p)
 		end
 		
 		if me.skin == SOAP_SKIN
-			local event_t = Takis_Hook.events["Soap_Thinker"]
-			if (event_t.numhooks)
-				local events = event_t.events
-				for i = 1, event_t.numhooks
-					Takis_Hook.tryRunHook("Soap_Thinker", events[i], p)
-				end
+		and (Soap_Thinker.numhooks)
+			local events = Soap_Thinker.events
+			for i = 1, Soap_Thinker.numhooks
+				Takis_Hook.tryRunHook("Soap_Thinker", events[i], p)
 			end
 		end
 		if me.skin == TAKIS_SKIN
 		and not mbrelease
-			local event_t = Takis_Hook.events["Takis_Thinker"]
-			if (event_t.numhooks)
-				local events = event_t.events
-				for i = 1, event_t.numhooks
-					Takis_Hook.tryRunHook("Takis_Thinker", events[i], p)
-				end
+		and (Takis_Thinker.numhooks)
+			local events = Takis_Thinker.events
+			for i = 1, Takis_Thinker.numhooks
+				Takis_Hook.tryRunHook("Takis_Thinker", events[i], p)
 			end
 		end
 		
@@ -150,8 +148,8 @@ addHook("PlayerThink",function(p)
 	end
 end)
 
+local PostThinkFrame = Takis_Hook.events["PostThinkFrame"]
 addHook("PostThinkFrame",function()
-	local event_t = Takis_Hook.events["PostThinkFrame"]
 	for p in players.iterate
 		if not (p and p.valid) then continue end
 		
@@ -162,9 +160,9 @@ addHook("PostThinkFrame",function()
 		
 		if not (me and me.valid) then continue end
 		
-		if (event_t.numhooks)
-			local events = event_t.events
-			for i = 1, event_t.numhooks
+		if (PostThinkFrame.numhooks)
+			local events = PostThinkFrame.events
+			for i = 1, PostThinkFrame.numhooks
 				Takis_Hook.tryRunHook("PostThinkFrame", events[i], p)
 			end
 		end
@@ -212,6 +210,7 @@ addHook("PostThinkFrame",function()
 	end
 end)
 
+local MoveBlocked = Takis_Hook.events["MoveBlocked"]
 addHook("MobjMoveBlocked", function(me, thing, line)
 	local p = me.player
 	local soap = p.soaptable
@@ -229,10 +228,9 @@ addHook("MobjMoveBlocked", function(me, thing, line)
 		end
 	end
 	
-	local event_t = Takis_Hook.events["MoveBlocked"]
-	if (event_t.numhooks)
-		local events = event_t.events
-		for i = 1, event_t.numhooks
+	if (MoveBlocked.numhooks)
+		local events = MoveBlocked.events
+		for i = 1, MoveBlocked.numhooks
 			local res = Takis_Hook.tryRunHook("MoveBlocked", events[i], me,thing,line, goingup)
 			if res ~= nil then return res; end
 		end

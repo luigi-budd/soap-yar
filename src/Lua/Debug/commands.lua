@@ -174,12 +174,12 @@ CMDConstructor("debug", {prefix = SOAP_DEVPREFIX, outoflevels = true, checksoap 
 	if not #args
 		prn(p, "Current flags enabled:")
 		local buf = ""
-		for i = 0,31
-			if SOAP_DEBUG & (1 << i)
-				buf = $ .. DEBUGTOENUM[(1 << i)] .."\t"
-			end
+		for i = 0, #DEBUGTOENUM
+			local text = DEBUGTOENUM[(1 << i)]
+			local clr = (SOAP_DEBUG & (1 << i)) and ("\x83") or ("\x86")
+			buf = $ .. clr..text .."\t"
 		end
-		if buf == "" then buf = "None" end
+		
 		prn(p, buf)
 		return
 	end
@@ -229,6 +229,17 @@ CMDConstructor("killme", {prefix = SOAP_DEVPREFIX, func = function(p,...)
 	type = _G["DMG_"..type] or DMG_INSTAKILL
 	P_KillMobj(p.realmo,nil,nil,type)
 	p.soaptable.deathtype = type
+end})
+
+CMDConstructor("hurtme", {prefix = SOAP_DEVPREFIX, func = function(p,...)
+	local args = {...}
+	local type = args[1]
+	if type == nil then return end
+	if not (p.realmo and p.realmo.valid) then return end
+	
+	type = string.upper($)
+	type = _G["DMG_"..type] or 0
+	P_DamageMobj(p.realmo,nil,nil,type)
 end})
 
 CMDConstructor("scale", {prefix = SOAP_DEVPREFIX, func = function(p,...)
@@ -437,8 +448,8 @@ end, unsafe = true})
 CMDConstructor("spawn", {prefix = SOAP_DEVPREFIX, func = function(p,...)
 	local args = {...}
 	local type = args[1]
-	local aiming = args[2]
-	local offset = args[3]
+	local offset = args[2]
+	local aiming = args[3]
 	
 	local me = p.realmo
 	if not (me and me.valid)
@@ -447,7 +458,7 @@ CMDConstructor("spawn", {prefix = SOAP_DEVPREFIX, func = function(p,...)
 	end
 
 	if type == nil
-		prn(p,"sd_spawn <type> <aiming> <offset>")
+		prn(p,"sd_spawn <type> <offset> [<doaiming>]")
 		return
 	end
 	
@@ -506,6 +517,7 @@ local valid_types = {
 	["nil"] = true,
 	["boolean"] = true,
 	["number"] = true,
+	["int"] = true,
 	--special cases
 	["fixed_t"] = true,
 	["fixed"] = true,
@@ -517,7 +529,7 @@ CMDConstructor("editmyself", {prefix = SOAP_DEVPREFIX, func = function(p,...)
 	local args = {...}
 	if not #args
 	or (#args ~= 3)
-		prn(p, "\x82"..SOAP_DEVPREFIX.."_editmyself <name> <type> <value> <strict>\x80: Edits \"name\" in your mobj.")
+		prn(p, "\x82"..SOAP_DEVPREFIX.."_editmyself <name> <type> <value> [<strict>]\x80: Edits \"name\" in your mobj.")
 		prn(p, "\x82\Availiable types:")
 		for prefix,_ in pairs(valid_types)
 			prn(p, "\t\x83"..prefix)
@@ -557,7 +569,7 @@ CMDConstructor("editmyself", {prefix = SOAP_DEVPREFIX, func = function(p,...)
 			real_value = nil
 		elseif type == "boolean"
 			real_value = ($:upper()) == "TRUE"
-		elseif type == "number"
+		elseif type == "number" or type == "int"
 			real_value = tonumber($)
 		elseif type == "fixed" or type == "fixed_t"
 			real_value = tofixed($)
@@ -572,6 +584,7 @@ CMDConstructor("editmyself", {prefix = SOAP_DEVPREFIX, func = function(p,...)
 				real_value = _G[$]
 			else
 				real_value = nil
+				prn(p,"\x83NOTICE: global is nil")
 			end
 		end
 		if real_value == nil and type ~= "nil"
@@ -701,6 +714,46 @@ CMDConstructor("rings", {prefix = SOAP_DEVPREFIX, func = function(p,...)
 	
 	p.rings = rings
 end})
+
+CMDConstructor("knockback", {prefix = SOAP_DEVPREFIX, func = function(p,...)
+	local args = {...}
+	local node = args[1]
+	if node == nil
+		prn(p, "knockback <name/node> <speed> <momz> [<angle>]: Forces a player to suffer knockback.")
+		return
+	end
+	
+	local speed = abs( tofixed(args[2] or "") or 30*FU )
+	local momz = abs( tofixed(args[3] or "") or 0 )
+	local angle = tofixed(args[4] or "")
+	local p2 = GetPlayer(p,node)
+	if p2
+		local mo = p2.realmo
+		if not (mo and mo.valid)
+			prn(p,"This person's object isn't valid.")
+			return
+		end
+		if angle == nil
+			angle = mo.angle + ANGLE_180
+		else
+			angle = FixedAngle($)
+		end
+		
+		p2.rings = max($, 1)
+		p2.powers[pw_flashing] = 0
+		P_DamageMobj(mo)
+		mo.soap_damagevar = {
+			ang = angle,
+			momz = (momz*4) + 8*mo.scale,
+			speed = speed,
+			threshold = speed
+		}
+		if speed >= 30*mo.scale
+			p2.soaptable.hud.painsurge = 6
+		end
+		
+	end	
+end, unsafe = true})
 
 /*
 CMDConstructor("togglehook", {prefix = SOAP_DEVPREFIX, func = function(p,...)

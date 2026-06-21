@@ -38,6 +38,9 @@ local R_PointTo3DAngles = R_PointTo3DAngles
 local P_3DThrust = P_3DThrust
 local P_IsObjectOnGround = P_IsObjectOnGround
 
+local Event_CharOnMove = Takis_Hook.events["Char_OnMove"]
+local Event_CharOnDamage = Takis_Hook.events["Char_OnDamage"]
+
 --max speed increase
 rawset(_G,"SOAP_MAXDASH", 21*FU)
 --speed increase ramp-up time
@@ -66,6 +69,20 @@ local function playknockout_kbsfx(p,me,soap)
 	local speed = FixedMul(soap.accspeed, me.scale)
 	if me.soap_damagevar
 		speed = max($, me.soap_damagevar.threshold)
+		speed = max($, FixedHypot(me.soap_damagevar.speed, me.soap_damagevar.momz / 4))
+	end
+	if (SOAP_DEBUG and SOAP_DEBUG & DEBUG_KNOCKBACK)
+		printf(
+			"%s is playying knockback sound (%d)\n"..
+			"\tplayerspeed: %f\n"..
+			"\tthreshold:   %f\n"..
+			"\tworkspeed:   %f\n",
+			
+			p.name, leveltime,
+			soap.accspeed,
+			me.soap_damagevar.threshold,
+			speed
+		)
 	end
 	if speed <= 15 * me.scale then return end
 	
@@ -109,7 +126,8 @@ local function handle_knockback(p,me,soap)
 		P_SetObjectMomZ(me, me.soap_damagevar.momz / 4)
 	end
 	playknockout_kbsfx(p,me,soap)
-	if me.soap_damagevar.threshold >= 30*me.scale
+	local kb_speed = FixedHypot(me.soap_damagevar.speed, me.soap_damagevar.momz / 4)
+	if max(me.soap_damagevar.threshold, kb_speed) >= 30*me.scale
 		playknockoutsfx(p,me,soap)
 		
 		me.state = S_PLAY_DEAD
@@ -173,6 +191,11 @@ local function sixseven_callback(spark, me)
 		spark.type = MT_SOAP_WALLBUMP
 		spark.sixseveneffect = true
 		spark.fuse = spark.tics
+		if (me.soap_poundvfx)
+			spark.drawonlyforplayer = me.player
+			spark.fuse = 25
+			speed = 16
+		end
 	end
 	P_ThrustEvenIn2D(spark, spark.angle - ANGLE_90, speed*frac)
 	spark.momx = $ + me.momx
@@ -284,10 +307,9 @@ local function soap_poundonland(p,me,soap)
 			)
 		)
 		*/
-		local event_t = Takis_Hook.events["Char_OnMove"]
-		if (event_t.numhooks)
-			local events = event_t.events
-			for i = 1, event_t.numhooks
+		if (Event_CharOnMove.numhooks)
+			local events = Event_CharOnMove.events
+			for i = 1, Event_CharOnMove.numhooks
 				local newrad = Takis_Hook.tryRunHook("Char_OnMove", events[i], p, "poundland",
 					br
 				)
@@ -311,6 +333,7 @@ local function soap_poundonland(p,me,soap)
 				)
 				rock.flags = $|MF_NOCLIPTHING &~(MF_PAIN|MF_SPECIAL)
 				rock.state = S_ROCKCRUMBLEA+P_RandomRange(0, 3)
+				rock.drawonlyforplayer = p
 				P_SetObjectMomZ(rock, Soap_RandomFixedRange(10*FU,20*FU))
 				P_Thrust(rock, FixedAngle(ang * i), Soap_RandomFixedRange(3*FU,7*FU))
 				rock.fuse = TR*3
@@ -335,14 +358,29 @@ local function soap_poundonland(p,me,soap)
 					
 					spark.random = P_RandomRange(-limit,limit) * ANG1
 					spark.momz = Soap_RandomFixedRange(15*me.scale, 30*me.scale) * soap.gravflip
+					spark.drawonlyforplayer = p
 					dust_noviewmobj(spark)
 				end
 			)
+			
+			me.soap_supertemp = true
+			me.soap_poundvfx = true
+			Soap_DustRing(me,
+				MT_PARTICLE, 16,
+				{me.x,me.y,me.z},
+				8*FU, 10*FU,
+				me.scale / 10,
+				me.scale * 6,
+				false, sixseven_callback
+			)
+			me.soap_supertemp = nil
+			me.soap_poundvfx = nil
 		end
 		
 		if me.health
 			P_MovePlayer(p)
 			
+			-- a lil bit of goop!
 			if P_IsObjectInGoop(me)
 				me.state = S_PLAY_ROLL
 				P_SetObjectMomZ(me, 9*FU)
@@ -411,8 +449,6 @@ local function soap_poundonland(p,me,soap)
 			and not Soap_IsCompGamemode()
 				P_DoBubbleBounce(p)
 				p.pflags = $|PF_JUMPED &~PF_THOKKED
-				soap.nofreefall = true
-				soap.ranoff = false
 				
 				P_SetObjectMomZ(me, 12*FU)
 				local speed = max(soap.accspeed, 20*FU)
@@ -424,6 +460,7 @@ local function soap_poundonland(p,me,soap)
 				)
 				me.state = S_PLAY_ROLL
 				p.drawangle = me.angle
+				soap.noability = $|SNOABIL_CROUCH
 				noquake = true
 			elseif shield == SH_ARMAGEDDON
 			and not soap.inBattle
@@ -431,7 +468,7 @@ local function soap_poundonland(p,me,soap)
 				P_BlackOw(p)
 			end
 		end
-		 
+		
 		Soap_BreakFloors(p,me)
 		if not noquake
 			local quake_tics = 16 + (FixedDiv(br,me.scale)/FU / 25)
@@ -448,6 +485,8 @@ local function soap_poundonland(p,me,soap)
 				512*me.scale
 			)
 			S_StartSound(me,sfx_pstop)
+		else
+			me.soap_noslidetempugh = true
 		end
 		
 		if Soap_IsCompGamemode()
@@ -599,6 +638,24 @@ local function dolunge(p,me,soap, fromjump)
 	Soap_DoLunge(p, fromjump)
 end
 
+local function uppercutrefresh_vfx(p,me,soap)
+	S_StartSound(nil, sfx_sp_rcg, p)
+
+	local top_layer = P_SpawnMobjFromMobj(me, 0,0,0, MT_SOAP_FREEZEGFX)
+	top_layer.state = S_SOAP_HITM_RSPRK
+	top_layer.fuse = top_layer.tics
+	top_layer.spritexscale = FU * 3/4
+	top_layer.spriteyscale = top_layer.spritexscale
+	top_layer.renderflags = $|RF_ALWAYSONTOP
+	top_layer.drawonlyforplayer = p
+	top_layer.dontdrawforviewmobj = me
+	top_layer.dispoffset = 200
+	top_layer.translation = "AllYellow"
+	top_layer.spriteyoffset = 140*FU / 2
+	top_layer.spritexoffset = -70*FU / 2
+	top_layer.tracer = me
+end
+
 local discoranges = {
 	["DISCO1"] = true,
 	["DISCO2"] = true,
@@ -646,14 +703,6 @@ Takis_Hook.addHook("PreThinkFrame",function(p)
 		soap.fakeskidtime = p.skidtime
 	end
 	
-	soap.bm.damaging = false
-	local dprp = soap.bm.dmg_props
-	dprp.att = 0
-	dprp.def = 0
-	dprp.s_att = 0
-	dprp.s_def = 0
-	dprp.name = ""
-	
 	--Okay
 	if soap.bm.lockmove
 		p.cmd.forwardmove = $/5
@@ -677,9 +726,7 @@ Takis_Hook.addHook("PreThinkFrame",function(p)
 	end
 end)
 
-Takis_Hook.addHook("Soap_DashSpeeds", function(p, dash, time, noadjust)
-	local soap = p.soaptable
-	
+local function dash_speeds(p,me,soap, dash, time, noadjust)
 	if soap.inBattle
 	or Soap_IsCompGamemode()
 		if not soap.inBattle
@@ -724,9 +771,9 @@ Takis_Hook.addHook("Soap_DashSpeeds", function(p, dash, time, noadjust)
 			dash = 0
 		end
 	end
-	
-	return dash, time
-end)
+
+	return dash, time, noadjust
+end
 
 Takis_Hook.addHook("Soap_Thinker",function(p)
 	local me = p.realmo
@@ -749,94 +796,97 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 		p.charflags = $ &~SF_SUPER
 	end
 	
-	if ( (((soap.weaponnext and soap.weaponprev)
-	or (p.exiting and p.pflags & PF_FINISHED
-		and soap.accspeed < FU/5
-		and soap.onGround
-	) or (
-		soap.onGround
-		and (soap.accspeed <= FU)
-		and discoranges[Soap_CheckFloorPic(me,true)] == true
-	)) and not soap.taunt.tics)
-	-- and not soap.taunttime
-	and not (p.powers[pw_carry] or soap.isSliding)
-	and not P_PlayerInPain(p) )
+	if (
+		(
+			((soap.weaponnext and soap.weaponprev)
+			or (p.exiting and p.pflags & PF_FINISHED
+				and soap.accspeed < FU/5
+				and soap.onGround
+			) or (
+				soap.onGround
+				and (soap.accspeed <= FU)
+				and discoranges[Soap_CheckFloorPic(me,true)] == true
+			)) and not soap.taunt.tics
+		)
+		and not (p.powers[pw_carry] or soap.isSliding)
+		and not P_PlayerInPain(p)
+	)
 	and (me.health)
 	and not (soap.noability & SNOABIL_BREAKDANCE)
 	or (soap.taunt.num == 4)
 		if me.state ~= S_PLAY_SOAP_BREAKDANCE
 			me.state = S_PLAY_SOAP_BREAKDANCE
-		else
-			--frame F = loop point start
-			--frame 60 = animation end
-			
-			--init
-			if skins[p.skin].sprites[SPR2_BRDA].numframes == 61
-				if soap.breakdance < F
-					me.frame = ($ &~FF_FRAMEMASK)|(soap.breakdance)
-				--loop
-				else
-					local timer = (soap.breakdance - F) % (60 - F)
-					me.frame = ($ &~FF_FRAMEMASK)|(timer + G)
-				end
+		end
+		
+		--frame F = loop point start
+		--frame 60 = animation end
+		
+		--init
+		if skins[p.skin].sprites[SPR2_BRDA].numframes == 61
+			if soap.breakdance < F
+				me.frame = ($ &~FF_FRAMEMASK)|(soap.breakdance)
+			--loop
 			else
-				local timer = soap.breakdance % skins[p.skin].sprites[SPR2_ROLL].numframes
-				me.frame = ($ &~FF_FRAMEMASK)|(timer)
+				local timer = (soap.breakdance - F) % (60 - F)
+				me.frame = ($ &~FF_FRAMEMASK)|(timer + G)
 			end
-			p.drawangle = (p.cmd.angleturn << 16) + ANGLE_180
-			local incre_frame = (leveltime & 1)
-			if incre_frame
-				soap.breakdance = $ + 1
-			end
-			soap.true_breakdance = $ + 1
+		else
+			local timer = soap.breakdance % skins[p.skin].sprites[SPR2_ROLL].numframes
+			me.frame = ($ &~FF_FRAMEMASK)|(timer)
+		end
+		p.drawangle = (p.cmd.angleturn << 16) + ANGLE_180
+		local incre_frame = (leveltime & 1)
+		if incre_frame
+			soap.breakdance = $ + 1
+		end
+		soap.true_breakdance = $ + 1
+		
+		if soap.true_breakdance == TR * 3/2
+		and not p.exiting
+		and not (soap.boombox and soap.boombox.valid)
+			local angle = me.angle + ANGLE_45
+			local dist = 55*FU
+			local boom = P_SpawnMobjFromMobj(me,
+				0, --P_ReturnThrustX(nil,angle, dist),
+				0, --P_ReturnThrustY(nil,angle, dist),
+				0,
+				MT_SOAP_BOOMBOX
+			)
+			local thrust_lul = FixedDiv(FixedMul(dist,me.scale),12*FU + 5*FU)
+			if soap.inWater then thrust_lul = $ / 2 end
+			Soap_ZLaunch(boom, 12*FU)
+			P_Thrust(boom,angle,
+				thrust_lul
+			)
 			
-			if soap.true_breakdance == TR * 3/2
-			and not p.exiting
-			and not (soap.boombox and soap.boombox.valid)
-				local angle = me.angle + ANGLE_45
-				local dist = 55*FU
-				local boom = P_SpawnMobjFromMobj(me,
-					0, --P_ReturnThrustX(nil,angle, dist),
-					0, --P_ReturnThrustY(nil,angle, dist),
-					0,
-					MT_SOAP_BOOMBOX
+			boom.color = p.skincolor
+			boom.tracer = me
+			boom.lifetime = 0
+			S_StartSoundAtVolume(me,sfx_sp_jm2, 255 * 8/10)
+			boom.songid = 1
+			if P_RandomChance(boom.info.painchance)
+				boom.funny = true
+				boom.songid = P_RandomRange(2, #SOAP_BOOMBOXJAMS)
+			end
+			soap.boombox = boom
+			
+			local speed = 15*me.scale
+			local range = 15*FU
+			for i = 0,P_RandomRange(15,22)
+				local poof = P_SpawnMobjFromMobj(boom,
+					Soap_RandomFixedRange(-range, range),
+					Soap_RandomFixedRange(-range, range),
+					FixedDiv(boom.height,boom.scale)/2 + Soap_RandomFixedRange(-range, range),
+					MT_SOAP_DUST
 				)
-				local thrust_lul = FixedDiv(FixedMul(dist,me.scale),12*FU + 5*FU)
-				if soap.inWater then thrust_lul = $ / 2 end
-				Soap_ZLaunch(boom, 12*FU)
-				P_Thrust(boom,angle,
-					thrust_lul
+				local hang,vang = R_PointTo3DAngles(
+					poof.x,poof.y,poof.z,
+					boom.x,boom.y,boom.z + boom.height/2
 				)
+				P_3DThrust(poof, hang,vang, speed)
 				
-				boom.color = p.skincolor
-				boom.tracer = me
-				boom.lifetime = 0
-				S_StartSoundAtVolume(me,sfx_sp_jm2, 255 * 8/10)
-				boom.songid = 1
-				if P_RandomChance(boom.info.painchance)
-					boom.funny = true
-					boom.songid = P_RandomRange(2, #SOAP_BOOMBOXJAMS)
-				end
-				soap.boombox = boom
-				
-				local speed = 15*me.scale
-				local range = 15*FU
-				for i = 0,P_RandomRange(15,22)
-					local poof = P_SpawnMobjFromMobj(boom,
-						Soap_RandomFixedRange(-range, range),
-						Soap_RandomFixedRange(-range, range),
-						FixedDiv(boom.height,boom.scale)/2 + Soap_RandomFixedRange(-range, range),
-						MT_SOAP_DUST
-					)
-					local hang,vang = R_PointTo3DAngles(
-						poof.x,poof.y,poof.z,
-						boom.x,boom.y,boom.z + boom.height/2
-					)
-					P_3DThrust(poof, hang,vang, speed)
-					
-					poof.spritexscale = $ + Soap_RandomFixedRange(0,2*FU)/3
-					poof.spriteyscale = poof.spritexscale
-				end
+				poof.spritexscale = $ + Soap_RandomFixedRange(0,2*FU)/3
+				poof.spriteyscale = poof.spritexscale
 			end
 		end
 	else
@@ -874,6 +924,7 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 			and not (soap.noability & (SNOABIL_CROUCH|SNOABIL_COMBAT))
 			and soap.notCarried
 			and not soap.pounding
+			and not me.soap_noslidetempugh
 				--if you were spinning already, and WERENT sliding,
 				--you can flop on your belly so you can lunge later
 				local wasspinning = (p.pflags & PF_SPINNING)
@@ -938,17 +989,9 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 				dolunge(p,me,soap)
 			end
 		end
-		
-		--super transformation
-		/*
-		if (p.pflags & (PF_JUMPED|PF_THOKKED) == PF_JUMPED)
-		and (soap.c2 == 1)
-		and Soap_SuperReady(p)
-		and not soap.isSolForm
-		and (lunge.angle == nil)
-			P_DoSuperTransformation(p)
+		if me.soap_noslidetempugh
+			me.soap_noslidetempugh = nil
 		end
-		*/
 		
 		if (soap.inBattle and CBW_Battle)
 		and (p.powers[pw_shield] & SH_NOSTACK == SH_ARMAGEDDON)
@@ -1011,9 +1054,11 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 			if not (p.powers[pw_super])
 			and Soap_SuperReady(p)
 			and not (soap.superlockout or soap.pounding)
+			and (me.health)
 				transforming = true
 			elseif (p.powers[pw_super])
 			and not soap.desuperlockout
+			and (me.health)
 				detransforming = true
 			end
 		end
@@ -1114,6 +1159,14 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 		S_StopSoundByID(me,sfx_sp_dtn)
 	end
 	
+	-- due to popular demmand spinning top
+	-- can now be toggled in co-op
+	if (CV.allowtop.value and soap.fire)
+		if soap.fire == 1
+			SoapST_Start(p)
+		end
+	end
+	
 	local waslunging = soap.lunge.lunged
 	if soap.lunge.lunged
 	and not (me.state == S_PLAY_JUMP or me.state == S_PLAY_ROLL)
@@ -1160,68 +1213,20 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 	local my_maxdash = SOAP_MAXDASH
 	local my_dashtime = SOAP_DASHTIME
 	local my_noadjust = false
-	do
-		local event_t = Takis_Hook.events["Soap_DashSpeeds"]
-		if (event_t.numhooks)
-			local events = event_t.events
-			for i = 1, event_t.numhooks
-				local new_md,new_dt,no_adjust = Takis_Hook.tryRunHook("Soap_DashSpeeds", events[i], p,my_maxdash,my_dashtime)
-				
-				if new_md ~= nil
-				and type(new_md) == "number"
-					my_maxdash = abs(new_md)
-				end
-				if new_dt ~= nil
-				and type(new_dt) == "number"
-					my_dashtime = abs(new_dt)
-				end
-				if no_adjust ~= nil
-				and type(no_adjust) == "boolean"
-					my_noadjust = no_adjust
-				end
-			end
-		end
-		
-		if soap.inWater
-			soap._maxdash = $ * 3/2
-		end
-		
-		--hacky
-		--print(("%f"):format(p.gradualspeed))
-		soap._maxdash = my_maxdash + (p.gradualspeed or 0)
-		soap._maxdashtime = max(my_dashtime, 2)
-		soap._noadjust = my_noadjust
+	-- no reason for this to be a hook honestly...
+	-- yyyyyeah putting it out of a hook made it faster LOL
+	my_maxdash,my_dashtime,my_noadjust = dash_speeds(p,me,soap, my_maxdash,my_dashtime,no_adjust)
+	if soap.inWater
+		my_maxdash = $ * 3/2
 	end
+	
+	--hacky
+	soap._maxdash = my_maxdash + (p.gradualspeed or 0)
+	soap._maxdashtime = max(my_dashtime, 2)
+	soap._noadjust = my_noadjust
 	
 	--spin specials
 	if (soap.use)
-		
-		--grabbing (lol)
-		if (CV.FindVar("friendlyfire").value)
-		and (not Soap_IsCompGamemode())
-		and (soap.use_R)
-		and (soap.use == 1)
-		and (soap.onGround)
-		and not (p.pflags & PF_SPINNING)
-		and not (me.soap_grabcooldown)
-		and not (soap.stasistic)
-		and (false)
-			if not Soap_GrabHitbox(p)
-				if (me.health)
-					p.skidtime = TR/2
-					if p.powers[pw_carry] == CR_NONE
-						me.state = S_PLAY_SKID
-						me.tics = p.skidtime
-						P_Thrust(me,me.angle, -5*me.scale)
-						P_MovePlayer(p)
-					end
-					soap.fakeskidtime = p.skidtime
-					p.pflags = $ &~PF_SPINNING
-				end
-				me.soap_grabcooldown = TR
-			end
-			soap.use_R = 0
-		end
 		
 		--r-dash
 		local rightway = false
@@ -1333,6 +1338,17 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 					soap.speedlenient = max($,4)
 					
 					Soap_SquashMacro(p, {ease_func = "insine", ease_time = soap.chargedtime * 3/4, strength = (FU/3)})
+					Soap_DustRing(me, dust_type(me), 16, {me.x,me.y,me.z + me.height/2},
+						126*me.scale, 20*me.scale,
+						me.scale/2, me.scale,
+						true, function(s)
+							s.momx = $ + me.momx * 3/4
+							s.momy = $ + me.momy * 3/4
+							s.momz = $ + me.momz * 3/4
+							dust_noviewmobj(s)
+						end,
+						p.drawangle, 0
+					)
 					
 					if (p.powers[pw_shield] & SH_NOSTACK == SH_FLAMEAURA)
 						S_StartSound(me,sfx_s3k43)
@@ -1421,10 +1437,9 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 				S_StartSound(me,sfx_s3k43)
 			end
 
-			local event_t = Takis_Hook.events["Char_OnMove"]
-			if (event_t.numhooks)
-				local events = event_t.events
-				for i = 1, event_t.numhooks
+			if (Event_CharOnMove.numhooks)
+				local events = Event_CharOnMove.events
+				for i = 1, Event_CharOnMove.numhooks
 					local new_t, new_min, new_max = Takis_Hook.tryRunHook("Char_OnMove", events[i], p, "airdash", thrust,min_speed,max_speed)
 					
 					if new_t ~= nil
@@ -1560,7 +1575,6 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 		and me.health
 		-- and not soap.taunttime
 		and not soap.pounding
-		and not soap.uppercut_cooldown
 		and (p.powers[pw_carry] == CR_NONE))
 		and not (soap.noability & (SNOABIL_UPPERCUT|SNOABIL_COMBAT))
 			soap.uppercut_spin = soap_baseuppercutturn
@@ -1609,7 +1623,6 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 			soap.onGround = false
 			
 			soap.sprung = false
-			soap.ranoff = false
 			
 			local sound = true
 			if (shield == SH_THUNDERCOIN)
@@ -1632,17 +1645,15 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 				S_StartSoundAtVolume(me,sfx_sp_upr, 255 * 8/10)
 			end
 			
-			local event_t = Takis_Hook.events["Char_OnMove"]
-			if (event_t.numhooks)
-				local events = event_t.events
-				for i = 1, event_t.numhooks
+			if (Event_CharOnMove.numhooks)
+				local events = Event_CharOnMove.events
+				for i = 1, Event_CharOnMove.numhooks
 					local newrad = Takis_Hook.tryRunHook("Char_OnMove", events[i], p, "uppercut", sound)
 				end
 			end
 			setstate = true
 		end
 	end
-	if soap.uppercut_cooldown then soap.uppercut_cooldown = $ - 1 end
 	
 	--jump specials
 	if (soap.jump)
@@ -1669,10 +1680,9 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 			Soap_ZLaunch(me,13*FU)
 			p.pflags = $|PF_THOKKED|PF_JUMPED &~(PF_STARTJUMP|PF_SPINNING)
 			
-			local event_t = Takis_Hook.events["Char_OnMove"]
-			if (event_t.numhooks)
-				local events = event_t.events
-				for i = 1, event_t.numhooks
+			if (Event_CharOnMove.numhooks)
+				local events = Event_CharOnMove.events
+				for i = 1, Event_CharOnMove.numhooks
 					local newrad = Takis_Hook.tryRunHook("Char_OnMove", events[i], p, "pound")
 				end
 			end
@@ -1704,7 +1714,35 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 	if soap.airdashed
 		if Soap_AirdashState(me)
 			if Soap_DirBreak(p,me, R_PointToAngle2(0,0,me.momx,me.momy))
-				Soap_Hitlag.addHitlag(me, 7, false)
+				soap.extraairdash = true
+				soap.canuppercut = true
+				
+				me.state = S_PLAY_SOAP_PUNCH1
+				local follow = P_SpawnMobjFromMobj(me,0,0,0,MT_SOAP_FREEZEGFX)
+				follow.tics = -1
+				follow.fuse = -1
+				follow.tracer = me
+				follow.bigwind = true
+				follow.state = S_TAKIS_SLINGFX
+				follow.dontdrawforviewmobj = me
+				follow.zcorrect = true
+				follow.angle = me.angle - ANGLE_90
+				follow.firstangle = follow.angle
+				follow.dist = 20*FU
+				Soap_SquashMacro(p, {
+					ease_func = "inexpo",
+					ease_time = 6,
+					x = -FU * 1/5,
+					y = -FU/4,
+					singular = true
+				})
+				Soap_ZLaunch(me, 7*FU + FU/2)
+				Soap_DamageSfx(me, FU*3/4,FU,nil, {volume = 255/2})
+				Soap_StartQuake(20*FU, 19,
+					{me.x,me.y,me.z},
+					512*me.scale
+				)
+				Soap_Hitlag.addHitlag(me, 14, false)
 			end
 			
 			p.powers[pw_strong] = $|STR_SPIKE|STR_ANIM
@@ -1726,8 +1764,6 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 		if (me.eflags & MFE_SPRUNG)
 			soap.airdashed = false
 		end
-		
-		soap.nofreefall = true
 	end
 	
 	if soap.uppercutted
@@ -1739,6 +1775,11 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 			if soap.last.momz*soap.gravflip < 0
 			and not soap.just_uppercut
 			and not soap.onGround
+				if not soap.canuppercut
+				and not soap.pounding
+					uppercutrefresh_vfx(p,me,soap)
+				end
+
 				soap.canuppercut = true
 			end
 			
@@ -1750,7 +1791,6 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 			--shitty
 			or me.sprite2 == SPR2_MLEE)
 			and not soap.pounding
-				--soap.bm.intangible = max($, 2)
 				
 				if not (soap.fx.uppercut_aura and soap.fx.uppercut_aura.valid)
 					local follow = P_SpawnMobjFromMobj(me,0,0,0,MT_SOAP_FREEZEGFX)
@@ -1781,7 +1821,13 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 			
 			soap.afterimage = true
 			if Soap_BreakFloors(p,me)
-				Soap_Hitlag.addHitlag(me, 7, false)
+				Soap_DamageSfx(me, FU*3/4,FU,nil, {volume = 255/2})
+				Soap_StartQuake(20*FU, 19,
+					{me.x,me.y,me.z},
+					512*me.scale
+				)
+				Soap_Hitlag.addHitlag(me, 14, false)
+				uppercutrefresh_vfx(p,me,soap)
 				soap.canuppercut = true
 				P_SetObjectMomZ(me, 5*FU,true)
 				soap.uppercut_spin = $ - ANGLE_90
@@ -1822,7 +1868,7 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 	--r-dash thinker
 	--r dash thinker
 	--rdash thinker
-	--just take it off when we dont need it`
+	--just take it off when we dont need it
 	p.charflags = $ &~(SF_RUNONWATER|SF_NOSKID)|(lunge.effect and SF_NOSKID or 0)
 	if soap.rdashing and not soap.resetdash
 		--local micros = getTimeMicros()
@@ -1980,7 +2026,31 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 				accelerative_speedlines(p,me,soap, FixedDiv(R_PointTo3DDist(0,0,0,me.momx,me.momy,me.momz),me.scale), 65*FU, color)
 				
 				if Soap_DirBreak(p,me, R_PointToAngle2(0,0,me.momx,me.momy))
-					Soap_Hitlag.addHitlag(me, 7, false)
+					me.state = S_PLAY_SOAP_RAM
+					local follow = P_SpawnMobjFromMobj(me,0,0,0,MT_SOAP_FREEZEGFX)
+					follow.tics = -1
+					follow.fuse = -1
+					follow.tracer = me
+					follow.bigwind = true
+					follow.state = S_TAKIS_SLINGFX
+					follow.dontdrawforviewmobj = me
+					follow.zcorrect = true
+					follow.angle = me.angle - ANGLE_90
+					follow.firstangle = follow.angle
+					follow.dist = 20*FU
+					Soap_SquashMacro(p, {
+						ease_func = "inexpo",
+						ease_time = 6,
+						x = -FU * 1/5,
+						y = -FU/4,
+						singular = true
+					})
+					Soap_DamageSfx(me, FU*3/4,FU,nil, {volume = 255/2})
+					Soap_StartQuake(20*FU, 19,
+						{me.x,me.y,me.z},
+						512*me.scale
+					)
+					Soap_Hitlag.addHitlag(me, 14, false)
 				end
 				
 				p.powers[pw_strong] = $|STR_SPIKE|STR_ANIM|STR_HEAVY
@@ -2021,7 +2091,7 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 					end
 				end
 				if soap.accspeed >= 3*FU
-					soap.dashangle = P_Lerp(FU/4, $, R_PointToAngle2(0,0,me.momx,me.momy))
+					soap.dashangle = P_Lerp((me.eflags & MFE_SPRUNG and FU or FU/4), $, R_PointToAngle2(0,0,me.momx,me.momy))
 					p.drawangle = soap.dashangle
 					--TODO: drifting vfx
 					setangle = true
@@ -2147,7 +2217,12 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 		end
 		
 		if Soap_BreakFloors(p,me)
-			Soap_Hitlag.addHitlag(me, 7, false)
+			Soap_DamageSfx(me, FU*3/4,FU,nil, {volume = 255/2})
+			Soap_StartQuake(20*FU, 19,
+				{me.x,me.y,me.z},
+				512*me.scale
+			)
+			Soap_Hitlag.addHitlag(me, 14, false)
 		end
 		
 		--wind lines
@@ -2235,11 +2310,11 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 			armasound(me,true)
 		end
 		
+		-- ..?
 		if (soap.pounding)
-			local event_t = Takis_Hook.events["Char_OnMove"]
-			if (event_t.numhooks)
-				local events = event_t.events
-				for i = 1, event_t.numhooks
+			if (Event_CharOnMove.numhooks)
+				local events = Event_CharOnMove.events
+				for i = 1, Event_CharOnMove.numhooks
 					local newrad = Takis_Hook.tryRunHook("Char_OnMove", events[i], p, "poundthinker")
 				end
 			end
@@ -2271,7 +2346,6 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 	if do_poundaura
 		soap.uppercutted = false
 		soap.canuppercut = false
-		--soap.bm.intangible = max($,2)
 		
 		local spritemul = FU*3/4
 		local height = FixedMul(
@@ -2369,13 +2443,6 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 			p.powers[pw_strong] = $|STR_SPIKE|STR_ANIM
 			p.acceleration = skins[p.skin].acceleration * 2
 			me.friction = FU - FU/45
-			
-			soap.bm.damaging = true
-			soap.bm.dmg_props = {
-				att = 2,
-				def = 2,
-				name = "Spinning Top"
-			}
 			
 			SoapST_Hitbox(p)
 			if soap.onGround
@@ -2674,11 +2741,11 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 		end
 		
 		local speedup_frame = false
-		if (soap.accspeed > 56*FU)
+		if (soap.accspeed > 52*FU)
 			speedup_frame = P_RandomChance(
-				min(FixedDiv(5*FU, soap.accspeed - 56*FU), FU)
+				min(FixedDiv(5*FU, soap.accspeed - 52*FU), FU)
 			)
-			if (soap.accspeed > 52*FU) then speedup_frame = true end
+			if (soap.accspeed > 57*FU) then speedup_frame = true end
 		end
 		if speedup_frame
 		and (aura.state ~= S_SOAP_NWF_WIND_FAST and aura.tics >= states[S_SOAP_NWF_WIND].tics - 2)
@@ -2765,18 +2832,6 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 		squishme = squishme,
 	})
 	
-	--handle battlemod
-	if soap.bm.intangible
-		soap.bm.intangible = $ - 1
-		p.intangible = true
-		if soap.bm.intangible == 0
-			if (p.airdodge ~= nil)
-			and p.airdodge <= 0
-				p.intangible = false
-			end
-		end
-	end
-	
 	if (p.pflags & (PF_JUMPED|PF_THOKKED) == PF_JUMPED)
 	and (me.state == S_PLAY_JUMP or me.state == S_PLAY_SPRING)
 		soap.jumptime = $+1
@@ -2812,7 +2867,6 @@ addHook("PlayerSpawn",function(p)
 	
 	soap.canuppercut = true
 	soap.uppercutted = false
-	soap.uppercut_cooldown = 0
 	
 	soap.rdashing = false
 	soap.airdashed = false
@@ -3085,33 +3139,6 @@ addHook("PlayerCanDamage",function(p)
 	end
 end)
 
-----grab thinker		
-addHook("PlayerThink",function(p)
-	if not (p and p.valid) then return end
-	if not p.soaptable then return end
-	if not (p.mo and p.mo.valid) then return end
-	
-	local me = p.mo
-	local soap = p.soaptable
-	
-	--lol
-	if (me.skin ~= SOAP_SKIN)
-		--free the other guy
-		if (me.punchtarget and me.punchtarget.valid)
-			Soap_GrabFree(me, me.punchtarget)
-		end
-	--only soaps can grab other people
-	else
-		Soap_Grabbing(p,me,soap)
-	end
-	if me.soap_grabcooldown then me.soap_grabcooldown = $ - 1; end
-	
-	if (me.punchsource and me.punchsource.valid)
-		Soap_Grabbed(p,me,soap)
-	end
-end)
-----
-
 Takis_Hook.addHook("MoveBlocked",function(me,thing,line, goingup)
 	local p = me.player
 	local soap = p.soaptable
@@ -3296,8 +3323,6 @@ local function try_damage_cases(me,thing, p,soap,DealDamage)
 				local offset = P_RandomRange(-4, 8)
 				s.tics = $ + halftic + offset
 				s.anim_duration = $ + halftic + offset
-				-- stuff breaks if too many things have hitlag so watch out
-				--Soap_Hitlag.addHitlag(s, hitlag_tics / 2, false)
 			end
 		end
 		
@@ -3578,7 +3603,7 @@ addHook("ShouldDamage",function(me, inf,src)
 	if not (p and p.valid) then return end
 	if not (p.soaptable) then return end
 	if (me.hitlag) then return end
-	if not (inf and inf.valid or src and src.valid) then return end
+	if not (inf and inf.valid and src and src.valid) then return end
 	if inf.flags & MF_MISSILE then return end
 	
 	local soap = p.soaptable
@@ -3655,10 +3680,9 @@ addHook("MobjDamage", function(me,inf,sor,dmg,dmgt)
 	if (soap.hurtframe == leveltime) then return; end
 	soap.hurtframe = leveltime
 	
-	local event_t = Takis_Hook.events["Char_OnDamage"]
-	if (event_t.numhooks)
-		local events = event_t.events
-		for i = 1, event_t.numhooks
+	if (Event_CharOnDamage.numhooks)
+		local events = Event_CharOnDamage.events
+		for i = 1, Event_CharOnDamage.numhooks
 			local short = Takis_Hook.tryRunHook("Char_OnDamage", events[i], me,inf,sor,dmg,dmgt)
 			
 			-- does not short out the calling MobjDamage
@@ -3774,10 +3798,10 @@ addHook("MobjDamage", function(me,inf,sor,dmg,dmgt)
 			nosfx = true,
 			vol = 255
 		})
-		Soap_ImpactVFX(me, inf, nil, power)
+		Soap_ImpactVFX(me, inf, nil, power, nil,nil, dmgt)
 	end
 	while (power > FU)
-		Soap_ImpactVFX(me, inf, 2*FU, power)
+		Soap_ImpactVFX(me, inf, 2*FU, power, nil,nil, dmgt)
 		power = $ - FU/2
 	end
 	
@@ -3845,7 +3869,14 @@ addHook("MobjDeath", function(me,inf,sor,dmgt)
 			return
 		end
 		
+		local cando = true
+		if (Soap_IsCompGamemode())
+		and (sor.flags & MF_BOSS == 0)
+			cando = false
+		end
+		
 		if speed >= 30*me.scale
+		and cando
 			me.soap_knockout = true
 			me.soap_knockout_speed = {
 				me.momx,me.momy,me.momz
@@ -3856,7 +3887,7 @@ addHook("MobjDeath", function(me,inf,sor,dmgt)
 	end
 	-- Intentional!
 	if (sor and sor.valid or inf and inf.valid)
-	and not (PTSR and PTSR.isPTSR()) -- seems to cause lag otherwise?
+	and not (PTSR and PTSR.isPTSR() or Soap_IsCompGamemode()) -- seems to cause lag otherwise?
 		Soap_Hitlag.addHitlag(me, 10, true, false)
 	end
 end)

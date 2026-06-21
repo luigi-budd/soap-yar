@@ -19,6 +19,11 @@ local R_PointTo3DAngles = R_PointTo3DAngles
 local P_3DThrust = P_3DThrust
 local P_IsObjectOnGround = P_IsObjectOnGround
 
+local Event_CanPlayerHurtPlayer = Takis_Hook.events["CanPlayerHurtPlayer"]
+local Event_CanFlingThing = Takis_Hook.events["CanFlingThing"]
+local Event_Char_NoAbility = Takis_Hook.events["Char_NoAbility"]
+local Event_Char_VFX = Takis_Hook.events["Char_VFX"]
+
 local function dust_type(me)
 	return (me.eflags & (MFE_UNDERWATER|MFE_TOUCHWATER)) and P_RandomRange(MT_SMALLBUBBLE,MT_MEDIUMBUBBLE) or MT_SOAP_DUST
 end
@@ -604,10 +609,9 @@ rawset(_G, "Soap_CanHurtPlayer", function(p1,p2,nobs)
 			if false, force no hits
 			if nil, use the above checks
 		*/
-		local event_t = Takis_Hook.events["CanPlayerHurtPlayer"]
-		if (event_t.numhooks)
-			local events = event_t.events
-			for i = 1, event_t.numhooks
+		if (Event_CanPlayerHurtPlayer.numhooks)
+			local events = Event_CanPlayerHurtPlayer.events
+			for i = 1, Event_CanPlayerHurtPlayer.numhooks
 				local res = Takis_Hook.tryRunHook("CanPlayerHurtPlayer", events[i], p1,p2,nobs)
 				if res ~= nil then allowhurt = res; end
 			end
@@ -684,8 +688,19 @@ local damagecolors = {
 	SKINCOLOR_YELLOW,
 	SKINCOLOR_SAPPHIRE
 }
+local elec_sparkcolors = {
+	SKINCOLOR_CERULEAN, SKINCOLOR_COBALT, SKINCOLOR_MIDNIGHT, SKINCOLOR_SAPPHIRE,
+	SKINCOLOR_GALAXY, SKINCOLOR_VAPOR, SKINCOLOR_DUSK, SKINCOLOR_MAJESTY,
+}
+local damagecolors_elec = {
+	unpack(elec_sparkcolors),
+	SKINCOLOR_MINT, SKINCOLOR_SEAFOAM, SKINCOLOR_ISLAND, SKINCOLOR_BOTTLE,
+	SKINCOLOR_JADE, SKINCOLOR_MASTER,
+	SKINCOLOR_TOPAZ, SKINCOLOR_GOLDENROD, SKINCOLOR_PEAR, SKINCOLOR_LEMON,
+	SKINCOLOR_LIME, SKINCOLOR_PERIDOT, SKINCOLOR_HEADLIGHT, SKINCOLOR_CHARTREUSE
+}
 local vfxheight = 90*FU
-rawset(_G,"Soap_ImpactVFX",function(src,inf, distmul, scalemul, forcesplat, nosparklag)
+rawset(_G,"Soap_ImpactVFX",function(src,inf, distmul, scalemul, forcesplat, nosparklag, dmgt)
 	if (inf and inf.valid and inf.player and inf.skin == SOAP_SKIN)
 		inf.player.soaptable.calledvfxthistic = true
 	end
@@ -739,6 +754,7 @@ rawset(_G,"Soap_ImpactVFX",function(src,inf, distmul, scalemul, forcesplat, nosp
 	top_layer.startinghitlag = (src.hitlag or 0)
 	top_layer.distmul = distmul
 	top_layer.scalemul = scalemul
+	top_layer.dmgt = dmgt
 	top_layer.soap_supervfx = supervfx
 
 	if inf and inf.valid
@@ -764,6 +780,11 @@ rawset(_G,"Soap_ImpactVFX",function(src,inf, distmul, scalemul, forcesplat, nosp
 		shck.color = top_layer.color
 		shck.colorized = top_layer.colorized
 		shck.translation = (supervfx) and "AllBlack" or nil
+		if (dmgt == DMG_ELECTRIC)
+			shck.color = SKINCOLOR_GALAXY
+			shck.colorized = true
+		end
+		
 		if P_RandomChance(FU/2)
 			local shock = P_SpawnMobjFromMobj(top_layer, 0,0,0, MT_PARTICLE)
 			shock.state = shck.state
@@ -772,13 +793,53 @@ rawset(_G,"Soap_ImpactVFX",function(src,inf, distmul, scalemul, forcesplat, nosp
 			shock.spriteyoffset = 40*FU
 			shock.rollangle = ANGLE_90
 			--shock.renderflags = $|RF_HORIZONTALFLIP|RF_VERTICALFLIP
-			shock.color = top_layer.color
-			shock.colorized = top_layer.colorized
+			shock.color = shck.color
+			shock.colorized = shck.colorized
 			shock.renderflags = shck.renderflags
-			shock.translation = (supervfx) and "AllBlack" or nil
+			shock.translation = shck.translation
 		end
 	end
-
+	
+	-- what a mess...
+	local colorlist = damagecolors
+	if (dmgt == DMG_ELECTRIC)
+		top_layer.color = SKINCOLOR_ISLAND
+		top_layer.colorized = true
+		
+		if forcesplat or nosparklag then return end
+		local num = (28 * scalemul)/FU
+		
+		local range = FixedMul(70*src.scale, scalemul)
+		for i = 0,num
+			local f = P_SpawnMobjFromMobj(src,
+				Soap_RandomFixedRange(-range,range),
+				Soap_RandomFixedRange(-range,range),
+				Soap_RandomFixedRange(0,range*2),
+				MT_PARTICLE
+			)
+			f.scale = scalemul * 2
+			f.spritexscale = $ + FixedMul(Soap_RandomFixedRange(-FU/4,FU/4), scalemul)
+			f.spriteyscale = f.spritexscale
+			f.state = S_SOAP_HITM_ESW
+			f.tics = P_RandomRange(0, 5 + (20*scalemul)/FU)
+			-- Theres 3 "stages" for these little spark particles,
+			-- each stage only has 2 frames so stronger attacks
+			-- will have sparks that last longer
+			f.extravalue1 = 1 + (2*scalemul)/FU
+			if P_RandomChance(FU/10) then
+				f.extravalue1 = $ * 2
+			end
+			f.renderflags = $|(P_RandomChance(FU/2) and RF_HORIZONTALFLIP or 0)
+			f.color = elec_sparkcolors[P_RandomRange(1, #elec_sparkcolors)]
+			
+			local lag = (src.hitlag or 0)
+			f.tics = $ + lag
+			f.anim_duration = $ + lag
+		end
+		
+		colorlist = damagecolors_elec
+	end
+	
 	if forcesplat or nosparklag then return end
 	
 	if supervfx
@@ -795,8 +856,8 @@ rawset(_G,"Soap_ImpactVFX",function(src,inf, distmul, scalemul, forcesplat, nosp
 			--P_SetObjectMomZ(shck, -4*FU)
 		end
 	end
-
-	local damagecolor = damagecolors[P_RandomRange(1, #damagecolors)]
+	
+	local damagecolor = colorlist[P_RandomRange(1, #colorlist)]
 	local irad = 40*scalemul
 	local offset = 6
 	for i = 1,16
@@ -822,8 +883,9 @@ rawset(_G,"Soap_ImpactVFX",function(src,inf, distmul, scalemul, forcesplat, nosp
 		s.color = damagecolor
 		s.tracer = inf
 		s.renderflags = $|RF_ALWAYSONTOP|rflags
-		s.tics = $ + offset
-		s.anim_duration = $ + offset
+		local rand = P_RandomRange(-3,5)
+		s.tics = $ + offset + rand
+		s.anim_duration = $ + offset + rand
 		s.scale = $ / 2
 		s.spritexscale = max(scalemul, FU)
 		s.spriteyscale = s.spritexscale
@@ -874,12 +936,11 @@ rawset(_G,"Soap_CanDamageEnemy",function(p, mobj,flags,exclude, nobs)
 		if false, force no hits
 		if nil, use the above checks
 	*/
-	local event_t = Takis_Hook.events["CanFlingThing"]
-	if (event_t.numhooks)
-		local events = event_t.events
-		for i = 1, event_t.numhooks
-			if event_t.typefor ~= nil
-				if event_t.typefor(mobj, events[i].typedef) == false then continue end
+	if (Event_CanFlingThing.numhooks)
+		local events = Event_CanFlingThing.events
+		for i = 1, Event_CanFlingThing.numhooks
+			if Event_CanFlingThing.typefor ~= nil
+				if Event_CanFlingThing.typefor(mobj, events[i].typedef) == false then continue end
 			end
 			local res = Takis_Hook.tryRunHook("CanFlingThing", events[i], mobj, p,flags,false,exclude)
 			if res ~= nil then flingable = res; end
@@ -1035,7 +1096,6 @@ rawset(_G,"Soap_JostleThings",function(me, found, range)
 		local p = me.player
 		local p2 = found.player
 		
-		me.player.soaptable.bm.damaging = true
 		if Soap_CanHurtPlayer(p,p2, true)
 		and not (p2.tumble)
 		--???
@@ -1897,10 +1957,9 @@ rawset(_G,"Soap_HandleNoAbils", function(p)
 	
 	local hadcombat = (na & SNOABIL_COMBAT)
 	--return value: new noabilities field (absolute)
-	local event_t = Takis_Hook.events["Char_NoAbility"]
-	if (event_t.numhooks)
-		local events = event_t.events
-		for i = 1, event_t.numhooks
+	if (Event_Char_NoAbility.numhooks)
+		local events = Event_Char_NoAbility.events
+		for i = 1, Event_Char_NoAbility.numhooks
 			local new_noabil = Takis_Hook.tryRunHook("Char_NoAbility", events[i], p,na)
 			if new_noabil ~= nil and type(new_noabil) == "number"
 				na = abs(new_noabil)
@@ -1911,6 +1970,15 @@ rawset(_G,"Soap_HandleNoAbils", function(p)
 end)
 
 local soap_airfric = tofixed("0.96")
+local sixseven_callback = function(spark)
+	spark.tics = 8
+	spark.frame = A
+	spark.sprite = SPR_SOAP_GFX
+	spark.frame = 34|FF_PAPERSPRITE
+	spark.momz = 0
+	spark.renderflags = $|RF_NOCOLORMAPS|RF_FULLBRIGHT|(P_RandomChance(FU/2) and RF_HORIZONTALFLIP or 0)
+	P_ThrustEvenIn2D(spark, spark.angle - ANGLE_90, 12*FU)
+end
 rawset(_G,"Soap_DeathThinker",function(p,me,soap)
 	if me.sprite2 == SPR2_MSC2
 		local sweat = P_SpawnMobjFromMobj(me,
@@ -1944,6 +2012,14 @@ rawset(_G,"Soap_DeathThinker",function(p,me,soap)
 			me.momx = FixedMul($, soap_airfric)
 			me.momy = FixedMul($, soap_airfric)
 		end
+		if (me.z + me.momz + me.height >= me.ceilingz)
+			me.momz = -$
+			if Soap_IsLocalPlayer(p)
+				Soap_StartQuake(abs(me.momz)*2, TR/4)
+			end
+			S_StartSound(me, sfx_s3k5d)
+			Soap_Hitlag.addHitlag(me, 14, true)
+		end
 		if (me.momz*soap.gravflip <= -5 * me.scale)
 		and Soap_IsCompGamemode()
 			me.state = S_PLAY_FALL
@@ -1960,12 +2036,41 @@ rawset(_G,"Soap_DeathThinker",function(p,me,soap)
 		--lmao handle this here too
 		if (soap.onGround)
 		and me.health
-			me.state = S_PLAY_SOAP_KNOCKOUT
-			me.sprite2 = SPR2_MSC4
-			me.tics = -1
-			me.rollangle = 0
-			
-			me.soap_kickme = true
+			if abs(me.momz) >= 30*me.scale -- ouch
+				me.momz = -($ * 4/10)
+				me.momx = FixedMul($, soap_airfric)
+				me.momy = FixedMul($, soap_airfric)
+				Soap_Hitlag.addHitlag(me, 14, true)
+				Soap_DustRing(me,
+					MT_PARTICLE, 10,
+					{me.x,me.y,me.z},
+					8*FU, 8*FU,
+					me.scale / 10,
+					me.scale * 4,
+					false, sixseven_callback
+				)
+				Soap_DustRing(me,
+					dust_type(me),
+					P_RandomRange(8,10),
+					{me.x,me.y,me.z},
+					32*me.scale,
+					me.scale*5,
+					me.scale,
+					me.scale/2,
+					false
+				)
+				if Soap_IsLocalPlayer(p)
+					Soap_StartQuake(abs(me.momz)*3, TR/3)
+				end
+				S_StartSound(me, sfx_s3k5f)
+			else
+				me.state = S_PLAY_SOAP_KNOCKOUT
+				me.sprite2 = SPR2_MSC4
+				me.tics = -1
+				me.rollangle = 0
+				
+				me.soap_kickme = true
+			end
 		end
 	elseif me.soap_kickme
 		if (not me.health)
@@ -2628,6 +2733,7 @@ local function VFX_Waterrun(p,me,soap)
 				water.angle = angle - ANGLE_180 - ANGLE_22h
 				water.tracer = me
 				water.state = S_SOAP_WATERTRAIL
+				water.nofxadjust = true
 				P_SetOrigin(water,
 					(me.x + me.momx) + P_ReturnThrustX(nil, angle + ANGLE_90, radius) + forward_push_x,
 					(me.y + me.momy) + P_ReturnThrustY(nil, angle + ANGLE_90, radius) + forward_push_y,
@@ -2668,6 +2774,7 @@ local function VFX_Waterrun(p,me,soap)
 				water.angle = angle - ANGLE_180 + ANGLE_22h
 				water.tracer = me
 				water.state = S_SOAP_WATERTRAIL
+				water.nofxadjust = true
 				P_SetOrigin(water,
 					(me.x + me.momx) + P_ReturnThrustX(nil, angle - ANGLE_90, radius) + forward_push_x,
 					(me.y + me.momy) + P_ReturnThrustY(nil, angle - ANGLE_90, radius) + forward_push_y,
@@ -2886,6 +2993,7 @@ local function VFX_Lunge(p,me,soap, props)
 			}
 			roll.rollangle = FixedAngle(Soap_RandomFixedRange(0,360*FU))
 			roll.fuse = P_RandomRange(4,8)
+			roll.renderflags = $|RF_FULLBRIGHT|RF_NOCOLORMAPS
 			roll.state = S_SOAP_LUNGEVFX
 		end
 	end
@@ -2973,10 +3081,9 @@ rawset(_G,"Soap_VFX",function(p,me,soap, props)
 			["deathanims"] = boolean
 			etc...
 	*/
-	local event_t = Takis_Hook.events["Char_VFX"]
-	if (event_t.numhooks)
-		local events = event_t.events
-		for i = 1, event_t.numhooks
+	if (Event_Char_VFX.numhooks)
+		local events = Event_Char_VFX.events
+		for i = 1, Event_Char_VFX.numhooks
 			local new_noabil = Takis_Hook.tryRunHook("Char_VFX", events[i], p, props)
 			if fxtable == nil then continue end
 			
@@ -3206,378 +3313,6 @@ rawset(_G, "Soap_SuperThinker",function(p,me,soap)
 	*/
 end)
 
-local SOAP_GRAB_ACTIONSTATE = 9999
-rawset(_G,"Soap_GrabHitbox",function(p)
-	local me = p.mo
-	local soap = p.soaptable
-	
-	if me.soap_grabcooldown then return false; end
-	
-	local landed = false
-	
-	if (me.punchtarget and me.punchtarget.valid) then return end
-	if (me.punchsource and me.punchsource.valid) then return end
-	
-	local fakerange = 128*FU
-	local range = 32*me.scale
-	local disp = P_SpawnMobjFromMobj(me,
-		P_ReturnThrustX(nil, me.angle, FixedDiv(range + me.radius, me.scale)),
-		P_ReturnThrustY(nil, me.angle, FixedDiv(range + me.radius, me.scale)),
-		0, MT_THOK
-	)
-	disp.height = me.height
-	searchBlockmap("objects", function(ref, found)
-		if found == me then return end
-		if not (found.health) then return end
-		if not P_CheckSight(me,found) then return end
-		if (found.flags & (MF_MISSILE|MF_NOCLIP|MF_NOCLIPHEIGHT|MF_NOCLIPTHING)) then return end
-		if not (found.player and found.player.valid) then return end
-		if (found.player and found.player.airdodge ~= nil and found.player.airdodge > 0) then return end
-		if (found.player and found.player.intangible) then return end
-		if (found.player.powers[pw_invulnerability]
-		or found.player.powers[pw_flashing])
-			return
-		end
-		
-		if abs(disp.x - found.x) > range + found.radius
-		or abs(disp.y - found.y) > range + found.radius
-			return
-		end
-		if not Soap_ZCollide(disp,found) then return end
-		
-		--Already being grabbed
-		if (found.punchsource and found.punchsource.valid) then return end
-		--Already grabbing something
-		if (found.punchtarget and found.punchtarget.valid) then return end
-		
-		if Soap_CanHurtPlayer(p,found.player, soap.inBattle)
-			p.drawangle = me.angle
-			Soap_GrabStart(me, found)
-			
-			soap.firenormal = 0
-			p.cmd.buttons = $ &~BT_FIRENORMAL
-			
-			landed = true
-			return true
-		end
-	end, 
-	me,
-	me.x-fakerange, me.x+fakerange,
-	me.y-fakerange, me.y+fakerange)
-	if (disp and disp.valid)
-		P_RemoveMobj(disp)
-	end
-	return landed
-end)
-
-local function GrabSparks(me, flip)
-	local fa = FixedDiv(360*FU, 8*FU)
-	local dist = FixedDiv(me.radius,me.scale)
-	local angle = me.punchangle
-	for i = 1,8
-		local my_ang = FixedAngle(fa * i)
-		
-		local spark = P_SpawnMobjFromMobj(me,
-			P_ReturnThrustX(nil, angle, dist),
-			P_ReturnThrustY(nil, angle, dist),
-			FixedDiv((41*me.height)/48, me.scale),
-			MT_SOAP_WALLBUMP
-		)
-		
-		spark.sign = flip and -1 or 1
-		
-		spark.fuse = TR * 3/4
-		spark.destscale = 0
-		spark.scalespeed = FixedDiv(spark.scale, spark.fuse*FU)
-		
-		spark.grabmode = true
-		spark.flags = $|MF_NOGRAVITY
-		spark.color = me.player.skincolor
-		spark.colorized = true
-		
-		spark.rotate = {
-			x = spark.x,
-			y = spark.y,
-			z = spark.z,
-			
-			va = my_ang,
-			ha = angle + ANGLE_90,
-			
-			dist = 0,
-		}
-	end
-end
-
-rawset(_G, "Soap_GrabStart",function(me, victim)
-	me.punchtarget = victim
-	me.punchpower = 10
-	me.nothrow = 3
-	me.punchangle = me.angle
-	me.punchsparks = 6
-	
-	victim.punchsource = me
-	victim.punchfree = 0
-	victim.punchmash = 0
-	victim.player.intangible = true
-	victim.player.tumble = nil
-	victim.flags = $ &~MF_NOCLIPHEIGHT
-	
-	S_StartSound(me, sfx_sp_grb)
-	GrabSparks(me)
-end)
-
-rawset(_G, "Soap_GrabFree",function(from, me, idontflinch, theydontflinch)
-	--Grabber gets endlag
-	if not theydontflinch
-	and not (from.player.guard)
-	and CBW_Battle
-		CBW_Battle.DoPlayerFlinch(from.player,
-			TR/2, R_PointToAngle2(from.x,from.y, me.x,me.y),
-			-3 * me.scale,
-			false
-		)
-	end
-	
-	--And so do you
-	if not idontflinch
-	and CBW_Battle
-		CBW_Battle.DoPlayerFlinch(from.player,
-			TR/5, R_PointToAngle2(from.x,from.y, me.x,me.y),
-			-3 * me.scale,
-			false
-		)
-	end
-	
-	from.punchtarget = nil
-	me.punchsource = nil
-	me.player.intangible = false
-	me.flags = $ &~MF_NOCLIPHEIGHT
-	me.punchfree = nil
-	me.punchmash = nil
-	me.spritexoffset = 0
-	me.hitlag = 0
-	from.hitlag = 0
-	from.soap_grabcooldown = TR*3/2
-	from.nothrow = nil
-	
-	if (me.player.actionstate == SOAP_GRAB_ACTIONSTATE)
-		me.player.actionstate = 0
-	end
-	if (from.player.actionstate == SOAP_GRAB_ACTIONSTATE)
-		from.player.actionstate = 0
-	end
-end)
-
-rawset(_G, "Soap_Grabbed",function(p,me,soap)
-	local mo = me.punchsource
-	local play = mo.player
-	
-	if not (mo.punchtarget and mo.punchtarget.valid)
-	or (mo.punchtarget ~= me)
-		Soap_GrabFree(mo, me, false, true)
-	end
-	
-	p.powers[pw_nocontrol] = 2
-	p.powers[pw_flashing] = 0
-	p.pflags = $|PF_FULLSTASIS
-	me.soap_noguarding = true
-	me.momx,me.momy,me.momz = 0,0,0
-	me.recoilangle = nil
-	me.recoilthrust = nil
-	me.flags2 = $ &~MF2_DONTDRAW
-	
-	p.guard = 0
-	p.action2text = string.format("Release: %.1f%%", me.punchfree*100)
-	p.canstunbreak = -5
-	me.soap_noguarding = true
-	
-	local mashed = false
-	if (soap.jump == 1)
-	and not (me.punchmash)
-	--Too late!
-	and not (mo.punchtoss)
-		mashed = true
-	end
-	
-	if not (mo.punchtoss)
-		p.drawangle = R_PointToAngle2(me.x,me.y, mo.x,mo.y)
-	end
-	
-	if me.punchmash
-		if not (me.hitlag)
-			me.spritexoffset = (leveltime&1 and 1 or -1) * me.punchmash * FU/2
-		end
-		me.punchmash = $ - 1
-	end
-	
-	if mashed
-		S_StartSound(p.mo, sfx_s3kd7s)
-		me.punchmash = TR/4
-		me.punchfree = $ + FU/6
-		if me.punchfree >= FU then
-			Soap_GrabFree(me.punchsource, me)
-			return
-		end
-		if CBW_Battle
-			local shake = P_SpawnMobjFromMobj(me, 0, 0, 0, MT_THOK)
-			shake.state = S_SHAKE
-			p.shakemobj = shake
-		end
-	end
-	
-	if p.shakemobj and p.shakemobj.valid then
-		P_MoveOrigin(p.shakemobj, me.x, me.y, me.z + (me.height/2))
-	end
-end)
-
-rawset(_G, "Soap_Grabbing",function(p,me,soap)
-	if not (me.punchtarget and me.punchtarget.valid) then return end
-	if not (not me.health or P_PlayerInPain(p))
-		me.state = S_PLAY_SKID
-	end
-	
-	if me.punchsparks
-	and (leveltime & 1)
-		if (me.punchsparks % 2)
-			GrabSparks(me, me.punchsparks % 4 == 3)
-		end
-		me.punchsparks = $ - 1
-	end
-	
-	if (me.flags & MF_NOTHINK) then return end
-	
-	local mo = me.punchtarget
-	local play = mo.player
-	
-	--let go of the guy
-	if (p.guard)
-	--or (soap.firenormal)
-	or not (soap.onGround)
-	or (soap.jump)
-		Soap_GrabFree(me, mo, false, true)
-		return
-	end
-	if (not me.health or P_PlayerInPain(p))
-		me.hitlag = 0
-		Soap_GrabFree(me, mo, false, true)
-		return
-	end
-	
-	p.powers[pw_nocontrol] = 2
-	p.pflags = $|PF_STASIS
-	me.momx,me.momy = 0,0
-	me.recoilangle = nil
-	me.recoilthrust = nil
-	p.action2text = "Power: "..me.punchpower.."%"
-	
-	if CBW_Battle
-		p.actioncooldown = max($, TR/2)
-		play.actioncooldown = max($, TR/2)
-	end
-	p.actionstate = SOAP_GRAB_ACTIONSTATE
-	play.actionstate = SOAP_GRAB_ACTIONSTATE
-	
-	mo.state = S_PLAY_PAIN
-	local angle = (me.punchtoss) and (me.angle + FixedAngle(me.punchspin)) or (me.punchangle)
-	local dist = me.radius + mo.radius + (10 * me.scale)
-	P_MoveOrigin(mo,
-		me.x + P_ReturnThrustX(nil, angle, dist),
-		me.y + P_ReturnThrustY(nil, angle, dist),
-		me.z + 3 * me.scale
-	)
-	play.drawangle = angle + ANGLE_180
-	p.drawangle = me.punchangle
-	
-	if (soap.fire == 1)
-	and not me.punchtoss
-		Soap_ImpactVFX(mo,me)
-		Soap_SpawnBumpSparks(mo, me)
-		Soap_DamageSfx(mo, FU/3 + P_RandomRange(0, FU*2/3), FU)
-		Soap_Hitlag.addHitlag(me, 12, false, true)
-		Soap_Hitlag.addHitlag(mo, 12, true)
-		me.punchpower = $ + 3
-		
-		if (play.rings)
-			for i = 1, min(4, play.rings)
-				local fling = P_SpawnMobjFromMobj(mo,
-					0,0,0,
-					MT_FLINGRING
-				)
-				fling.flags = $|MF_NOCLIPTHING
-				fling.fuse = TR/2
-				fling.angle = angle + FixedAngle(Soap_RandomFixedRange(-90*FU,90*FU))
-				P_SetObjectMomZ(fling,
-					Soap_RandomFixedRange(3*FU, 6*FU)
-				)
-				P_Thrust(fling, fling.angle, 10*fling.scale)
-				P_GivePlayerRings(play, -1)
-			end
-		end
-	end
-	if (soap.firenormal == 1)
-	and not me.punchtoss
-	and not me.nothrow
-		me.punchtoss = TR * 3/4
-		me.punchspin = 0
-		S_StartSound(me,sfx_mswing)
-	end
-	if me.nothrow then me.nothrow = $ - 1; end
-	if me.punchtoss
-		me.punchspin = $ + FixedDiv(360 * 2 * FU, (TR * 3/4)*FU)
-		p.drawangle = me.angle + FixedAngle(me.punchspin)
-		me.punchtoss = $ - 1
-		
-		if me.punchtoss == (TR*3/4)/2
-			S_StartSound(me,sfx_mswing)
-		elseif me.punchtoss == 1
-			play.powers[pw_flashing] = 0
-			mo.state = S_PLAY_PAIN
-			mo.z = $ + mo.scale
-			S_StartSound(mo,sfx_s3k51)
-			if CBW_Battle
-				CBW_Battle.DoPlayerTumble(play,TR*3/2,
-					me.angle, 0
-				)
-				play.tumble_nostunbreak = true
-				play.airdodge_spin = 0
-			end
-			
-			local power = me.punchpower*me.scale
-			P_3DInstaThrust(mo, me.angle, p.aiming, power)
-			P_SetObjectMomZ(mo, 10*me.scale, true)
-			
-			Soap_GrabFree(me, mo, true)
-			if CBW_Battle
-				CBW_Battle.DoPlayerFlinch(p,
-					TR/2, me.angle,
-					-3 * me.scale,
-					false
-				)
-			end
-		end
-	elseif (leveltime & 1)
-	and false
-		local marker = P_SpawnMobjFromMobj(me,0,0,0,MT_THOK)
-		marker.drawonlyforplayer = p
-		marker.sprite = SPR_LCKN
-		marker.frame = A
-		marker.renderflags = $|RF_FULLBRIGHT
-		
-		local power = me.punchpower*me.scale
-		P_3DInstaThrust(marker, me.angle, p.aiming, power)
-		P_SetObjectMomZ(marker, 10*me.scale, true)
-		
-		P_XYMovement(marker)
-		P_ZMovement(marker)
-		P_XYMovement(marker)
-		P_ZMovement(marker)
-		P_SetOrigin(marker, marker.x,marker.y,marker.z)
-		
-		marker.fuse = -1
-		marker.tics = 2
-	end
-end)
-
 rawset(_G,"Soap_SlopeInfluence",function(mobj,player, options, p_slope)
 	if (mobj.flags & (MF_NOCLIPHEIGHT|MF_NOGRAVITY)) then return end
 	
@@ -3775,6 +3510,7 @@ rawset(_G, "Soap_DoLunge",function(p, fromjump)
 	ghost.colorized = true
 	ghost.frame = $|TR_TRANS50
 	ghost.blendmode = AST_ADD
+	ghost.renderflags = $|RF_FULLBRIGHT|RF_NOCOLORMAPS
 	ghost.state = S_PLAY_ROLL
 	ghost.tics = -1
 	
@@ -3888,8 +3624,6 @@ local UPPER_XYDRAG = FU * 8/9
 local UPPER_ZDRAG = FU * 6/7
 
 local SPIKE_START = 7
---[done?]TODO: fix clashing
---[done?]TODO: fix guard parrying
 local function CheckForClash(p,me, p2,them, myattackpri)
 	local soap = p.soaptable
 	local B = CBW_Battle
@@ -4041,8 +3775,6 @@ local function CheckHitbox(tempatk, p,me,soap, from, range,fakerange, power, max
 	return enemyhit
 end
 
---[done]TODO: soap should get his own "special" action in his
---		battle skin defs, so that p.canguard can be set
 rawset(_G, "Soap_Combat", function(p)
 	local me = p.realmo
 	local soap = p.soaptable
@@ -4355,7 +4087,5 @@ rawset(_G, "Soap_Combat", function(p)
 end)
 
 rawset(_G, "Soap_CheckSRB2Edit", function()
-	-- SRB2EDIT TODO: now that edit is officially called... srb2edit,
-	--				  all the takis_* variables should be renamed
-	return (takis_custombuild or gks_custombuild)
+	return (takis_custombuild or edit_custombuild or gks_custombuild)
 end)

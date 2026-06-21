@@ -46,8 +46,6 @@ sfxinfo[sfx_sp_ow3] = {
 	caption = "\x85".."Ahhh!\x80"
 }
 
-SafeFreeslot("sfx_sp_grb")
-sfxinfo[sfx_sp_grb].caption = "Grab"
 SafeFreeslot("sfx_sp_pry")
 sfxinfo[sfx_sp_pry].caption = "Parry"
 SafeFreeslot("sfx_sp_cln")
@@ -123,6 +121,16 @@ sfxinfo[sfx_sp_em2] = {
 	flags = SF_X2AWAYSOUND,
 	caption = "\x89Six seven!!\x80"
 }
+SafeFreeslot("sfx_sp_em3")
+sfxinfo[sfx_sp_em3] = {
+	flags = SF_TOTALLYSINGLE,
+	caption = "\x89Gangnam Style\x80"
+}
+SafeFreeslot("sfx_sp_em4")
+sfxinfo[sfx_sp_em4] = {
+	flags = SF_TOTALLYSINGLE,
+	caption = "\x89".."Caramelldansen\x80"
+}
 
 SafeFreeslot("sfx_sp_bsl")
 sfxinfo[sfx_sp_bsl].caption = "/"
@@ -150,7 +158,5 @@ for i = 0, 6
 	}
 end
 
-/*
 SafeFreeslot("sfx_sp_rcg")
 sfxinfo[sfx_sp_rcg].caption = "Recharge"
-*/

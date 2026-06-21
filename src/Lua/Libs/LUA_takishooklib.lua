@@ -64,9 +64,6 @@ events["PostThinkFrame"] = {}
 events["MoveBlocked"] = {handler = handler_snapany} --runs for every skin
 
 events["Soap_Thinker"] = {}
-events["Soap_DashSpeeds"] = {handler = handler_snapany}
-events["Soap_OnStunEnemy"] = {typefor = typefor_mobj}
-events["Soap_StunnedThink"] = {typefor = typefor_mobj}
 
 events["Takis_Thinker"] = {}
 
@@ -75,6 +72,8 @@ events["Char_OnMove"] = {}
 events["Char_NoAbility"] = {handler = handler_snapany}
 events["Char_VFX"] = {handler = handler_snapany}
 events["Char_OnDamage"] = {handler = handler_snaptrue}
+events["Char_OnStunEnemy"] = {typefor = typefor_mobj}
+events["Char_StunnedThink"] = {typefor = typefor_mobj}
 
 local deprecated = {
 	["Soap_OnMove"] = {
@@ -91,6 +90,14 @@ local deprecated = {
 	},
 	["Takis_VFX"] = {
 		correct = "Char_VFX",
+		seen = false,
+	},
+	["Soap_OnStunEnemy"] = {
+		correct = "Char_OnStunEnemy",
+		seen = false,
+	},
+	["Soap_StunnedThink"] = {
+		correct = "Char_StunnedThink",
 		seen = false,
 	},
 }
@@ -110,7 +117,10 @@ for event_name, event_t in pairs(events)
 end
 
 Takis_Hook.addHook = function(hooktype, func, typefor)
-	local hook_okay = Takis_Hook.events[hooktype] ~= nil
+	local TH_events = Takis_Hook.events
+	local event_t = TH_events[hooktype]
+	
+	local hook_okay = event_t ~= nil
 	local dep_t = nil
 	if not hook_okay
 		hook_okay = deprecated[hooktype] ~= nil
@@ -126,7 +136,6 @@ Takis_Hook.addHook = function(hooktype, func, typefor)
 			hooktype = dep_t.correct
 		end
 		
-		local event_t = Takis_Hook.events[hooktype]
 		table.insert(event_t.events, {
 			func = func,
 			typedef = typefor,
@@ -148,7 +157,8 @@ Takis_Hook.addHook = function(hooktype, func, typefor)
 end
 
 Takis_Hook.tryRunHook = function(hooktype, v, ...)
-	local handler = Takis_Hook.events[hooktype].handler or handler_default
+	local TH_events = Takis_Hook.events
+	local handler = TH_events[hooktype].handler or handler_default
 	local override = handler.initial
 	local debugmode = (debug and (SOAP_DEBUG & DEBUG_HOOKS))
 	local starttime
@@ -188,35 +198,4 @@ Takis_Hook.tryRunHook = function(hooktype, v, ...)
 	if override == nil then return nil; end
 	if type(override) == "table" then return unpack(override)
 	else return override; end
-end
-
-local notvalid = {}
-local seendep = false
-Takis_Hook.findEvent = function(hooktype)
-	local debugmode = (debug and (SOAP_DEBUG & DEBUG_HOOKS))
-	local name = hooktype
-	local events = Takis_Hook.events[name]
-	
-	if not seendep
-		print('\x83TAKIS: \x82WARNING\x80: Takis_Hook.findEvent is deprecated and should not be used. Check for Takis_Hook.events[eventname] explicity.')
-		seendep = true
-	end
-	if (debugmode and Takis_Hook.disabled[hooktype] == true)
-		return nil,nil
-	end
-	
-	if events == nil
-	and deprecated[hooktype] ~= nil
-		name = deprecated[hooktype].correct
-		events = Takis_Hook[name]
-	end
-	
-	if events == nil
-	and not (notvalid[name])
-		notvalid[name] = true
-		print('\x83TAKIS: \x82WARNING\x80: could not find hookevent "'..hooktype..'"')
-	end
-	
-	--can still return nil!
-	return events, name
 end

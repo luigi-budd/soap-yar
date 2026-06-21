@@ -5,6 +5,8 @@
 
 local CV = SOAP_CV
 
+local Event_CharOnDamage = Takis_Hook.events["Char_OnDamage"]
+
 local TAKIS_WDIVEVFX = TR - 1
 local armacolors = {
 	SKINCOLOR_KETCHUP, SKINCOLOR_PEPPER, SKINCOLOR_CRIMSON, SKINCOLOR_GARNET, SKINCOLOR_VOLCANIC
@@ -144,28 +146,88 @@ local function generic_slingshot(p,me,takis, stop_ang)
 	return didit
 end
 
-local function playknockoutsfx(p,me,soap)
-	if abs(leveltime - soap.kotic) < TR*3/2 then return end
-	soap.kotic = leveltime
-	
-	local sound = P_RandomChance(FU/50) and sfx_sp_em1 or P_RandomRange(sfx_sp_ow0,sfx_sp_ow1)
-	if R_PointToDist(me.x,me.y) >= 1024*FU
-	and (p ~= displayplayer)
-		sound = sfx_sp_ow2
-	end
-	S_StartSound(me,sound)
-
-	local speed = soap.accspeed
+local function playknockout_kbsfx(p,me,soap)
+	local speed = FixedMul(soap.accspeed, me.scale)
 	if me.soap_damagevar
-		speed = max($, me.soap_damagevar.speed)
+		speed = max($, me.soap_damagevar.threshold)
+		speed = max($, FixedHypot(me.soap_damagevar.speed, me.soap_damagevar.momz / 4))
 	end
-
-	sound = sfx_sp_kb0 + clamp(0,
+	if (SOAP_DEBUG and SOAP_DEBUG & DEBUG_KNOCKBACK)
+		printf(
+			"%s is playying knockback sound (%d)\n"..
+			"\tplayerspeed: %f\n"..
+			"\tthreshold:   %f\n"..
+			"\tworkspeed:   %f\n",
+			
+			p.name, leveltime,
+			soap.accspeed,
+			me.soap_damagevar.threshold,
+			speed
+		)
+	end
+	if speed <= 15 * me.scale then return end
+	
+	local sound = sfx_sp_kb0 + clamp(0,
 		FixedMul(2*FU, FixedDiv(speed - 30*FU, 10*FU)),
 		2*FU
 	)/FU
 	S_StartSound(me, sound)
 	S_StartSound(me, sound)
+end
+
+local function playknockoutsfx(p,me,soap)
+	if not me.health then return end
+	
+	if abs(leveltime - soap.kotic) < TR*3/2 then return end
+	soap.kotic = leveltime
+	
+	local chance = true
+	local sound = P_RandomChance(FU/50) and sfx_sp_em1 or P_RandomRange(sfx_sp_ow0,sfx_sp_ow1)
+	if R_PointToDist(me.x,me.y) >= 1024*FU * 4
+	and P_RandomChance(FU*3/4)
+	and (p ~= displayplayer)
+		sound = P_RandomRange(sfx_sp_ow2, sfx_sp_ow3)
+	end
+	if Soap_IsCompGamemode()
+		chance = P_RandomChance(FU/10)
+		S_StartSoundAtVolume(me, sfx_s3k61, 255 * 3/4)
+	end
+	if not chance then return end
+	S_StartSound(me,sound)
+end
+local function doknockback(p,me,soap)
+	me.state = S_PLAY_DEAD
+	me.frame = A|($ &~FF_FRAMEMASK)
+	me.sprite2 = SPR2_MSC2
+	me.tics = -1
+end
+local function handle_knockback(p,me,soap)
+	P_Thrust(me, me.soap_damagevar.ang, me.soap_damagevar.speed)
+	if me.soap_damagevar.momz
+		P_SetObjectMomZ(me, me.soap_damagevar.momz / 4)
+	end
+	playknockout_kbsfx(p,me,soap)
+	local kb_speed = FixedHypot(me.soap_damagevar.speed, me.soap_damagevar.momz / 4)
+	if max(me.soap_damagevar.threshold, kb_speed) >= 30*me.scale
+		playknockoutsfx(p,me,soap)
+		
+		me.state = S_PLAY_DEAD
+		me.frame = A|($ &~FF_FRAMEMASK)
+		me.sprite2 = SPR2_MSC2
+		me.tics = -1
+	end
+	
+	if (SOAP_DEBUG and SOAP_DEBUG & DEBUG_KNOCKBACK)
+		printf(
+			"%s carried out knockback (%d)\n"..
+			"\tplayerspeed: %f",
+			
+			p.name, leveltime,
+			R_PointTo3DDist(0,0,0, me.momx,me.momy,me.momz)
+		)
+	end
+	
+	me.soap_damagevar = nil
 end
 
 local function winddivevfx(p,me,soap, angle,offangle,dist,frac)
@@ -429,7 +491,7 @@ Takis_Hook.addHook("Takis_Thinker",function(p)
 		end
 	end
 	
-	--c1 specials (TODO: taunts will go here enventually)
+	--c1 specials
 	if (soap.c1)
 		
 		--dive
@@ -447,18 +509,23 @@ Takis_Hook.addHook("Takis_Thinker",function(p)
 			soap.bashspin = 0
 			
 			local ang = Soap_ControlDir(p)
+			if soap.io.airdashmode == "inputs"
+				ang = Soap_ControlDir(p)
+				--im not sure if this actually does anything
+				--but it seems to work so im leaving it
+				if ((me.flags2 & MF2_TWOD)
+				or (twodlevel))
+					if (p.cmd.sidemove > 0)
+						ang = p.drawangle
+					elseif (p.cmd.sidemove < 0)
+						ang = InvAngle(p.drawangle)
+					end
+				end
+			else
+				ang = me.angle
+			end
 			S_StartSound(me,soap.inWater and sfx_splash or sfx_tk_div)
 			
-			--im not sure if this actually does anything
-			--but it seems to work so im leaving it
-			if ((me.flags2 & MF2_TWOD)
-			or (twodlevel))
-				if (p.cmd.sidemove > 0)
-					ang = p.drawangle
-				elseif (p.cmd.sidemove < 0)
-					ang = InvAngle(p.drawangle)
-				end
-			end
 			
 			local speed = soap.accspeed
 			if soap.accspeed < 20*FU
@@ -625,6 +692,7 @@ Takis_Hook.addHook("Takis_Thinker",function(p)
 					fx.momx,fx.momy = me.momx/2,me.momy/2
 					fx.momz = soap.rmomz
 					fx.state = S_TAKIS_CDUST1
+					fx.nofxadjust = true
 				end
 			--auto-lunge / auto lunge
 			elseif me.state == S_PLAY_SOAP_SLIP
@@ -853,6 +921,10 @@ Takis_Hook.addHook("Takis_Thinker",function(p)
 				rock.spriteyoffset = 0
 			end
 		end
+	elseif (p.powers[pw_carry] == CR_ROPEHANG)
+		if soap.use
+			hammer.lockout = -2
+		end
 	end
 	
 	if not soap.notCarried
@@ -964,6 +1036,7 @@ Takis_Hook.addHook("Takis_Thinker",function(p)
 	end
 	
 	p.charflags = $ &~(SF_RUNONWATER|SF_NOSKID)|(soap.lunge.effect and SF_NOSKID or 0)
+	local noafterimages = true
 	if not (soap.noability & NOABIL_AFTERIMAGE)
 		if clutch.time
 		/*
@@ -982,6 +1055,7 @@ Takis_Hook.addHook("Takis_Thinker",function(p)
 		*/
 		--or (takis.transfo & TRANSFO_BALL and takis.accspeed >= 50*FU)
 		and ((me.health) or (p.playerstate == PST_LIVE))
+			noafterimages = false
 			clutch.time = $+1
 			soap.afterimage = true
 			p.powers[pw_strong] = $|STR_SPIKE
@@ -1009,6 +1083,7 @@ Takis_Hook.addHook("Takis_Thinker",function(p)
 							fx.momx,fx.momy = me.momx/4, me.momy/4
 							fx.momz = soap.rmomz
 							fx.state = S_TAKIS_CDUST1
+							fx.nofxadjust = true
 						end
 					end
 				end
@@ -1077,14 +1152,9 @@ Takis_Hook.addHook("Takis_Thinker",function(p)
 				)
 			end
 			*/
-		else
-			if not p.inkart
-				p.charflags = $ &~(SF_RUNONWATER)
-				p.runspeed = skins[TAKIS_SKIN].runspeed/2
-			end
-			clutch.time = 0
 		end
-	else
+	end
+	if noafterimages
 		if not p.inkart
 			p.charflags = $ &~(SF_RUNONWATER)
 			p.runspeed = skins[TAKIS_SKIN].runspeed/2
@@ -1113,6 +1183,9 @@ Takis_Hook.addHook("Takis_Thinker",function(p)
 		hammer.lockout = $ - 1
 	elseif hammer.lockout == -1
 	and soap.onGround
+		hammer.lockout = 0
+	elseif hammer.lockout == -2
+	and not (soap.use)
 		hammer.lockout = 0
 	end
 	if hammer.jumped
@@ -1188,17 +1261,9 @@ Takis_Hook.addHook("Takis_Thinker",function(p)
 		soap.paintime = $ + 1
 
 		--DAMMIT!!!
-		if me.soap_damagevar ~= nil
-			P_Thrust(me, me.soap_damagevar.ang, me.soap_damagevar.speed)
-			if me.soap_damagevar.speed >= 30*me.scale
-				playknockoutsfx(p,me,soap)
-				
-				me.state = S_PLAY_DEAD
-				me.frame = A|($ &~FF_FRAMEMASK)
-				me.sprite2 = SPR2_MSC2
-				me.tics = -1
-			end
-			me.soap_damagevar = nil
+		if (me.soap_damagevar ~= nil)
+		and not (me.hitlag)
+			handle_knockback(p,me,soap)
 		end
 		if soap.paintime == 1 and (soap.hud.painsurge == 0)
 		and (soap.accspeed >= 30*FU)
@@ -1731,6 +1796,7 @@ addHook("MobjCollide",try_pvp_collide,MT_PLAYER)
 local function get_inf_speed(me,inf,sor)
 	local default = 0
 	if (inf.flags & MF_MISSILE)
+	and (inf.type ~= MT_TNTBARREL)
 		if ((inf.flags2 & MF2_SCATTER) and sor)
 			local dist = FixedHypot(FixedHypot(sor.x - me.x, sor.y - me.y),sor.z - me.z)
 			dist = 128*inf.scale - dist/4
@@ -1752,7 +1818,9 @@ local function get_inf_speed(me,inf,sor)
 	elseif inf.type == MT_TNTBARREL or inf.type == MT_PROXIMITYTNT
 		default = 70 * inf.scale
 	end
-	return max(default, R_PointTo3DDist(0,0,0,inf.momx,inf.momy,inf.momz))
+	--return max(default, R_PointTo3DDist(0,0,0,inf.momx,inf.momy,inf.momz))
+	-- mmmaybe dont factor momz if we're using it now...
+	return max(default, R_PointToDist2(0,0,inf.momx,inf.momy)), max(default, R_PointTo3DDist(0,0,0,inf.momx,inf.momy,inf.momz))
 end
 
 --handle soap damage
@@ -1763,10 +1831,9 @@ addHook("MobjDamage", function(me,inf,sor,dmg,dmgt)
 	local p = me.player 
 	local soap = p.soaptable
 
-	local event_t = Takis_Hook.events["Char_OnDamage"]
-	if (event_t.numhooks)
-		local events = event_t.events
-		for i = 1, event_t.numhooks
+	if (Event_CharOnDamage.numhooks)
+		local events = Event_CharOnDamage.events
+		for i = 1, Event_CharOnDamage.numhooks
 			local short = Takis_Hook.tryRunHook("Char_OnDamage", events[i], me,inf,sor,dmg,dmgt)
 			
 			-- does not short out the calling MobjDamage
@@ -1848,9 +1915,9 @@ addHook("MobjDamage", function(me,inf,sor,dmg,dmgt)
 		nosfx = true,
 		vol = 255
 	})
-	Soap_ImpactVFX(me, inf, nil, power)
+	Soap_ImpactVFX(me, inf, nil, power, nil,nil, dmgt)
 	while (power > FU)
-		Soap_ImpactVFX(me, inf, 2*FU, power)
+		Soap_ImpactVFX(me, inf, 2*FU, power, nil,nil, dmgt)
 		power = $ - FU/2
 	end
 	
@@ -1882,22 +1949,41 @@ addHook("MobjDeath", function(me,inf,sor,dmgt)
 		soap.deathtype = DMG_SPACEDROWN
 	end
 	
-	if (sor and sor.valid and (sor.flags & MF_BOSS))
+	if (sor and sor.valid)
 		local killer = sor
 		if (inf and inf.valid) then killer = inf; end
 		
-		me.z = $ + soap.gravflip
-		local power = FixedHypot(FixedHypot(killer.momx,killer.momy),killer.momz)
-		P_InstaThrust(me, R_PointToAngle2(killer.x,killer.y,me.x,me.y), power)
-		P_SetObjectMomZ(me, 5*FU)
+		local speed = get_inf_speed(me,killer,sor)
+		if (sor.flags & MF_BOSS)
+			me.z = $ + FU*soap.gravflip
+			P_InstaThrust(me, R_PointToAngle2(killer.x,killer.y,me.x,me.y), speed)
+			P_SetObjectMomZ(me, 12*FU)
+			
+			me.soap_knockout = true
+			me.soap_knockout_speed = {
+				me.momx,me.momy,me.momz
+			}
+			
+			p.drawangle = R_PointToAngle2(me.x,me.y,killer.x,killer.y)
+			soap.deathtype = 0
+			return
+		end
 		
-		me.soap_knockout = true
-		me.soap_knockout_speed = {
-			me.momx,me.momy,me.momz
-		}
+		local cando = true
+		if (Soap_IsCompGamemode)
+		and (sor.flags & MF_BOSS == 0)
+			cando = false
+		end
 		
-		p.drawangle = R_PointToAngle2(me.x,me.y,killer.x,killer.y)
-		soap.deathtype = 0
+		if speed >= 30*me.scale
+		and cando
+			me.soap_knockout = true
+			me.soap_knockout_speed = {
+				me.momx,me.momy,me.momz
+			}
+			soap.deathtype = 0
+			soap.hud.painsurge = 6
+		end
 	end
 end)
 
@@ -1913,7 +1999,7 @@ Takis_Hook.addHook("PostThinkFrame",function(p)
 		if p.powers[pw_carry] == CR_NIGHTSMODE
 			if p.bumpertime > takis.lastbumper
 			and clutch.nights <= (TR/2) - 2
-				S_StartSoundAtVolume(me,sfx_cltch5,220)
+				S_StartSoundAtVolume(me,sfx_tk_cl3,220)
 			end
 			
 			if (me.state ~= S_PLAY_TAKIS_TORNADO)

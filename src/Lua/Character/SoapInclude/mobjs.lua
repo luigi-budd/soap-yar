@@ -7,6 +7,7 @@ SafeFreeslot("S_SOAP_NWF_WIND_FAST")
 SafeFreeslot("MT_SOAP_FREEZEGFX")
 
 local function WindThink(mo)
+	if mo.extravalue1 then return end
 	if mo.bigwind
 		mo.sprite = SPR_NWF_WIND
 	end
@@ -310,6 +311,27 @@ for i = 0,3
 		tics = (5*2),
 	}
 end
+
+SafeFreeslot("S_SOAP_HITM_ESW")
+SafeFreeslot("S_SOAP_HITM_ES")
+states[S_SOAP_HITM_ESW] = {
+	-- spark wait
+	sprite = SPR_NULL,
+	frame = A,
+	tics = 1,
+	nextstate = S_SOAP_HITM_ES
+}
+states[S_SOAP_HITM_ES] = {
+	-- spark
+	sprite = SPR_SOAP_HITMARK,
+	frame = 65|FF_FULLBRIGHT|FF_ANIMATE,
+	action = function(mo)
+		mo.tics = mo.extravalue1
+	end,
+	var1 = (6 - 1),
+	var2 = 1,
+	tics = 6,
+}
 
 SafeFreeslot("MT_SOAP_AMP")
 mobjinfo[MT_SOAP_AMP] = {

@@ -4,10 +4,9 @@ Soap_EnumFlags("NOABIL_", {
 	"HAMMER",
 	"DIVE",
 	"SLIDE",
-	"SHIELD",
+	"TAUNTS",
 	"THOK",
-	--TODO: delete this one too?
-	"AFTERIMAGE",	--i wouldnt really call afterimages an ability
+	"AFTERIMAGE",
 })
 local function fakeenum(name,val)
 	rawset(_G,name,val)

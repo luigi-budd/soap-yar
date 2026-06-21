@@ -199,7 +199,7 @@ local function WRAP_buttons(v,p,c, me,soap)
 		drawflag(v,x+15,y-50,"HM",flags,V_GREENMAP,V_REDMAP,"thin",(soap.noability & NOABIL_HAMMER))
 		drawflag(v,x+30,y-50,"DI",flags,V_GREENMAP,V_REDMAP,"thin",(soap.noability & NOABIL_DIVE))
 		drawflag(v,x+45,y-50,"SL",flags,V_GREENMAP,V_REDMAP,"thin",(soap.noability & NOABIL_SLIDE))
-		drawflag(v,x+60,y-50,"SH",flags,V_GREENMAP,V_REDMAP,"thin",(soap.noability & NOABIL_SHIELD))
+		drawflag(v,x+60,y-50,"TN",flags,V_GREENMAP,V_REDMAP,"thin",(soap.noability & NOABIL_TAUNTS))
 		drawflag(v,x+75,y-50,"TH",flags,V_GREENMAP,V_REDMAP,"thin",(soap.noability & NOABIL_THOK))
 		drawflag(v,x+90,y-50,"AI",flags,V_GREENMAP,V_REDMAP,"thin",(soap.noability & NOABIL_AFTERIMAGE))
 	else

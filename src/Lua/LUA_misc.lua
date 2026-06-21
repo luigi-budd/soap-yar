@@ -52,12 +52,22 @@ addHook("MobjThinker",function(bump)
 	if not (bump and bump.valid) then return end
 	
 	if bump.sixseveneffect
+		local frame = (bump.frame & FF_FRAMEMASK)
 		if bump.fuse <= 20
+		and frame ~= 40
 			bump.alpha = $ - (FU/20)
 			bump.momx = $ * 9/10
 			bump.momy = $ * 9/10
-			if (bump.frame & FF_FRAMEMASK == 34)
+			if (frame == 34)
 				bump.spriteyscale = ease.outquad(FU - ((FU/20)*bump.fuse), FU, 0)
+			end
+		elseif frame == 40
+			local frac = FU - FixedDiv(bump.fuse*FU, 12*FU)
+			bump.alpha = ease.inoutsine(frac, FU, 0)
+			bump.spritexscale = ease.inoutquad(frac, FU, FU*5/2)
+			bump.spriteyscale = bump.spritexscale
+			if CV.rotations.value
+				bump.rollangle = $ + ANG2*2
 			end
 		end
 		return
@@ -74,19 +84,6 @@ addHook("MobjThinker",function(bump)
 	and bump.fuse == bump.startfuse * 3/8
 		bump.destscale = 0
 		bump.scalespeed = FixedDiv(bump.scale, bump.fuse*FU)
-	end
-	
-	if bump.grabmode
-		local ro = bump.rotate
-		local h_dist = FixedMul(cos(ro.va), ro.dist)
-		P_MoveOrigin(bump,
-			ro.x + P_ReturnThrustX(nil, ro.ha, h_dist),
-			ro.y + P_ReturnThrustY(nil, ro.ha, h_dist),
-			ro.z + FixedMul(sin(ro.va), ro.dist)
-		)
-		ro.va = $ + ANG20 * bump.sign
-		ro.dist = $ + 6*bump.scale
-		return
 	end
 	
 	if not (bump.flags & MF_NOGRAVITY)
@@ -277,7 +274,7 @@ local function NewVFXThink(v)
 				shck.rollangle = P_RandomChance(FU/2) and ANGLE_90 or 0
 				*/
 				v.distmul = ($ or FU) + FU
-				Soap_ImpactVFX(v.target or v, v.tracer or v, v.distmul,v.scalemul, false, true)
+				Soap_ImpactVFX(v.target or v, v.tracer or v, v.distmul,v.scalemul, false, true, v.dmgt)
 			end
 		end
 	end
@@ -354,6 +351,7 @@ local function FreezeInHitlag(mo)
 	local p = me.player
 	local soap = p.soaptable
 	
+	local eat = false
 	if (mo.state == S_SOAP_NWF_WIND)
 	or (mo.state == S_SOAP_NWF_WIND_FAST)
 	or (mo.state == S_TAKIS_SLINGFX)
@@ -396,11 +394,12 @@ local function FreezeInHitlag(mo)
 				mo.eflags = $ &~MFE_VERTICALFLIP
 			end
 		end
-		
+		eat = true
 	end
 	if me.hitlag
 		return true
 	end
+	if eat then return end
 	
 	if mo.ghosttype
 		P_MoveOrigin(mo,
@@ -423,6 +422,18 @@ local function FreezeInHitlag(mo)
 			mo.spriteyscale = $ + (FU/11) * tics
 			*/
 			mo.alpha = P_Lerp(FixedDiv(7 - mo.fuse, 6), FU, 0)
+		end
+		eat = true
+	end
+	if eat then return end
+	
+	if not (mo.nofxadjust)
+		P_MoveOrigin(mo, me.x,me.y,me.z)
+		if (soap.gravflip == -1)
+			mo.z = me.z + me.height - mo.height
+			mo.eflags = $|MFE_VERTICALFLIP
+		else
+			mo.eflags = $ &~MFE_VERTICALFLIP
 		end
 	end
 end
@@ -473,7 +484,7 @@ addHook("MobjThinker",function(rock)
 	end
 end,MT_ROLLOUTROCK)
 
-local amp_tics = TR
+local amp_tics = 41
 local amp_frac = (FU / amp_tics)
 local amp_drag = FU * 6/7
 local amp_dist = 1200 * FU
@@ -485,6 +496,7 @@ addHook("MobjThinker",function(amp)
 	end
 	local me = amp.tracer
 	if not (me and me.valid) then P_RemoveMobj(amp); return end
+	local p = me.player
 
 	if (displayplayer and displayplayer.valid)
 		if (displayplayer ~= me.player)

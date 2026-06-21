@@ -27,7 +27,7 @@ hl.cv_hitlagtics = CV_RegisterVar({
 })
 if (CV)
 	CV.hitlag_tics = hl.cv_hitlagtics
-	CV.PossibleValues["soap_maxhitlagtics"] = {values = hlt_pv, min = 0, max = 10*TR} -- probably cap it in the menu
+	CV.PossibleValues["soap_maxhitlagtics"] = {values = hlt_pv, min = 0, max = 10*TICRATE} -- probably cap it in the menu
 end
 
 --lol
@@ -168,7 +168,7 @@ hl.iterateHitlagged = function()
 	
 	local stunned_hook
 	if (rawget(_G, "Takis_Hook"))
-		stunned_hook = Takis_Hook.events["Soap_StunnedThink"]
+		stunned_hook = Takis_Hook.events["Char_StunnedThink"]
 	end
 	local stunned = hl.stunned
 	for k = hl.numstunned, 1, -1
@@ -284,7 +284,7 @@ hl.iterateHitlagged = function()
 					if stunned_hook.typefor ~= nil
 						if stunned_hook.typefor(mo, events[i].typedef) == false then continue end
 					end
-					Takis_Hook.tryRunHook("Soap_StunnedThink", events[i], mo)
+					Takis_Hook.tryRunHook("Char_StunnedThink", events[i], mo)
 				end
 			end
 			
@@ -479,14 +479,14 @@ hl.stunEnemy = function(mo,tics)
 	end
 	
 	if rawget(_G, "Takis_Hook")
-		local stunned_hook = Takis_Hook.events["Soap_OnStunEnemy"]
+		local stunned_hook = Takis_Hook.events["Char_OnStunEnemy"]
 		if (stunned_hook.numhooks)
 			local events = stunned_hook.events
 			for i = 1, stunned_hook.numhooks
 				if stunned_hook.typefor ~= nil
 					if stunned_hook.typefor(mo, events[i].typedef) == false then continue end
 				end
-				local res = Takis_Hook.tryRunHook("Soap_StunnedThink", events[i], mo,tics)
+				local res = Takis_Hook.tryRunHook("Char_StunnedThink", events[i], mo,tics)
 				if res then return end
 				if not (mo and mo.valid) then return end
 			end
