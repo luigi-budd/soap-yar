@@ -415,6 +415,13 @@ SOAP_TAUNTS[SOAP_SKIN] = {
 		name = "Punch",
 		
 		run = function(p, me, soap, taunt)
+			if (CV.tauntinterference.value == 0)
+			and Soap_IsCompGamemode()
+				CONS_Printf(p, "Can't use this taunt in this gamemode!")
+				S_StartSound(nil, sfx_shldls, p)
+				return
+			end
+			
 			me.state = S_PLAY_SOAP_PREPUNCH
 			
 			me.tempangle = me.angle

@@ -458,6 +458,7 @@ local function soap_poundonland(p,me,soap)
 				)
 				me.state = S_PLAY_ROLL
 				p.drawangle = me.angle
+				soap.noability = $|SNOABIL_CROUCH
 				noquake = true
 			elseif shield == SH_ARMAGEDDON
 			and not soap.inBattle
@@ -465,7 +466,7 @@ local function soap_poundonland(p,me,soap)
 				P_BlackOw(p)
 			end
 		end
-		 
+		
 		Soap_BreakFloors(p,me)
 		if not noquake
 			local quake_tics = 16 + (FixedDiv(br,me.scale)/FU / 25)
@@ -482,6 +483,8 @@ local function soap_poundonland(p,me,soap)
 				512*me.scale
 			)
 			S_StartSound(me,sfx_pstop)
+		else
+			me.soap_noslidetempugh = true
 		end
 		
 		if Soap_IsCompGamemode()
@@ -919,6 +922,7 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 			and not (soap.noability & (SNOABIL_CROUCH|SNOABIL_COMBAT))
 			and soap.notCarried
 			and not soap.pounding
+			and not me.soap_noslidetempugh
 				--if you were spinning already, and WERENT sliding,
 				--you can flop on your belly so you can lunge later
 				local wasspinning = (p.pflags & PF_SPINNING)
@@ -982,6 +986,9 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 			--and soap.onGround
 				dolunge(p,me,soap)
 			end
+		end
+		if me.soap_noslidetempugh
+			me.soap_noslidetempugh = nil
 		end
 		
 		if (soap.inBattle and CBW_Battle)
@@ -3855,7 +3862,14 @@ addHook("MobjDeath", function(me,inf,sor,dmgt)
 			return
 		end
 		
+		local cando = true
+		if (Soap_IsCompGamemode())
+		and (sor.flags & MF_BOSS == 0)
+			cando = false
+		end
+		
 		if speed >= 30*me.scale
+		and cando
 			me.soap_knockout = true
 			me.soap_knockout_speed = {
 				me.momx,me.momy,me.momz
@@ -3866,7 +3880,7 @@ addHook("MobjDeath", function(me,inf,sor,dmgt)
 	end
 	-- Intentional!
 	if (sor and sor.valid or inf and inf.valid)
-	and not (PTSR and PTSR.isPTSR()) -- seems to cause lag otherwise?
+	and not (PTSR and PTSR.isPTSR() or Soap_IsCompGamemode()) -- seems to cause lag otherwise?
 		Soap_Hitlag.addHitlag(me, 10, true, false)
 	end
 end)

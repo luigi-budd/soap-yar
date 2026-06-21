@@ -1943,22 +1943,41 @@ addHook("MobjDeath", function(me,inf,sor,dmgt)
 		soap.deathtype = DMG_SPACEDROWN
 	end
 	
-	if (sor and sor.valid and (sor.flags & MF_BOSS))
+	if (sor and sor.valid)
 		local killer = sor
 		if (inf and inf.valid) then killer = inf; end
 		
-		me.z = $ + soap.gravflip
-		local power = FixedHypot(FixedHypot(killer.momx,killer.momy),killer.momz)
-		P_InstaThrust(me, R_PointToAngle2(killer.x,killer.y,me.x,me.y), power)
-		P_SetObjectMomZ(me, 5*FU)
+		local speed = get_inf_speed(me,killer,sor)
+		if (sor.flags & MF_BOSS)
+			me.z = $ + FU*soap.gravflip
+			P_InstaThrust(me, R_PointToAngle2(killer.x,killer.y,me.x,me.y), speed)
+			P_SetObjectMomZ(me, 12*FU)
+			
+			me.soap_knockout = true
+			me.soap_knockout_speed = {
+				me.momx,me.momy,me.momz
+			}
+			
+			p.drawangle = R_PointToAngle2(me.x,me.y,killer.x,killer.y)
+			soap.deathtype = 0
+			return
+		end
 		
-		me.soap_knockout = true
-		me.soap_knockout_speed = {
-			me.momx,me.momy,me.momz
-		}
+		local cando = true
+		if (Soap_IsCompGamemode)
+		and (sor.flags & MF_BOSS == 0)
+			cando = false
+		end
 		
-		p.drawangle = R_PointToAngle2(me.x,me.y,killer.x,killer.y)
-		soap.deathtype = 0
+		if speed >= 30*me.scale
+		and cando
+			me.soap_knockout = true
+			me.soap_knockout_speed = {
+				me.momx,me.momy,me.momz
+			}
+			soap.deathtype = 0
+			soap.hud.painsurge = 6
+		end
 	end
 end)
 
