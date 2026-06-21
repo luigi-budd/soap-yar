@@ -38,6 +38,9 @@ local R_PointTo3DAngles = R_PointTo3DAngles
 local P_3DThrust = P_3DThrust
 local P_IsObjectOnGround = P_IsObjectOnGround
 
+local Event_CharOnMove = Takis_Hook.events["Char_OnMove"]
+local Event_CharOnDamage = Takis_Hook.events["Char_OnDamage"]
+
 --max speed increase
 rawset(_G,"SOAP_MAXDASH", 21*FU)
 --speed increase ramp-up time
@@ -304,10 +307,9 @@ local function soap_poundonland(p,me,soap)
 			)
 		)
 		*/
-		local event_t = Takis_Hook.events["Char_OnMove"]
-		if (event_t.numhooks)
-			local events = event_t.events
-			for i = 1, event_t.numhooks
+		if (Event_CharOnMove.numhooks)
+			local events = Event_CharOnMove.events
+			for i = 1, Event_CharOnMove.numhooks
 				local newrad = Takis_Hook.tryRunHook("Char_OnMove", events[i], p, "poundland",
 					br
 				)
@@ -1425,10 +1427,9 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 				S_StartSound(me,sfx_s3k43)
 			end
 
-			local event_t = Takis_Hook.events["Char_OnMove"]
-			if (event_t.numhooks)
-				local events = event_t.events
-				for i = 1, event_t.numhooks
+			if (Event_CharOnMove.numhooks)
+				local events = Event_CharOnMove.events
+				for i = 1, Event_CharOnMove.numhooks
 					local new_t, new_min, new_max = Takis_Hook.tryRunHook("Char_OnMove", events[i], p, "airdash", thrust,min_speed,max_speed)
 					
 					if new_t ~= nil
@@ -1634,10 +1635,9 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 				S_StartSoundAtVolume(me,sfx_sp_upr, 255 * 8/10)
 			end
 			
-			local event_t = Takis_Hook.events["Char_OnMove"]
-			if (event_t.numhooks)
-				local events = event_t.events
-				for i = 1, event_t.numhooks
+			if (Event_CharOnMove.numhooks)
+				local events = Event_CharOnMove.events
+				for i = 1, Event_CharOnMove.numhooks
 					local newrad = Takis_Hook.tryRunHook("Char_OnMove", events[i], p, "uppercut", sound)
 				end
 			end
@@ -1670,10 +1670,9 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 			Soap_ZLaunch(me,13*FU)
 			p.pflags = $|PF_THOKKED|PF_JUMPED &~(PF_STARTJUMP|PF_SPINNING)
 			
-			local event_t = Takis_Hook.events["Char_OnMove"]
-			if (event_t.numhooks)
-				local events = event_t.events
-				for i = 1, event_t.numhooks
+			if (Event_CharOnMove.numhooks)
+				local events = Event_CharOnMove.events
+				for i = 1, Event_CharOnMove.numhooks
 					local newrad = Takis_Hook.tryRunHook("Char_OnMove", events[i], p, "pound")
 				end
 			end
@@ -2303,10 +2302,9 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 		
 		-- ..?
 		if (soap.pounding)
-			local event_t = Takis_Hook.events["Char_OnMove"]
-			if (event_t.numhooks)
-				local events = event_t.events
-				for i = 1, event_t.numhooks
+			if (Event_CharOnMove.numhooks)
+				local events = Event_CharOnMove.events
+				for i = 1, Event_CharOnMove.numhooks
 					local newrad = Takis_Hook.tryRunHook("Char_OnMove", events[i], p, "poundthinker")
 				end
 			end
@@ -3672,10 +3670,9 @@ addHook("MobjDamage", function(me,inf,sor,dmg,dmgt)
 	if (soap.hurtframe == leveltime) then return; end
 	soap.hurtframe = leveltime
 	
-	local event_t = Takis_Hook.events["Char_OnDamage"]
-	if (event_t.numhooks)
-		local events = event_t.events
-		for i = 1, event_t.numhooks
+	if (Event_CharOnDamage.numhooks)
+		local events = Event_CharOnDamage.events
+		for i = 1, Event_CharOnDamage.numhooks
 			local short = Takis_Hook.tryRunHook("Char_OnDamage", events[i], me,inf,sor,dmg,dmgt)
 			
 			-- does not short out the calling MobjDamage

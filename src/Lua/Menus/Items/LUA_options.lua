@@ -402,7 +402,7 @@ ML.addMenu({
 		})
 		SOAP_MENUS.buttontoggle(v, cx,cy+39, menu.width - 4, {
 			cv_name = "soap_b-rushmode", name = "B-Rush Mode",
-			cv_type = "custom", tooltip = {"Change which direction Soap's B-Rush will send you."}
+			cv_type = "custom", tooltip = {"Change which direction Soap's B-Rush and.", "Takis' Dive will send you."}
 		})
 		SOAP_MENUS.buttontoggle(v, cx,cy+52, menu.width - 4, {
 			cv_name = "soap_boomboxsfx", name = "Taunt Audio",

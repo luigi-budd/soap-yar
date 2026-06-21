@@ -6,6 +6,8 @@ local function dust_noviewmobj(dust)
 	dust.dontdrawforviewmobj = me
 end
 
+local Event_Char_NoAbility = Takis_Hook.events["Char_NoAbility"]
+
 rawset(_G,"Takis_DoClutch",function(p,riding)
 	local me = p.mo
 	local takis = p.soaptable
@@ -474,10 +476,9 @@ rawset(_G,"Takis_HandleNoAbils", function(p)
 	end
 	
 	--return value: new noabilities field (absolute)
-	local event_t = Takis_Hook.events["Char_NoAbility"]
-	if (event_t.numhooks)
-		local events = event_t.events
-		for i = 1, event_t.numhooks
+	if (Event_Char_NoAbility.numhooks)
+		local events = Event_Char_NoAbility.events
+		for i = 1, Event_Char_NoAbility.numhooks
 			local new_noabil = Takis_Hook.tryRunHook("Char_NoAbility", events[i], p,na)
 			if new_noabil ~= nil and type(new_noabil) == "number"
 				na = abs(new_noabil)

@@ -5,6 +5,8 @@
 
 local CV = SOAP_CV
 
+local Event_CharOnDamage = Takis_Hook.events["Char_OnDamage"]
+
 local TAKIS_WDIVEVFX = TR - 1
 local armacolors = {
 	SKINCOLOR_KETCHUP, SKINCOLOR_PEPPER, SKINCOLOR_CRIMSON, SKINCOLOR_GARNET, SKINCOLOR_VOLCANIC
@@ -507,18 +509,23 @@ Takis_Hook.addHook("Takis_Thinker",function(p)
 			soap.bashspin = 0
 			
 			local ang = Soap_ControlDir(p)
+			if soap.io.airdashmode == "inputs"
+				ang = Soap_ControlDir(p)
+				--im not sure if this actually does anything
+				--but it seems to work so im leaving it
+				if ((me.flags2 & MF2_TWOD)
+				or (twodlevel))
+					if (p.cmd.sidemove > 0)
+						ang = p.drawangle
+					elseif (p.cmd.sidemove < 0)
+						ang = InvAngle(p.drawangle)
+					end
+				end
+			else
+				ang = me.angle
+			end
 			S_StartSound(me,soap.inWater and sfx_splash or sfx_tk_div)
 			
-			--im not sure if this actually does anything
-			--but it seems to work so im leaving it
-			if ((me.flags2 & MF2_TWOD)
-			or (twodlevel))
-				if (p.cmd.sidemove > 0)
-					ang = p.drawangle
-				elseif (p.cmd.sidemove < 0)
-					ang = InvAngle(p.drawangle)
-				end
-			end
 			
 			local speed = soap.accspeed
 			if soap.accspeed < 20*FU
@@ -1824,10 +1831,9 @@ addHook("MobjDamage", function(me,inf,sor,dmg,dmgt)
 	local p = me.player 
 	local soap = p.soaptable
 
-	local event_t = Takis_Hook.events["Char_OnDamage"]
-	if (event_t.numhooks)
-		local events = event_t.events
-		for i = 1, event_t.numhooks
+	if (Event_CharOnDamage.numhooks)
+		local events = Event_CharOnDamage.events
+		for i = 1, Event_CharOnDamage.numhooks
 			local short = Takis_Hook.tryRunHook("Char_OnDamage", events[i], me,inf,sor,dmg,dmgt)
 			
 			-- does not short out the calling MobjDamage
