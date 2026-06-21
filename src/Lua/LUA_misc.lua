@@ -484,7 +484,7 @@ addHook("MobjThinker",function(rock)
 	end
 end,MT_ROLLOUTROCK)
 
-local amp_tics = TR
+local amp_tics = 41
 local amp_frac = (FU / amp_tics)
 local amp_drag = FU * 6/7
 local amp_dist = 1200 * FU

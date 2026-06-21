@@ -444,8 +444,8 @@ end, unsafe = true})
 CMDConstructor("spawn", {prefix = SOAP_DEVPREFIX, func = function(p,...)
 	local args = {...}
 	local type = args[1]
-	local aiming = args[2]
-	local offset = args[3]
+	local offset = args[2]
+	local aiming = args[3]
 	
 	local me = p.realmo
 	if not (me and me.valid)
@@ -454,7 +454,7 @@ CMDConstructor("spawn", {prefix = SOAP_DEVPREFIX, func = function(p,...)
 	end
 
 	if type == nil
-		prn(p,"sd_spawn <type> <aiming> <offset>")
+		prn(p,"sd_spawn <type> <offset> [<doaiming>]")
 		return
 	end
 	
@@ -513,6 +513,7 @@ local valid_types = {
 	["nil"] = true,
 	["boolean"] = true,
 	["number"] = true,
+	["int"] = true,
 	--special cases
 	["fixed_t"] = true,
 	["fixed"] = true,
@@ -524,7 +525,7 @@ CMDConstructor("editmyself", {prefix = SOAP_DEVPREFIX, func = function(p,...)
 	local args = {...}
 	if not #args
 	or (#args ~= 3)
-		prn(p, "\x82"..SOAP_DEVPREFIX.."_editmyself <name> <type> <value> <strict>\x80: Edits \"name\" in your mobj.")
+		prn(p, "\x82"..SOAP_DEVPREFIX.."_editmyself <name> <type> <value> [<strict>]\x80: Edits \"name\" in your mobj.")
 		prn(p, "\x82\Availiable types:")
 		for prefix,_ in pairs(valid_types)
 			prn(p, "\t\x83"..prefix)
@@ -564,7 +565,7 @@ CMDConstructor("editmyself", {prefix = SOAP_DEVPREFIX, func = function(p,...)
 			real_value = nil
 		elseif type == "boolean"
 			real_value = ($:upper()) == "TRUE"
-		elseif type == "number"
+		elseif type == "number" or type == "int"
 			real_value = tonumber($)
 		elseif type == "fixed" or type == "fixed_t"
 			real_value = tofixed($)
@@ -579,6 +580,7 @@ CMDConstructor("editmyself", {prefix = SOAP_DEVPREFIX, func = function(p,...)
 				real_value = _G[$]
 			else
 				real_value = nil
+				prn(p,"\x83NOTICE: global is nil")
 			end
 		end
 		if real_value == nil and type ~= "nil"
