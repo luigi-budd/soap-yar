@@ -25,11 +25,6 @@ sfxinfo[sfx_sp_ant] = {
 	caption = "\x89".."ANTONYMPH Jam\x80"
 }
 
-SafeFreeslot("sfx_sp_gns")
-sfxinfo[sfx_sp_gns] = {
-	flags = SF_X2AWAYSOUND|SF_NOMULTIPLESOUND,
-	caption = "\x89".."Gangnam Jam\x80"
-}
 SafeFreeslot("sfx_sp_hsk")
 sfxinfo[sfx_sp_hsk] = {
 	flags = SF_X2AWAYSOUND|SF_NOMULTIPLESOUND,
@@ -126,6 +121,7 @@ local tacojam_captions = {
 	[56*TR + (TR*5/10)] = {"Shell", "Meat", "Cheese Cheese Cheese Cheese"},
 	[56*TR + (TR*9/10)] = {"Shell", "Meat", "Cheese Cheese Cheese Cheese Cheese"},
 }
+local caramelljam_bpm = 160*FU
 
 --should be fine if we dont synch this
 -- credits = {"song name", "artist"}
@@ -135,9 +131,10 @@ rawset(_G, "SOAP_BOOMBOXJAMS", {
 	[3] = {sfx = sfx_sp_mul, bpm = mulejam_bpm, fadeto = 0, credits = {"M.U.L.E.", "Seth Sternberger, Michelle Sternberger"}},
 	[4] = {sfx = sfx_sp_rto, bpm = retrojam_bpm, fadeto = 0},
 	[5] = {sfx = sfx_sp_ant, bpm = larpyjam_bpm, fadeto = 0, credits = {"ANTONYMPH", "Vylet Pony"}, captions = larpyjam_captions},
-	[6] = {sfx = sfx_sp_gns, bpm = gangnamjam_bpm, fadeto = 0, credits = {"Gangnam Style", "NULLSCAPE, @digital_dsc"}},
+	[6] = {sfx = sfx_sp_em3, bpm = gangnamjam_bpm, fadeto = 0, credits = {"Gangnam Style", "NULLSCAPE, @digital_dsc"}},
 	[7] = {sfx = sfx_sp_hsk, bpm = huskjam_bpm, fadeto = 0, credits = {"Husk", "NULLSCAPE"}},
 	[8] = {sfx = sfx_sp_tac, bpm = tacojam_bpm, fadeto = 0, credits = {"Raining Tacos", "Parry Gripp & BooneBum"}, captions = tacojam_captions},
+	[9] = {sfx = sfx_sp_em4, bpm = caramelljam_bpm, fadeto = 0, credits = {"Caramelldansen", "NULLSCAPE, @digital_dsc"}},
 })
 rawset(_G, "Soap_MakeJamCrochet",function(fixed_bpm)
 	return FixedDiv(60*TR*FU, fixed_bpm)
