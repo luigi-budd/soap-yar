@@ -53,6 +53,16 @@ states[S_NSBABY_TOIDLE] = {
 	nextstate = S_NSBABY_IDLE
 }
 
+SafeFreeslot("S_NSBABY_PROBLEM")
+states[S_NSBABY_PROBLEM] = {
+	sprite = SPR_NSBABY,
+	frame = 34|FF_ANIMATE|FF_FULLBRIGHT,
+	var1 = 6,
+	var2 = 2,
+	tics = (7*2),
+	nextstate = S_NSBABY_PROBLEM
+}
+
 SafeFreeslot("MT_NSBABY")
 mobjinfo[MT_NSBABY] = {
 	doomednum = -1,
@@ -64,14 +74,26 @@ mobjinfo[MT_NSBABY] = {
 	flags = MF_NOCLIP|MF_NOCLIPHEIGHT|MF_NOGRAVITY,
 }
 
-SafeFreeslot("S_NSBABY_PROBLEM")
-states[S_NSBABY_PROBLEM] = {
-	sprite = SPR_NSBABY,
-	frame = 34|FF_ANIMATE|FF_FULLBRIGHT,
-	var1 = 6,
+SafeFreeslot("SPR_NSVBBABY")
+SafeFreeslot("S_NSVBBABY_IDLE")
+states[S_NSVBBABY_IDLE] = {
+	sprite = SPR_NSVBBABY,
+	frame = 0|FF_ANIMATE|FF_FULLBRIGHT,
+	var1 = 17,
 	var2 = 2,
-	tics = (7*2),
-	nextstate = S_NSBABY_PROBLEM
+	tics = (18*2),
+	nextstate = S_NSVBBABY_IDLE
+}
+
+SafeFreeslot("MT_NSVBBABY")
+mobjinfo[MT_NSVBBABY] = {
+	doomednum = -1,
+	spawnstate = S_NSVBBABY_IDLE,
+	deathstate = S_NSVBBABY_IDLE,
+	height = 134*FU,
+	radius = 67*FU, --lol
+	spawnhealth = 1,
+	flags = MF_NOCLIP|MF_NOCLIPHEIGHT|MF_NOGRAVITY,
 }
 
 -- alarm
@@ -117,8 +139,44 @@ sfxinfo[SafeFreeslot("sfx_nb_7")] = {
 	flags = SF_X4AWAYSOUND
 }
 
+---- VOIDBOUND
+-- alarm
+sfxinfo[SafeFreeslot("sfx_nvb_0")] = {
+	caption = "/",
+	flags = SF_X4AWAYSOUND
+}
+-- dash
+sfxinfo[SafeFreeslot("sfx_nvb_1")] = {
+	caption = "/",
+	flags = SF_X4AWAYSOUND
+}
+
 local function Baby_Sound(baby, sfx)
-	S_StartSoundAtVolume(baby, sfx, 255 * 3/5)
+	local vol = 255 * 3/5
+	if (baby.type == MT_NSVBBABY)
+		local offset = sfx - sfx_nb_0
+		offset = min($, 1)
+		sfx = sfx_nvb_0 + offset
+		vol = 255
+	end
+	S_StartSoundAtVolume(baby, sfx, vol)
+end
+
+local cached = {}
+local function Baby_State(baby, state)
+	if not cached[state..baby.type]
+		local prefix = (baby.type == MT_NSVBBABY) and "S_NSVBBABY_" or "S_NSBABY_"
+		local statestr = prefix .. state
+		local result = pcall(function() return _G[statestr]; end)
+		local work
+		if result
+			work = _G[statestr]
+		else
+			work = _G[prefix .. "IDLE"]
+		end
+		cached[state..baby.type] = work
+	end
+	return cached[state..baby.type]
 end
 
 local function Baby_SetBaseStats(baby)
@@ -131,7 +189,7 @@ local function Baby_SetBaseStats(baby)
 	baby.color = SKINCOLOR_NONE
 	baby.colorized = false
 	baby.rangecount = 0
-	
+
 	S_StopSoundByID(baby, sfx_nb_4)
 	S_StopSoundByID(baby, sfx_nb_5)
 	Baby_Sound(baby, sfx_nb_6)
@@ -155,6 +213,11 @@ local function Baby_Init(baby)
 	baby.aiming = 0
 	baby.tics = -1
 	
+	if baby.type == MT_NSVBBABY
+		baby.spritexscale = $ / 3
+		baby.spriteyscale = baby.spritexscale
+	end
+	
 	baby.touchlist = {}
 	baby.enraged = false
 	baby.rangecount = 0
@@ -164,6 +227,12 @@ local function Baby_Init(baby)
 	baby.base_charge_dist = 2450*FU
 	baby.base_charge_time = TR * 19/10
 	baby.base_charge_cool = (2*TR - baby.base_charge_time) * 4/5
+	if baby.type == MT_NSVBBABY
+		baby.base_charge_wait = TR * 34/100
+		baby.base_charge_dist = 3250*FU
+		baby.base_charge_time = TR * 88/100 * 2/3
+		baby.base_charge_cool = 2 --(TR*8/10 - baby.base_charge_time) * 4/5
+	end
 	Baby_SetBaseStats(baby)
 
 	baby.rage_charge_wait = TR * 46/100
@@ -224,7 +293,7 @@ local function Baby_Telegraph(baby, angle,aim, dist, tics)
 		vfx.frame = 37
 		vfx.flags = $|MF_NOCLIP|MF_NOGRAVITY|MF_NOCLIPHEIGHT
 		
-		vfx.color = SKINCOLOR_RED
+		vfx.color = (baby.type == MT_NSVBBABY) and SKINCOLOR_GALAXY or SKINCOLOR_RED
 		
 		vfx.renderflags = rflags
 		vfx.tics = 2
@@ -253,9 +322,13 @@ local function Baby_Telegraph(baby, angle,aim, dist, tics)
 		top_layer.renderflags = $|rflags
 		top_layer.spriteyoffset = -20*FU
 		top_layer.fuse = top_layer.tics
-		
+		if (baby.type == MT_NSVBBABY)
+			top_layer.color = SKINCOLOR_GALAXY
+			top_layer.colorized = true
+		end
+
 		if not baby.problem
-			baby.state = S_NSBABY_LOCKON
+			baby.state = Baby_State(baby, "LOCKON")
 		end
 	end
 end
@@ -263,6 +336,20 @@ end
 local base_easefunc = ease.outquint
 local rage_easefunc = ease.outquad -- ease.inoutsine
 local feign_easefunc = ease.linear
+local vb_base_easefunc = ease.outback
+local easefuncs = {
+	[MT_NSBABY] = {
+		base = base_easefunc,
+		rage = rage_easefunc,
+		feign = feign_easefunc,
+	},
+	[MT_NSVBBABY] = {
+		base = vb_base_easefunc,
+		rage = rage_easefunc,
+		feign = feign_easefunc,
+	}
+}
+
 local lunge_steps = 10
 local lunge_random = 64 * FU
 local function Baby_DoLunge(baby, angle,aim, dist, tics)
@@ -279,7 +366,7 @@ local function Baby_DoLunge(baby, angle,aim, dist, tics)
 		
 		Baby_Sound(baby, sound)
 		if not baby.problem
-			baby.state = S_NSBABY_TOCHASE
+			baby.state = Baby_State(baby, "TOCHASE")
 		end
 		
 		baby.start_x = baby.x
@@ -294,23 +381,26 @@ local function Baby_DoLunge(baby, angle,aim, dist, tics)
 		baby.touchlist = {}
 	end
 	
-	local easefunc = (baby.enraged) and rage_easefunc or base_easefunc
-	if (baby.state == S_NSBABY_PROBLEM)
-		easefunc = feign_easefunc
+	local easetype = easefuncs[baby.type]
+	local easefunc = (baby.enraged) and easetype.rage or easetype.base
+	if (baby.state == Baby_State(baby, "PROBLEM"))
+		--easefunc = easetype.feign
 	end
+	local easeback = -5*FU
 	local prevfrac = max(FixedDiv(adjtics - 1, baby.charge_time), 0)
 	local nextfrac = FixedDiv(adjtics, baby.charge_time)
 	-- for collision...
 	local start = {
-		x = easefunc(prevfrac, baby.start_x, baby.end_x),
-		y = easefunc(prevfrac, baby.start_y, baby.end_y),
-		z = easefunc(prevfrac, baby.start_z, baby.end_z)
+		x = easefunc(prevfrac, baby.start_x, baby.end_x, easeback),
+		y = easefunc(prevfrac, baby.start_y, baby.end_y, easeback),
+		z = easefunc(prevfrac, baby.start_z, baby.end_z, easeback)
 	}
 	local eased = {
-		x = easefunc(nextfrac, baby.start_x, baby.end_x),
-		y = easefunc(nextfrac, baby.start_y, baby.end_y),
-		z = easefunc(nextfrac, baby.start_z, baby.end_z)
+		x = easefunc(nextfrac, baby.start_x, baby.end_x, easeback),
+		y = easefunc(nextfrac, baby.start_y, baby.end_y, easeback),
+		z = easefunc(nextfrac, baby.start_z, baby.end_z, easeback)
 	}
+	local inproblem = false --baby.state == Baby_State(baby, "PROBLEM")
 	for i = 0, lunge_steps
 		local frac = P_Lerp((FU/lunge_steps)*i, 0, FU)
 		P_MoveOrigin(baby,
@@ -320,8 +410,8 @@ local function Baby_DoLunge(baby, angle,aim, dist, tics)
 		)
 		
 		-- this isnt in vanilla nullscape but i think it looks nice
-		if baby.enraged or baby.state == S_NSBABY_PROBLEM
-			if (baby.state == S_NSBABY_PROBLEM and (i or (leveltime % 4))) then continue end
+		if baby.enraged or inproblem
+			if ((inproblem) and (i or (leveltime % 4))) then continue end
 			local g = P_SpawnGhostMobj(baby)
 			P_SetOrigin(g,
 				g.x + Soap_RandomFixedRange(-lunge_random, lunge_random),
@@ -329,9 +419,26 @@ local function Baby_DoLunge(baby, angle,aim, dist, tics)
 				g.z + Soap_RandomFixedRange(-lunge_random, lunge_random)
 			)
 			
-			g.blendmode = (baby.state == S_NSBABY_PROBLEM) and AST_SUBTRACT or AST_ADD
+			g.blendmode = (inproblem) and AST_SUBTRACT or AST_ADD
 			g.destscale = 0
 			g.renderflags = $ &~RF_ALWAYSONTOP
+		elseif baby.type == MT_NSVBBABY
+		and (i == 0)
+			local g = P_SpawnGhostMobj(baby)
+			P_SetOrigin(g,
+				g.x + Soap_RandomFixedRange(-lunge_random, lunge_random),
+				g.y + Soap_RandomFixedRange(-lunge_random, lunge_random),
+				g.z + Soap_RandomFixedRange(-lunge_random, lunge_random)
+			)
+			
+			g.blendmode = AST_SUBTRACT
+			g.destscale = 0
+			g.renderflags = $ &~RF_ALWAYSONTOP
+			P_3DThrust(g,
+				angle + FixedAngle(Soap_RandomFixedRange(-10*FU,10*FU)),
+				aim + FixedAngle(Soap_RandomFixedRange(-10*FU,10*FU)),
+				-24*baby.scale
+			)
 		end
 	end
 end
@@ -357,7 +464,7 @@ local function Baby_SearchForPlayers(baby)
 	baby.target = closest_player.mo
 end
 
-addHook("MobjThinker",function(b)
+local function Baby_Thinker(b)
 	if not (b and b.valid) then return end
 	
 	if not b.init
@@ -394,7 +501,7 @@ addHook("MobjThinker",function(b)
 		local feign = false
 		if not b.enraged
 		and not b.problem
-			feign = P_RandomChance(FU/5)
+			feign = false --P_RandomChance(FU/5)
 		end
 		if feign
 			b.chargewind = $ * 7/5
@@ -420,7 +527,7 @@ addHook("MobjThinker",function(b)
 			b.chargewind = b.charge_wait + 1
 			b.angle,b.aiming = R_PointTo3DAngles(b.x,b.y,b.z, me.x,me.y,me.z)
 			b.extravalue1 = 1
-			b.state = S_NSBABY_PROBLEM
+			b.state = Baby_State(b, "PROBLEM")
 		end
 	end
 	
@@ -431,7 +538,7 @@ addHook("MobjThinker",function(b)
 		
 		b.chargingtics = $ - 1
 		if not b.chargingtics
-			b.state = S_NSBABY_TOIDLE
+			b.state = Baby_State(b, "TOIDLE")
 			b.flags = $ &~MF_SPECIAL
 			b.target = nil
 			
@@ -470,7 +577,9 @@ addHook("MobjThinker",function(b)
 			Baby_Sound(b, sfx_nb_5)
 		end
 	end
-end,MT_NSBABY)
+end
+addHook("MobjThinker",Baby_Thinker,MT_NSBABY)
+addHook("MobjThinker",Baby_Thinker,MT_NSVBBABY)
 
 local function unfuck(f, mo)
 	if not (f and f.valid) then return end
