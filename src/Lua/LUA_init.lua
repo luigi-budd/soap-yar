@@ -344,6 +344,7 @@ rawset(_G, "Soap_InitTable", function(p)
 		canceltime = 0,
 		lastbumper = 0, -- for nights clutches
 		nadotime = 0,
+		swimmode = false,
 	}
 	
 	CONS_Printf(p,"\x82Soap_InitTable(): Success!")

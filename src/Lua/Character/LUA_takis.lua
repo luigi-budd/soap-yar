@@ -589,11 +589,101 @@ Takis_Hook.addHook("Takis_Thinker",function(p)
 			soap.dived = true
 			soap.sprung = false
 			soap.noability = $|NOABIL_SLIDE
+			soap.swimmode = (soap.c2 and soap.inWater)
+			if soap.swimmode
+				S_StartSound(me, sfx_sp_cln)
+			end
 			--takis.thokked = true
 			
 			me.state = S_PLAY_GLIDE
 		end
 		
+	end
+	
+	-- pee poo
+	-- first ever bloat-specific ability
+	if not soap.inWater
+	or not me.health
+	or (me.state ~= S_PLAY_GLIDE) 
+		if not soap.inWater and soap.swimmode
+			me.momx = $ * 8/5
+			me.momy = $ * 8/5
+			me.momz = $ * 8/5
+			S_StartSound(me, sfx_sp_cln)
+			
+			for i = 0,8
+				Soap_WindLines(me,nil,nil,nil, i < 4 and 1 or -1)
+			end
+			me.soap_wasinswim = true
+		end
+		soap.swimmode = false
+	end
+	if soap.inWater and not soap.swimmode
+	and me.state == S_PLAY_GLIDE
+		if me.soap_wasinswim
+			soap.swimmode = true
+			me.soap_wasinswim = nil
+		end
+	end
+	if soap.onGround
+		me.soap_wasinswim = nil
+	end
+	if soap.swimmode
+		local xyfrac = FU * 99 / 100
+		if not (p.cmd.sidemove and p.cmd.forwardmove)
+			xyfrac = FU * 98 / 100
+		end
+		local zfrac = FU * 95 / 100
+		me.momx = FixedMul($, xyfrac)
+		me.momy = FixedMul($, xyfrac)
+		me.momz = FixedMul($, zfrac)
+		me.momz = $ + FixedMul(FixedMul(FixedMul(FU / 2, clamp(0,FixedDiv(p.cmd.forwardmove*FU,35*FU),FU)), me.scale), sin(p.aiming))
+		if (leveltime % 2 == 0)
+		and (p.powers[pw_underwater] > 10*TR + 1)
+			p.powers[pw_underwater] = $ + 1
+		end
+		
+		if soap.jump == 1
+		and not me.soap_waterfx
+			P_SetObjectMomZ(me, 8*FU, true)
+			me.soap_waterfx = 13
+			S_StartSound(me, sfx_splash)
+		end
+		if me.soap_waterfx
+			local frac = FU - ((FU/13)*me.soap_waterfx)
+			local angle = 10*FU + ease.outquad(frac, 0, 100*FU)
+			local rad = FixedDiv(me.radius * 2, me.scale)
+			local z = FixedDiv(me.scale / 2, me.scale)
+			for i = -1, 1, 2
+				local a = p.drawangle + FixedAngle(angle * i)
+				local b = P_SpawnMobjFromMobj(me,
+					P_ReturnThrustX(nil, a, rad),
+					P_ReturnThrustY(nil, a, rad),
+					z, dust_type(me)
+				)
+				b.momx = $ + me.momx * 3/4
+				b.momy = $ + me.momy * 3/4
+				b.momz = $ + me.momz * 3/4
+				b.fuse = 20
+			end
+			
+			me.soap_waterfx = $ - 1
+		end
+		
+		if soap.c1 == 1
+		and not (soap.noability & NOABIL_SLIDE)
+		and not me.soap_watercd
+		and not me.soap_waterfx
+			S_StartSound(me, sfx_sp_cln)
+			soap.divewhirl = TAKIS_WDIVEVFX
+			me.soap_watercd = TAKIS_WDIVEVFX
+			
+			me.momz = $ * 4/7
+			P_3DThrust(me, Soap_ControlDir(p),p.aiming, 12*me.scale)
+		end
+		if me.soap_watercd
+			me.soap_watercd = $ - 1
+		end
 	end
 	
 	-- c2 specials
@@ -951,6 +1041,9 @@ Takis_Hook.addHook("Takis_Thinker",function(p)
 		else
 			p.thrustfactor = 2
 		end
+		if (soap.swimmode)
+			p.thrustfactor = 10
+		end
 		if (p.powers[pw_shield] & SH_NOSTACK == SH_FLAMEAURA)
 			soap.noairdrag = max($, 4)
 			me.momz = $ - P_GetMobjGravity(me) / 3
@@ -1012,6 +1105,7 @@ Takis_Hook.addHook("Takis_Thinker",function(p)
 		if (soap.jump == 1 or soap.c1 == 1)
 		and not (soap.noability & NOABIL_SLIDE)
 		and not (soap.use)
+		and not (soap.swimmode)
 			me.state = S_PLAY_SOAP_SLIP
 			p.pflags = $ &~(PF_JUMPED|PF_SHIELDABILITY)
 			local prevspeed = soap.accspeed - 20*FU
