@@ -37,6 +37,7 @@ local filetree = {
 	"bloat/telefragger.lua",
 	"bloat/nuke.lua",
 	"bloat/husk.lua",
+	"bloat/physgun.lua",
 	
 	"LUA_main.lua",
 	
