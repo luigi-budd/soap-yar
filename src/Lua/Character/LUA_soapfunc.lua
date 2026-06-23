@@ -756,6 +756,7 @@ rawset(_G,"Soap_ImpactVFX",function(src,inf, distmul, scalemul, forcesplat, nosp
 	top_layer.scalemul = scalemul
 	top_layer.dmgt = dmgt
 	top_layer.soap_supervfx = supervfx
+	top_layer.extrastars = (inf and inf.valid and inf.player and inf.player.powers[pw_shield] & SH_FORCE)
 
 	if inf and inf.valid
 		top_layer.vfx_mom = {inf.momx, inf.momy, inf.momz}
@@ -782,6 +783,9 @@ rawset(_G,"Soap_ImpactVFX",function(src,inf, distmul, scalemul, forcesplat, nosp
 		shck.translation = (supervfx) and "AllBlack" or nil
 		if (dmgt == DMG_ELECTRIC)
 			shck.color = SKINCOLOR_GALAXY
+			shck.colorized = true
+		elseif (dmgt == DMG_FIRE)
+			shck.color = SKINCOLOR_FLAME
 			shck.colorized = true
 		end
 		
@@ -838,15 +842,45 @@ rawset(_G,"Soap_ImpactVFX",function(src,inf, distmul, scalemul, forcesplat, nosp
 		end
 		
 		colorlist = damagecolors_elec
+	elseif (dmgt == DMG_FIRE)
+		if forcesplat or nosparklag then return end
+		local num = (28 * scalemul)/FU
+		
+		local range = FixedMul(20*src.scale, scalemul)
+		for i = 0,num
+			local f = P_SpawnMobjFromMobj(src,
+				Soap_RandomFixedRange(-range,range),
+				Soap_RandomFixedRange(-range,range),
+				Soap_RandomFixedRange(0,range*2),
+				MT_SMOKE
+			)
+			f.type = MT_SOAP_DUST
+			f.scale = scalemul * 2
+			f.spritexscale = $ + FixedMul(Soap_RandomFixedRange(-FU/4,FU/4), scalemul)
+			f.spriteyscale = f.spritexscale
+			f.tics = $ + P_RandomRange(0, 5 + (20*scalemul)/FU)
+			
+			local ha,va = R_PointTo3DAngles(f.x,f.y,f.z, src.x,src.y,src.z)
+			P_3DThrust(f, ha,va, -Soap_RandomFixedRange(8*scalemul, 20*scalemul))
+			
+			local lag = (src.hitlag or 0)
+			f.tics = $ + lag
+			f.anim_duration = $ + lag
+		end
+		
+		colorlist = damagecolors_elec
 	end
 	
 	if forcesplat or nosparklag then return end
 	
-	if supervfx
+	if supervfx or (dmgt == DMG_FIRE)
 		for i = 0,P_RandomRange(1,3)
 			local shck = P_SpawnMobjFromMobj(top_layer, 0,0,0, MT_PARTICLE)
 			shck.state = S_SOAP_HITM_SSHK0 + i
 			shck.spritexscale = top_layer.spritexscale*3/2 + Soap_RandomFixedSigned() / 4
+			if (dmgt == DMG_FIRE) and not supervfx
+				shck.spritexscale = $ / 2
+			end
 			shck.spriteyscale = shck.spritexscale
 			shck.renderflags = $|rflags|RF_ALWAYSONTOP|(P_RandomChance(FU/2) and RF_HORIZONTALFLIP or 0)
 			shck.color = top_layer.color
@@ -2042,7 +2076,7 @@ rawset(_G,"Soap_DeathThinker",function(p,me,soap)
 				me.momy = FixedMul($, soap_airfric)
 				Soap_Hitlag.addHitlag(me, 14, true)
 				Soap_DustRing(me,
-					MT_PARTICLE, 10,
+					MT_PARTICLE, 14,
 					{me.x,me.y,me.z},
 					8*FU, 8*FU,
 					me.scale / 10,
@@ -3046,7 +3080,42 @@ local function VFX_CeilingHit(p,me,soap, props)
 			Soap_StartQuake(5*FU,10)
 		end
 	end
-	
+end
+
+local TAKIS_WDIVEVFX = TR - 1
+local function winddivevfx(p,me,soap, angle,offangle,dist,frac)
+	local dust = P_SpawnMobjFromMobj(me,
+		P_ReturnThrustX(nil, angle, FixedMul(cos(offangle), dist)),
+		P_ReturnThrustY(nil, angle, FixedMul(cos(offangle), dist)),
+		FixedDiv(me.height,me.scale)/2 + FixedMul(sin(offangle), dist),
+		MT_SOAP_DUST
+	)
+	dust.fuse = (7 + 6 + 4 + 3) -- S_SPINDUST1-4 ...
+	if (p.powers[pw_shield] & SH_NOSTACK == SH_FLAMEAURA)
+		dust.state = S_FLAME
+		dust.fuse = dust.tics / 2
+	end
+	dust.alpha = frac
+	dust.destscale = 0
+	dust.scalespeed = FixedDiv(dust.scale, dust.fuse*FU)
+	dust.momx = $ + me.momx * 3/4
+	dust.momy = $ + me.momy * 3/4
+	P_SetObjectMomZ(dust, FU)
+end
+local function VFX_DiveWhirl(p,me,soap, props)
+	if (soap.divewhirl)
+		local angle = R_PointToAngle2(0,0, me.momx,me.momy) + ANGLE_90
+		local frac = FixedDiv(soap.divewhirl*FU, TAKIS_WDIVEVFX*FU)
+		local offangle = FixedAngle(360 * FixedMul(frac, frac * 8/6))
+		
+		frac = ease.outquart($, 0, FU)
+		local dist = 60 * frac
+		winddivevfx(p,me,soap, angle,offangle,dist,frac)
+		winddivevfx(p,me,soap, angle,offangle + FixedAngle(120*FU),dist,frac)
+		winddivevfx(p,me,soap, angle,offangle + FixedAngle(240*FU),dist,frac)
+		
+		soap.divewhirl = $ - 1
+	end
 end
 
 rawset(_G, "Soap_VFXFuncs",{
@@ -3056,6 +3125,7 @@ rawset(_G, "Soap_VFXFuncs",{
 	squish = VFX_Squish,
 	lunge = VFX_Lunge,
 	ceilinghit = VFX_CeilingHit,
+	divewhirl = VFX_DiveWhirl,
 })
 
 --preferrably we could handle the auras here but ehh whatever
@@ -3069,6 +3139,7 @@ rawset(_G,"Soap_VFX",function(p,me,soap, props)
 		deathanims = true,
 		lunge = true,
 		ceilinghit = true,
+		divewhirl = true,
 	}
 	
 	/*
@@ -3114,6 +3185,9 @@ rawset(_G,"Soap_VFX",function(p,me,soap, props)
 			if fxtable.ceilinghit
 				allowed.ceilinghit = false
 			end
+			if fxtable.divewhirl
+				allowed.divewhirl = false
+			end
 		end
 	end
 	
@@ -3141,6 +3215,9 @@ rawset(_G,"Soap_VFX",function(p,me,soap, props)
 		VFX_CeilingHit(p,me,soap, props)
 	end
 	
+	if allowed.divewhirl
+		VFX_DiveWhirl(p,me,soap, props)
+	end
 	soap.allowdeathanims = allowed.deathanims
 end)
 

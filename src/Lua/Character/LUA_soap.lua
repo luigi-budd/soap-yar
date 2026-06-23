@@ -656,6 +656,8 @@ local function uppercutrefresh_vfx(p,me,soap)
 	top_layer.tracer = me
 end
 
+local TAKIS_WDIVEVFX = TR - 1
+
 local discoranges = {
 	["DISCO1"] = true,
 	["DISCO2"] = true,
@@ -1338,20 +1340,42 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 					soap.speedlenient = max($,4)
 					
 					Soap_SquashMacro(p, {ease_func = "insine", ease_time = soap.chargedtime * 3/4, strength = (FU/3)})
-					Soap_DustRing(me, dust_type(me), 16, {me.x,me.y,me.z + me.height/2},
-						126*me.scale, 20*me.scale,
-						me.scale/2, me.scale,
-						true, function(s)
-							s.momx = $ + me.momx * 3/4
-							s.momy = $ + me.momy * 3/4
-							s.momz = $ + me.momz * 3/4
-							dust_noviewmobj(s)
-						end,
-						p.drawangle, 0
-					)
-					
-					if (p.powers[pw_shield] & SH_NOSTACK == SH_FLAMEAURA)
+					local shield = p.powers[pw_shield] & SH_NOSTACK
+					if (shield == SH_FLAMEAURA)
+						local s = P_SpawnMobjFromMobj(me,
+							0,0,FixedDiv(me.height,me.scale) / 2, MT_SOAP_WALLBUMP
+						)
+						s.frame = 36|FF_PAPERSPRITE|FF_FULLBRIGHT
+						s.angle = p.drawangle + ANGLE_90
+						s.color = SKINCOLOR_KETCHUP
+						s.blendmode = AST_ADD
+						
+						s.tics = 12
+						s.fuse = 12
+						s.sixseveneffect = true
+						
+						s.scale = $ / 4
+						s.destscale = me.scale * 2
+						s.scalespeed = FixedDiv(s.destscale - s.scale, s.tics*FU)
+						
+						s.momx = $ + me.momx --/ 5
+						s.momy = $ + me.momy --/ 5
+						s.momz = $ + me.momz --/ 5
 						S_StartSound(me,sfx_s3k43)
+					elseif (shield == SH_WHIRLWIND)
+						soap.divewhirl = TAKIS_WDIVEVFX * 3/4
+					else
+						Soap_DustRing(me, dust_type(me), 16, {me.x,me.y,me.z + me.height/2},
+							126*me.scale, 20*me.scale,
+							me.scale/2, me.scale,
+							true, function(s)
+								s.momx = $ + me.momx * 3/4
+								s.momy = $ + me.momy * 3/4
+								s.momz = $ + me.momz * 3/4
+								dust_noviewmobj(s)
+							end,
+							p.drawangle, 0
+						)
 					end
 				end
 				
@@ -1431,12 +1455,18 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 				min_speed = $*2/3
 				max_speed = $*2/3
 			end
-			if (p.powers[pw_shield] & SH_NOSTACK) == SH_FLAMEAURA
+			local shield = (p.powers[pw_shield] & SH_NOSTACK)
+			if shield == SH_FLAMEAURA
 				thrust = $*6/5
 				min_speed = $*4/3
 				S_StartSound(me,sfx_s3k43)
+			elseif shield == SH_WHIRLWIND
+				soap.divewhirl = TAKIS_WDIVEVFX / 2
+				min_speed = $ * 3/2
+				max_speed = $ * 3
+				thrust = $ / 4
 			end
-
+			
 			if (Event_CharOnMove.numhooks)
 				local events = Event_CharOnMove.events
 				for i = 1, Event_CharOnMove.numhooks
@@ -1635,7 +1665,7 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 						sound = false
 						
 						spawn_thundercoin_sparks(p,me)
-						soap.noairdashforme = true
+						--soap.noairdashforme = true
 						soap.uppercut_spin = $ + 360*FU
 					end
 				end
@@ -1753,6 +1783,9 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 			
 			if not soap.onGround
 				p.runspeed = max(soap.accspeed - 10*FU, skins[p.skin].runspeed)
+				if (p.powers[pw_shield] & SH_NOSTACK == SH_WHIRLWIND)
+					me.momz = $ - (P_GetMobjGravity(me) / 3)
+				end
 			end
 			if soap.accspeed >= FU
 				p.drawangle = R_PointToAngle2(0,0, me.momx,me.momy)
@@ -2736,6 +2769,26 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 			else
 				aura.flags2 = $ &~MF2_DONTDRAW
 			end
+			if (leveltime % 6 == 0)
+				local s = P_SpawnMobjFromMobj(me,
+					0,0,FixedDiv(me.height,me.scale) / 2, MT_SOAP_WALLBUMP
+				)
+				s.frame = 36|FF_PAPERSPRITE|FF_FULLBRIGHT
+				s.angle = p.drawangle + ANGLE_90
+				s.color = SKINCOLOR_KETCHUP
+				s.blendmode = AST_ADD
+				
+				s.tics = 12
+				s.fuse = 12
+				s.sixseveneffect = true
+				
+				s.destscale = 0
+				s.scalespeed = FixedDiv(s.scale, s.tics*FU)
+				
+				s.momx = $ + me.momx / 5
+				s.momy = $ + me.momy / 5
+				s.momz = $ + me.momz / 5
+			end
 		else
 			aura.flags2 = $ &~MF2_DONTDRAW
 		end
@@ -3271,7 +3324,7 @@ local function dotumble(p)
 	me.soap_tumble_oldmomz = me.momz
 end
 
-local function try_damage_cases(me,thing, p,soap,DealDamage)
+local function try_damage_cases(me,thing, p,soap,DealDamage,damagetype)
 	--hit by pound
 	if ((soap.pounding)
 	and (thing.health))
@@ -3281,11 +3334,11 @@ local function try_damage_cases(me,thing, p,soap,DealDamage)
 			return false
 		end
 		
-		Soap_ImpactVFX(thing, me)
+		Soap_ImpactVFX(thing, me, nil,nil,nil,nil,damagetype)
 		local damage = 1
 		local power = 5*FU + FixedDiv(abs(me.momz),me.scale*3)
 		local hitlag_tics = 10 + ((power/FU) / 5)
-		Soap_DamageSfx(thing, power, 35*FU)
+		Soap_DamageSfx(thing, power, 35*FU, damagetype)
 		
 		-- spike!
 		local halftic = hitlag_tics/2
@@ -3293,7 +3346,7 @@ local function try_damage_cases(me,thing, p,soap,DealDamage)
 			S_StartSound(me,sfx_sp_dm4)
 			local work = FixedDiv(power, 35*FU) - FU/2
 			repeat
-				Soap_ImpactVFX(thing,me, FU + work*7)
+				Soap_ImpactVFX(thing,me, FU + work*7, nil,nil,nil,damagetype)
 				work = $ - FU/4
 				damage = $ + 2
 			until (work <= 0)
@@ -3326,7 +3379,7 @@ local function try_damage_cases(me,thing, p,soap,DealDamage)
 			end
 		end
 		
-		DealDamage(thing, me,me, damage)
+		DealDamage(thing, me,me, damage, damagetype)
 		if (thing and thing.valid and thing.flags & MF_BOSS and (thing.health <= 0))
 			hitlag_tics = $ * 3
 			S_StartSound(me, sfx_sp_kco)
@@ -3357,16 +3410,16 @@ local function try_damage_cases(me,thing, p,soap,DealDamage)
 	and (me.momz*soap.gravflip > 0)
 	and (me.sprite2 == SPR2_MLEE)
 	and (thing.type ~= MT_ROLLOUTROCK)
-		Soap_ImpactVFX(thing,me)
+		Soap_ImpactVFX(thing,me, nil,nil,nil,nil,damagetype)
 		soap.uppercut_spin = soap_baseuppercutturn
 		soap.canuppercut = true
 		
 		local power = 5*FU + FixedDiv(me.momz,me.scale)
-		Soap_DamageSfx(thing, power, 35*FU)
+		Soap_DamageSfx(thing, power, 35*FU, damagetype)
 		
 		local hitlag_tics = 10 + (power/FU / 5)
 		
-		DealDamage(thing, me,me)
+		DealDamage(thing, me,me, nil, damagetype)
 		
 		if (thing and thing.valid and thing.flags & MF_BOSS and (thing.health <= 0))
 			hitlag_tics = $ * 3
@@ -3409,10 +3462,10 @@ local function try_damage_cases(me,thing, p,soap,DealDamage)
 	if (soap.rdashing and p.normalspeed >= skins[p.skin].normalspeed + soap._maxdash)
 	or (soap.airdashed and Soap_AirdashState(me))
 	and not (thing.type == MT_ROLLOUTROCK and me.tracer == thing)
-		Soap_ImpactVFX(thing,me)
+		Soap_ImpactVFX(thing,me, nil,nil,nil,nil,damagetype)
 		
 		local power = FixedMul(10*FU + max(soap.accspeed - 20*FU,0), me.scale)
-		Soap_DamageSfx(thing, power, 60*FU)
+		Soap_DamageSfx(thing, power, 60*FU, damagetype)
 		
 		local hitlag_tics = 4 + (power/FU / 10)
 		if (me.state == S_PLAY_FLOAT_RUN)
@@ -3466,7 +3519,7 @@ local function try_damage_cases(me,thing, p,soap,DealDamage)
 			})
 		end
 		
-		DealDamage(thing, me,me)
+		DealDamage(thing, me,me, nil,damagetype)
 		if (thing and thing.valid and thing.flags & MF_BOSS and (thing.health <= 0))
 			hitlag_tics = $ * 3
 			S_StartSound(me, sfx_sp_kco)
@@ -3496,11 +3549,11 @@ local function try_damage_cases(me,thing, p,soap,DealDamage)
 	
 	-- just so you wont miss out on amps
 	if basicdamage
-		Soap_ImpactVFX(thing,me, nil, FU/3)
-		Soap_DamageSfx(thing, FU/3, 2*FU)
+		Soap_ImpactVFX(thing,me, nil, FU/3, nil,nil,damagetype)
+		Soap_DamageSfx(thing, FU/3, 2*FU, damagetype)
 		Soap_SpawnBumpSparks(me, thing, nil, true)
 		
-		DealDamage(thing, me,me)
+		DealDamage(thing, me,me, nil,damagetype)
 		if (thing and thing.valid and thing.flags & MF_BOSS and (thing.health <= 0))
 			S_StartSound(me, sfx_sp_kco)
 			soap.hud.painsurge = 6
@@ -3548,8 +3601,9 @@ local function try_pvp_collide(me,thing)
 			DealDamage = P_DamageMobj
 		end
 	end
-	if (thing.type == MT_ROLLOUTROCK)
-		DealDamage = P_DamageMobj -- never kill rollout rocks
+	if (thing.type == MT_ROLLOUTROCK) -- never kill rollout rocks
+	or (thing.flags & MF_MONITOR) -- or monitors
+		DealDamage = P_DamageMobj 
 	end
 	if not candamagemobj then return end
 	
@@ -3584,7 +3638,19 @@ local function try_pvp_collide(me,thing)
 		return
 	end
 	
-	thinghit = try_damage_cases(me,thing, p,soap,DealDamage)
+	local damagetype
+	local shield = p.powers[pw_shield] & SH_NOSTACK
+	if (shield & SH_PROTECTELECTRIC)
+		damagetype = DMG_ELECTRIC
+	end
+	if (shield & SH_PROTECTFIRE)
+		damagetype = DMG_FIRE
+	end
+	if (shield & SH_PROTECTWATER)
+		damagetype = DMG_WATER
+	end
+	
+	thinghit = try_damage_cases(me,thing, p,soap,DealDamage, damagetype)
 	if thinghit == false
 		return false
 	end
