@@ -529,9 +529,62 @@ SOAP_TAUNTS[SOAP_SKIN] = {
 						and not (found.player.powers[pw_flashing] or found.player.powers[pw_invulnerability])
 							local p2 = found.player
 							
-							Soap_ImpactVFX(found, me, nil,nil, true)
 							Soap_SpawnBumpSparks(found, me, nil,false, found.scale * 3/2, true)
 							Soap_DamageSfx(found, 25*FU, 30*me.scale)
+							
+							-- kou parries lol
+							if (found.skin == "kou")
+							and (p2.kou and p2.kou.parrytimer)
+								me.soap_tumble = true
+								me.soap_tumble_oldmomz = me.momz
+								
+								P_ResetPlayer(p)
+								me.state = S_PLAY_PAIN
+								me.tempangle = nil
+								p.drawangle = ang + ANGLE_180
+								
+								if P_IsObjectOnGround(me)
+									me.z = $ + P_MobjFlip(me)
+								end
+								local speed = (soap.taunt.tics) and 30*me.scale or 12*me.scale
+								P_Thrust(me, ang, -speed*2)
+								P_SetObjectMomZ(me, 30*me.scale, true)
+								p.powers[pw_flashing] = flashingtics
+								
+								-- kou vfx
+								P_FlashPal(p, PAL_INVERT, 4)
+								P_FlashPal(p2, PAL_INVERT, 4)
+								local kou = p2.kou
+								kou.punchlagactive = 18
+								
+								if not (found.state == S_PLAY_KOU_DROP)
+									found.state = S_PLAY_KOU_DROP
+								end
+								
+								local circ = P_SpawnMobjFromMobj(found, 0, 0, 1, MT_KOUCIRCLE)
+								circ.tics = 15
+								circ.scale = found.scale + found.scale
+								circ.destscale = found.scale * 30
+								circ.scalespeed = found.scale * 3
+								P_Telekinesis(found.player, 45*found.scale, 640*found.scale)
+								local kicker = P_SpawnMobjFromMobj(found, 0,0,0, MT_KOU_MISSILEPARTICLE)
+								kicker.destscale = $*8
+								kicker.scalespeed = found.scale/2
+								kicker.color = p2.skincolor
+								kicker.blendmode = AST_ADD
+								kicker.fuse = 6
+								local sounds = {sfx_kodrp1, sfx_kodrp2}
+								S_StartSound(found, sounds[P_RandomRange(1, #sounds)])
+								
+								Soap_Hitlag.addHitlag(found, 12, false)
+								Soap_Hitlag.addHitlag(me, 12, true)
+								Soap_StartQuake(10*FU, 12, {me.x, me.y, me.z}, 512*me.scale)
+								Soap_ImpactVFX(me, found, nil,2*FU,nil,nil, DMG_ELECTRIC)
+								Soap_DamageSfx(me, 25*FU, 30*me.scale, DMG_ELECTRIC)
+								
+								return true
+							end
+							Soap_ImpactVFX(found, me, nil,nil, true)
 							
 							if CV.tauntinterference.value
 								found.soap_tumble = true
@@ -599,7 +652,6 @@ SOAP_TAUNTS[SOAP_SKIN] = {
 					thok,
 					thok.x - fakerange, thok.x + fakerange,
 					thok.y - fakerange, thok.y + fakerange)
-					
 				end
 			end
 			
