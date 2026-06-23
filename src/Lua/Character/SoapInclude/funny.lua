@@ -180,13 +180,26 @@ addHook("MobjThinker",function(f)
 		
 		speed = $ + FixedMul(max($, 300 * f.scale), FixedDiv(dist, bandcap))
 		
-		P_3DInstaThrust(f, ha,va, speed/4)
-		for i = 0,2
-			if P_XYMovement(f) then return end
-			P_ZMovement(f)
+		local steps = 6
+		local frac = FU/steps
+		local start = {
+			x = f.x,
+			y = f.y,
+			z = f.z
+		}
+		P_3DInstaThrust(f, ha,va, speed/steps)
+		for i = 0,6
+			local myfrac = frac*i
+			P_MoveOrigin(f,
+				start.x + FixedMul(f.momx, myfrac),
+				start.y + FixedMul(f.momy, myfrac),
+				start.z + FixedMul(f.momz, myfrac)
+			)
 			if not f.valid then return end
 		end
-		if not f.valid then return end
+		f.momx = 0
+		f.momy = 0
+		f.momz = 0
 		
 		if not S_SoundPlaying(f,sfx_kc64)
 			S_StartSound(f,sfx_kc64)
@@ -297,39 +310,12 @@ Takis_Hook.addHook("MoveBlocked", function(me, thing,line)
 	local soap = p.soaptable
 	
 	if me.soap_tumble
-		S_StartSound(me, sfx_s3k49)
-		Soap_SpawnBumpSparks(me, thing, line)
-		if (line and line.valid)
-			local line_ang = R_PointToAngle2(
-				line.v1.x, line.v1.y, line.v2.x, line.v2.y
-			)
-			local speed = R_PointToDist2(0,0,me.momx,me.momy) + FixedHypot(p.cmomx,p.cmomy)
-			speed = max($, 20 * me.scale)
-			
-			P_InstaThrust(me,
-				line_ang - ANGLE_90*(P_PointOnLineSide(me.x,me.y, line) and 1 or -1),
-				-speed
-			)
-			if soap.onGround
-				P_MovePlayer(p)
-			end
-			if soap.in2D
-				me.momy = 0
-			end
-			return true
-		elseif (thing and thing.valid)
-			local ang = R_PointToAngle2(me.x,me.y, thing.x,thing.y)
-			local speed = R_PointToDist2(0,0,thing.momx,thing.momy) + FixedMul(
-				20*FU, FixedSqrt(FixedMul(thing.scale,me.scale))
-			)
-			if soap.onGround then speed = FixedDiv($, me.friction) end
-			P_InstaThrust(me, ang, -speed)
-			if soap.in2D
-				me.momy = 0
-			end
-			return true
+		me.soap_tumble_bumps = ($ or 0) + 1
+		if me.soap_tumble_bumps >= 30
+			me.momx = FixedMul($, FU * 4/5)
+			me.momy = FixedMul($, FU * 4/5)
 		end
-		--P_SetObjectMomZ(me, 5*FU, true)
+		return Soap_Bump(me,thing,line)
 	end
 end)
 
@@ -361,6 +347,7 @@ addHook("PostThinkFrame",do
 				me.rollangle = 0
 				me.soap_tumble_oldmomz = nil
 				me.soap_tumble_down = nil
+				me.soap_tumble_bumps = nil
 			end
 			continue
 		end

@@ -446,6 +446,7 @@ CMDConstructor("spawn", {prefix = SOAP_DEVPREFIX, func = function(p,...)
 	local type = args[1]
 	local offset = args[2]
 	local aiming = args[3]
+	local scale = args[4]
 	
 	local me = p.realmo
 	if not (me and me.valid)
@@ -454,14 +455,16 @@ CMDConstructor("spawn", {prefix = SOAP_DEVPREFIX, func = function(p,...)
 	end
 
 	if type == nil
-		prn(p,"sd_spawn <type> <offset> [<doaiming>]")
+		prn(p,"sd_spawn <type> <offset> [<doaiming> <scale>]")
 		return
 	end
 	
 	local mobjtype = nil
 	if offset == nil then offset = "50" end
 	local soffset = tofixed(offset)
-	--if soffset == 0 then soffset = 50*FU end
+	
+	if scale == nil then scale = "1" end
+	scale = tofixed($)
 	
 	if tonumber(type) ~= nil
 		mobjtype = abs(tonumber(type))
@@ -500,7 +503,7 @@ CMDConstructor("spawn", {prefix = SOAP_DEVPREFIX, func = function(p,...)
 		mobjtype
 	)
 	spawn.angle = me.angle
-	spawn.scale = me.scale
+	spawn.scale = FixedMul(scale, me.scale)
 	
 	if (spawn.renderflags & RF_PAPERSPRITE)
 	or (spawn.frame & FF_PAPERSPRITE)
@@ -521,11 +524,11 @@ local valid_types = {
 	["angle"] = true,
 	["global"] = true,
 }
-CMDConstructor("editmyself", {prefix = SOAP_DEVPREFIX, func = function(p,...)
+CMDConstructor("editmobj", {prefix = SOAP_DEVPREFIX, func = function(p,...)
 	local args = {...}
 	if not #args
-	or (#args ~= 3)
-		prn(p, "\x82"..SOAP_DEVPREFIX.."_editmyself <name> <type> <value> [<strict>]\x80: Edits \"name\" in your mobj.")
+	or (#args < 4)
+		prn(p, "\x82"..SOAP_DEVPREFIX.."_editmobj <node> <name> <type> <value> [<strict>]\x80: Edits \"name\" in your mobj.")
 		prn(p, "\x82\Availiable types:")
 		for prefix,_ in pairs(valid_types)
 			prn(p, "\t\x83"..prefix)
@@ -533,8 +536,13 @@ CMDConstructor("editmyself", {prefix = SOAP_DEVPREFIX, func = function(p,...)
 		return
 	end
 	
+	local p2 = GetPlayer(p,args[1])
+	if not p2 then return end
+	table.remove(args, 1)
+	
 	local mo_entry
-	local mobj = p.realmo
+	local mobj = p2.realmo
+	local obtype = type
 	local type = "string"
 	local strict = (#args == 4)
 	for num, entry in ipairs(args)
@@ -558,6 +566,96 @@ CMDConstructor("editmyself", {prefix = SOAP_DEVPREFIX, func = function(p,...)
 			else
 				prn(p,"\x83NOTICE: current entry is nil, continuing")
 			end
+		end
+		if obtype(mobj[mo_entry]) == "table"
+			prn(p,"\x85NOTICE: Can't edit tables yet! Stopping.")
+			return
+		end
+		
+		local real_value = entry
+		if type == "nil"
+			real_value = nil
+		elseif type == "boolean"
+			real_value = ($:upper()) == "TRUE"
+		elseif type == "number" or type == "int"
+			real_value = tonumber($)
+		elseif type == "fixed" or type == "fixed_t"
+			real_value = tofixed($)
+		elseif type == "angle" or type == "angle_t"
+			real_value = tofixed($)
+			if real_value ~= nil
+				real_value = FixedAngle($)
+			end
+		elseif type == "global"
+			local result,status = pcall(function() return _G[real_value]; end)
+			if (result)
+				real_value = _G[$]
+			else
+				real_value = nil
+				prn(p,"\x83NOTICE: global is nil")
+			end
+		end
+		if real_value == nil and type ~= "nil"
+			prn(p,"\x85Value does not fit type")
+			return
+		end
+		
+		local result,status = pcall(function() mobj[mo_entry] = real_value; end)
+		if not result
+			prn(p,"\x85\Failed to set entry: \x80"..status)
+			return
+		else
+			mobj[mo_entry] = real_value
+		end
+		prn(p,"\x83Success!")
+	end
+end})
+CMDConstructor("editplayer", {prefix = SOAP_DEVPREFIX, func = function(p,...)
+	local args = {...}
+	if not #args
+	or (#args < 4)
+		prn(p, "\x82"..SOAP_DEVPREFIX.."_editplayer <node> <name> <type> <value> [<strict>]\x80: Edits \"name\" in your player struct.")
+		prn(p, "\x82\Availiable types:")
+		for prefix,_ in pairs(valid_types)
+			prn(p, "\t\x83"..prefix)
+		end
+		return
+	end
+	
+	local p2 = GetPlayer(p,args[1])
+	if not p2 then return end
+	table.remove(args, 1)
+	
+	local mo_entry
+	local mobj = p2
+	local obtype = type
+	local type = "string"
+	local strict = (#args == 4)
+	for num, entry in ipairs(args)
+		if num == 1
+			mo_entry = entry
+			continue
+		elseif num == 2
+			if valid_types[entry] ~= nil
+				type = entry
+			else
+				prn(p,"\x85Type value '"..entry.."' not valid")
+				return
+			end
+			continue
+		end
+		
+		if mobj[mo_entry] == nil
+			if strict
+				prn(p,"\x85NOTICE: current entry is nil, stopping")
+				return
+			else
+				prn(p,"\x83NOTICE: current entry is nil, continuing")
+			end
+		end
+		if obtype(mobj[mo_entry]) == "table"
+			prn(p,"\x85NOTICE: Can't edit tables yet! Stopping.")
+			return
 		end
 		
 		local real_value = entry

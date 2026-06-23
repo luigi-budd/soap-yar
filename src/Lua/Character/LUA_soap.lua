@@ -3197,6 +3197,7 @@ Takis_Hook.addHook("MoveBlocked",function(me,thing,line, goingup)
 	local soap = p.soaptable
 	
 	if me.skin ~= SOAP_SKIN then return end
+	if me.soap_tumble then return end
 	if goingup then return end
 	
 	if not (me.health)
