@@ -5,9 +5,9 @@ addHook("HUD",function(v,p)
 	
 	local width = (v.width() / v.dupx())+1
 	
-	local str = "-- DEMO --   Not representative of final product.   -- DEMO --   Made by EpixGamer21   "
+	local str = "-- DEMO --   BLOAT BRANCH   "
 	local wid = v.stringWidth(str,0,"thin")/2
-	local flags = V_REDMAP|V_SNAPTOBOTTOM|V_ALLOWLOWERCASE|V_30TRANS|V_SNAPTOLEFT
+	local flags = V_PURPLEMAP|V_SNAPTOBOTTOM|V_ALLOWLOWERCASE|V_30TRANS|V_SNAPTOLEFT
 	local offset = 4
 	
 	local marquee = leveltime % (wid)
