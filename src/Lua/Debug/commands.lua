@@ -235,7 +235,7 @@ CMDConstructor("hurtme", {prefix = SOAP_DEVPREFIX, func = function(p,...)
 	
 	type = string.upper($)
 	type = _G["DMG_"..type] or 0
-	P_DamageMobj(p.realmo,nil,nil,type)
+	P_DamageMobj(p.realmo,nil,nil,nil,type)
 end})
 
 CMDConstructor("scale", {prefix = SOAP_DEVPREFIX, func = function(p,...)
