@@ -100,10 +100,13 @@ local function cancelConds(p, nobuttons, checkspinonly)
 end
 
 local sixseven_callback = function(spark)
-	spark.tics = 12
+	spark.tics = 25
+	spark.fuse = 25
+	spark.type = MT_SOAP_WALLBUMP
+	spark.sixseveneffect = true
 	spark.frame = A
 	spark.sprite = SPR_SOAP_GFX
-	spark.frame = 34|FF_PAPERSPRITE
+	spark.frame = 34|FF_PAPERSPRITE|FF_ADD
 	spark.momz = 0
 	spark.renderflags = $|RF_NOCOLORMAPS|RF_FULLBRIGHT|(P_RandomChance(FU/2) and RF_HORIZONTALFLIP or 0)
 	P_ThrustEvenIn2D(spark, spark.angle - ANGLE_90, 8*FU)

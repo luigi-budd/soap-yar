@@ -385,8 +385,12 @@ rawset(_G,"Takis_HandleNoAbils", function(p)
 	
 	if (p.exiting)
 	or (p.inkart)
+	or (p.boat)
 	or hiding or ((gametyperules & GTR_RACE) and p.realtime == 0)
 		na = $|NOABIL_ALL &~(NOABIL_CLUTCH|NOABIL_TAUNTS)
+		if (p.inkart or p.boat)
+			na = $|NOABIL_ALL
+		end
 		/*
 		if (p.exiting)
 		or (hiding or ((gametyperules & GTR_RACE) and p.realtime == 0))
@@ -513,7 +517,9 @@ local function forcehambounce(p)
 	
 	P_DoJump(p,false)
 	me.state = S_PLAY_SPINDASH
-	
+	Soap_RemoveSquash(p, "jumpeffect")
+	Soap_SquashMacro(p, {ease_func = "inoutback", ease_time = 12, x = -FU*3/4, y = -FU, backparam = FU, name = "hambounce"})
+
 	local momz = 10*FU
 	if me.health
 	and not (takis.inPain)
@@ -905,10 +911,10 @@ rawset(_G,"Takis_DoHammerBlastLand",function(p,domoves)
 			Soap_ZLaunch(me, basemomz + (time*FU/8) )
 			takis.clutch.time = 1
 			takis.clutch.misfire = TR
+			Soap_RemoveSquash(p, "jumpeffect")
+			Soap_SquashMacro(p, {ease_func = "inoutback", ease_time = 12, x = -FU*3/4, y = -FU, backparam = FU, name = "hambounce"})
 			
 			S_StartSoundAtVolume(me,sfx_kc52,180)
-			--p.jp = 1
-			--p.jt = 5
 			
 			p.pflags = $|PF_JUMPED &~(PF_THOKKED|PF_SHIELDABILITY)
 			

@@ -186,7 +186,7 @@ local function TryVFXStars(v)
 	v.sentstars = true
 
 	local colorlist = (v.soap_supervfx) and super_damagecolors or damagecolors
-	for i = 0, 5
+	for i = 0, (v.extrastars) and 10 or 5
 		local star = P_SpawnMobjFromMobj(v,
 			Soap_RandomFixedRange(-RED_STAROFFSET, RED_STAROFFSET),
 			Soap_RandomFixedRange(-RED_STAROFFSET, RED_STAROFFSET),
@@ -228,8 +228,9 @@ local function TryVFXStars(v)
 			
 			star.ticker = 0
 			local off = (i * 3) --+ max(star.tracer.soap_amps - i, 0)*3
-			star.wait = 12 + (off)
+			star.wait = (v.extrastars and 22 or 12) + (off)
 			star.tics = $ + off
+			star.extended = v.extrastars
 			star.awardrings = v.soap_supervfx or (star.tracer.player.powers[pw_invulnerability])
 		end
 		star.renderflags = $|RF_FULLBRIGHT|RF_NOCOLORMAPS
@@ -485,7 +486,9 @@ addHook("MobjThinker",function(rock)
 end,MT_ROLLOUTROCK)
 
 local amp_tics = 41
+local amp_longtics = 55
 local amp_frac = (FU / amp_tics)
+local amp_longfrac = (FU / amp_longtics)
 local amp_drag = FU * 6/7
 local amp_dist = 1200 * FU
 addHook("MobjThinker",function(amp)
@@ -542,7 +545,10 @@ addHook("MobjThinker",function(amp)
 	amp.starty = $ + amp.momy
 	amp.startz = $ + amp.momz
 	
-	local frac = min(amp_frac * amp.ticker, FU)
+	local mytics = (amp.extended and amp_longtics or amp_tics)
+	local myfrac = (amp.extended and amp_longfrac or amp_frac)
+	
+	local frac = min(myfrac * amp.ticker, FU)
 	P_MoveOrigin(amp,
 		ease.inexpo(frac, amp.startx, me.x),
 		ease.inexpo(frac, amp.starty, me.y),
@@ -556,7 +562,7 @@ addHook("MobjThinker",function(amp)
 		amp.spriteyscale = amp.spritexscale
 	end
 	
-	if amp.ticker == amp_tics + 1
+	if amp.ticker == mytics + 1
 		if me.soap_lifetimeamps == nil then me.soap_lifetimeamps = 0 end
 		if (me.soap_lifetimeamps % 4 == 0)
 			if (amp.awardrings)

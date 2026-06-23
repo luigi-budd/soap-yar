@@ -8,6 +8,7 @@ local CV = SOAP_CV
 local Event_CharOnDamage = Takis_Hook.events["Char_OnDamage"]
 
 local TAKIS_WDIVEVFX = TR - 1
+
 local armacolors = {
 	SKINCOLOR_KETCHUP, SKINCOLOR_PEPPER, SKINCOLOR_CRIMSON, SKINCOLOR_GARNET, SKINCOLOR_VOLCANIC
 }
@@ -228,26 +229,6 @@ local function handle_knockback(p,me,soap)
 	end
 	
 	me.soap_damagevar = nil
-end
-
-local function winddivevfx(p,me,soap, angle,offangle,dist,frac)
-	local dust = P_SpawnMobjFromMobj(me,
-		P_ReturnThrustX(nil, angle, FixedMul(cos(offangle), dist)),
-		P_ReturnThrustY(nil, angle, FixedMul(cos(offangle), dist)),
-		FixedDiv(me.height,me.scale)/2 + FixedMul(sin(offangle), dist),
-		MT_SOAP_DUST
-	)
-	dust.fuse = (7 + 6 + 4 + 3) -- S_SPINDUST1-4 ...
-	if (p.powers[pw_shield] & SH_NOSTACK == SH_FLAMEAURA)
-		dust.state = S_FLAME
-		dust.fuse = dust.tics / 2
-	end
-	dust.alpha = frac
-	dust.destscale = 0
-	dust.scalespeed = FixedDiv(dust.scale, dust.fuse*FU)
-	dust.momx = $ + me.momx * 3/4
-	dust.momy = $ + me.momy * 3/4
-	P_SetObjectMomZ(dust, FU)
 end
 
 Takis_Hook.addHook("PreThinkFrame",function(p)
@@ -1425,20 +1406,6 @@ Takis_Hook.addHook("Takis_Thinker",function(p)
 		was_pounding = washammering,
 		halfsquish = washammering or hammer.down
 	})
-	-- ...?
-	if (soap.divewhirl)
-		local angle = R_PointToAngle2(0,0, me.momx,me.momy) + ANGLE_90
-		local frac = FixedDiv(soap.divewhirl*FU, TAKIS_WDIVEVFX*FU)
-		local offangle = FixedAngle(360 * FixedMul(frac, frac * 8/6))
-		
-		frac = ease.outquart($, 0, FU)
-		local dist = 60 * frac
-		winddivevfx(p,me,soap, angle,offangle,dist,frac)
-		winddivevfx(p,me,soap, angle,offangle + FixedAngle(120*FU),dist,frac)
-		winddivevfx(p,me,soap, angle,offangle + FixedAngle(240*FU),dist,frac)
-		
-		soap.divewhirl = $ - 1
-	end
 	Soap_DeathThinker(p,me,soap)
 end)
 
