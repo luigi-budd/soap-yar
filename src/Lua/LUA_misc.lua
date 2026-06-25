@@ -72,6 +72,12 @@ addHook("MobjThinker",function(bump)
 		end
 		return
 	end
+	-- this is just much better
+	if (bump.fusefade ~= nil)
+		if bump.fuse > bump.fusefade then return end
+		bump.alpha = $ - (FU / bump.fusefade)
+		return
+	end
 	
 	local me = bump.target
 	if (me and me.valid)

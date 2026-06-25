@@ -1271,6 +1271,15 @@ rawset(_G, "Soap_WindLines", function(me,rmomz,color,forceang,forceside)
 		and (p.powers[pw_shield] & SH_NOSTACK == SH_FLAMEAURA)
 			mocolor = armacolors[P_RandomRange(1, #armacolors)]
 		end
+		-- what is this bullshit
+		if (me.sprite2 == SPR2_MSC2)
+			if (me.soap_inf and me.soap_inf.valid)
+			and me.soap_inf.color ~= SKINCOLOR_NONE
+				mocolor = me.soap_inf.color
+			else
+				mocolor = SKINCOLOR_WHITE
+			end
+		end
 	end
 	-- use super color as default
 	-- this does support supercolors, you just gotta
@@ -2052,20 +2061,48 @@ rawset(_G,"Soap_DeathThinker",function(p,me,soap)
 				Soap_StartQuake(abs(me.momz)*2, TR/4)
 			end
 			S_StartSound(me, sfx_s3k5d)
-			Soap_Hitlag.addHitlag(me, 14, true)
+			Soap_Hitlag.addHitlag(me, 10 + (FixedDiv(abs(me.momz),me.scale)/FU / 6), true)
 		end
 		if (me.momz*soap.gravflip <= -5 * me.scale)
 		and Soap_IsCompGamemode()
 			me.state = S_PLAY_FALL
 		end
 		
+		local speed = R_PointTo3DDist(0,0,0, me.momx,me.momy,me.momz)
 		if (me.skin == TAKIS_SKIN)
-			local speed = R_PointTo3DDist(0,0,0, me.momx,me.momy,me.momz)
 			p.drawangle = $ + FixedAngle(speed / 2)
 			me.rollangle = $ + FixedAngle(speed / 2)
 			me.soap_wasinknockout = true
 		end
 		me.flags2 = $ &~MF2_DONTDRAW
+		
+		if speed >= 32 * me.scale
+			me.soap_kbvfx = $ + FixedDiv(speed, 120*me.scale) / 4
+		end
+		while (me.soap_kbvfx > FU)
+			local s = P_SpawnMobjFromMobj(me,
+				0,0,FixedDiv(me.height,me.scale) / 2, MT_SOAP_WALLBUMP
+			)
+			s.frame = 36|FF_PAPERSPRITE|FF_FULLBRIGHT
+			s.angle = R_PointToAngle2(0,0, me.momx,me.momy) + ANGLE_90
+			if (sweat.colorized)
+				s.color = sweat.color
+			else
+				s.color = SKINCOLOR_WHITE
+			end
+			s.blendmode = AST_ADD
+			
+			s.tics = 8
+			s.fuse = 8
+			s.fusefade = 6
+			s.flags = $|MF_NOGRAVITY
+			
+			s.scale = $ / 2
+			s.destscale = me.scale * 2
+			s.scalespeed = FixedDiv(s.destscale - s.scale, s.tics*FU)
+			
+			me.soap_kbvfx = $ - FU
+		end
 		
 		--lmao handle this here too
 		if (soap.onGround)
@@ -2074,7 +2111,7 @@ rawset(_G,"Soap_DeathThinker",function(p,me,soap)
 				me.momz = -($ * 4/10)
 				me.momx = FixedMul($, soap_airfric)
 				me.momy = FixedMul($, soap_airfric)
-				Soap_Hitlag.addHitlag(me, 14, true)
+				Soap_Hitlag.addHitlag(me, 14 + (FixedDiv(abs(me.momz),me.scale)/FU / 6), true)
 				Soap_DustRing(me,
 					MT_PARTICLE, 14,
 					{me.x,me.y,me.z},

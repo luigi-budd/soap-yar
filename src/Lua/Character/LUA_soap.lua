@@ -73,7 +73,7 @@ local function playknockout_kbsfx(p,me,soap)
 	end
 	if (SOAP_DEBUG and SOAP_DEBUG & DEBUG_KNOCKBACK)
 		printf(
-			"%s is playying knockback sound (%d)\n"..
+			"%s is playing knockback sound (%d)\n"..
 			"\tplayerspeed: %f\n"..
 			"\tthreshold:   %f\n"..
 			"\tworkspeed:   %f\n",
@@ -130,10 +130,33 @@ local function handle_knockback(p,me,soap)
 	if max(me.soap_damagevar.threshold, kb_speed) >= 30*me.scale
 		playknockoutsfx(p,me,soap)
 		
+		P_MovePlayer(p)
 		me.state = S_PLAY_DEAD
 		me.frame = A|($ &~FF_FRAMEMASK)
 		me.sprite2 = SPR2_MSC2
 		me.tics = -1
+		
+		local s = P_SpawnMobjFromMobj(me,
+			0,0,FixedDiv(me.height,me.scale) / 2, MT_SOAP_WALLBUMP
+		)
+		s.frame = 36|FF_PAPERSPRITE|FF_FULLBRIGHT
+		s.angle = me.soap_damagevar.ang + ANGLE_90
+		if (me.soap_inf and me.soap_inf.valid)
+		and me.soap_inf.color ~= SKINCOLOR_NONE
+			s.color = me.soap_inf.color
+		else
+			s.color = SKINCOLOR_WHITE
+		end
+		s.blendmode = AST_ADD
+		
+		s.tics = 16
+		s.fuse = 16
+		s.fusefade = 6
+		s.flags = $|MF_NOGRAVITY
+		
+		s.scale = $ / 4
+		s.destscale = me.scale * 5
+		s.scalespeed = FixedDiv(s.destscale - s.scale, s.tics*FU)
 	end
 	
 	if (SOAP_DEBUG and SOAP_DEBUG & DEBUG_KNOCKBACK)
@@ -146,6 +169,7 @@ local function handle_knockback(p,me,soap)
 		)
 	end
 	
+	me.soap_kbvfx = 0
 	me.soap_damagevar = nil
 end
 
@@ -3197,6 +3221,7 @@ Takis_Hook.addHook("MoveBlocked",function(me,thing,line, goingup)
 	local soap = p.soaptable
 	
 	if me.skin ~= SOAP_SKIN then return end
+	if me.soap_tumble then return end
 	if goingup then return end
 	
 	if not (me.health)
@@ -3264,7 +3289,7 @@ local function handleBump(p,me,thing)
 	)
 	speed_add = max($ - 3*FU, 0)
 	
-	if not (thing.flags & MF_MONITOR)
+	if not (thing.flags & MF_MONITOR or thing.soap_nojostle)
 		if not (thing.flags & MF_NOGRAVITY)
 			Soap_ZLaunch(thing, FixedMul(3*FU + speed_add/5, me.scale))
 			P_Thrust(thing,
