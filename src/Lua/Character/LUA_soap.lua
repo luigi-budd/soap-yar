@@ -3729,7 +3729,6 @@ addHook("AbilitySpecial",function(p)
 end)
 
 --various effects
-
 local function get_inf_speed(me,inf,sor)
 	local default = 0
 	if (inf.flags & MF_MISSILE)
