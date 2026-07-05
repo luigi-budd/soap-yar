@@ -1901,6 +1901,7 @@ rawset(_G,"Soap_HandleNoAbils", function(p)
 	
 	if (p.exiting)
 	or (p.inkart)
+	or (p.boat)
 	or hiding or ((gametyperules & GTR_RACE) and p.realtime == 0)
 	or soap.toptics
 		na = $|SNOABIL_ALL
