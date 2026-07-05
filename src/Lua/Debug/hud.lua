@@ -247,7 +247,7 @@ addHook("HUD",function(v,p)
 		local f = V_SNAPTOBOTTOM
 		local skin = skins[p.skin]
 		
-		v.interpolate(true)
+		v.dointerp(true)
 		v.drawFixedFill(x-FU,y-FU, w+2*FU,h+2*FU, 27|f)
 		if soap.rdashing
 			local progress = min(
@@ -266,7 +266,7 @@ addHook("HUD",function(v,p)
 			soap._maxdash),
 			f|V_ALLOWLOWERCASE, "small-thin-fixed"
 		)
-		v.interpolate(false)
+		v.dointerp(false)
 	end
 	if (SOAP_DEBUG & DEBUG_HOOKS)
 		if not (oldflags & DEBUG_HOOKS)

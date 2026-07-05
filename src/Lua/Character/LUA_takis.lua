@@ -1937,7 +1937,7 @@ addHook("MobjDamage", function(me,inf,sor,dmg,dmgt)
 	p.pflags = $ &~(PF_THOKKED|PF_JUMPED|PF_SHIELDABILITY)
 	
 	local power = 0
-	local inf_speed,threshold = 0
+	local inf_speed, threshold = 0
 	--S_StartSoundAtVolume(me,sfx_sp_smk,255*3/4)
 	S_StartSound(me,sfx_sp_dmg)
 	if Soap_IsLocalPlayer(p)
@@ -1946,6 +1946,9 @@ addHook("MobjDamage", function(me,inf,sor,dmg,dmgt)
 			512*me.scale
 		)
 	end
+	
+	me.soap_inf = inf
+	me.soap_sor = sor
 	
 	if (inf and inf.valid)
 		--default speeds
@@ -1968,6 +1971,27 @@ addHook("MobjDamage", function(me,inf,sor,dmg,dmgt)
 		if soap.taunt.tics
 			inf_speed = $ * 4
 			momz = $ * 8 -- x8 to revert the / 4 from um
+			--				why are we dividing by 4 again?
+		end
+		if dokb and FixedHypot(inf_speed, momz) < 4 * inf.scale
+			dokb = false
+		end
+		
+		if (SOAP_DEBUG and SOAP_DEBUG & DEBUG_KNOCKBACK)
+			printf(
+				"%s suffered knockback: (%d)\n"..
+				"\tinf_speed: %f\n"..
+				"\tinf.momz:  %f\n"..
+				"\tknockback speed: %f\n"..
+				"\tknockback thres: %f\n"..
+				"\tknockback momz:  %f\n"..
+				"\tdo knockback? %s",
+				
+				p.name, leveltime,
+				inf_speed, inf.momz,
+				inf_speed, threshold, momz,
+				(dokb) and "yes" or "no"
+			)
 		end
 		
 		if dokb

@@ -2076,6 +2076,8 @@ rawset(_G,"Soap_DeathThinker",function(p,me,soap)
 		end
 		me.flags2 = $ &~MF2_DONTDRAW
 		
+		-- bruh
+		if (me.soap_kbvfx == nil) then me.soap_kbvfx = 0; end
 		if speed >= 32 * me.scale
 			me.soap_kbvfx = $ + FixedDiv(speed, 120*me.scale) / 4
 		end
@@ -4201,5 +4203,5 @@ rawset(_G, "Soap_Combat", function(p)
 end)
 
 rawset(_G, "Soap_CheckSRB2Edit", function()
-	return (takis_custombuild or edit_custombuild or gks_custombuild)
+	return (takis_custombuild or edit_custombuild)
 end)

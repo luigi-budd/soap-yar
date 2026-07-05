@@ -36,6 +36,12 @@ end, MT_RING_BLUEBOX)
 Takis_Hook.addHook("Char_OnStunEnemy",function(mo)
 	mo.flags = $ &~(MF_NOCLIP|MF_NOCLIPHEIGHT|MF_NOCLIPTHING)
 end, MT_FANG)
+-- um..?
+Takis_Hook.addHook("CanFlingThing",function(mo, p)
+	if not (mo.flags & (MF_NOCLIP|MF_NOCLIPHEIGHT|MF_NOCLIPTHING)) then return end
+	if skins[p.skin].name ~= TAKIS_SKIN then return end
+	return false
+end, MT_FANG)
 
 Takis_Hook.addHook("Char_OnStunEnemy",function(mo)
 	P_KillMobj(mo)
