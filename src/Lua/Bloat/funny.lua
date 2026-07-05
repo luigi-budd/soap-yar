@@ -127,11 +127,17 @@ local function SpawnExplosions(mine, doquake, docount)
 	end
 end
 
-SafeFreeslot("sfx_sp_em0")
-sfxinfo[sfx_sp_em0] = {
+local infotable = {
 	flags = SF_X2AWAYSOUND,
 	caption = "Nice words"
 }
+SafeFreeslot("sfx_sp_em0")
+sfxinfo[sfx_sp_em0] = infotable
+SafeFreeslot("sfx_sp_em5")
+sfxinfo[sfx_sp_em5] = infotable
+SafeFreeslot("sfx_sp_em6")
+sfxinfo[sfx_sp_em6] = infotable
+
 SafeFreeslot("sfx_sp_em1")
 sfxinfo[sfx_sp_em1].caption = "\x8F\"Fuck!\"\x80"
 
@@ -276,9 +282,10 @@ COM_AddCommand("fucker", function(p, node, speed)
 	end
 end)
 
+local fuck_sounds = {sfx_sp_em0, sfx_sp_em5, sfx_sp_em6}
 addHook("MobjThinker",function(f)
 	if not f.extravalue1
-		S_StartSound(f, sfx_sp_em0)
+		S_StartSound(f, fuck_sounds[P_RandomRange(1,#fuck_sounds)])
 		f.extravalue1 = 1
 	end
 	
