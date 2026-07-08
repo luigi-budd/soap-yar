@@ -1836,7 +1836,7 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 				and not soap.pounding
 					uppercutrefresh_vfx(p,me,soap)
 				end
-
+				
 				soap.canuppercut = true
 			end
 			

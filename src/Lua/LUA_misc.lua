@@ -51,6 +51,21 @@ end,MT_SOAP_SPEEDLINE)
 addHook("MobjThinker",function(bump)
 	if not (bump and bump.valid) then return end
 	
+	-- this is just much better
+	if (bump.fusefade ~= nil)
+		if bump.fuse > bump.fusefade then return end
+		bump.alpha = $ - (FU / bump.fusefade)
+	end
+	if (bump.fusesquish ~= nil)
+	and bump.fuse <= bump.fusesquish
+		local frac = FU - FixedDiv(bump.fuse*FU, bump.fusesquish*FU)
+		bump.spriteyscale = ease.outquad(frac, FU, 0)
+	end
+	if (bump.movefactor ~= FU)
+		bump.momx = FixedMul($, bump.movefactor)
+		bump.momy = FixedMul($, bump.movefactor)
+	end
+	
 	if bump.sixseveneffect
 		local frame = (bump.frame & FF_FRAMEMASK)
 		if bump.fuse <= 20
@@ -72,12 +87,8 @@ addHook("MobjThinker",function(bump)
 		end
 		return
 	end
-	-- this is just much better
-	if (bump.fusefade ~= nil)
-		if bump.fuse > bump.fusefade then return end
-		bump.alpha = $ - (FU / bump.fusefade)
-		return
-	end
+	
+	if bump.nothink then return end -- ...?
 	
 	local me = bump.target
 	if (me and me.valid)
