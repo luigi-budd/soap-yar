@@ -1836,7 +1836,7 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 				and not soap.pounding
 					uppercutrefresh_vfx(p,me,soap)
 				end
-
+				
 				soap.canuppercut = true
 			end
 			
@@ -2962,6 +2962,8 @@ addHook("PlayerSpawn",function(p)
 	soap.deathtype = 0
 	Soap_ResetLunge(p)
 	soap.squash = {}
+
+	soap.last.onground = P_IsObjectOnGround(me)
 	
 	if skins[p.skin].name ~= SOAP_SKIN then return end
 	if mariomode
@@ -3005,18 +3007,6 @@ addHook("PlayerHeight",function(p)
 	and (me.sprite2 == SPR2_MLEE)
 		return P_GetPlayerHeight(p)
 	end
-end)
-
-addHook("PlayerSpawn",function(p)
-	if not (p and p.valid) then return end
-	
-	local me = p.realmo
-	local soap = p.soaptable
-	
-	if not (me and me.valid) then return end
-	if not soap then return end
-	
-	soap.last.onground = P_IsObjectOnGround(me)
 end)
 
 --use an extremely obscure mt_* so the mobjthinker destructor
