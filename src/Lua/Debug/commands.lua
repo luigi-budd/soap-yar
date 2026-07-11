@@ -444,9 +444,10 @@ end, unsafe = true})
 CMDConstructor("spawn", {prefix = SOAP_DEVPREFIX, func = function(p,...)
 	local args = {...}
 	local type = args[1]
-	local offset = args[2]
-	local aiming = args[3]
-	local scale = args[4]
+	local amount = args[2]
+	local offset = args[3]
+	local aiming = args[4]
+	local scale = args[5]
 	
 	local me = p.realmo
 	if not (me and me.valid)
@@ -455,7 +456,7 @@ CMDConstructor("spawn", {prefix = SOAP_DEVPREFIX, func = function(p,...)
 	end
 
 	if type == nil
-		prn(p,"sd_spawn <type> <offset> [<doaiming> <scale>]")
+		prn(p,"sd_spawn <type> [<amount> <offset> <doaiming> <scale>]")
 		return
 	end
 	
@@ -465,6 +466,8 @@ CMDConstructor("spawn", {prefix = SOAP_DEVPREFIX, func = function(p,...)
 	
 	if scale == nil then scale = "1" end
 	scale = tofixed($)
+	
+	amount = abs(tonumber($ or "1") or 1)
 	
 	if tonumber(type) ~= nil
 		mobjtype = abs(tonumber(type))
@@ -496,18 +499,20 @@ CMDConstructor("spawn", {prefix = SOAP_DEVPREFIX, func = function(p,...)
 		off2.z = FixedMul(soffset,sin(p.aiming))
 	end
 	
-	local spawn = P_SpawnMobjFromMobj(me,
-		P_ReturnThrustX(nil,me.angle,soffset)+off2.x,
-		P_ReturnThrustY(nil,me.angle,soffset)+off2.y,
-		off2.z,
-		mobjtype
-	)
-	spawn.angle = me.angle
-	spawn.scale = FixedMul(scale, me.scale)
-	
-	if (spawn.renderflags & RF_PAPERSPRITE)
-	or (spawn.frame & FF_PAPERSPRITE)
-		spawn.angle = $+ANGLE_90
+	for i = 1, amount
+		local spawn = P_SpawnMobjFromMobj(me,
+			P_ReturnThrustX(nil,me.angle,soffset)+off2.x,
+			P_ReturnThrustY(nil,me.angle,soffset)+off2.y,
+			off2.z,
+			mobjtype
+		)
+		spawn.angle = me.angle
+		spawn.scale = FixedMul(scale, me.scale)
+		
+		if (spawn.renderflags & RF_PAPERSPRITE)
+		or (spawn.frame & FF_PAPERSPRITE)
+			spawn.angle = $+ANGLE_90
+		end
 	end
 end, unsafe = true})
 

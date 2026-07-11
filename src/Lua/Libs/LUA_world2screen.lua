@@ -185,15 +185,16 @@ rawset(_G, "K_GetScreenCoords",function(vid,p,cam, point, props)
 	if splitscreen
 		x = ($/2) + (x/8)
 	end
-	x = $ + xres
 	
 	/*
+	-- too much roll
 	if viewroll
 		local tempx = x
 		x = FixedMul(cos(viewroll), tempx) - FixedMul(sin(viewroll), y)
 		y = FixedMul(sin(viewroll), tempx) + FixedMul(cos(viewroll), y)
 	end
 	*/
+	x = $ + xres
 	
 	-- adjust coords for splitscreen
 	if splitscreen
