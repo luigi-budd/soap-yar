@@ -467,6 +467,7 @@ CMDConstructor("spawn", {prefix = SOAP_DEVPREFIX, func = function(p,...)
 	local mobjtype = nil
 	if offset == nil then offset = "50" end
 	local soffset = tofixed(offset)
+	if soffset == nil then soffset = 50*FU end -- bruh
 	
 	if scale == nil then scale = "1" end
 	scale = tofixed($)
