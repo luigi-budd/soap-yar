@@ -675,9 +675,16 @@ rawset(_G,"Soap_DamageSfx", function(src, power, maxpow, damagetype, props)
 		sfx_m.tics = sfx_m.fuse
 		src = sfx_m
 	end
+	vol = $ * 2/3
 	S_StartSoundAtVolume(src, sfx, vol)
-	S_StartSound(src, sfx_sp_kil)
-	S_StartSound(src, sfx_sp_smk)
+	S_StartSoundAtVolume(src, sfx_sp_kil, 255 / 2)
+	S_StartSoundAtVolume(src, sfx_sp_smk, 255 / 3)
+	
+	sfx = P_RandomRange(sfx_sp_d0, sfx_sp_d15)
+	S_StartSound(src, sfx)
+	S_StartSound(src, sfx)
+	S_StartSound(displayplayer.mo, sfx)
+	S_StartSound(displayplayer.mo, sfx)
 end)
 
 --@src is the source of the vfx, not of the damage (thats @inf)

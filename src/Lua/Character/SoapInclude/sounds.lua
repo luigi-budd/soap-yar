@@ -103,6 +103,13 @@ for i = 0, 2
 	}
 end
 
+for i = 0, 15
+	SafeFreeslot("sfx_sp_d"..i)
+	sfxinfo[sfx_sp_d0 + i] = {
+		caption = "/",
+	}
+end
+
 SafeFreeslot("sfx_sp_smk")
 sfxinfo[sfx_sp_smk].caption = "Smack"
 SafeFreeslot("sfx_sp_kil")
