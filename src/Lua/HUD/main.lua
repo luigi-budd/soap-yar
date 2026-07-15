@@ -136,7 +136,7 @@ addHook("HUD",function(v,p, cam)
 			else
 				str = amp_combo[me.soap_amppayoutlevel or 0]
 				if not Soap_IsCompGamemode()
-					str = $ .. " (+"..(me.soap_amppayout*50)..")"
+					str = $ .. " (+"..(me.soap_amppayout*80)..")"
 				end
 			end
 			

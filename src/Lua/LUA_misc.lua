@@ -586,7 +586,7 @@ addHook("MobjThinker",function(amp)
 				me.player.rings = $ + 1
 				S_StartSoundAtVolume(me, sfx_itemup, 255 * 4/5, p)
 			elseif not Soap_IsCompGamemode()
-				P_AddPlayerScore(me.player, 50)
+				P_AddPlayerScore(me.player, 80)
 			end
 		end
 		me.soap_lifetimeamps = $ + 1
