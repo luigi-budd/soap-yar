@@ -5,8 +5,8 @@ states[S_NSTFRAG_WALK] = {
 	sprite = SPR_NSTELEFRAGGER,
 	frame = 0|FF_ANIMATE|FF_FULLBRIGHT,
 	var1 = 1,
-	var2 = (TR * 64/100),
-	tics = (TR * 64/100)*2,
+	var2 = (TR * 64/100) / 2,
+	tics = (TR * 64/100),
 	nextstate = S_NSTFRAG_WALK
 }
 sfxinfo[SafeFreeslot("sfx_ntf_0")].caption = "/"
@@ -110,6 +110,7 @@ addHook("MobjThinker",function(mo)
 		me.x,me.y, me.z + me.height/2
 	)
 	P_3DInstaThrust(mo, ha,va, 4*mo.scale)
+	mo.angle = ha
 	
 	if (mo.extravalue1)
 		if mo.extravalue1 == TR + 1
@@ -218,6 +219,23 @@ addHook("TouchSpecial",function(f, mo)
 	local play = mo.player
 	if (play and play.valid)
 	and not (play.powers[pw_flashing])
+		if (play.powers[pw_shield])
+			S_StartSound(mo, sfx_nssb)
+			Soap_ImpactVFX(mo, f, nil,nil,nil,nil, DMG_ELECTRIC)
+			if (play.powers[pw_shield] & SH_FORCE)
+				if (play.powers[pw_shield] & 255 == 0) -- no hp
+					P_RemoveShield(play)
+				else
+					play.powers[pw_shield] = (($ & 255) - 1)|SH_FORCE
+				end
+			else
+				P_RemoveShield(play)
+			end
+			play.powers[pw_flashing] = flashingtics - 1
+			
+			return unfuck(f,mo)
+		end
+		
 		Soap_DamageSfx(mo,FU*3/4,FU)
 		Soap_ImpactVFX(mo, f, nil, 3*FU)
 		

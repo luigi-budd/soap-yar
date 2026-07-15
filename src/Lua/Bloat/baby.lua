@@ -96,6 +96,10 @@ mobjinfo[MT_NSVBBABY] = {
 	flags = MF_NOCLIP|MF_NOCLIPHEIGHT|MF_NOGRAVITY,
 }
 
+sfxinfo[SafeFreeslot("sfx_nssb")] = {
+	caption = "Shield break"
+}
+
 -- alarm
 sfxinfo[SafeFreeslot("sfx_nb_0")] = {
 	caption = "/",
@@ -150,16 +154,34 @@ sfxinfo[SafeFreeslot("sfx_nvb_1")] = {
 	caption = "/",
 	flags = SF_X4AWAYSOUND
 }
+-- problem alarm
+sfxinfo[SafeFreeslot("sfx_nvb_7")] = {
+	caption = "/",
+	flags = SF_X4AWAYSOUND
+}
+-- problem dash
+sfxinfo[SafeFreeslot("sfx_nvb_2")] = {
+	caption = "/",
+	flags = SF_X4AWAYSOUND
+}
 
-local function Baby_Sound(baby, sfx)
+local BABY_SOUNDS = {
+	["alarm"]	= {[MT_NSBABY] = sfx_nb_0, [MT_NSVBBABY] = sfx_nvb_0},
+	["dash"]	= {[MT_NSBABY] = sfx_nb_1, [MT_NSVBBABY] = sfx_nvb_1},
+	["palarm"]	= {[MT_NSBABY] = sfx_nb_7, [MT_NSVBBABY] = sfx_nvb_7},
+	["pdash"]	= {[MT_NSBABY] = sfx_nb_2, [MT_NSVBBABY] = sfx_nvb_2},
+
+	["tdash"]	= {[MT_NSBABY] = sfx_nb_3, [MT_NSVBBABY] = sfx_none},
+	["tstart"]	= {[MT_NSBABY] = sfx_nb_4, [MT_NSVBBABY] = sfx_none},
+	["tloop"]	= {[MT_NSBABY] = sfx_nb_5, [MT_NSVBBABY] = sfx_none},
+	["tend"]	= {[MT_NSBABY] = sfx_nb_6, [MT_NSVBBABY] = sfx_none},
+}
+local function Baby_Sound(baby, sfxname)
 	local vol = 255 * 3/5
 	if (baby.type == MT_NSVBBABY)
-		local offset = sfx - sfx_nb_0
-		offset = min($, 1)
-		sfx = sfx_nvb_0 + offset
-		vol = 255
+		--vol = 255
 	end
-	S_StartSoundAtVolume(baby, sfx, vol)
+	S_StartSoundAtVolume(baby, BABY_SOUNDS[sfxname][baby.type], vol)
 end
 
 local cached = {}
@@ -190,9 +212,9 @@ local function Baby_SetBaseStats(baby)
 	baby.colorized = false
 	baby.rangecount = 0
 
-	S_StopSoundByID(baby, sfx_nb_4)
-	S_StopSoundByID(baby, sfx_nb_5)
-	Baby_Sound(baby, sfx_nb_6)
+	S_StopSoundByID(baby, BABY_SOUNDS["tstart"][baby.type])
+	S_StopSoundByID(baby, BABY_SOUNDS["tloop"][baby.type])
+	Baby_Sound(baby, "tend")
 end
 local function Baby_SetRageStats(baby)
 	baby.charge_wait = baby.rage_charge_wait
@@ -205,7 +227,7 @@ local function Baby_SetRageStats(baby)
 	baby.colorized = true
 	baby.rangecount = RAGE_DASHES
 	
-	Baby_Sound(baby, sfx_nb_4)
+	Baby_Sound(baby, "tstart")
 end
 
 local RAGE_DASHES = 7
@@ -228,10 +250,10 @@ local function Baby_Init(baby)
 	baby.base_charge_time = TR * 19/10
 	baby.base_charge_cool = (2*TR - baby.base_charge_time) * 4/5
 	if baby.type == MT_NSVBBABY
-		baby.base_charge_wait = TR * 34/100
+		baby.base_charge_wait = TR * 60/100
 		baby.base_charge_dist = 3250*FU
-		baby.base_charge_time = TR * 88/100 * 2/3
-		baby.base_charge_cool = 2 --(TR*8/10 - baby.base_charge_time) * 4/5
+		baby.base_charge_time = TR * 64/100
+		baby.base_charge_cool = 4 --(TR*8/10 - baby.base_charge_time) * 4/5
 	end
 	Baby_SetBaseStats(baby)
 
@@ -256,6 +278,7 @@ local function Baby_Init(baby)
 	baby.renderflags = RF_FULLBRIGHT|RF_NOCOLORMAPS|RF_ALWAYSONTOP
 	
 	baby.shadowscale = FU
+	S_StopSound(baby)
 end
 
 local function Baby_TryRubberBand(baby)
@@ -336,7 +359,7 @@ end
 local base_easefunc = ease.outquint
 local rage_easefunc = ease.outquad -- ease.inoutsine
 local feign_easefunc = ease.linear
-local vb_base_easefunc = ease.outback
+local vb_base_easefunc = ease.inoutback
 local easefuncs = {
 	[MT_NSBABY] = {
 		base = base_easefunc,
@@ -351,17 +374,78 @@ local easefuncs = {
 }
 
 local lunge_steps = 10
+local lunge_frac = FixedDiv(FU, lunge_steps*FU)
 local lunge_random = 64 * FU
+local function P_ClosestPointOnLine3D(p, lstart, lend)
+	local t,d
+	local V = Vec3.Sub(lend, lstart)
+	local c = Vec3.Sub(p, lstart)
+	
+	-- d = R_PointToDist2(0, lend.z, R_PointToDist2(lend.x, lend.y, lstart.x, lstart.y), lstart.z)
+	d = R_PointTo3DDist(lstart.x,lstart.y,lstart.z, lend.x,lend.y,lend.z)
+	local n = Vec3.New(V.x, V.y, V.z) / d
+	t = Vec3.Dot(n, c)
+	
+	if t <= 0
+		return lstart
+	elseif t >= d
+		return lend
+	end
+	
+	n = $ * t
+	return Vec3.Add(lstart, n)
+end
+local function TraceRay(lstart,lend)
+	for i = 0,64
+		local frac = FixedDiv(i*FU, 64*FU)
+		local t = P_SpawnMobj(
+			P_Lerp(frac, lstart.x, lend.x),
+			P_Lerp(frac, lstart.y, lend.y),
+			P_Lerp(frac, lstart.z, lend.z),
+			MT_THOK
+		)
+		t.scale = $ / 6
+		t.fuse = 12
+		t.tics = t.fuse
+		t.blendmode = AST_ADD
+		t.flags = $|MF_NOBLOCKMAP
+	end
+end
+
+local function Baby_Raycast(baby, start,dest)
+	if R_PointTo3DDist(start.x,start.y,start.z, dest.x,dest.y,dest.z) <= 0 then return end
+	local fudge = 4*baby.scale
+	local radius = baby.radius + fudge
+	local height = baby.height + fudge
+	
+	for p in players.iterate
+		if not (p.mo and p.mo.valid and p.mo.health) then continue end
+		
+		local intersect = P_ClosestPointOnLine3D(Vec3.MobjPosToVec(p.mo), start, dest)
+		
+		if abs(intersect.x - p.mo.x) <= p.mo.radius + radius
+		and abs(intersect.y - p.mo.y) <= p.mo.radius + radius
+		and (
+			p.mo.z <= intersect.z + height -- check overhead
+			and p.mo.z+p.mo.height >= intersect.z -- check underhead
+		)
+			baby.flags = $|MF_SPECIAL
+			P_TouchSpecialThing(baby, p.mo)
+			baby.flags = $ &~MF_SPECIAL
+		end
+	end
+end
+
 local function Baby_DoLunge(baby, angle,aim, dist, tics)
 	local adjtics = baby.charge_time - tics
 	local vec = SphereToCartesian(angle,aim)
 	if adjtics == 0
-		local sound = sfx_nb_1
+		local sound = "dash"
 		if baby.enraged
-			sound = sfx_nb_3
+			sound = "tdash"
 		end
 		if baby.problem
-			sound = sfx_nb_2
+			sound = "pdash"
 		end
 		
 		Baby_Sound(baby, sound)
@@ -377,7 +461,7 @@ local function Baby_DoLunge(baby, angle,aim, dist, tics)
 		baby.end_y = baby.y + FixedMul(dist, vec.y)
 		baby.end_z = baby.z + FixedMul(dist, vec.z)
 		
-		baby.flags = $|MF_SPECIAL
+		--baby.flags = $|MF_SPECIAL
 		baby.touchlist = {}
 	end
 	
@@ -386,7 +470,7 @@ local function Baby_DoLunge(baby, angle,aim, dist, tics)
 	if (baby.state == Baby_State(baby, "PROBLEM"))
 		--easefunc = easetype.feign
 	end
-	local easeback = -5*FU
+	local easeback = 2*FU
 	local prevfrac = max(FixedDiv(adjtics - 1, baby.charge_time), 0)
 	local nextfrac = FixedDiv(adjtics, baby.charge_time)
 	-- for collision...
@@ -400,9 +484,14 @@ local function Baby_DoLunge(baby, angle,aim, dist, tics)
 		y = easefunc(nextfrac, baby.start_y, baby.end_y, easeback),
 		z = easefunc(nextfrac, baby.start_z, baby.end_z, easeback)
 	}
+	
+	Baby_Raycast(baby, Vec3.New(start.x,start.y,start.z), Vec3.New(eased.x,eased.y,eased.z))
+	Baby_Raycast(baby, Vec3.New(start.x,start.y,start.z + baby.height/2), Vec3.New(eased.x,eased.y,eased.z + baby.height/2))
+	--Baby_Raycast(baby, Vec3.New(baby.start_x,baby.start_y,baby.start_z), Vec3.New(baby.end_x,baby.end_y,baby.end_z))
+	
 	local inproblem = false --baby.state == Baby_State(baby, "PROBLEM")
 	for i = 0, lunge_steps
-		local frac = P_Lerp((FU/lunge_steps)*i, 0, FU)
+		local frac = P_Lerp(lunge_frac*i, 0, FU)
 		P_MoveOrigin(baby,
 			P_Lerp(frac, start.x, eased.x),
 			P_Lerp(frac, start.y, eased.y),
@@ -485,7 +574,7 @@ local function Baby_Thinker(b)
 	
 	if not b.charging
 	and not b.chargewind
-		if R_PointTo3DDist(b.x,b.y,b.z, me.x,me.y,me.z) >= 8192*FU
+		if R_PointTo3DDist(b.x,b.y,b.z, me.x,me.y,me.z+ me.height/2) >= 8192*FU
 			P_SetOrigin(b,
 				me.x + P_RandomRange(-128, 128)*FU,
 				me.y + P_RandomRange(-128, 128)*FU,
@@ -495,13 +584,14 @@ local function Baby_Thinker(b)
 		
 		b.charging = true
 		b.chargewind = b.charge_wait + 1
-		b.angle,b.aiming = R_PointTo3DAngles(b.x,b.y,b.z, me.x,me.y,me.z)
-		Baby_Sound(b, sfx_nb_0)
+		b.angle,b.aiming = R_PointTo3DAngles(b.x,b.y,b.z, me.x,me.y,me.z + me.height/2)
+		Baby_Sound(b, "alarm")
 		
 		local feign = false
 		if not b.enraged
 		and not b.problem
-			feign = false --P_RandomChance(FU/5)
+		and (b.type ~= MT_NSVBBABY)
+			feign = P_RandomChance(FU/5)
 		end
 		if feign
 			b.chargewind = $ * 7/5
@@ -520,7 +610,7 @@ local function Baby_Thinker(b)
 			b.chargingtics = b.charge_time
 			b.chargewind = 0
 		elseif b.extravalue1 == 0
-			Baby_Sound(b, sfx_nb_7)
+			Baby_Sound(b, "palarm")
 			
 			b.charge_time = $ / 2
 			
@@ -544,7 +634,7 @@ local function Baby_Thinker(b)
 			
 			local dist = R_PointTo3DDist(b.x,b.y,b.z, me.x,me.y,me.z)
 			local distcap = b.charge_dist + 524*FU
-			if not b.enraged
+			if not b.enraged and (b.type == MT_NSBABY)
 				if (dist >= distcap)
 					Baby_SetRageStats(b)
 					b.rangecount = RAGE_DASHES
@@ -572,9 +662,9 @@ local function Baby_Thinker(b)
 	end
 	
 	if b.enraged
-		if not S_SoundPlaying(b, sfx_nb_4)
-		and not S_SoundPlaying(b, sfx_nb_5)
-			Baby_Sound(b, sfx_nb_5)
+		if not S_SoundPlaying(b, BABY_SOUNDS["tstart"][b.type])
+		and not S_SoundPlaying(b, BABY_SOUNDS["tloop"][b.type])
+			Baby_Sound(b, "tloop")
 		end
 	end
 end
@@ -593,7 +683,8 @@ local function dotumble(p)
 	me.soap_tumble_oldmomz = me.momz
 	me.soap_tumble_markedfordeath = CV.babykills.value == 1
 end
-addHook("TouchSpecial",function(f, mo)
+
+local function Baby_Collide(f, mo)
 	if not (f and f.valid) then return false; end
 	if not (mo and mo.valid) then return false; end
 	--if not (mo.health) then return end
@@ -608,7 +699,8 @@ addHook("TouchSpecial",function(f, mo)
 	if (play and play.valid)
 	and not (play.powers[pw_flashing])
 		if (play.powers[pw_shield])
-			S_StartSound(mo, sfx_shldls)
+			S_StartSound(mo, sfx_nssb)
+			Soap_ImpactVFX(mo, f, nil,nil,nil,nil, DMG_ELECTRIC)
 			if (play.powers[pw_shield] & SH_FORCE)
 				if (play.powers[pw_shield] & 255 == 0) -- no hp
 					P_RemoveShield(play)
@@ -655,7 +747,9 @@ addHook("TouchSpecial",function(f, mo)
 		P_KillMobj(mo,f, f.tracer)
 	end
 	return unfuck(f,mo)
-end,MT_NSBABY)
+end
+addHook("TouchSpecial",Baby_Collide,MT_NSBABY)
+addHook("TouchSpecial",Baby_Collide,MT_NSVBBABY)
 
 COM_AddCommand("clearbabies", function(p)
 	if not (p.soaptable and p.realmo and p.realmo.valid) then return end
@@ -669,7 +763,7 @@ COM_AddCommand("clearbabies", function(p)
 	
 	local cleared = 0
 	for mo in mobjs.iterate()
-		if mo.type == MT_NSBABY
+		if mo.type == MT_NSBABY or mo.type == MT_NSVBBABY
 			P_RemoveMobj(mo)
 			cleared = $ + 1
 		end
@@ -707,10 +801,10 @@ local function thebaby(mo)
 		P_RandomRange(-256, 256)*FU,
 		P_RandomRange(-256, 256)*FU,
 		P_RandomRange(-256, 256)*FU,
-		MT_NSBABY
+		voidbound and MT_MSVBBABY or MT_NSBABY
 	)
 end
-COM_AddCommand("spawnbabyby", function(p, node)
+COM_AddCommand("spawnbabyby", function(p, node, voidbound)
 	if not (p.soaptable and p.realmo and p.realmo.valid) then return end
 	
 	local certified = false
@@ -734,7 +828,7 @@ COM_AddCommand("spawnbabyby", function(p, node)
 			local mo = p2.realmo
 			if not (mo and mo.valid) then continue end
 			
-			thebaby(mo)
+			thebaby(mo, voidbound)
 		end
 		return
 	end
@@ -748,7 +842,7 @@ COM_AddCommand("spawnbabyby", function(p, node)
 			return
 		end
 		
-		thebaby(mo)
+		thebaby(mo, voidbound)
 	else
 		CONS_Printf(p,"Spawns a Baby next to whoever.")
 	end
