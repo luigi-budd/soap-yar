@@ -833,6 +833,9 @@ rawset(_G,"Soap_ImpactVFX",function(src,inf, distmul, scalemul, forcesplat, nosp
 			if P_RandomChance(FU/10) then
 				f.extravalue1 = $ * 2
 			end
+			if P_RandomChance(FU/2) then
+				f.extravalue1 = $ + P_RandomRange(1,3)*3
+			end
 			f.renderflags = $|(P_RandomChance(FU/2) and RF_HORIZONTALFLIP or 0)
 			f.color = elec_sparkcolors[P_RandomRange(1, #elec_sparkcolors)]
 			if P_RandomChance(FU/2)
@@ -840,6 +843,10 @@ rawset(_G,"Soap_ImpactVFX",function(src,inf, distmul, scalemul, forcesplat, nosp
 				f.tics = $ + lag
 				f.anim_duration = $ + lag
 			end
+			
+			-- clamp just in case...
+			f.tics = max($, 1)
+			f.extravalue1 = max($, 1)
 		end
 		
 		colorlist = damagecolors_elec
