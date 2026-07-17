@@ -811,9 +811,9 @@ rawset(_G,"Soap_ImpactVFX",function(src,inf, distmul, scalemul, forcesplat, nosp
 		top_layer.colorized = true
 		
 		if forcesplat or nosparklag then return end
-		local num = (28 * scalemul)/FU
+		local num = (36 * scalemul)/FU
 		
-		local range = FixedMul(70*src.scale, scalemul)
+		local range = FixedMul(85*src.scale, scalemul)
 		for i = 0,num
 			local f = P_SpawnMobjFromMobj(src,
 				Soap_RandomFixedRange(-range,range),
@@ -822,10 +822,10 @@ rawset(_G,"Soap_ImpactVFX",function(src,inf, distmul, scalemul, forcesplat, nosp
 				MT_PARTICLE
 			)
 			f.scale = scalemul * 2
-			f.spritexscale = $ + FixedMul(Soap_RandomFixedRange(-FU/4,FU/4), scalemul)
+			f.spritexscale = $ + FixedMul(Soap_RandomFixedRange(-FU/4,FU/3), scalemul)
 			f.spriteyscale = f.spritexscale
 			f.state = S_SOAP_HITM_ESW
-			f.tics = P_RandomRange(0, 5 + (20*scalemul)/FU)
+			f.tics = P_RandomRange(1, 5 + (30*scalemul)/FU)
 			-- Theres 3 "stages" for these little spark particles,
 			-- each stage only has 2 frames so stronger attacks
 			-- will have sparks that last longer
@@ -833,12 +833,20 @@ rawset(_G,"Soap_ImpactVFX",function(src,inf, distmul, scalemul, forcesplat, nosp
 			if P_RandomChance(FU/10) then
 				f.extravalue1 = $ * 2
 			end
+			if P_RandomChance(FU/2) then
+				f.extravalue1 = $ + P_RandomRange(1,3)*3
+			end
 			f.renderflags = $|(P_RandomChance(FU/2) and RF_HORIZONTALFLIP or 0)
 			f.color = elec_sparkcolors[P_RandomRange(1, #elec_sparkcolors)]
+			if P_RandomChance(FU/2)
+				local lag = (src.hitlag or 0)
+				f.tics = $ + lag
+				f.anim_duration = $ + lag
+			end
 			
-			local lag = (src.hitlag or 0)
-			f.tics = $ + lag
-			f.anim_duration = $ + lag
+			-- clamp just in case...
+			f.tics = max($, 1)
+			f.extravalue1 = max($, 1)
 		end
 		
 		colorlist = damagecolors_elec
@@ -2541,6 +2549,11 @@ rawset(_G,"Soap_DeathThinker",function(p,me,soap)
 			end
 			me.soap_landondeath = false
 		end
+	end
+	
+	-- dont respawn if we have an amp payout pending
+	if me.soap_amps
+		p.deadtimer = min($, 3)
 	end
 	
 	if me.soap_landondeath
