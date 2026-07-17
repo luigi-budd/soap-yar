@@ -28,7 +28,7 @@ local function Op_Start(p)
 		delay = 12,
 		active = 0,
 		ticks = 0,
-		lockoutticks = 3,
+		lockoutticks = 2,
 		
 		sign = 0,
 		anganim = 0,
@@ -102,7 +102,10 @@ addHook("PlayerThink",function(p)
 				if (cmd.forwardmove == 0 and cmd.sidemove == 0)
 				and (cmd.buttons & (BT_JUMP|BT_SPIN|BT_CUSTOM1|BT_CUSTOM2|BT_CUSTOM3|BT_ATTACK|BT_FIRENORMAL) == 0)
 				and (p.pflags & (PF_THOKKED|PF_SPINNING|PF_STARTJUMP|PF_STARTDASH) == 0)
-				and not (p.panim == PA_ABILITY or p.panim == PA_ABILITY2)
+				and not (
+					(p.panim == PA_ABILITY or p.panim == PA_ABILITY2)
+					or (p.mo.state >= S_PLAY_SPINDASH and p.mo.state <= S_PLAY_MELEE_LANDING) 
+				)
 					pass = true
 				end
 				
@@ -148,6 +151,7 @@ addHook("HUD",function(v,p)
 	end
 	
 	local ang = (op.state == OP_ACTIVE) and 5*FU or 0
+	v.dointerp(true)
 	v.drawScaled(
 		60*FU, 
 		100*FU +offset+ (3*sin(FixedAngle(leveltime*FU * 3))), 
@@ -155,4 +159,5 @@ addHook("HUD",function(v,p)
 		v.cachePatch(patch, FixedAngle((ang + op.anganim)*op.sign)), --FixedAngle(5*FU*(((leveltime/9)%2) and 1 or -1))),
 		V_SNAPTOLEFT|fade
 	)
+	v.dointerp(false)
 end)
