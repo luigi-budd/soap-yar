@@ -71,6 +71,7 @@ end
 local CV = SOAP_CV
 
 SafeFreeslot("SPR_TRC1")
+SafeFreeslot("SPR_SOAP_BLOATVFX")
 SafeFreeslot("SPR_NSBELL")
 SafeFreeslot("S_NSBELL_IDLE")
 states[S_NSBELL_IDLE] = {
@@ -112,6 +113,27 @@ states[S_NSBELL_OVERTUNED] = {
 		)
 		v.spritexscale = p.shieldscale / 2
 		v.spriteyscale = v.spritexscale
+	end
+}
+
+SafeFreeslot("S_NSBELL_CAURA")
+states[S_NSBELL_CAURA] = {
+	sprite = SPR_SOAP_BLOATVFX,
+	frame = A|FF_FULLBRIGHT|FF_ADD,
+	tics = 1,
+	nextstate = S_NSBELL_CAURA,
+	action = function(v)
+		local me = v.target
+		if not (me and me.valid)
+			P_RemoveMobj(v)
+			return
+		end
+		
+		v.frame = ($ &~FF_FRAMEMASK)|(v.extravalue1 % 5)
+		P_MoveOrigin(v, me.x,me.y,
+			me.z + me.height/2
+		)
+		v.extravalue1 = $ + 1
 	end
 }
 

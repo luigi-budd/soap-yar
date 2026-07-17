@@ -207,14 +207,16 @@ local function Baby_SetBaseStats(baby)
 	baby.charge_time = baby.base_charge_time
 	baby.charge_cool = baby.base_charge_cool
 	
-	baby.enraged = false
 	baby.color = SKINCOLOR_NONE
 	baby.colorized = false
 	baby.rangecount = 0
-
-	S_StopSoundByID(baby, BABY_SOUNDS["tstart"][baby.type])
-	S_StopSoundByID(baby, BABY_SOUNDS["tloop"][baby.type])
-	Baby_Sound(baby, "tend")
+	
+	if baby.enraged
+		S_StopSoundByID(baby, BABY_SOUNDS["tstart"][baby.type])
+		S_StopSoundByID(baby, BABY_SOUNDS["tloop"][baby.type])
+		Baby_Sound(baby, "tend")
+	end
+	baby.enraged = false
 end
 local function Baby_SetRageStats(baby)
 	baby.charge_wait = baby.rage_charge_wait
@@ -245,13 +247,13 @@ local function Baby_Init(baby)
 	baby.rangecount = 0
 	baby.problem = false
 	
-	baby.base_charge_wait = TR * 46/100
-	baby.base_charge_dist = 2450*FU
-	baby.base_charge_time = TR * 19/10
-	baby.base_charge_cool = (2*TR - baby.base_charge_time) * 4/5
+	baby.base_charge_wait = (TR * 46/100) + 5
+	baby.base_charge_dist = 2450*FU * 5/4
+	baby.base_charge_time = TR * 15/10
+	baby.base_charge_cool = ((2*TR - (TR * 19/10)) * 4/5) + ((TR * 19/10) - baby.base_charge_time)
 	if baby.type == MT_NSVBBABY
 		baby.base_charge_wait = TR * 60/100
-		baby.base_charge_dist = 3250*FU
+		baby.base_charge_dist = 3550*FU
 		baby.base_charge_time = TR * 64/100
 		baby.base_charge_cool = 4 --(TR*8/10 - baby.base_charge_time) * 4/5
 	end
@@ -317,6 +319,9 @@ local function Baby_Telegraph(baby, angle,aim, dist, tics)
 		vfx.flags = $|MF_NOCLIP|MF_NOGRAVITY|MF_NOCLIPHEIGHT
 		
 		vfx.color = (baby.type == MT_NSVBBABY) and SKINCOLOR_GALAXY or SKINCOLOR_RED
+		if (baby.enraged)
+			vfx.color = SKINCOLOR_KETCHUP
+		end
 		
 		vfx.renderflags = rflags
 		vfx.tics = 2
@@ -349,7 +354,7 @@ local function Baby_Telegraph(baby, angle,aim, dist, tics)
 			top_layer.color = SKINCOLOR_GALAXY
 			top_layer.colorized = true
 		end
-
+		
 		if not baby.problem
 			baby.state = Baby_State(baby, "LOCKON")
 		end
@@ -467,8 +472,8 @@ local function Baby_DoLunge(baby, angle,aim, dist, tics)
 	
 	local easetype = easefuncs[baby.type]
 	local easefunc = (baby.enraged) and easetype.rage or easetype.base
-	if (baby.state == Baby_State(baby, "PROBLEM"))
-		--easefunc = easetype.feign
+	if (baby.extravalue2)
+		easefunc = easetype.feign
 	end
 	local easeback = 2*FU
 	local prevfrac = max(FixedDiv(adjtics - 1, baby.charge_time), 0)
@@ -499,8 +504,8 @@ local function Baby_DoLunge(baby, angle,aim, dist, tics)
 		)
 		
 		-- this isnt in vanilla nullscape but i think it looks nice
-		if baby.enraged or inproblem
-			if ((inproblem) and (i or (leveltime % 4))) then continue end
+		if (baby.enraged and (i % 3 == 0)) or inproblem
+			if ((inproblem) and (i or (leveltime % 3))) then continue end
 			local g = P_SpawnGhostMobj(baby)
 			P_SetOrigin(g,
 				g.x + Soap_RandomFixedRange(-lunge_random, lunge_random),
@@ -511,6 +516,10 @@ local function Baby_DoLunge(baby, angle,aim, dist, tics)
 			g.blendmode = (inproblem) and AST_SUBTRACT or AST_ADD
 			g.destscale = 0
 			g.renderflags = $ &~RF_ALWAYSONTOP
+			
+			if baby.enraged
+				g.alpha = $ / 3
+			end
 		elseif baby.type == MT_NSVBBABY
 		and (i == 0)
 			local g = P_SpawnGhostMobj(baby)
@@ -539,6 +548,7 @@ local function Baby_SearchForPlayers(baby)
 	baby.target = nil
 	for p in players.iterate
 		if p.spectator then continue end
+		if p.pflags & PF_INVIS then continue end
 		local me = p.mo
 		if not (me and me.valid and me.health) then continue end
 		
@@ -553,22 +563,28 @@ local function Baby_SearchForPlayers(baby)
 	baby.target = closest_player.mo
 end
 
-local function Baby_Thinker(b)
-	if not (b and b.valid) then return end
+local function Baby_TryRevert(b)
+	if (b.state == Baby_State(b, "IDLE") or b.state == Baby_State(b, "TOIDLE")) then return end
+	b.state = Baby_State(b, "TOIDLE")
 	
-	if not b.init
-		Baby_Init(b)
-	end
-	
+	baby.chargewind = 0
+	baby.chargecooldown = P_RandomRange(0, baby.charge_time + baby.charge_cool)
+	baby.chargingtics = 0
+	baby.charging = (baby.chargecooldown > 0)
+end
+
+local function Baby_MainThinker(b)
 	local me = b.target
 	if not (me and me.valid)
 		if not Baby_SearchForPlayers(b)
+			Baby_TryRevert(b)
 			return
 		end
 		me = b.target
 	end
 	if not (me.health)
 		b.target = nil
+		Baby_TryRevert(b)
 		return
 	end
 	
@@ -590,11 +606,10 @@ local function Baby_Thinker(b)
 		local feign = false
 		if not b.enraged
 		and not b.problem
-		and (b.type ~= MT_NSVBBABY)
 			feign = P_RandomChance(FU/5)
 		end
 		if feign
-			b.chargewind = $ * 7/5
+			b.charge_dist = $ * 5/4
 			b.problem = true
 		end
 	end
@@ -617,6 +632,7 @@ local function Baby_Thinker(b)
 			b.chargewind = b.charge_wait + 1
 			b.angle,b.aiming = R_PointTo3DAngles(b.x,b.y,b.z, me.x,me.y,me.z)
 			b.extravalue1 = 1
+			b.extravalue2 = 1
 			b.state = Baby_State(b, "PROBLEM")
 		end
 	end
@@ -628,6 +644,11 @@ local function Baby_Thinker(b)
 		
 		b.chargingtics = $ - 1
 		if not b.chargingtics
+			if not b.enraged
+				Baby_SetBaseStats(b)
+			end
+			b.extravalue2 = 0
+			
 			b.state = Baby_State(b, "TOIDLE")
 			b.flags = $ &~MF_SPECIAL
 			b.target = nil
@@ -653,6 +674,16 @@ local function Baby_Thinker(b)
 			end
 		end
 	end
+end
+
+local function Baby_Thinker(b)
+	if not (b and b.valid) then return end
+	
+	if not b.init
+		Baby_Init(b)
+	end
+	
+	Baby_MainThinker(b)
 	
 	if b.chargecooldown
 		b.chargecooldown = $ - 1
@@ -666,7 +697,26 @@ local function Baby_Thinker(b)
 		and not S_SoundPlaying(b, BABY_SOUNDS["tloop"][b.type])
 			Baby_Sound(b, "tloop")
 		end
+		
+		if (leveltime % 3 == 0)
+			local v = P_SpawnMobjFromMobj(b, 0,0,FixedDiv(b.height,b.scale)/2, MT_SOAP_WALLBUMP)
+			v.target = b
+			v.state = S_NSBELL_CAURA
+			v.blendmode = AST_ADD
+			v.color = SKINCOLOR_PEPPER
+			v.fuse = 8
+			
+			v.destscale = b.scale*2
+			v.scalespeed = FixedDiv(v.destscale - v.scale, v.fuse*FU)
+			v.spriteyoffset = -20*FU
+			v.dispoffset = -200
+			v.extravalue1 = P_RandomRange(0,4)
+			
+			v.nothink = true
+			v.fadefuse = 3
+		end
 	end
+	
 end
 addHook("MobjThinker",Baby_Thinker,MT_NSBABY)
 addHook("MobjThinker",Baby_Thinker,MT_NSVBBABY)

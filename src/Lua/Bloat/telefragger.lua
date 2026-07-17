@@ -121,7 +121,7 @@ addHook("MobjThinker",function(mo)
 				end
 			end
 			
-			S_StartSound(me, sfx_ntf_0)
+			S_StartSoundAtVolume(me, sfx_ntf_0, 255 * 3/4)
 		elseif mo.extravalue1 == 1
 			local dist = 400 * me.scale
 			P_SetOrigin(mo,
