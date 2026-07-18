@@ -249,6 +249,8 @@ local function TryVFXStars(v)
 			star.tics = $ + off
 			star.extended = v.extrastars
 			star.awardrings = v.soap_supervfx or (star.tracer.player.powers[pw_invulnerability])
+		else
+			star.tics = $ + P_RandomRange(0,TR)
 		end
 		star.renderflags = $|RF_FULLBRIGHT|RF_NOCOLORMAPS
 	end
@@ -313,8 +315,12 @@ local function NewVFXThink(v)
 		and not (v.extravalue1)
 			v.momz = -$
 			if (v.type ~= MT_SOAP_AMP)
-				v.extravalue1 = 1
-				v.flags = $|MF_NOCLIPHEIGHT
+				if v.tics <= states[S_SOAP_HITM_STAR].tics
+					v.extravalue1 = 1
+					v.flags = $|MF_NOCLIPHEIGHT
+				else
+					v.momz = $ * 97/100
+				end
 			end
 		end
 		
