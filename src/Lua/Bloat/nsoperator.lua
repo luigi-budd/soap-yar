@@ -88,6 +88,7 @@ addHook("PlayerThink",function(p)
 					
 					S_StartSound(nil, sfx_nso4, p)
 					Soap_ImpactVFX(p.mo, nil, nil,nil,nil,nil, DMG_ELECTRIC)
+					return
 				elseif op.ticks == 11
 				elseif op.ticks == 10
 					S_StartSound(p.mo, sfx_nso2, p)
