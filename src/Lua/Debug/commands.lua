@@ -534,7 +534,7 @@ CMDConstructor("editmobj", {prefix = SOAP_DEVPREFIX, func = function(p,...)
 	local args = {...}
 	if not #args
 	or (#args < 4)
-		prn(p, "\x82"..SOAP_DEVPREFIX.."_editmobj <node> <name> <type> <value> [<strict>]\x80: Edits \"name\" in your mobj.")
+		prn(p, "\x82"..SOAP_DEVPREFIX.."_editmobj <node> <name> <type> <value> [<strict>]\x80: Edits \"name\" in \"node's\" mobj.")
 		prn(p, "\x82\Availiable types:")
 		for prefix,_ in pairs(valid_types)
 			prn(p, "\t\x83"..prefix)
@@ -620,7 +620,7 @@ CMDConstructor("editplayer", {prefix = SOAP_DEVPREFIX, func = function(p,...)
 	local args = {...}
 	if not #args
 	or (#args < 4)
-		prn(p, "\x82"..SOAP_DEVPREFIX.."_editplayer <node> <name> <type> <value> [<strict>]\x80: Edits \"name\" in your player struct.")
+		prn(p, "\x82"..SOAP_DEVPREFIX.."_editplayer <node> <name> <type> <value> [<strict>]\x80: Edits \"name\" in \"node's\" player struct.")
 		prn(p, "\x82\Availiable types:")
 		for prefix,_ in pairs(valid_types)
 			prn(p, "\t\x83"..prefix)
