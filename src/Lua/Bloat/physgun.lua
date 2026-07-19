@@ -162,30 +162,6 @@ rawset(_G,"SphereToCartesian",function(alpha, beta)
     t.z = sin(beta)
     return t
 end)
-rawset(_G,"R_PointTo3DAngles",function(x1,y1,z1, x2,y2,z2)
-	return R_PointToAngle2(x1,y1,x2,y2), R_PointToAngle2(
-		0,z1,
-		R_PointToDist2(x1,y1,x2,y2), z2
-	)
-end)
-rawset(_G,"R_PointTo3DDist",function(x1,y1,z1, x2,y2,z2)
-	return FixedHypot(FixedHypot(x2 - x1, y2 - y1), z2 - z1)
-end)
-rawset(_G,"clamp",function(minimum,value,maximum)
-	if maximum < minimum
-		local temp = minimum
-		minimum = maximum
-		maximum = temp
-	end
-	return max(minimum,min(maximum,value))
-end)
-rawset(_G,"P_3DThrust",function(mo, h_ang, v_ang, speed)
-	local t = SphereToCartesian(h_ang,v_ang)
-	mo.momx = $ + FixedMul(speed, t.x)
-	mo.momy = $ + FixedMul(speed, t.y)
-	mo.momz = $ + FixedMul(speed, t.z)
-end)
-
 local function ZCollide(mo1,mo2)
 	if mo1.z > mo2.height+mo2.z then return false end
 	if mo2.z > mo1.height+mo1.z then return false end
@@ -535,6 +511,7 @@ function Phys:physgun_thinker(p, ph, me)
 		hold.flags = $|MF_NOGRAVITY
 		local easing = FU/3
 		
+		/*
 		hold.momx = FixedMul((me.x + vec.x) - hold.x, easing)
 		hold.momy = FixedMul((me.y + vec.y) - hold.y, easing)
 		hold.momz = FixedMul((me.z + vec.z) - hold.z, easing)
@@ -548,6 +525,17 @@ function Phys:physgun_thinker(p, ph, me)
 				return
 			end
 		end
+		*/
+		
+		P_TryMove(hold,
+			me.x + vec.x,-- + FixedMul((me.x + vec.x) - hold.x, easing),
+			me.y + vec.y,-- + FixedMul((me.y + vec.y) - hold.y, easing),
+			true
+		)
+		hold.z = clamp(hold.floorz, me.z + vec.z, hold.ceilingz - hold.height)
+		hold.momx = 0
+		hold.momy = 0
+		hold.momz = 0
 		
 		local chance = true
 		local sparks = true

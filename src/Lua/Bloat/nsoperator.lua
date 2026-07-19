@@ -107,6 +107,7 @@ addHook("PlayerThink",function(p)
 					(p.panim == PA_ABILITY or p.panim == PA_ABILITY2)
 					or (p.mo.state >= S_PLAY_SPINDASH and p.mo.state <= S_PLAY_MELEE_LANDING) 
 				)
+				and not (p.mo.hitlag)
 					pass = true
 				end
 				
