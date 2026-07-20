@@ -567,10 +567,10 @@ local function Baby_TryRevert(b)
 	if (b.state == Baby_State(b, "IDLE") or b.state == Baby_State(b, "TOIDLE")) then return end
 	b.state = Baby_State(b, "TOIDLE")
 	
-	baby.chargewind = 0
-	baby.chargecooldown = P_RandomRange(0, baby.charge_time + baby.charge_cool)
-	baby.chargingtics = 0
-	baby.charging = (baby.chargecooldown > 0)
+	b.chargewind = 0
+	b.chargecooldown = P_RandomRange(0, b.charge_time + b.charge_cool)
+	b.chargingtics = 0
+	b.charging = (b.chargecooldown > 0)
 end
 
 local function Baby_MainThinker(b)
