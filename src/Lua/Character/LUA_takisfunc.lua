@@ -194,7 +194,6 @@ rawset(_G,"Takis_DoClutch",function(p,riding)
 	local speedmul = FU
 	if twod
 		speedmul = $*3/4
-		thrust = $/2
 	end
 	if (takis.inWater)
 	and not twod
