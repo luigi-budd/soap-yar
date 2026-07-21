@@ -150,6 +150,12 @@ CV.allowtop = CV_RegisterVar({
 	flags = CV_SHOWMODIF|CV_NETVAR,
 	PossibleValue = CV_OnOff,
 })
+CV.kbmul = CV_RegisterVar({
+	name = "soap_knockbackmul",
+	defaultvalue = "1.0",
+	flags = CV_SHOWMODIF|CV_NETVAR|CV_FLOAT,
+	PossibleValue = CV_Unsigned,
+})
 
 CV.tauntinterference = CV_RegisterVar({
 	name = "soap_tauntinterference",

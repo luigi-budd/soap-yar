@@ -3804,6 +3804,11 @@ addHook("MobjDamage", function(me,inf,sor,dmg,dmgt)
 		--default speeds
 		local dokb = true
 		inf_speed, threshold = get_inf_speed(me,inf,sor)
+		if CV.kbmul.value ~= FU -- lullll
+			inf_speed = FixedMul($, CV.kbmul.value)
+			threshold = FixedMul($, CV.kbmul.value)
+		end
+		
 		power = FU + FixedDiv(inf_speed, 30*me.scale)
 		if Soap_IsCompGamemode()
 			if (inf.flags & MF_MISSILE)
