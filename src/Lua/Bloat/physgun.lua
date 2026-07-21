@@ -24,11 +24,13 @@ Phys.DEFAULT_DISTNUDGE = 16*FU
 Phys.createTable = function(p)
 	p.physgun = {
 		active = false,
+		bindsactive = true,
 		
 		mode = "physgun",
 		toolgun = {
 			hit = -1, --{x, y, z}
 			type = MT_RING,
+			ropedist = 0,
 		},
 		
 		target = nil,
@@ -155,13 +157,6 @@ function Phys:throwMobj(p,mo)
 	Phys:setGunRecoil(p)
 end
 
-rawset(_G,"SphereToCartesian",function(alpha, beta)
-    local t = {}
-    t.x = FixedMul(cos(alpha), cos(beta))
-    t.y = FixedMul(sin(alpha), cos(beta))
-    t.z = sin(beta)
-    return t
-end)
 local function ZCollide(mo1,mo2)
 	if mo1.z > mo2.height+mo2.z then return false end
 	if mo2.z > mo1.height+mo1.z then return false end
@@ -171,6 +166,7 @@ end
 freeslot("S_PHYSGUN",/*"SPR_PHYSGUNSPR",*/"MT_PHYSGUN")
 freeslot("SPR_RVOL")
 freeslot("SPR_LUGR")
+freeslot("SPR_HYPERLASERGUN")
 states[S_PHYSGUN] = {
 	sprite = SPR_LUGR,
 	frame = A,
@@ -200,6 +196,8 @@ states[S_PHYSGUN] = {
 		mo.dontdrawforviewmobj = t
 		if (t.player.physgun.mode == "toolgun")
 			mo.sprite = SPR_RVOL
+		elseif (t.player.physgun.mode == "flinggun")
+			mo.sprite = SPR_HYPERLASERGUN
 		end
 	end,
 	nextstate = S_PHYSGUN
@@ -221,7 +219,7 @@ function Phys:rayHits(ray, mo)
 		
 		ph.distance = FixedDiv(R_PointTo3DDist(me.x,me.y,me.z, mo.x,mo.y,mo.z),me.scale)
 		Phys:holdMobj(p,mo, ray.silent)
-	elseif ray.mode == "toolgun"
+	elseif ray.mode == "toolgun" or ray.mode == "flinggun"
 		ph.toolgun.hit = {x = ray.x, y = ray.y, z = ray.z}
 	end
 end
@@ -405,6 +403,9 @@ function Phys:fireRay(p, nosound, visual, opposite)
 	ray.target = me
 	ray.origin = {x = me.x, y = me.y, z = ray.z}
 	ray.range = ph.range
+	if (ph.mode == "flinggun")
+		ray.range = $ * 3
+	end
 	ray.lifespan = 0
 	ray.silent = nosound
 	ray.visual = visual
@@ -599,26 +600,44 @@ function Phys:toolgun_thinker(p, ph, me)
 		end
 		ph.toolgun.hit = -1
 	end
-	
-	/*
-	-- Grab stuff!
-	if not (hold and hold.valid)
-		ph.range = Phys.DEFAULT_RANGE
-		elseif (throwinput)
-			ph.queuethrow = true
-			Phys:fireRay(p, true, false, true)
-		end
-	else
-		if fireinput
-			Phys:releaseMobj(p, hold)
-		elseif (throwinput)
-			Phys:fireRay(p, true, true, true)
-			Phys:throwVFX(p, ph.target)
-			Phys:throwMobj(p, hold)
-		end
+end
+
+function Phys:flinggun_thinker(p, ph, me)
+	if (ph.mode ~= "flinggun")
+		return
 	end
-	hold = ph.target
-	*/
+	if (ph.target and ph.target.valid)
+		Phys:releaseMobj(p,ph.target)
+	end
+	
+	local fireinput = (p.cmd.buttons & BT_ATTACK) and not (p.lastbuttons & BT_ATTACK)
+	if fireinput
+		Phys:fireRay(p)
+		ph.toolgun.ropedist = -1
+	end
+	
+	if ph.toolgun.hit == -1 then return end
+	local pos = ph.toolgun.hit
+	if ph.toolgun.ropedist == -1
+		ph.toolgun.ropedist = R_PointTo3DDist(
+			me.x,me.y,me.z,
+			pos.x,pos.y,pos.z
+		)
+	end
+	
+	if (p.cmd.buttons & BT_ATTACK)
+		local anc = Vec3.New(pos.x, pos.y, pos.z)
+		local aim = Vec3.SphereToCartesian(p.cmd.angleturn << 16, p.cmd.aiming << 16)
+		aim = $ * (-ph.toolgun.ropedist)
+		aim = anc + $
+		aim.z = $ + (41 * me.height)/48
+		
+		me.momx = (aim.x - me.x) / 3
+		me.momy = (aim.y - me.y) / 3
+		me.momz = (aim.z - me.z) / 3
+	else
+		ph.toolgun.hit = -1
+	end
 end
 
 addHook("PlayerThink",function(p)
@@ -646,6 +665,7 @@ addHook("PlayerThink",function(p)
 	
 	Phys:physgun_thinker(p, ph, me)
 	Phys:toolgun_thinker(p, ph, me)
+	Phys:flinggun_thinker(p, ph, me)
 end)
 
 COM_AddCommand("phys_toggle",function(p)
@@ -656,6 +676,10 @@ COM_AddCommand("phys_toggle",function(p)
 	else
 		S_StartSound(p.realmo, sfx_gndrop)
 	end
+end,COM_ADMIN)
+COM_AddCommand("phys_togglebinds",function(p)
+	if not (p.physgun) then return end
+	p.physgun.bindsactive = not $
 end,COM_ADMIN)
 
 COM_AddCommand("phys_mode",function(p, mode)
@@ -668,6 +692,9 @@ COM_AddCommand("phys_mode",function(p, mode)
 		valid = true
 	elseif mode == "toolgun"
 		str = "Set mode to 'toolgun'"
+		valid = true
+	elseif mode == "flinggun"
+		str = "Set mode to 'flinggun'"
 		valid = true
 	end
 	if valid
@@ -758,8 +785,9 @@ addHook("HUD",function(v,p,c)
 	local hold = ph.target
 	
 	if not ph.active then return end
-	if ph.mode == "physgun" or ph.mode == "toolgun"
-		v.drawString(160, 170, ph.mode == "physgun" and "Physgun" or "Toolgun", V_ALLOWLOWERCASE|V_YELLOWMAP|V_50TRANS, "small-center")
+	do --if ph.mode == "physgun" or ph.mode == "toolgun" or ph.mode == "toolgun"
+		local mode = (ph.mode:sub(1,1):upper()) .. (ph.mode:sub(2))
+		v.drawString(160, 170, mode, V_ALLOWLOWERCASE|V_YELLOWMAP|V_50TRANS, "small-center")
 	end
 	
 	v.dointerp = function(tag)
@@ -1029,6 +1057,202 @@ local function drawMobjCard(v, x,y, id, visual, uncapped)
 	end
 end
 
+ML.addMenu({
+	stringId = "Phys_ContextMenu",
+	title = "",
+	ps_flags = PS_NOFADE|PS_NOSLIDEIN,
+	
+	x = 180,
+	y = 40,
+	width = 130,
+	height = 124,
+	outline = 29,
+	
+	exit = function()
+		buffer = ""
+		clicktime = 0
+		grabbed = false
+	end,
+	drawer = function(v, ML, menu, props)
+		local x = props.corner_x + 2
+		local y = props.corner_y + 3
+		
+		v.drawString(x,y, "Physgun Mode", V_ALLOWLOWERCASE, "thin")
+		local butwid = (130 - 4 - 2) / 3
+		local mode = consoleplayer.physgun.mode
+		butwid = $ - 2
+		ML.interpolate(v, false)
+		ML.addButton(v, {
+			id = 2,
+			x = x + 1,y = y + 10,
+			
+			width = butwid,
+			height = 11,
+			
+			color = (mode == "physgun") and 67 or 13,
+			outline = (mode == "physgun") and 70 or 19,
+			
+			name = "Physgun",
+			pressFunc = function()
+				ML.client.commandbuffer = "phys_mode physgun"
+			end
+		})
+		ML.addButton(v, {
+			id = 4,
+			x = x + 3 + butwid + 1,y = y + 10,
+			
+			width = butwid,
+			height = 11,
+			
+			color = (mode == "toolgun") and 67 or 13,
+			outline = (mode == "toolgun") and 70 or 19,
+			
+			name = "Toolgun",
+			pressFunc = function()
+				ML.client.commandbuffer = "phys_mode toolgun"
+			end
+		})
+		ML.addButton(v, {
+			id = 4,
+			x = x + 6 + butwid*2 + 1,y = y + 10,
+			
+			width = butwid,
+			height = 11,
+			
+			color = (mode == "flinggun") and 67 or 13,
+			outline = (mode == "flinggun") and 70 or 19,
+			
+			name = "Flinggun",
+			pressFunc = function()
+				ML.client.commandbuffer = "phys_mode flinggun"
+			end
+		})
+		y = $ + 24
+		
+		v.drawString(x,y, "Throw Force", V_ALLOWLOWERCASE, "thin")
+		ML.addButton(v, {
+			id = 4,
+			x = x + 1,y = y + 10,
+			
+			width = 123,
+			height = 11,
+			
+			color = 159,
+			outline = 159,
+			
+			name = "",
+			pressFunc = function()
+				buffer = ""
+				ML.startTextInput(buffer,bufferid, {
+					onenter = function()
+						ML.client.commandbuffer = "phys_throwforce "..ML.client.textbuffer
+					end,
+					tooltip = {
+						"Enter a value.",
+						"Default is 100.00."
+					}
+					--typesound = sfx_oldrad
+				})
+			end
+		})
+		-- inset
+		do
+			local x = x + 1
+			local y = y + 10
+			local width = 123
+			v.drawFill(x,y,
+				width,1, 156)
+			v.drawFill(x,y + 10,
+				width,1, 156)
+			v.drawFill(x,y,
+				1,11, 156)
+			v.drawFill(x+width-1,y,
+				1,11, 156)
+		end
+		v.drawString((x + 123/2), y + 12, ("%.2f"):format(consoleplayer.physgun.throwforce), V_ALLOWLOWERCASE, "thin-center")
+		y = $ + 24
+		
+		v.drawString(x,y, "Distance Adjust", V_ALLOWLOWERCASE, "thin")
+		ML.addButton(v, {
+			id = 4,
+			x = x + 1,y = y + 10,
+			
+			width = 123,
+			height = 11,
+			
+			color = 159,
+			outline = 159,
+			
+			name = "",
+			pressFunc = function()
+				buffer = ""
+				ML.startTextInput(buffer,bufferid, {
+					onenter = function()
+						ML.client.commandbuffer = "phys_distadjust "..ML.client.textbuffer
+					end,
+					tooltip = {
+						"Things are moved by this much when adjusting distance.",
+						"Default is 16.00."
+					}
+					--typesound = sfx_oldrad
+				})
+			end
+		})
+		-- inset
+		do
+			local x = x + 1
+			local y = y + 10
+			local width = 123
+			v.drawFill(x,y,
+				width,1, 156)
+			v.drawFill(x,y + 10,
+				width,1, 156)
+			v.drawFill(x,y,
+				1,11, 156)
+			v.drawFill(x+width-1,y,
+				1,11, 156)
+		end
+		v.drawString((x + 123/2), y + 12, ("%.2f"):format(consoleplayer.physgun.distance_nudge), V_ALLOWLOWERCASE, "thin-center")
+		y = $ + 24
+		
+		v.drawString(x,y, "Physgun Toggle", V_ALLOWLOWERCASE, "thin")
+		ML.addButton(v, {
+			id = 2,
+			x = x + 1,y = y + 10,
+			
+			width = 123,
+			height = 11,
+			
+			color = 13,
+			outline = 19,
+			
+			name = consoleplayer.physgun.active and "On" or "Off",
+			pressFunc = function()
+				ML.client.commandbuffer = "phys_toggle"
+			end
+		})
+		y = $ + 24
+		
+		v.drawString(x,y, "Physgun Binds", V_ALLOWLOWERCASE, "thin")
+		ML.addButton(v, {
+			id = 2,
+			x = x + 1,y = y + 10,
+			
+			width = 123,
+			height = 11,
+			
+			color = 13,
+			outline = 19,
+			
+			name = consoleplayer.physgun.bindsactive and "Active" or "Inactive",
+			pressFunc = function()
+				ML.client.commandbuffer = "phys_togglebinds"
+			end
+		})
+		y = $ + 24
+	end
+})
+
 local filterstring = ""
 ML.addMenu({
 	stringId = "Phys_TypeSelector",
@@ -1107,16 +1331,15 @@ ML.addMenu({
 			)
 			ML.interpolate(v,true)
 			
-			y = y + (menu.height - 50) - (30 + 4)
+			/*
 			x = $ + 4
-			
-			--TODO: "throwforce" and "distadjust" buttons
+			y = $ + 12
 			v.drawString(x,y, "Phys-gun:", V_ALLOWLOWERCASE,"thin")
 			ML.addButton(v, {
 				id = 1,
 				x = x,y = y + 10,
 				
-				width = panel_width - 8,
+				width = panel_width - (8 + (card_width + 1)),
 				height = 20,
 				
 				color = 13,
@@ -1127,13 +1350,15 @@ ML.addMenu({
 					ML.client.commandbuffer = "phys_toggle"
 				end
 			})
-			y = $ + 34
+			*/
+			
+			y = y + (menu.height - 50) - (30 + 4)
+			x = $ + 4
 			
 			-- y = starting_y + 130
-			v.drawString(x,y, "Phys-gun Mode:", V_ALLOWLOWERCASE,"thin")
 			ML.addButton(v, {
 				id = 1,
-				x = x,y = y + 10,
+				x = x,y = y,
 				
 				width = panel_width - 8,
 				height = 20,
@@ -1141,12 +1366,14 @@ ML.addMenu({
 				color = 13,
 				outline = 19,
 				
-				name = '"'..ph.mode..'"',
+				name = "Physgun Settings",
 				pressFunc = function()
-					local newmode = ph.mode == "toolgun" and "physgun" or "toolgun"
-					ML.client.commandbuffer = "phys_mode "..newmode
+					-- how long has menulib had this issue for?
+					ML.client.doMousePress = false
+					ML.initPopup(ML.findMenu("Phys_ContextMenu"))
 				end
 			})
+			--y = $ + 34
 		end
 		
 		--scrolling menu (180, 86 free space)
@@ -1276,6 +1503,11 @@ ML.addMenu({
 						
 						name = "",
 						pressFunc = function()
+							if filterstring ~= ""
+								filterstring = ""
+								return
+							end
+							
 							filterstring = ""
 							ML.startTextInput(buffer,bufferid, {
 								onenter = function()
@@ -1305,6 +1537,9 @@ ML.addMenu({
 							1,20, 156
 						)
 					end
+					v.drawScaled((x - 1)*FU,(y - 1)*FU,FU,
+						v.cachePatch((filterstring ~= "") and "PHYSREM" or "PHYSFILT"), 0
+					)
 					ML.interpolate(v, false)
 					x = $ + (21)
 					width = $ - (21)
@@ -1402,7 +1637,7 @@ ML.addMenu({
 
 addHook("KeyDown",function(key)
 	if isdedicatedserver then return end
-	if not (consoleplayer and consoleplayer.valid and consoleplayer.physgun) then return end
+	if not (consoleplayer and consoleplayer.valid and consoleplayer.physgun and consoleplayer.physgun.bindsactive) then return end
 	if (chatactive) then return end
 	if (key.repeated) then return end
 	if ML.client.currentMenu.id ~= -1 then return end
@@ -1411,7 +1646,15 @@ addHook("KeyDown",function(key)
 	if (key.name == "]")
 		MenuLib.initMenu(MenuLib.findMenu("Phys_TypeSelector"))
 	elseif (key.name == "[")
-		local newmode = consoleplayer.physgun.mode == "toolgun" and "physgun" or "toolgun"
+		local mode = consoleplayer.physgun.mode
+		local newmode
+		if mode == "physgun"
+			newmode = "toolgun"
+		elseif mode == "toolgun"
+			newmode = "flinggun"
+		elseif mode == "flinggun"
+			newmode = "physgun"
+		end
 		COM_BufInsertText(consoleplayer, "phys_mode "..newmode)
 	elseif (key.name == "=")
 		COM_BufInsertText(consoleplayer, "phys_toggle")
