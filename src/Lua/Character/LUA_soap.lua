@@ -755,10 +755,10 @@ end)
 local function dash_speeds(p,me,soap, dash, time, noadjust)
 	if soap.inBattle
 	or Soap_IsCompGamemode()
-		if not soap.inBattle
+		if (not soap.inBattle) or soap.inHeist
 			dash = $ * 3/5
 		--be about the same speed as heavy
-		else
+		elseif soap.inBattle
 			noadjust = true
 			dash = 19*FU
 			--Cool...
@@ -792,10 +792,17 @@ local function dash_speeds(p,me,soap, dash, time, noadjust)
 		dash = $ * 5/8
 		soap.nerfed = true
 		
-		if soap.inBattle
+		if (soap.inBattle and not soap.inHeist)
 		and soap.accspeed >= 15*FU
 			dash = 0
 		end
+	end
+	if soap.inHeist
+	and (p.noactions) -- ouuuugh
+		-- just so you can at least be
+		-- in a damaging state when you
+		-- have a treasure
+		dash = 0
 	end
 
 	return dash, time, noadjust

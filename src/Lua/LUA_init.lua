@@ -70,7 +70,7 @@ rawset(_G, "Soap_InitTable", function(p)
 		weaponnext = 0,
 		weaponprev = 0,
 		
-		--release varients
+		--release variants
 		jump_R = 0,
 		use_R = 0,
 		tossflag_R = 0,
@@ -106,6 +106,7 @@ rawset(_G, "Soap_InitTable", function(p)
 		inWater = false,
 		in2D = false,
 		inBattle = false,
+		inHeist = false,
 		--water running
 		onWater = false,
 		--handled in prethink

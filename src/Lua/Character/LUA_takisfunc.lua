@@ -165,6 +165,8 @@ rawset(_G,"Takis_DoClutch",function(p,riding)
 	end
 	
 	if p.gotflag
+	or p.gotcrystal
+	or p.noactions
 		thrust = $/6
 	end
 	
@@ -199,7 +201,7 @@ rawset(_G,"Takis_DoClutch",function(p,riding)
 	and not twod
 		speedmul = $*3/4
 	end
-	if (p.gotflag)
+	if (p.gotflag or p.gotcrystal or p.noactions)
 		speedmul = $*7/10
 	end
 	
@@ -358,7 +360,11 @@ rawset(_G,"Takis_HandleNoAbils", function(p)
 	
 	if (p.gotflag)
 	or (p.gotcrystal)
+	or (p.noactions)
 		na = $|NOABIL_HAMMER|NOABIL_AFTERIMAGE
+		if (p.noactions)
+			na = $ &~NOABIL_AFTERIMAGE
+		end
 	end
 	
 	if soap.hammer.lockout
