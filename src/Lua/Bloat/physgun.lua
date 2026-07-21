@@ -220,6 +220,7 @@ function Phys:rayHits(ray, mo)
 		ph.distance = FixedDiv(R_PointTo3DDist(me.x,me.y,me.z, mo.x,mo.y,mo.z),me.scale)
 		Phys:holdMobj(p,mo, ray.silent)
 	elseif ray.mode == "toolgun" or ray.mode == "flinggun"
+	and ph.toolgun.hit == -1
 		ph.toolgun.hit = {x = ray.x, y = ray.y, z = ray.z}
 	end
 end
@@ -635,6 +636,17 @@ function Phys:flinggun_thinker(p, ph, me)
 		me.momx = (aim.x - me.x) / 3
 		me.momy = (aim.y - me.y) / 3
 		me.momz = (aim.z - me.z) / 3
+		
+		local ray = Phys:fireRay(p, true, true, false)
+		ray.oneshot = true
+		-- ray.nosparks = not sparks
+		
+		local ang,aim = R_PointTo3DAngles(me.x,me.y,me.z, anc.x,anc.y,anc.z)
+		P_SetOrigin(ray, ph.gun.x, ph.gun.y, ph.gun.z)
+		P_InstaThrust(ray, ang, ray.radius*2)
+		ray.origin = {x = ph.gun.x, y = ph.gun.y, z = ph.gun.z}
+		ray.range = ph.toolgun.ropedist
+		Phys:aimRay(p, ray, ang, aim)
 	else
 		ph.toolgun.hit = -1
 	end
