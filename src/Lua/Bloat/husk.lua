@@ -168,6 +168,25 @@ addHook("PostThinkFrame",do for p in players.iterate
 		and abs(h.y - me.y) <= me.radius + h.radius
 		and Soap_ZCollide(me,h)
 		and not (me.hitlag or step.hitlag)
+		and not (me.husk_shieldloss and (leveltime - me.husk_shieldloss >= flashingtics))
+			if (p.powers[pw_shield])
+				S_StartSound(me, sfx_nssb)
+				Soap_ImpactVFX(me, nil, nil,nil,nil,nil, DMG_ELECTRIC)
+				if (p.powers[pw_shield] & SH_FORCE)
+					if (p.powers[pw_shield] & 255 == 0) -- no hp
+						P_RemoveShield(p)
+					else
+						p.powers[pw_shield] = (($ & 255) - 1)|SH_FORCE
+					end
+				else
+					P_RemoveShield(p)
+				end
+				p.powers[pw_flashing] = flashingtics - 1
+				me.husk_shieldloss = leveltime
+				
+				continue
+			end
+			
 			local sfx = P_SpawnGhostMobj(h)
 			sfx.flags2 = $|MF2_DONTDRAW
 			sfx.tics = 3*TR

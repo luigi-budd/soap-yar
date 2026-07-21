@@ -249,7 +249,7 @@ addHook("MobjThinker",function(b)
 				
 				P_SetOrigin(b,
 					me.x + P_ReturnThrustX(angle, dist),
-					me.y + P_ReturnThrustX(angle, dist),
+					me.y + P_ReturnThrustY(angle, dist),
 					me.z + Soap_RandomFixedRange(-256*FU, 256*FU)
 				)
 				b.z = clamp(b.floorz, $, b.ceilingz - b.height)

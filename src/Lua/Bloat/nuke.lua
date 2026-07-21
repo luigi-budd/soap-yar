@@ -22,10 +22,9 @@ local function SpawnExplosions(mine, doquake, docount)
 		mobj.momz = 0
 		--mobj.spritexscale,mobj.spriteyscale = FU*2,FU*2
 		mobj.flags2 = $ &~MF2_DONTDRAW
-		mobj.forcescale = FU * 5
 		
 		mobj.angle = R_PointToAngle2(mobj.x,mobj.y, mine.x,mine.y)
-		mobj.scale = $+(P_RandomFixed()*((P_RandomChance(FU/2)) and 1 or -1))
+		mobj.forcescale = FU * 5 + Soap_RandomFixedRange(-4*FU, 2*FU)
 		
 		P_Thrust(mobj, mobj.angle,
 			P_RandomRange(0, -30)*mobj.scale
