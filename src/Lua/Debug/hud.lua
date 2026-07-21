@@ -259,13 +259,31 @@ addHook("HUD",function(v,p)
 			v.drawFixedFill(x,y, FixedMul(w,eprogress),h, 162|f)
 			v.drawFixedFill(x,y, FixedMul(w,progress),h, 134|f)
 		end
-		v.drawString(x,y+(h - 4*FU), string.format("R-Dash: %.1f%% (%.1f, %.1f/%.0f%%) (max %.1f)",
-			FixedDiv(p.normalspeed - skin.normalspeed, soap._maxdash)*100,
-			p.normalspeed, soap.dashcharge,
-			FixedDiv(soap.chargingtime*FU,3*TR*FU)*100,
-			soap._maxdash),
+		local firststr = -FU
+		if (soap._maxdash ~= 0)
+			firststr = FixedDiv(p.normalspeed - skin.normalspeed, soap._maxdash)*100
+		end
+		v.drawString(x,y+(h - 4*FU), string.format("R-Dash: %.1f%% (%.1f + %.1f/%.0f%%) (max %.1f)",
+				firststr,
+				p.normalspeed, soap.dashcharge,
+				FixedDiv(soap.chargingtime*FU,3*TR*FU)*100,
+				soap._maxdash
+			),
 			f|V_ALLOWLOWERCASE, "small-thin-fixed"
 		)
+		
+		local info = {
+			[1] = ("maxdash:\t%f"):format(soap._maxdash),
+			[2] = ("maxdashtime:\t%d"):format(soap._maxdashtime),
+			[3] = ("noadjust:\t%s"):format(soap._noadjust and "true" or "false"),
+		}
+		y = $ - (2 + (4 * 3))*FU
+		for i = 1,3
+			v.drawString(x,y, info[i],
+				f|V_ALLOWLOWERCASE, "small-thin-fixed"
+			)
+			y = $ + 4*FU
+		end
 		v.dointerp(false)
 	end
 	if (SOAP_DEBUG & DEBUG_HOOKS)

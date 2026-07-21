@@ -219,6 +219,7 @@ rawset(_G,"Soap_Booleans", function(p)
 	soap.inWater = (me.eflags & (MFE_UNDERWATER|MFE_TOUCHLAVA) == MFE_UNDERWATER)
 	soap.in2D = (me.flags2 & MF2_TWOD or twodlevel)
 	soap.inBattle = (CBW_Battle and CBW_Battle.BattleGametype())
+	soap.inHeist = (FH and FH:isMode())
 	soap.isElevated = (p == server) or (IsPlayerAdmin(p))
 	
 	if (p.solchar)
@@ -1954,9 +1955,13 @@ rawset(_G,"Soap_HandleNoAbils", function(p)
 				na = $ &~(SNOABIL_BOTHTAUNTS)
 			end
 		end
+		
+		if soap.inHeist
+			na = $ &~SNOABIL_COMBAT
+		end
 	end
 	if CV.forcecombatmode.value
-		na = $|SNOABIL_COMBAT
+		na = $ ^^ SNOABIL_COMBAT
 	end
 	
 	--Gametypes
@@ -3026,7 +3031,17 @@ local function VFX_Lunge(p,me,soap, props)
 	local lunge = soap.lunge
 	local doeffect = (lunge.effect > 0) --or (me.momz * soap.gravflip > 0)
 	
-	if lunge.lockout then lunge.lockout = $ - 1; end
+	if lunge.lockout
+		-- um you can double tap spin to
+		-- airdash if you really need to
+		-- uppercutting also removes the
+		-- lockout so you can just combo
+		-- that into an airdash
+		if soap.use == 1
+			lunge.lockout = 1
+		end
+		lunge.lockout = $ - 1
+	end
 	
 	if lunge.effect
 		-- does something vfx shouldnt do (modify player)
