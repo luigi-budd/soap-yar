@@ -53,11 +53,16 @@ end
 addHook("PlayerThink",function(p)
 	if (leveltime and (leveltime % (CV.operator_timeframe.value*TR) == 0)
 	and P_RandomChance(FU * 3/4))
+		p.operatorqueued = true
+	end
+	if p.operatorqueued
 	and not p.nsoper
 	and CV.operator.value
 	and (p.mo and p.mo.valid and p.mo.health)
 		Op_Start(p)
+		p.operatorqueued = nil
 	end
+	
 	if not p.nsoper then return end
 	
 	local op = p.nsoper
