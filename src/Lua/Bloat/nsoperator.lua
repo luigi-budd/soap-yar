@@ -86,10 +86,25 @@ addHook("PlayerThink",function(p)
 				op.lockoutticks = max($ - 1, 0)
 				
 				if op.ticks == 12
+					p.nsoper = nil
+					if (p.powers[pw_shield])
+						S_StartSound(p.mo, sfx_nssb)
+						Soap_ImpactVFX(p.mo, nil, nil,nil,nil,nil, DMG_ELECTRIC)
+						if (p.powers[pw_shield] & SH_FORCE)
+							if (p.powers[pw_shield] & 255 == 0) -- no hp
+								P_RemoveShield(p)
+							else
+								p.powers[pw_shield] = (($ & 255) - 1)|SH_FORCE
+							end
+						else
+							P_RemoveShield(p)
+						end
+						p.powers[pw_flashing] = flashingtics - 1
+						return
+					end
 					Soap_Hitlag.addHitlag(p.mo, 12, true)
 					P_FlashPal(p, PAL_INVERT, 12)
 					P_KillMobj(p.mo)
-					p.nsoper = nil
 					
 					S_StartSound(nil, sfx_nso4, p)
 					Soap_ImpactVFX(p.mo, nil, nil,nil,nil,nil, DMG_ELECTRIC)
