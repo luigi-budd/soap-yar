@@ -3147,6 +3147,73 @@ local function VFX_CeilingHit(p,me,soap, props)
 		if (Soap_IsLocalPlayer(p))
 			Soap_StartQuake(5*FU,10)
 		end
+		
+		if soap.last.momz*soap.gravflip >= 30*FU
+			me.soap_ihaveaholeinmybrain = ($ or 0) + 1
+			
+			if me.bell_overtuned
+				Soap_DamageSfx(me,FU*3/4,FU)
+				me.soap_supervfx = true
+				Soap_ImpactVFX(me, me, nil, 3*FU)
+				
+				p.powers[pw_flashing] = 0
+				P_ResetPlayer(p)
+				me.state = S_PLAY_PAIN
+				
+				me.soap_tumble = true
+				me.soap_tumble_oldmomz = me.momz
+				me.soap_tumble_markedfordeath = me.bell_overtuned
+				
+				local ang = FixedAngle(P_RandomRange(0,720)*FU)
+				me.state = S_PLAY_PAIN
+				p.drawangle = ang + ANGLE_180
+				
+				me.bell_deathanim = TR
+				S_StartSound(nil, sfx_nbl_7, p)
+				S_StartSound(nil, sfx_nbl_7, p)
+			end
+			
+			if me.soap_ihaveaholeinmybrain == 2
+				me.bell_overtuned = true
+				me.bell_overtuneticker = 20*TR
+			end
+			
+			S_StartSound(me, sfx_husk2)
+			S_StartSound(me,sfx_sp_dmg)
+			
+			Soap_Hitlag.addHitlag(me, 8, true)
+			me.bell_effect = 2*TR + TR / 2
+			P_FlashPal(p, PAL_WHITE, 16)
+			
+			soap.hud.painsurge = 6
+			local rad = FixedDiv(me.radius, me.scale)
+			local hei = FixedDiv(me.height, me.scale)
+			local extra = abs(FixedDiv(me.momz, 50*me.scale))
+			local halftic = 6
+			for i = 0, 32
+				local s = P_SpawnMobjFromMobj(me,
+					Soap_RandomFixedRange(-rad, rad),
+					Soap_RandomFixedRange(-rad, rad),
+					Soap_RandomFixedRange(-hei, 0) - 128*FU,
+					MT_PARTICLE
+				)
+				s.state = S_SOAP_IMPACT_LINE2
+				if (soap.in2D)
+					s.angle = 0
+				else
+					s.angle = me.angle - ANGLE_90
+				end
+				s.color = armacolors[P_RandomRange(1, #armacolors)]
+				s.rollangle = -ANGLE_90
+				s.renderflags = $|RF_ALWAYSONTOP|RF_VERTICALFLIP
+				s.spriteyscale = $ * 3/2 + extra
+				s.flags = $|MF_NOCLIPTHING|MF_NOCLIP|MF_NOCLIPHEIGHT|MF_NOBLOCKMAP
+				s.takis_flingme = false
+				local offset = P_RandomRange(-4, 8)
+				s.tics = $ + halftic + offset
+				s.anim_duration = $ + halftic + offset
+			end
+		end
 	end
 end
 
