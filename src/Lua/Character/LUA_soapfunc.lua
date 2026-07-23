@@ -3162,7 +3162,6 @@ local function VFX_CeilingHit(p,me,soap, props)
 				
 				me.soap_tumble = true
 				me.soap_tumble_oldmomz = me.momz
-				me.soap_tumble_markedfordeath = me.bell_overtuned
 				
 				local ang = FixedAngle(P_RandomRange(0,720)*FU)
 				me.state = S_PLAY_PAIN
@@ -3176,6 +3175,7 @@ local function VFX_CeilingHit(p,me,soap, props)
 			if me.soap_ihaveaholeinmybrain == 2
 				me.bell_overtuned = true
 				me.bell_overtuneticker = 20*TR
+				me.soap_ihaveaholeinmybrain = 0
 			end
 			
 			S_StartSound(me, sfx_husk2)
