@@ -1661,6 +1661,17 @@ local function try_pvp_collide(me,thing)
 	if (soap.damagedealtthistic > SOAP_MAXDAMAGETICS) then return end
 	
 	local DealDamage = (p.powers[pw_super] or soap.isSolForm or p.powers[pw_invulnerability]) and P_KillMobj or P_DamageMobj
+	local damagetype
+	local shield = p.powers[pw_shield] & SH_NOSTACK
+	if (shield & SH_PROTECTELECTRIC)
+		damagetype = DMG_ELECTRIC
+	end
+	if (shield & SH_PROTECTFIRE)
+		damagetype = DMG_FIRE
+	end
+	if (shield & SH_PROTECTWATER)
+		damagetype = DMG_WATER
+	end
 	
 	--if the thing we're killing ISNT a player, then theyre probably an enemy
 	local candamagemobj = false
@@ -1686,7 +1697,7 @@ local function try_pvp_collide(me,thing)
 	if (me.sixsev_super and me.sixsev_super >= 3*TR)
 	and not (thing.hitlag)
 		Soap_DamageSfx(thing,FU*3/4,FU)
-		Soap_ImpactVFX(thing, me)
+		Soap_ImpactVFX(thing, me, nil,nil,nil,nil, damagetype)
 		local angleto = R_PointToAngle2(thing.x,thing.y, me.x,me.y)
 		
 		if (thing.player and thing.player.valid)
@@ -1715,7 +1726,7 @@ local function try_pvp_collide(me,thing)
 	--hit by clutch
 	if (soap.afterimage)
 	and not (thing.type == MT_ROLLOUTROCK and me.tracer == thing)
-		Soap_ImpactVFX(thing,me)
+		Soap_ImpactVFX(thing,me, nil,nil,nil,nil, damagetype)
 		
 		local power = FixedMul(10*FU + max(soap.accspeed - 20*FU,0), me.scale)
 		
@@ -1725,7 +1736,7 @@ local function try_pvp_collide(me,thing)
 		if generic_slingshot(p,me,soap)
 			hitlag_tics = $ + FixedDiv(soap.accspeed, 50*FU) / FU
 			Soap_Hitlag.addHitlag(me, hitlag_tics, false)
-			Soap_DamageSfx(thing, FU*3/4,FU,nil, {volume = 255/2})
+			Soap_DamageSfx(thing, FU*3/4,FU,damagetype, {volume = 255/2})
 			S_StartSoundAtVolume(me, sfx_tk_hml, 255*3/4)
 			S_StartSound(me, sfx_sp_kil)
 			S_StartSound(me, sfx_sp_smk)
@@ -1735,13 +1746,13 @@ local function try_pvp_collide(me,thing)
 				512*me.scale + power
 			)
 		else
-			Soap_DamageSfx(thing, power, 60*FU)
+			Soap_DamageSfx(thing, power, 60*FU, damagetype)
 			P_StartQuake(power/2, hitlag_tics,
 				{me.x, me.y, me.z},
 				512*me.scale + power
 			)
 		end
-		DealDamage(thing, me,me)
+		DealDamage(thing, me,me, nil, damagetype)
 		
 		if (thing and thing.valid and thing.type == MT_ROLLOUTROCK)
 			hitlag_tics = $ / 2
@@ -1762,12 +1773,13 @@ local function try_pvp_collide(me,thing)
 	local basicdamage = (p.powers[pw_super] or p.powers[pw_invulnerability] or (p.pflags & PF_SPINNING))
 		and not (thing.player and thing.player.valid)
 		and not (thing == me.target or thing == me.tracer)
+	
 	if basicdamage
-		Soap_ImpactVFX(thing,me, nil, FU/3)
-		Soap_DamageSfx(thing, FU/3, 2*FU)
+		Soap_ImpactVFX(thing,me, nil, FU/3, nil,nil, damagetype)
+		Soap_DamageSfx(thing, FU/3, 2*FU, damagetype)
 		Soap_SpawnBumpSparks(me, thing, nil, true)
 		
-		DealDamage(thing, me,me)
+		DealDamage(thing, me,me, nil, damagetype)
 		if (thing and thing.valid and thing.flags & MF_BOSS and (thing.health <= 0))
 			S_StartSound(me, sfx_sp_kco)
 			soap.hud.painsurge = 6
