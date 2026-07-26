@@ -1071,6 +1071,7 @@ local wheel_inner = wheel_start + (wheel_radius - wheel_start)/2
 addHook("HUD",function(v,p)
 	-- bruh
 	p = consoleplayer
+	if not (p and p.valid) then return end -- DEMOSSSSSS. UGH.
 	
 	local soap = p.soaptable
 	if not soap then return end
