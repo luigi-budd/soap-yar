@@ -3148,7 +3148,7 @@ local function VFX_CeilingHit(p,me,soap, props)
 			Soap_StartQuake(5*FU,10)
 		end
 		
-		if soap.last.momz*soap.gravflip >= 30*FU
+		if soap.last.momz*soap.gravflip >= 25*FU
 			me.soap_ihaveaholeinmybrain = ($ or 0) + 1
 			
 			if me.bell_overtuned
@@ -3180,6 +3180,7 @@ local function VFX_CeilingHit(p,me,soap, props)
 			
 			S_StartSound(me, sfx_husk2)
 			S_StartSound(me,sfx_sp_dmg)
+			S_StartSound(me,sfx_brndmg)
 			
 			Soap_Hitlag.addHitlag(me, 8, true)
 			me.bell_effect = 2*TR + TR / 2
