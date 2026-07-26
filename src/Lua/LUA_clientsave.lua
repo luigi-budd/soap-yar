@@ -88,6 +88,9 @@ end)
 
 --save
 addHook("GameQuit",do
+	-- probably some demo stuff
+	if not consoleplayer and consoleplayer.valid then return end
+	
 	local file = io.openlocal(filepath, "w+")
 	for k, cvname in ipairs(cv_save)
 		local cv = CV.FindVar(cvname)
