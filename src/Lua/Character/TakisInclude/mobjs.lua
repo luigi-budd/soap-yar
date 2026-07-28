@@ -41,3 +41,18 @@ states[S_TAKIS_BONKFX2] = {
 	frame = 39|FF_FULLBRIGHT,
 	tics = 3 * TR,
 }
+
+-- Ninja Belt bottomlayer
+SafeFreeslot("S_TAKIS_NBR_B")
+states[S_TAKIS_NBR_B] = {
+	sprite = SPR_SOAP_GFX,
+	frame = 41|FF_PAPERSPRITE|FF_ANIMATE|FF_FULLBRIGHT,
+	tics = -1,
+}
+-- Ninja Belt toplayer
+SafeFreeslot("S_TAKIS_NBR_T")
+states[S_TAKIS_NBR_T] = {
+	sprite = SPR_SOAP_GFX,
+	frame = 42|FF_PAPERSPRITE|FF_ANIMATE|FF_FULLBRIGHT,
+	tics = -1,
+}

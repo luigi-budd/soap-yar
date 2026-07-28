@@ -12,6 +12,7 @@ local filetree = {
 	"LUA_init.lua",
 	--math is important so run it up here
 	"libs/LUA_math.lua",
+	"libs/LUA_vec3.lua",
 	"LUA_console.lua",
 	
 	"libs/LUA_takishooklib.lua",
