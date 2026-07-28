@@ -255,6 +255,156 @@ local function handle_knockback(p,me,soap)
 	me.soap_damagevar = nil
 end
 
+local NINJA_FRONT = 1<<0
+local NINJA_FLAME = 1<<1
+local NINJA_RING  = 1<<2
+
+local NINJA_HANGOFF = 36*FU
+local NINJA_VANGOFF = 20*FU
+local function ninjabelt_vfx(p,me,soap, type, alt)
+	local angle,vertang = R_PointTo3DAngles(0,0,0, me.momx,me.momy,me.momz)
+	if FixedHypot(FixedHypot(me.momx, me.momy), me.momz) <= me.scale
+		angle = me.angle
+	end
+	local frontpush = FixedDiv(me.radius,me.scale) * 2
+	local sidepush = Soap_RandomFixedRange(-frontpush/3, frontpush/3)
+	local toppush = FixedDiv(me.height,me.scale) / 2 + Soap_RandomFixedRange(-frontpush / 3, frontpush / 3)
+	local s
+	
+	if (type & NINJA_FRONT)
+		s = P_SpawnMobjFromMobj(me,
+			P_ReturnThrustX(nil, angle, frontpush) + P_ReturnThrustX(nil, angle+ANGLE_90, sidepush),
+			P_ReturnThrustY(nil, angle, frontpush) + P_ReturnThrustY(nil, angle+ANGLE_90, sidepush),
+			toppush + FixedMul(sin(vertang), toppush), MT_PARTICLE
+		)
+		s.scale = FixedMul($ / 2, FU + Soap_RandomFixedRange(-FU/3,FU/3))
+		s.state = S_SOAP_IMPACT_LINE2F
+		local h,v = R_PointTo3DAngles(
+			s.x,s.y,s.z,
+			me.x+P_ReturnThrustX(nil, angle, frontpush*3/2),me.y+P_ReturnThrustY(nil, angle, frontpush*3/2),me.z + me.height/2
+		)
+		s.angle = h + ANGLE_180
+		s.rollangle = v + InvAngle(vertang)
+		s.color = armacolors[P_RandomRange(1,#armacolors)]
+		local offset = P_RandomRange(0, 2)
+		s.anim_duration = $ + offset
+		s.tics = $ + offset
+		s.momx = $ + me.momx
+		s.momy = $ + me.momy
+		s.momz = $ + me.momz
+		s.dontdrawforviewmobj = me
+		
+		if not CV.rotations.value
+			s.flags2 = $|MF2_DONTDRAW
+		end
+	end
+	
+	if (type & NINJA_FLAME)
+	and (leveltime % 2 == 0 or (alt ~= nil))
+		s = P_SpawnMobjFromMobj(me,
+			P_RandomRange(-16,16)*FU,
+			P_RandomRange(-16,16)*FU,
+			P_RandomRange(-8,32)*FU,
+			MT_SOAP_FREEZEGFX
+		)
+		s.state = mobjinfo[MT_FLAMEPARTICLE].spawnstate
+		s.tracer = me
+		s.nofxadjust = true
+		s.ninjadive = true
+		s.spritexscale = Soap_RandomFixedRange($/2, $*3/2)
+		if alt
+			s.spritexscale = $ * 2
+		end
+		s.spriteyscale = s.spritexscale
+		
+		s.drawonlyforplayer = p
+		s.dontdrawforviewmobj = me
+		s.renderflags = $|RF_FULLBRIGHT
+		--s.blendmode = AST_ADD
+		
+		-- honestly im not sure how netsafe
+		-- it is to have one of these vectors
+		-- in a mobj
+		s.anchor = Vec3.New(
+			me.x,me.y,me.z
+		)
+		s.offset = Vec3.MobjPosToVec(s) - s.anchor
+		
+		s.offsetmom = Vec3.New(0,0,0)
+		s.offsetparentmom = Vec3.MobjMomToVec(me)
+		s.offsetspeed = Soap_RandomFixedRange(5*me.scale, 16*me.scale)
+		s.movefactor = P_RandomRange(FU*7/8, FU*98/100)
+		s.angles = {
+			h = FixedAngle(360*P_RandomFixed()),
+			hc = Soap_RandomFixedRange(-18*FU, 18*FU),
+			v = FixedAngle(Soap_RandomFixedRange(-180*FU, 180*FU)),
+			vc = Soap_RandomFixedRange(-20*FU, 20*FU),
+		}
+		s.fadeat = P_RandomRange(6,10)
+	end
+	
+	if (leveltime % 6 == 0 or (alt ~= nil))
+	and (type & NINJA_RING)
+		if alt ~= nil
+			angle = alt
+		end
+		
+		s = P_SpawnMobjFromMobj(me,
+			0,0,FixedDiv(me.height,me.scale) / 2, MT_SOAP_WALLBUMP
+		)
+		s.state = S_TAKIS_NBR_B
+		s.angle = angle + ANGLE_90
+		s.color = SKINCOLOR_KETCHUP
+		s.blendmode = (alt == nil) and AST_ADD or AST_TRANSLUCENT
+		s.flags = $|MF_NOGRAVITY
+		
+		s.tics = (alt ~= nil) and 40 or 18
+		s.fuse = s.tics
+		s.nothink = true
+		s.rollangle = FixedAngle(45*P_RandomRange(0,7)*FU)
+		if not CV.rotations.value
+			-- should be fine since random was already called
+			s.rollangle = 0
+		end
+		s.random = FixedAngle(15*FU)
+		
+		if alt ~= nil
+			s.scale = $ * 2
+			s.fusefade = 6
+		else
+			s.alpha = FU * 5/6
+		end
+		s.destscale = 0
+		s.scalespeed = FixedDiv(s.scale, s.tics*FU)
+		
+		s.momx = $ + me.momx / 5
+		s.momy = $ + me.momy / 5
+		s.momz = $ + me.momz / 5
+		
+		-- toplayerrrrrrrr
+		local b = P_SpawnMobjFromMobj(me,
+			0,0,FixedDiv(me.height,me.scale) / 2, MT_SOAP_WALLBUMP
+		)
+		b.state = S_TAKIS_NBR_T
+		b.angle = s.angle
+		b.color = s.color
+		b.blendmode = s.blendmode
+		b.flags = $|MF_NOGRAVITY
+		
+		b.tics, b.fuse, b.nothink = s.tics, s.fuse, s.nothink
+		b.rollangle = -s.rollangle
+		b.random = -s.random
+		
+		b.scale = s.scale
+		b.destscale, b.scalespeed = s.destscale, s.scalespeed
+		b.fusefade = s.fusefade
+		
+		b.momx, b.momy, b.momz = s.momx, s.momy, s.momz
+		b.dispoffset = 10
+		b.alpha = s.alpha
+	end
+end
+
 Takis_Hook.addHook("PreThinkFrame",function(p)
 	local me = p.realmo
 	if (me.skin ~= TAKIS_SKIN) then return end
@@ -500,8 +650,17 @@ Takis_Hook.addHook("Takis_Thinker",function(p)
 	if (soap.c1)
 		
 		--dive
+		local divecheck = false
+		if (p.powers[pw_shield] & SH_NOSTACK == SH_FLAMEAURA)
+			-- You can dive even while youre grounded
+			-- with the ninja belt shield
+			divecheck = true
+		else
+			divecheck = not soap.onGround
+		end
+		
 		if soap.c1 == 1
-		and not soap.onGround
+		and divecheck
 		and not (soap.dived)
 		and (soap.notCarried)
 		and me.state ~= S_PLAY_PAIN
@@ -531,18 +690,25 @@ Takis_Hook.addHook("Takis_Thinker",function(p)
 			end
 			S_StartSound(me,soap.inWater and sfx_splash or sfx_tk_div)
 			
-			
 			local speed = soap.accspeed
 			if soap.accspeed < 20*FU
 				speed = 20*FU
 			end
 			if (p.powers[pw_shield] & SH_NOSTACK == SH_FLAMEAURA)
-				if soap.accspeed < 38*FU
-					speed = 38*FU
+				if soap.accspeed < 42*FU
+					speed = 42*FU
 				elseif soap.accspeed <= 60*FU
-					speed = $ + 8*FU
+					speed = $ + 12*FU
 				end
-				S_StartSound(me,sfx_s3k43)
+				S_StartSoundAtVolume(me,sfx_s3k43, 255 / 2)
+				--S_StartSoundAtVolume(me,sfx_sp_df1, 255 / 4)
+				S_StartSoundAtVolume(me,sfx_tk_fdv, 255 / 2)
+				
+				for i = 0,10
+					ninjabelt_vfx(p,me,soap, NINJA_FLAME, true)
+				end
+				ninjabelt_vfx(p,me,soap, NINJA_RING, ang)
+				
 				p.pflags = $|PF_SHIELDABILITY
 			end
 			P_InstaThrust(me,ang,FixedMul(speed,me.scale))
@@ -561,6 +727,10 @@ Takis_Hook.addHook("Takis_Thinker",function(p)
 					s.momy = $ + me.momy * 3/4
 					s.momz = $ + me.momz * 3/4
 					dust_noviewmobj(s)
+					if (p.powers[pw_shield] & SH_NOSTACK == SH_FLAMEAURA)
+					and s.type == MT_SOAP_DUST
+						s.state = mobjinfo[MT_SMOKE].spawnstate
+					end
 				end,
 				ang, vertang
 			)
@@ -594,11 +764,16 @@ Takis_Hook.addHook("Takis_Thinker",function(p)
 			soap.dived = true
 			soap.sprung = false
 			soap.noability = $|NOABIL_SLIDE
+			
+			-- for ninja belt
+			p.rmomx = me.momx - p.cmomx
+			p.rmomy = me.momy - p.cmomy
+			soap.onGround = false
+			
 			soap.swimmode = (soap.c2 and soap.inWater)
 			if soap.swimmode
 				S_StartSound(me, sfx_sp_cln)
 			end
-			--takis.thokked = true
 			
 			me.state = S_PLAY_GLIDE
 		end
@@ -1051,58 +1226,16 @@ Takis_Hook.addHook("Takis_Thinker",function(p)
 		end
 		if (p.powers[pw_shield] & SH_NOSTACK == SH_FLAMEAURA)
 			soap.noairdrag = max($, 4)
-			me.momz = $ - P_GetMobjGravity(me) / 3
+			me.momz = $ - P_GetMobjGravity(me) / 8
 			
-			local angle,vertang = R_PointTo3DAngles(0,0,0, me.momx,me.momy,me.momz)
-			local frontpush = FixedDiv(me.radius,me.scale) * 2
-			local sidepush = Soap_RandomFixedRange(-frontpush/3, frontpush/3)
-			local toppush = FixedDiv(me.height,me.scale) / 2
-			
-			local s = P_SpawnMobjFromMobj(me,
-				P_ReturnThrustX(nil, angle, frontpush) + P_ReturnThrustX(nil, angle+ANGLE_90, sidepush),
-				P_ReturnThrustY(nil, angle, frontpush) + P_ReturnThrustY(nil, angle+ANGLE_90, sidepush),
-				toppush + FixedMul(sin(vertang), toppush), MT_PARTICLE
-			)
-			s.scale = FixedMul($ * 3/4, FU + Soap_RandomFixedRange(-FU/3,FU/3))
-			s.state = P_RandomChance(FU/2) and S_SOAP_IMPACT_LINE2F or S_SOAP_IMPACT_LINE2
-			s.angle = angle + ANGLE_180 + FixedAngle(Soap_RandomFixedRange(-45*FU,45*FU))
-			s.rollangle = InvAngle(vertang) + FixedAngle(Soap_RandomFixedRange(-22*FU,22*FU))
-			s.color = armacolors[P_RandomRange(1,#armacolors)]
-			s.tracer = inf
-			s.momx = $ + me.momx
-			s.momy = $ + me.momy
-			s.momz = $ + me.momz
-			
-			s = P_SpawnMobjFromMobj(me,
-				P_RandomRange(-16,16)*FU,
-				P_RandomRange(-16,16)*FU,
-				P_RandomRange(-8,8)*FU,
-				MT_FLAMEPARTICLE
-			)
-			s.momx = $ + me.momx / 2
-			s.momy = $ + me.momy / 2
-			s.momz = $ + me.momz / 2
-			
-			if (leveltime % 6 == 0)
-				s = P_SpawnMobjFromMobj(me,
-					0,0,toppush, MT_SOAP_WALLBUMP
-				)
-				s.frame = 36|FF_PAPERSPRITE|FF_FULLBRIGHT
-				s.angle = angle + ANGLE_90
-				s.color = SKINCOLOR_KETCHUP
-				s.blendmode = AST_ADD
-				
-				s.tics = 12
-				s.fuse = 12
-				s.sixseveneffect = true
-				
-				s.destscale = 0
-				s.scalespeed = FixedDiv(s.scale, s.tics*FU)
-				
-				s.momx = $ + me.momx / 5
-				s.momy = $ + me.momy / 5
-				s.momz = $ + me.momz / 5
+			ninjabelt_vfx(p,me,soap, NINJA_FRONT)
+			if P_RandomChance(FU / 2)
+				ninjabelt_vfx(p,me,soap, NINJA_FRONT)
 			end
+			
+			ninjabelt_vfx(p,me,soap, NINJA_FLAME)
+			ninjabelt_vfx(p,me,soap, NINJA_FLAME)
+			ninjabelt_vfx(p,me,soap, NINJA_RING)
 		end
 		soap.setrolltrol = true
 		
@@ -1118,6 +1251,15 @@ Takis_Hook.addHook("Takis_Thinker",function(p)
 			if (p.powers[pw_shield] & SH_NOSTACK) == SH_WHIRLWIND
 				local thrust = 4 * FU
 				thrust = $ + (11 * clamp(0, FixedDiv(prevspeed, 50*FU), FU))
+				-- no movement inputs gives you a larger
+				-- upwards thrust, just like actual sharktail
+				if (p.cmd.forwardmove == 0 and p.cmd.sidemove == 0)
+					me.momx = $ / 5
+					me.momy = $ / 5
+					thrust = $ * 17/10
+					
+					soap.sharktailfx = TAKIS_WDIVEVFX
+				end
 				
 				P_SetObjectMomZ(me, thrust, true)
 				S_StartSound(me, sfx_wdjump)

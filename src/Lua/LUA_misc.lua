@@ -52,8 +52,7 @@ addHook("MobjThinker",function(bump)
 	if not (bump and bump.valid) then return end
 	
 	-- this is just much better
-	if (bump.fusefade ~= nil)
-		if bump.fuse > bump.fusefade then return end
+	if (bump.fusefade ~= nil) and bump.fuse < bump.fusefade
 		bump.alpha = $ - (FU / bump.fusefade)
 	end
 	if (bump.fusesquish ~= nil)
@@ -64,6 +63,10 @@ addHook("MobjThinker",function(bump)
 	if (bump.movefactor ~= FU)
 		bump.momx = FixedMul($, bump.movefactor)
 		bump.momy = FixedMul($, bump.movefactor)
+	end
+	-- lol
+	if CV.rotations.value
+		bump.rollangle = $ + (bump.random or 0)
 	end
 	
 	if bump.sixseveneffect
@@ -105,9 +108,6 @@ addHook("MobjThinker",function(bump)
 	
 	if not (bump.flags & MF_NOGRAVITY)
 		bump.momz = $ + P_GetMobjGravity(bump)
-	end
-	if CV.rotations.value
-		bump.rollangle = $ + (bump.random or 0)
 	end
 	bump.lifetime = (bump.lifetime ~= nil and $+1 or 0)
 	
@@ -363,6 +363,7 @@ end
 --lol
 local function FreezeInHitlag(mo)
 	-- this is handled here because i cant be bothered to make a new mobj
+	-- only really meant for the hitmark vfx
 	if mo.soap_newvfx
 		return NewVFXThink(mo)
 	end
@@ -447,6 +448,37 @@ local function FreezeInHitlag(mo)
 			*/
 			mo.alpha = P_Lerp(FixedDiv(7 - mo.fuse, 6), FU, 0)
 		end
+		eat = true
+	end
+	if eat then return end
+	
+	if mo.ninjadive
+		local mypos = mo.anchor + mo.offset
+		mypos:ToMobjPos(mo, true, false)
+		
+		local mul = FU
+		local hc = mo.angles.hc
+		local vc = mo.angles.vc
+		if mo.offsetspeed >= 10*me.scale
+			mul = $ + FixedDiv(mo.offsetspeed - 10*me.scale, 10*me.scale)
+		elseif mo.offsetspeed <= 5*me.scale
+			mul = FixedDiv(mo.offsetspeed, 5*me.scale)
+		end
+		
+		mo.angles.h = $ + FixedAngle(FixedMul(hc, mul))
+		mo.angles.v = $ + FixedAngle(FixedMul(vc, mul))
+		mo.angle = mo.angles.h
+		mo.offset = $ + mo.offsetmom
+		mo.offset = $ + mo.offsetparentmom
+		
+		mo.offsetmom = (Vec3.SphereToCartesian(mo.angles.h, mo.angles.v) * mo.offsetspeed)
+		mo.offsetspeed = FixedMul($, mo.movefactor)
+		mo.offsetparentmom = mo.offsetparentmom * mo.movefactor
+		
+		if mo.fadeat and mo.tics < mo.fadeat
+			mo.alpha = $ - (FU/mo.fadeat)
+		end
+		
 		eat = true
 	end
 	if eat then return end

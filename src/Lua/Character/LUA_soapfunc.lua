@@ -189,15 +189,14 @@ end
 --expose
 rawset(_G,"P_CheckPredictedPitCollide",checkpredictedpitcollide)
 
-rawset(_G,"Soap_Booleans", function(p)
+-- rolls my huge eyes This is so the prethink
+-- can catch any floor hits we miss in the playerthink
+rawset(_G,"Soap_CheckGround", function(p, coordonly)
 	local soap = p.soaptable
 	local me = p.realmo
-	
-	soap.gravflip = P_MobjFlip(me)
-	
 	local posz = me.floorz
 	local z = me.z + me.momz
-	local onPosZ
+	local onPosZ = false
 	if (P_MobjFlip(me) == -1)
 		posz = me.ceilingz
 		z = me.z+me.height + me.momz
@@ -206,9 +205,26 @@ rawset(_G,"Soap_Booleans", function(p)
 		onPosZ = (z <= posz)
 	end
 	
-	soap.onGround = (P_IsObjectOnGround(me) or onPosZ)
-	if P_CheckDeathPitCollide(me) then soap.onGround = false; end
-	if checkpredictedpitcollide(p, me, z) then soap.onGround = false; end
+	if not coordonly
+		soap.onGround = (P_IsObjectOnGround(me) or onPosZ)
+		if P_CheckDeathPitCollide(me) then soap.onGround = false; end
+		if P_CheckPredictedPitCollide(p, me, z) then soap.onGround = false; end
+	end
+	
+	return posz,z
+end)
+ 
+rawset(_G,"Soap_Booleans", function(p)
+	local soap = p.soaptable
+	local me = p.realmo
+	local posz,z = Soap_CheckGround(p, true)
+	-- Just in case the prethink didnt
+	-- catch anything
+	if not soap.onGround
+		Soap_CheckGround(p, false)
+	end
+	
+	soap.gravflip = P_MobjFlip(me)
 	
 	soap.inPain = P_PlayerInPain(p)
 	if (p.powers[pw_carry] == CR_NIGHTSMODE)
@@ -3247,10 +3263,65 @@ local function VFX_DiveWhirl(p,me,soap, props)
 		frac = ease.outquart($, 0, FU)
 		local dist = 60 * frac
 		winddivevfx(p,me,soap, angle,offangle,dist,frac)
-		winddivevfx(p,me,soap, angle,offangle + FixedAngle(120*FU),dist,frac)
-		winddivevfx(p,me,soap, angle,offangle + FixedAngle(240*FU),dist,frac)
+		if soap.sharktailfx
+			winddivevfx(p,me,soap, angle,offangle + ANGLE_180,dist,frac)
+			
+			local s = P_SpawnMobjFromMobj(me,
+				P_RandomRange(-16,16)*FU,
+				P_RandomRange(-16,16)*FU,
+				P_RandomRange(-8,32)*FU,
+				MT_SOAP_FREEZEGFX
+			)
+			s.state = mobjinfo[MT_SOAP_DUST].spawnstate
+			s.tracer = me
+			s.nofxadjust = true
+			s.ninjadive = true
+			s.spritexscale = Soap_RandomFixedRange($*4/5, $*6/5)
+			s.spriteyscale = s.spritexscale
+			
+			s.anchor = Vec3.New(
+				me.x,me.y,me.z
+			)
+			s.offset = Vec3.MobjPosToVec(s) - s.anchor
+			
+			s.offsetmom = Vec3.New(0,0,0)
+			s.offsetparentmom = Vec3.MobjMomToVec(me)
+			s.offsetspeed = Soap_RandomFixedRange(5*me.scale, 16*me.scale)
+			s.movefactor = P_RandomRange(FU*7/8, FU*98/100)
+			s.angles = {
+				h = FixedAngle(360*P_RandomFixed()),
+				hc = Soap_RandomFixedRange(-18*FU, 18*FU),
+				v = FixedAngle(Soap_RandomFixedRange(-180*FU, 180*FU)),
+				vc = Soap_RandomFixedRange(-20*FU, 20*FU),
+			}
+		else
+			winddivevfx(p,me,soap, angle,offangle + FixedAngle(120*FU),dist,frac)
+			winddivevfx(p,me,soap, angle,offangle + FixedAngle(240*FU),dist,frac)
+		end
 		
 		soap.divewhirl = $ - 1
+	end
+	if soap.sharktailfx
+		if (soap.sharktailfx % 2)
+		and (soap.sharktailfx >= TAKIS_WDIVEVFX/2)
+			local w = Soap_WindLines(me, 1000*FU, SKINCOLOR_WHITE)
+			w.rollangle = ANGLE_90
+			w.spriteyscale = FixedMul($, P_RandomRange(FU*9/10, FU*8/5))
+			
+			w.momx = me.momx * 3/4
+			w.momy = me.momy * 3/4
+			w.momz = me.momz * 3/4
+			
+			local rad = 32 * me.scale
+			P_SetOrigin(w,
+				me.x + Soap_RandomFixedRange(-rad, rad),
+				me.y + Soap_RandomFixedRange(-rad, rad),
+				me.z + Soap_RandomFixedRange(0, -rad*4)
+			)
+			w.angle = (p.cmd.angleturn << 16) + ANGLE_90
+		end
+		
+		soap.sharktailfx = $ - 1
 	end
 end
 

@@ -42,6 +42,7 @@ addHook("PreThinkFrame",function()
 		--see also: https://git.do.srb2.org/STJr/SRB2/-/merge_requests/2656
 		soap.isSliding = p.pflags & PF_SLIDING == PF_SLIDING
 		Soap_ButtonStuff(p)
+		Soap_CheckGround(p, false)
 		
 		if (me.skin == SOAP_SKIN)
 			Soap_HandleNoAbils(p)

@@ -4210,25 +4210,54 @@ Takis_Hook.addHook("PostThinkFrame",function(p)
 				soap.uppercut_spin = 0
 			end
 			
-			if (leveltime & 1)
-			and (p.powers[pw_shield] & SH_NOSTACK == SH_WHIRLWIND)
-				local rad = FixedDiv(me.radius,me.scale) + 16*FU
-				local hei = FixedDiv(me.height,me.scale)
-				for i = -1,1,2
-					local ang = p.drawangle + ANGLE_90*i
-					local dust = P_SpawnMobjFromMobj(me,
-						P_ReturnThrustX(nil,ang,rad),
-						P_ReturnThrustY(nil,ang,rad),
-						hei/2,
-						MT_SOAP_DUST
-					)
-					P_Thrust(dust, R_PointToAngle2(dust.x,dust.y,me.x,me.y), -5*me.scale)
-					dust.momx = $ + me.momx
-					dust.momy = $ + me.momy
-					dust.momz = me.momz * 3/4
-					dust.destscale = dust.scale * 3/2
-					dust.scalespeed = FixedDiv(dust.destscale - dust.scale, dust.tics*FU)
+			if (p.powers[pw_shield] & SH_NOSTACK == SH_WHIRLWIND)
+				if (leveltime & 1)
+					local rad = FixedDiv(me.radius,me.scale) + 16*FU
+					local hei = FixedDiv(me.height,me.scale)
+					for i = -1,1,2
+						local ang = p.drawangle + ANGLE_90*i
+						local dust = P_SpawnMobjFromMobj(me,
+							P_ReturnThrustX(nil,ang,rad),
+							P_ReturnThrustY(nil,ang,rad),
+							hei/2,
+							MT_SOAP_DUST
+						)
+						P_Thrust(dust, R_PointToAngle2(dust.x,dust.y,me.x,me.y), -5*me.scale)
+						dust.momx = $ + me.momx
+						dust.momy = $ + me.momy
+						dust.momz = me.momz * 3/4
+						dust.destscale = dust.scale * 3/2
+						dust.scalespeed = FixedDiv(dust.destscale - dust.scale, dust.tics*FU)
+					end
 				end
+				local s = P_SpawnMobjFromMobj(me,
+					P_RandomRange(-16,16)*FU,
+					P_RandomRange(-16,16)*FU,
+					P_RandomRange(-8,32)*FU,
+					MT_SOAP_FREEZEGFX
+				)
+				s.state = mobjinfo[MT_SOAP_DUST].spawnstate
+				s.tracer = me
+				s.nofxadjust = true
+				s.ninjadive = true
+				s.spritexscale = Soap_RandomFixedRange($*4/5, $*6/5)
+				s.spriteyscale = s.spritexscale
+				
+				s.anchor = Vec3.New(
+					me.x,me.y,me.z
+				)
+				s.offset = Vec3.MobjPosToVec(s) - s.anchor
+				
+				s.offsetmom = Vec3.New(0,0,0)
+				s.offsetparentmom = Vec3.MobjMomToVec(me)
+				s.offsetspeed = Soap_RandomFixedRange(5*me.scale, 16*me.scale)
+				s.movefactor = P_RandomRange(FU*7/8, FU*98/100)
+				s.angles = {
+					h = FixedAngle(360*P_RandomFixed()),
+					hc = Soap_RandomFixedRange(-18*FU, 18*FU),
+					v = FixedAngle(Soap_RandomFixedRange(-180*FU, 180*FU)),
+					vc = Soap_RandomFixedRange(-20*FU, 20*FU),
+				}
 			end
 		end
 	end
