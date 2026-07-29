@@ -478,9 +478,6 @@ function Phys:physgun_thinker(p, ph, me)
 	elseif (p.cmd.buttons & BT_WEAPONPREV)
 		dist_change = -ph.distance_nudge
 	end
-	if dist_change ~= 0
-		--print(p.cmd.buttons & BT_FIRENORMAL)
-	end
 	ph.distance = clamp(100*FU, $ + dist_change, 1000*FU)
 	--ph.range = ph.distance*14/10
 	
@@ -627,6 +624,14 @@ function Phys:flinggun_thinker(p, ph, me)
 	end
 	
 	if (p.cmd.buttons & BT_ATTACK)
+		local dist_change = 0
+		if (p.cmd.buttons & BT_WEAPONNEXT)
+			dist_change = -ph.distance_nudge
+		elseif (p.cmd.buttons & BT_WEAPONPREV)
+			dist_change = ph.distance_nudge
+		end
+		ph.toolgun.ropedist = clamp(me.radius*2, $ + dist_change*2, ph.range*3)
+		
 		local anc = Vec3.New(pos.x, pos.y, pos.z)
 		local aim = Vec3.SphereToCartesian(p.cmd.angleturn << 16, p.cmd.aiming << 16)
 		aim = $ * (-ph.toolgun.ropedist)
