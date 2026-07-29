@@ -184,7 +184,7 @@ local function FuckIt(me, homing, target)
 		fuck.target_player = target.player
 		fuck.state = S_FUCK_INF
 		fuck.homing = true
-		fuck.flags = $|MF_NOCLIPHEIGHT|MF_NOCLIP
+		fuck.flags = $|MF_NOCLIPHEIGHT|MF_NOCLIP &~MF_SPECIAL
 	end
 	fuck.speed = fuck.info.speed
 	return fuck
@@ -283,6 +283,50 @@ COM_AddCommand("fucker", function(p, node, speed)
 end)
 
 local fuck_sounds = {sfx_sp_em0, sfx_sp_em5, sfx_sp_em6}
+local function P_ClosestPointOnLine3D(p, lstart, lend)
+	local t,d
+	local V = Vec3.Sub(lend, lstart)
+	local c = Vec3.Sub(p, lstart)
+	
+	-- d = R_PointToDist2(0, lend.z, R_PointToDist2(lend.x, lend.y, lstart.x, lstart.y), lstart.z)
+	d = R_PointTo3DDist(lstart.x,lstart.y,lstart.z, lend.x,lend.y,lend.z)
+	local n = Vec3.New(V.x, V.y, V.z) / d
+	t = Vec3.Dot(n, c)
+	
+	if t <= 0
+		return lstart
+	elseif t >= d
+		return lend
+	end
+	
+	n = $ * t
+	return Vec3.Add(lstart, n)
+end
+local function Baby_Raycast(baby, start,dest)
+	if R_PointTo3DDist(start.x,start.y,start.z, dest.x,dest.y,dest.z) <= 0 then return end
+	local fudge = 4*baby.scale
+	local radius = baby.radius + fudge
+	local height = baby.height + fudge
+	
+	for p in players.iterate
+		if not (p.mo and p.mo.valid and p.mo.health) then continue end
+		
+		local intersect = P_ClosestPointOnLine3D(Vec3.MobjPosToVec(p.mo), start, dest)
+		
+		if abs(intersect.x - p.mo.x) <= p.mo.radius + radius
+		and abs(intersect.y - p.mo.y) <= p.mo.radius + radius
+		and (
+			p.mo.z <= intersect.z + height -- check overhead
+			and p.mo.z+p.mo.height >= intersect.z -- check underhead
+		)
+			baby.flags = $|MF_SPECIAL
+			P_TouchSpecialThing(baby, p.mo)
+			if (baby and baby.valid)
+				baby.flags = $ &~MF_SPECIAL
+			end
+		end
+	end
+end
 addHook("MobjThinker",function(f)
 	if not f.extravalue1
 		S_StartSound(f, fuck_sounds[P_RandomRange(1,#fuck_sounds)])
@@ -299,8 +343,13 @@ addHook("MobjThinker",function(f)
 	if (f.homing and (play and play.valid))
 		local mo = play.realmo
 		
-		if mo.hitlag
-			return true
+		if mo.hitlag then return true; end
+		
+		if f.hitlagged
+			f.hitlagged = $ - 1
+			if not f.hitlagged
+				S_StartSound(f, sfx_sp_top)
+			end
 		end
 		
 		local speed = FixedMul(f.speed,f.scale)
@@ -312,29 +361,14 @@ addHook("MobjThinker",function(f)
 		local bandcap = 512 * f.scale
 		dist = clamp(0, $, bandcap)
 		
-		speed = $ + FixedMul(max($, 300 * f.scale), FixedDiv(dist, bandcap))
+		speed = $ + FixedMul($ * 4, FixedDiv(dist, bandcap))
 		
-		local steps = 6
-		local frac = FU/steps
-		local start = {
-			x = f.x,
-			y = f.y,
-			z = f.z
-		}
-		P_3DInstaThrust(f, ha,va, speed/steps)
-		for i = 0,6
-			local myfrac = frac*i
-			P_MoveOrigin(f,
-				start.x + FixedMul(f.momx, myfrac),
-				start.y + FixedMul(f.momy, myfrac),
-				start.z + FixedMul(f.momz, myfrac)
-			)
-			if not f.valid then return end
-		end
-		f.momx = 0
-		f.momy = 0
-		f.momz = 0
-		
+		P_3DInstaThrust(f, ha,va, speed)
+		Baby_Raycast(f,
+			Vec3.New(f.x, f.y, f.z),
+			Vec3.New(f.x+f.momx, f.y+f.momy, f.z+f.momz)
+		)
+		if not (f and f.valid) then return end
 		if not S_SoundPlaying(f,sfx_kc64)
 			S_StartSound(f,sfx_kc64)
 		end
@@ -378,6 +412,56 @@ local function dotumble(p)
 	me.soap_tumble_oldmomz = me.momz
 end
 
+-- kou parries lol
+local function try_kou_parry(p, f)
+	local me = p.mo
+	if not (f.homing) then return false; end -- homing fingers only
+	if (me.skin ~= "kou") then return false; end
+	if not (p.kou and p.kou.parrytimer) then return false; end
+	
+	-- kou vfx
+	P_FlashPal(p, PAL_INVERT, 4)
+	local kou = p.kou
+	kou.punchlagactive = 18
+	
+	if not (me.state == S_PLAY_KOU_DROP)
+		me.state = S_PLAY_KOU_DROP
+	end
+	
+	local circ = P_SpawnMobjFromMobj(me, 0, 0, 1, MT_KOUCIRCLE)
+	circ.tics = 15
+	circ.scale = me.scale + me.scale
+	circ.destscale = me.scale * 30
+	circ.scalespeed = me.scale * 3
+	P_Telekinesis(me.player, 45*me.scale, 640*me.scale)
+	local kicker = P_SpawnMobjFromMobj(me, 0,0,0, MT_KOU_MISSILEPARTICLE)
+	kicker.destscale = $*8
+	kicker.scalespeed = me.scale/2
+	kicker.color = p.skincolor
+	kicker.blendmode = AST_ADD
+	kicker.fuse = 6
+	local sounds = {sfx_kodrp1, sfx_kodrp2}
+	S_StartSound(me, sounds[P_RandomRange(1, #sounds)])
+	
+	Soap_Hitlag.addHitlag(me, 24, false)
+	Soap_Hitlag.addHitlag(f, 24, true)
+	Soap_StartQuake(10*FU, 12, {me.x, me.y, me.z}, 512*me.scale)
+	Soap_ImpactVFX(f, me, nil,2*FU,nil,nil, DMG_ELECTRIC)
+	Soap_DamageSfx(f, 25*FU, 30*me.scale, DMG_ELECTRIC)
+	S_StartSound(me, sfx_sp_pry)
+	
+	-- return to sender!
+	f.speed = $ * 3
+	f.target_player = players[f.playernum]
+	f.playernum = #p
+	f.tracer = me
+	f.touchlist[me] = nil
+	f.hitlagged = 2
+	me.fuckimmunity = TR
+	
+	return true
+end
+
 addHook("TouchSpecial",function(f, mo)
 	if not (f and f.valid) then return false; end
 	if not (mo and mo.valid) then return false; end
@@ -391,6 +475,10 @@ addHook("TouchSpecial",function(f, mo)
 	f.touchlist[mo] = true
 	local play = mo.player
 	if (play and play.valid)
+		if try_kou_parry(play, f) then
+			return unfuck(f,mo)
+		end
+		
 		Soap_DamageSfx(mo,FU*3/4,FU)
 		Soap_ImpactVFX(mo, f)
 		
