@@ -3222,7 +3222,8 @@ local function VFX_CeilingHit(p,me,soap, props)
 				end
 				s.color = armacolors[P_RandomRange(1, #armacolors)]
 				s.rollangle = -ANGLE_90
-				s.renderflags = $|RF_ALWAYSONTOP|RF_VERTICALFLIP
+				s.renderflags = $|RF_ALWAYSONTOP|RF_VERTICALFLIP|RF_NOCOLORMAPS
+				s.translation = "Invert"
 				s.spriteyscale = $ * 3/2 + extra
 				s.flags = $|MF_NOCLIPTHING|MF_NOCLIP|MF_NOCLIPHEIGHT|MF_NOBLOCKMAP
 				s.takis_flingme = false
