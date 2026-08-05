@@ -189,6 +189,7 @@ addHook("MobjThinker",function(b)
 		b.bell_init = true
 		
 		b.soap_supervfx = true
+		b.grap_forcereel = true
 		b.bell_cooldown = 0
 		settptimer(b)
 	end

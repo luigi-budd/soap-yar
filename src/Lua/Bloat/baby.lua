@@ -490,6 +490,51 @@ local function Baby_DoLunge(baby, angle,aim, dist, tics)
 		z = easefunc(nextfrac, baby.start_z, baby.end_z, easeback)
 	}
 	
+	if (baby.type == MT_NSVBBABY) and (adjtics <= baby.charge_time*8/10)
+		for i = 0,P_RandomRange(1,3)
+			local s = P_SpawnMobjFromMobj(baby,
+				Soap_RandomFixedRange(-baby.radius, baby.radius),
+				Soap_RandomFixedRange(-baby.radius, baby.radius),
+				Soap_RandomFixedRange(-8*FU, baby.height),
+				MT_SOAP_FREEZEGFX
+			)
+			s.sprite = SPR_SOAP_BLOATVFX
+			s.frame = 5
+			s.tics = P_RandomRange(18, 45)
+			s.fuse = s.tics
+			s.tracer = baby
+			s.nofxadjust = true
+			s.ninjadive = true
+			s.spritexscale = Soap_RandomFixedRange($/3, $*2)
+			s.spriteyscale = s.spritexscale
+			
+			s.dontdrawforviewmobj = baby
+			s.renderflags = $|RF_FULLBRIGHT
+			s.color = SKINCOLOR_GALAXY
+			s.blendmode = AST_SUBTRACT
+			
+			-- honestly im not sure how netsafe
+			-- it is to have one of these vectors
+			-- in a mobj
+			s.anchor = Vec3.New(
+				baby.x,baby.y,baby.z
+			)
+			s.offset = Vec3.MobjPosToVec(s) - s.anchor
+			
+			s.offsetmom = Vec3.SphereToCartesian(angle,aim) * (-80*FU)
+			s.offsetparentmom = Vec3.New(eased.x - start.x, eased.y - start.y, eased.z - start.z) / (7*FU)
+			s.offsetspeed = Soap_RandomFixedRange(20*baby.scale, 60*baby.scale)
+			s.movefactor = P_RandomRange(FU*87/100, FU*98/100)
+			s.angles = {
+				h = FixedAngle(360*P_RandomFixed()),
+				hc = Soap_RandomFixedRange(-18*FU, 18*FU),
+				v = FixedAngle(Soap_RandomFixedRange(-180*FU, 180*FU)),
+				vc = Soap_RandomFixedRange(-20*FU, 20*FU),
+			}
+			s.shrinkat = P_RandomRange(6,16)
+		end
+	end
+	
 	Baby_Raycast(baby, Vec3.New(start.x,start.y,start.z), Vec3.New(eased.x,eased.y,eased.z))
 	Baby_Raycast(baby, Vec3.New(start.x,start.y,start.z + baby.height/2), Vec3.New(eased.x,eased.y,eased.z + baby.height/2))
 	--Baby_Raycast(baby, Vec3.New(baby.start_x,baby.start_y,baby.start_z), Vec3.New(baby.end_x,baby.end_y,baby.end_z))
