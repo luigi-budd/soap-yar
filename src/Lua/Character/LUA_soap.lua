@@ -3356,10 +3356,10 @@ local function try_damage_cases(me,thing, p,soap,DealDamage,damagetype)
 			return false
 		end
 		
-		Soap_ImpactVFX(thing, me, nil,nil,nil,nil,damagetype)
 		local damage = 1
 		local power = 5*FU + FixedDiv(abs(me.momz),me.scale*3)
 		local hitlag_tics = 10 + ((power/FU) / 5)
+		Soap_ImpactVFX(thing, me, nil,FixedDiv(power,35*FU),nil,nil,damagetype)
 		Soap_DamageSfx(thing, power, 35*FU, damagetype)
 		
 		-- spike!
@@ -3368,7 +3368,7 @@ local function try_damage_cases(me,thing, p,soap,DealDamage,damagetype)
 			S_StartSound(me,sfx_sp_dm4)
 			local work = FixedDiv(power, 35*FU) - FU/2
 			repeat
-				Soap_ImpactVFX(thing,me, FU + work*7, nil,nil,nil,damagetype)
+				Soap_ImpactVFX(thing,me, FU + work*7, FU + work/2,nil,nil,damagetype)
 				work = $ - FU/4
 				damage = $ + 2
 			until (work <= 0)
@@ -3432,14 +3432,14 @@ local function try_damage_cases(me,thing, p,soap,DealDamage,damagetype)
 	and (me.momz*soap.gravflip > 0)
 	and (me.sprite2 == SPR2_MLEE)
 	and (thing.type ~= MT_ROLLOUTROCK)
-		Soap_ImpactVFX(thing,me, nil,nil,nil,nil,damagetype)
 		soap.uppercut_spin = soap_baseuppercutturn
 		soap.canuppercut = true
 		
-		local power = 5*FU + FixedDiv(me.momz,me.scale)
+		local power = 5*FU + FixedDiv(FixedHypot(FixedHypot(me.momx,me.momy)*3/4, me.momz), me.scale)
+		Soap_ImpactVFX(thing,me, nil,FixedDiv(power,35*FU),nil,nil,damagetype)
 		Soap_DamageSfx(thing, power, 35*FU, damagetype)
 		
-		local hitlag_tics = 10 + (power/FU / 5)
+		local hitlag_tics = 6 + (power/FU / 5)
 		
 		DealDamage(thing, me,me, nil, damagetype)
 		
@@ -3449,7 +3449,7 @@ local function try_damage_cases(me,thing, p,soap,DealDamage,damagetype)
 			soap.hud.painsurge = 6
 		end
 		
-		Soap_StartQuake(power*2, hitlag_tics,
+		Soap_StartQuake(power, hitlag_tics,
 			{me.x, me.y, me.z},
 			512*me.scale + power
 		)
@@ -3484,9 +3484,9 @@ local function try_damage_cases(me,thing, p,soap,DealDamage,damagetype)
 	if (soap.rdashing and p.normalspeed >= skins[p.skin].normalspeed + soap._maxdash)
 	or (soap.airdashed and Soap_AirdashState(me))
 	and not (thing.type == MT_ROLLOUTROCK and me.tracer == thing)
-		Soap_ImpactVFX(thing,me, nil,nil,nil,nil,damagetype)
 		
 		local power = FixedMul(10*FU + max(soap.accspeed - 20*FU,0), me.scale)
+		Soap_ImpactVFX(thing,me, nil,FixedDiv(power,60*FU),nil,nil,damagetype)
 		Soap_DamageSfx(thing, power, 60*FU, damagetype)
 		
 		local hitlag_tics = 4 + (power/FU / 10)

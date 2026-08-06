@@ -562,7 +562,7 @@ Takis_Hook.addHook("Takis_Thinker",function(p)
 		end
 		
 		if clutch.slinglag
-			S_StartSound(me, sfx_sp_top)
+			S_StartSoundAtVolume(me, sfx_sp_top, 255 * 4/5)
 			clutch.slinglag = false
 		end
 
@@ -1868,12 +1868,9 @@ local function try_pvp_collide(me,thing)
 	--hit by clutch
 	if (soap.afterimage)
 	and not (thing.type == MT_ROLLOUTROCK and me.tracer == thing)
-		Soap_ImpactVFX(thing,me, nil,nil,nil,nil, damagetype)
 		
 		local power = FixedMul(10*FU + max(soap.accspeed - 20*FU,0), me.scale)
-		
 		local hitlag_tics = 6
-		--P_Thrust(me, R_PointToAngle2(0,0,me.momx,me.momy), me.scale*8)
 		
 		if generic_slingshot(p,me,soap)
 			hitlag_tics = $ + FixedDiv(soap.accspeed, 50*FU) / FU
@@ -1883,17 +1880,23 @@ local function try_pvp_collide(me,thing)
 			S_StartSound(me, sfx_sp_kil)
 			S_StartSound(me, sfx_sp_smk)
 			
-			P_StartQuake(power, hitlag_tics + 3,
+			P_StartQuake(power * 3/4, hitlag_tics + 3,
 				{me.x, me.y, me.z},
 				512*me.scale + power
 			)
+			power = $ * 2
 		else
+			Soap_Hitlag.addHitlag(me, hitlag_tics/2, false)
 			Soap_DamageSfx(thing, power, 60*FU, damagetype)
 			P_StartQuake(power/2, hitlag_tics,
 				{me.x, me.y, me.z},
 				512*me.scale + power
 			)
+			if soap.clutch.misfire
+				soap.clutch.misfire = CLUTCH_MISFIRE
+			end
 		end
+		Soap_ImpactVFX(thing,me, nil,FixedDiv(power,60*FU),nil,nil, damagetype)
 		DealDamage(thing, me,me, nil, damagetype)
 		
 		if (thing and thing.valid and thing.type == MT_ROLLOUTROCK)
