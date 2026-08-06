@@ -112,10 +112,19 @@ end
 local TRACE_LEN = 90
 local TRACE_WOB = 2
 local TRACE_ENDWOB = 5
-local function TraceRope(p,me,cmd,g,m)
-	local angle, mang = R_PointTo3DAngles(me.x+me.momx,me.y+me.momy,me.z+me.momz+me.height/2, m.x,m.y,m.z)
+local function TraceRope(p,me,cmd,g,m, rpos)
+	local mx = me.momx
+	local my = me.momy
+	local mz = me.momz
+	if rpos ~= nil
+		mx = $ + (rpos.x - me.x)
+		my = $ + (rpos.y - me.y)
+		mz = $ + (rpos.z - me.z)
+	end
+	
+	local angle, mang = R_PointTo3DAngles(me.x+mx,me.y+my,me.z+mz+me.height/2, m.x,m.y,m.z)
 	mang = InvAngle($)
-	local step = R_PointTo3DDist(me.x+me.momx,me.y+me.momy,me.z+me.momz+me.height/2, m.x,m.y,m.z)
+	local step = R_PointTo3DDist(me.x+mx,me.y+my,me.z+mz+me.height/2, m.x,m.y,m.z)
 	step = FixedMul($, FixedDiv(g.ropefx, m.xyzdist))
 	step = $ / TRACE_LEN
 	
@@ -141,9 +150,9 @@ local function TraceRope(p,me,cmd,g,m)
 		
 		local dot = g.ropeparts[i]
 		local pos = {
-			x = me.x+me.momx + FixedMul(dist, vec.x) + wx,
-			y = me.y+me.momy + FixedMul(dist, vec.y) + wy,
-			z = me.z+me.momz+me.height/2 + FixedMul(dist, vec.z)
+			x = me.x+mx + FixedMul(dist, vec.x) + wx,
+			y = me.y+my + FixedMul(dist, vec.y) + wy,
+			z = me.z+mz+me.height/2 + FixedMul(dist, vec.z)
 		}
 		if not (dot and dot.valid)
 			dot = P_SpawnMobj(pos.x, pos.y, pos.z, MT_PARTICLE)
@@ -166,9 +175,9 @@ local function TraceRope(p,me,cmd,g,m)
 	
 	local dot = g.destfx
 	local pos = {
-		x = me.x+me.momx + FixedMul(dist, vec.x),
-		y = me.y+me.momy + FixedMul(dist, vec.y),
-		z = me.z+me.momz+me.height/2 + FixedMul(dist, vec.z)
+		x = me.x+mx + FixedMul(dist, vec.x),
+		y = me.y+my + FixedMul(dist, vec.y),
+		z = me.z+mz+me.height/2 + FixedMul(dist, vec.z)
 	}
 	if not (dot and dot.valid)
 		dot = P_SpawnMobj(pos.x, pos.y, pos.z, MT_PARTICLE)
@@ -334,7 +343,7 @@ local function ReelPart(p,me,cmd,g)
 	end
 	
 	g.wigglefx = min($ + FixedDiv(reelspeed,80*me.scale)/8, FU)
-	TraceRope(p,me,cmd,g,m)
+	TraceRope(p,me,cmd,g,m, pos)
 	local movegood = SafeVecPos(pos, me, true)
 	
 	if P_IsObjectOnGround(me)
@@ -360,7 +369,7 @@ local function ReelPart(p,me,cmd,g)
 end
 
 local MAX_ROPE_DIST = 2150*FU
-local ANTILAG = 5
+local ANTILAG = 10
 local function TryRayPrefire(p,me,cmd,g)
 	local speed = 16
 	local maxdist = FixedMul(MAX_ROPE_DIST, me.scale)
@@ -424,6 +433,8 @@ local function TryRayFire(p,me,cmd,g)
 	
 	local numhits = 0
 	local hits = {}
+	local curlag = (p.jointime % ANTILAG) + 1
+	local firsthit = 0
 	
 	for i = 1, ANTILAG
 		local step = g.antilag[i]
@@ -468,6 +479,9 @@ local function TryRayFire(p,me,cmd,g)
 					dist = R_PointTo3DDist(me.x,me.y,me.z+me.height/2, ray.x,ray.y,ray.z),
 					grapmobj = ray.target
 				}
+				if i == curlag
+					firsthit = i
+				end
 				P_RemoveMobj(ray)
 				break
 			end
@@ -479,10 +493,15 @@ local function TryRayFire(p,me,cmd,g)
 	end
 	
 	if numhits
-		table.sort(hits,function(a,b)
-			return a.dist < b.dist
-		end)
-		local h = hits[1]
+		local h
+		if firsthit > 0
+			h = hits[firsthit]
+		else
+			table.sort(hits,function(a,b)
+				return a.dist < b.dist
+			end)
+			h = hits[1]
+		end
 		
 		g.grappoint = {
 			x = h.x,
@@ -589,6 +608,9 @@ addHook("PlayerThink",function(p)
 	if g.fire
 	and not (g.grappoint or g.reeling)
 		TryRayPrefire(p,me,cmd,g)
+		if not P_IsObjectOnGround(me)
+			p.drawangle = cmd.angleturn << 16
+		end
 	end
 	
 	if oldfire and g.fire == 0
