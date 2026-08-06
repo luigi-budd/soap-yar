@@ -43,7 +43,7 @@ end
 
 function Vec3.Len(v) 
 	local temp = v:Dot(v)
-	if temp < 0 then return 0 end
+	if temp < 0 then temp = -$; end
     return FixedSqrt(temp)
 end
 
@@ -64,8 +64,8 @@ end
 function Vec3.ToMobjMom(v, mo, absolute)
 	if absolute then
 		mo.momx = v.x
-		mo.momy = v.z
-		mo.momz = v.y
+		mo.momy = v.y
+		mo.momz = v.z
 	else
 		mo.momx = $ + v.x
 		mo.momy = $ + v.y
