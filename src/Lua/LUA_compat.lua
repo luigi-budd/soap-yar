@@ -4,7 +4,6 @@ local compat = {
 	ptsrhook = false,
 	mrce = false,
 	ze2config = false,
-	--solform = false,
 	mmportrait = false,
 	orbitcompat = false,
 	rsr = false,
@@ -14,8 +13,6 @@ local compat_names = {
 	["battlemod"]	= "BattleMoveset    ",
 	["ptsrhook"]	= "PTSR Hooks       ",
 	["mrce"]		= "MRCE Compat.     ",
-	["ze2config"]	= "ZE2 Config.      ",
-	--["solform"]		= "Sol Form     ",
 	["ze2config"]	= "ZE2 Config.      ",
 	["mmportrait"]	= "EPIC!MM support  ",
 	["orbitcompat"] = "Orbit Compat.    ",
@@ -77,7 +74,7 @@ local function SetCompat()
 		--returning true sets secondary stats (sourspot, in this case)
 		B.AddPriorityFunction("soap_uppercut", function(me, mo)
 			--youre only every going up while uppercutting
-			if abs(me.momz) <= -3 * me.scale
+			if abs(me.momz) <= 3 * me.scale
 				--about to fall, hit a sour spot
 				return true
 			end
@@ -114,14 +111,6 @@ local function SetCompat()
 					--no sour spot
 					2, 1,
 					"Meteor Knuckle"
-				)
-			end
-			
-			if me.soap_sweeptics
-				B.SetPriority(p, 1,1, "can_damage",
-					--no sour spot
-					1, 1,
-					"Sweeping Kick"
 				)
 			end
 			
@@ -444,13 +433,5 @@ COM_AddCommand("soap_compatinfo",function(p)
 	for k,v in pairs(compat)
 		local name = compat_names[k]
 		CONS_Printf(p,"\t\x82"..name.."\x80 : " .. (v and "\x83".."Added" or "\x86Not added"))
-	end
-end)
-
-Takis_Hook.addHook("CanPlayerHurtPlayer",function(p1,p2, nobs)
-	if not (p2.mo and p2.mo.valid) then return end
-	if p2.mo.skin == "maverick" then
-		P_KillMobj(p2.mo)
-		return true
 	end
 end)
