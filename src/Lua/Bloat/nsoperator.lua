@@ -1,7 +1,7 @@
 local CV = SOAP_CV
 CV.operator = CV_RegisterVar({
 	name = "soap_operator",
-	defaultvalue = "On",
+	defaultvalue = "Off",
 	flags = CV_SHOWMODIF|CV_NETVAR,
 	PossibleValue = CV_OnOff,
 })
