@@ -881,6 +881,7 @@ local control_gc = {
 	[GC_TURNRIGHT]		= 2,
 }
 local keymovespeed = 7*FU
+local numberkey = -1
 addHook("KeyDown", function(key)
 	if isdedicatedserver then return end
 	if key.repeated then return end
@@ -927,6 +928,15 @@ addHook("KeyDown", function(key)
 		elseif abs(type) == 2
 			taunt_cmd.side = keymovespeed * sign(type)
 		end
+	end
+	
+	-- number keys can select taunts as well
+	if tonumber(key.name) ~= nil
+		local knum = tonumber(key.name)
+		if knum == 0 then knum = 10; end -- if we ever have 10 taunts
+		
+		numberkey = knum - 1
+		return true
 	end
 end)
 
@@ -1016,9 +1026,12 @@ local function ClientTauntHandle(p)
 	if (taunt_cmd.buttons & (BT_ATTACK|BT_JUMP))
 	or (mouse.buttons & MB_BUTTON1)
 	and (dist >= wheel_start)
+	or (numberkey > -1)
+		if numberkey > -1 then selected = numberkey; end
 		COM_BufInsertText(consoleplayer, "_soap_dotaunt "..cmd_sig.." "..selected)
 		StopMenu()
 	end
+	numberkey = -1
 end
 
 rawset(_G, "Soap_TauntWheelThink", function(p)
