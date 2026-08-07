@@ -829,8 +829,9 @@ rawset(_G,"Soap_ImpactVFX",function(src,inf, distmul, scalemul, forcesplat, nosp
 		
 		if forcesplat or nosparklag then return end
 		local num = (36 * scalemul)/FU
+		local myscale = max(scalemul, FU)
 		
-		local range = FixedMul(85*src.scale, scalemul)
+		local range = FixedMul(85*src.scale, max(scalemul, FU/2))
 		for i = 0,num
 			local f = P_SpawnMobjFromMobj(src,
 				Soap_RandomFixedRange(-range,range),
@@ -838,8 +839,8 @@ rawset(_G,"Soap_ImpactVFX",function(src,inf, distmul, scalemul, forcesplat, nosp
 				Soap_RandomFixedRange(0,range*2),
 				MT_PARTICLE
 			)
-			f.scale = scalemul * 2
-			f.spritexscale = $ + FixedMul(Soap_RandomFixedRange(-FU/4,FU/3), scalemul)
+			f.scale = myscale * 2
+			f.spritexscale = $ + FixedMul(Soap_RandomFixedRange(-FU/4,FU/3), myscale)
 			f.spriteyscale = f.spritexscale
 			f.state = S_SOAP_HITM_ESW
 			f.tics = P_RandomRange(1, 5 + (30*scalemul)/FU)
@@ -853,7 +854,7 @@ rawset(_G,"Soap_ImpactVFX",function(src,inf, distmul, scalemul, forcesplat, nosp
 			if P_RandomChance(FU/2) then
 				f.extravalue1 = $ + P_RandomRange(1,3)*3
 			end
-			f.renderflags = $|(P_RandomChance(FU/2) and RF_HORIZONTALFLIP or 0)
+			f.renderflags = $|(P_RandomChance(FU/2) and RF_HORIZONTALFLIP or 0)|RF_ALWAYSONTOP
 			f.color = elec_sparkcolors[P_RandomRange(1, #elec_sparkcolors)]
 			if P_RandomChance(FU/2)
 				local lag = (src.hitlag or 0)
@@ -1551,7 +1552,7 @@ rawset(_G, "Soap_TickSquashes",function(p,me,soap, donttick)
 	
 	if not donttick
 		if soap.afterimage
-		and (me.skin == SOAP_SKIN or me.skin == "takisthefox")
+		and (me.skin == SOAP_SKIN or me.skin == TAKIS_SKIN)
 			Soap_CreateAfterimage(p, me)
 		end
 	end
