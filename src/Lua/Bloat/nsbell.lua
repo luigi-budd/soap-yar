@@ -6,69 +6,7 @@ CV.belltumbles = CV_RegisterVar({
 	PossibleValue = CV_OnOff,
 })
 
-local function SpawnExplosions(mine, doquake, docount)
-	if doquake
-		P_StartQuake(60*FU, TICRATE*2,
-			{mine.x, mine.y, mine.z},
-			550*mine.scale
-		)
-	end
-	
-	local radius = 32*FU
-	local minz = 10
-	local maxz = 30
-	
-	local count = docount
-    if count == nil then count = 25 end
-
-	local anglecount = FixedDiv(360*FU,count*FU)
-	for i = 0,count
-		local fa = FixedAngle(anglecount*i)
-        -- adjusted fixed angle
-        local afa = fa + P_RandomRange(-360, 360)*ANG1
-
-		local mobj = P_SpawnMobjFromMobj(mine,
-			FixedMul(cos(afa),radius + P_RandomRange(0,10)*FU),
-			FixedMul(sin(afa),radius + P_RandomRange(0,10)*FU),
-			0, --FU - FixedMul(mobjinfo[type].height,tracer.scale)/2,
-			MT_THOK
-		)
-		mobj.flags = MF_NOGRAVITY|MF_NOCLIP|MF_NOCLIPTHING|MF_RUNSPAWNFUNC
-		mobj.state = S_MM_TRIPMINE_EXPLODE
-		mobj.momz = 0
-		--mobj.spritexscale,mobj.spriteyscale = FU*2,FU*2
-		mobj.flags2 = $ &~MF2_DONTDRAW
-		
-		mobj.angle = R_PointToAngle2(mobj.x,mobj.y, mine.x,mine.y)
-		mobj.scale = $+(P_RandomFixed()*((P_RandomChance(FU/2)) and 1 or -1))
-		
-		P_Thrust(mobj, mobj.angle,
-			-6*mobj.scale
-		)
-		P_SetObjectMomZ(mobj,P_RandomRange(minz,maxz)*FU)
-		mobj.oldfx = true
-		
-		local static = P_SpawnMobjFromMobj(mine,
-			FixedMul(cos(fa),radius + P_RandomRange(0,10)*FU),
-			FixedMul(sin(fa),radius + P_RandomRange(0,10)*FU),
-			0,
-			MT_THOK
-		)
-		static.flags = MF_NOGRAVITY|MF_NOCLIP|MF_NOCLIPTHING|MF_RUNSPAWNFUNC
-		static.state = S_MM_TRIPMINE_EXPLODE
-		static.momz = 0
-		static.flags2 = $ &~MF2_DONTDRAW
-		
-		static.angle = R_PointToAngle2(mobj.x,mobj.y, mine.x,mine.y)
-		static.scale = $+(P_RandomFixed()*((P_RandomChance(FU/2)) and 1 or -1))
-		
-		P_Thrust(static, static.angle,
-			-6*static.scale
-		)
-	end
-end
-
-local CV = SOAP_CV
+local SpawnExplosions = Bloat_SpawnExplosions
 
 SafeFreeslot("SPR_TRC1")
 SafeFreeslot("SPR_SOAP_BLOATVFX")
@@ -349,7 +287,11 @@ addHook("PlayerThink",function(p)
 			me.bell_ticker = 0
 			
 			if not me.health
-				SpawnExplosions(me, true)
+				Soap_StartQuake(60*FU, TR,
+					{me.x, me.y, me.z},
+					550*me.scale
+				)
+				SpawnExplosions(me)
 				for i = 0,4
 					Soap_ImpactVFX(me,me, 4*FU, 2*FU, true,true)
 				end

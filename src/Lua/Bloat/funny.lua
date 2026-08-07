@@ -52,6 +52,10 @@ states[S_MM_TRIPMINE_EXPLODE] = {
 		end
 		if P_IsObjectOnGround(mo)
 			mo.momz = -$
+			local scale = max(mo.scale, mo.forcescale or 0)
+			if abs(mo.momz) <= 10*scale
+				mo.momz = 10*scale * sign($)
+			end
 		end
 		mo.thought = true
 	end,
@@ -65,30 +69,37 @@ sfxinfo[SafeFreeslot("sfx_mmdie0")] = {
 	caption = "Dying"
 }
 
-local function SpawnExplosions(mine, doquake, docount)
-	if doquake
-		P_StartQuake(60*FU, TICRATE*2,
-			{mine.x, mine.y, mine.z},
-			550*mine.scale
-		)
-	end
-	
-	local radius = 32*FU
-	local minz = 10
-	local maxz = 30
-	
-	local count = docount
-    if count == nil then count = 25 end
+local function parse(arg, default)
+	if arg == nil then return default end
+	return arg
+end
+rawset(_G, "Bloat_SpawnExplosions", function(mine, props)
+	props = $ or {}
+	local radius	= parse(props.radius, 32*FU)
+	local offlow	= parse(props.offsetlowbound, -10*FU)
+	local offhi		= parse(props.offsethighbound, 10*FU)
+	local momz		= parse(props.momz, 10*FU)
+	local momzlow	= parse(props.momzlowbound, 10*FU)
+	local momzhi	= parse(props.momzhighbound, 30*FU)
+	local count		= parse(props.count, 25)
+	local scale		= parse(props.scale, FU)
+	local scalelow	= parse(props.scalelowbound, -FU/2)
+	local scalehi	= parse(props.scalehighbound, FU/2)
+	local speed		= parse(props.speed, 10*FU)
+	local speedlow	= parse(props.speedlowbound, -2*FU)
+	local speedhi	= parse(props.speedhighbound, 2*FU)
+	local fuse		= parse(props.fuse, -1)
+	local scaletome	= parse(props.scaletomobj, true)
 
 	local anglecount = FixedDiv(360*FU,count*FU)
 	for i = 0,count
 		local fa = FixedAngle(anglecount*i)
         -- adjusted fixed angle
-        local afa = fa + P_RandomRange(-360, 360)*ANG1
+        local afa = fa + FixedAngle(360*P_RandomFixed())
 
 		local mobj = P_SpawnMobjFromMobj(mine,
-			FixedMul(cos(afa),radius + P_RandomRange(0,10)*FU),
-			FixedMul(sin(afa),radius + P_RandomRange(0,10)*FU),
+			FixedMul(cos(afa),radius) + Soap_RandomFixedRange(offlow, offhi),
+			FixedMul(sin(afa),radius) + Soap_RandomFixedRange(offlow, offhi),
 			0, --FU - FixedMul(mobjinfo[type].height,tracer.scale)/2,
 			MT_THOK
 		)
@@ -97,19 +108,21 @@ local function SpawnExplosions(mine, doquake, docount)
 		mobj.momz = 0
 		--mobj.spritexscale,mobj.spriteyscale = FU*2,FU*2
 		mobj.flags2 = $ &~MF2_DONTDRAW
+		if fuse ~= -1 then mobj.fuse = fuse; end
 		
 		mobj.angle = R_PointToAngle2(mobj.x,mobj.y, mine.x,mine.y)
-		mobj.scale = $+(P_RandomFixed()*((P_RandomChance(FU/2)) and 1 or -1))
+		mobj.forcescale = scale + Soap_RandomFixedRange(scalelow, scalehi)
+		mobj.scale = mobj.forcescale
 		
 		P_Thrust(mobj, mobj.angle,
-			-6*mobj.scale
+			-FixedMul(speed + Soap_RandomFixedRange(speedlow,speedhi), scaletome and mobj.scale or FU)
 		)
-		P_SetObjectMomZ(mobj,P_RandomRange(minz,maxz)*FU)
+		P_SetObjectMomZ(mobj, momz + Soap_RandomFixedRange(momzlow, momzhi))
 		mobj.oldfx = true
 		
 		local static = P_SpawnMobjFromMobj(mine,
-			FixedMul(cos(fa),radius + P_RandomRange(0,10)*FU),
-			FixedMul(sin(fa),radius + P_RandomRange(0,10)*FU),
+			FixedMul(cos(afa),radius) + Soap_RandomFixedRange(offlow, offhi),
+			FixedMul(sin(afa),radius) + Soap_RandomFixedRange(offlow, offhi),
 			0,
 			MT_THOK
 		)
@@ -119,13 +132,15 @@ local function SpawnExplosions(mine, doquake, docount)
 		static.flags2 = $ &~MF2_DONTDRAW
 		
 		static.angle = R_PointToAngle2(mobj.x,mobj.y, mine.x,mine.y)
-		static.scale = $+(P_RandomFixed()*((P_RandomChance(FU/2)) and 1 or -1))
+		static.forcescale = scale + Soap_RandomFixedRange(scalelow, scalehi)
+		static.scale = static.forcescale
 		
 		P_Thrust(static, static.angle,
-			-6*static.scale
+			-FixedMul(speed + Soap_RandomFixedRange(speedlow,speedhi), scaletome and static.scale or FU)
 		)
 	end
-end
+end)
+local SpawnExplosions = Bloat_SpawnExplosions
 
 local infotable = {
 	flags = SF_X2AWAYSOUND,
@@ -589,10 +604,15 @@ addHook("PostThinkFrame",do
 				me.soap_tumble_down = nil
 				me.rollangle = 0
 				
-				SpawnExplosions(me, true)
+
+				Soap_StartQuake(60*FU, TR,
+					{me.x, me.y, me.z},
+					550*me.scale
+				)
+				SpawnExplosions(me, {scale = FU*3/2})
 				S_StartSound(me, sfx_mmdie0)
-				for i = 0,4
-					Soap_ImpactVFX(me,me, 4*FU, 2*FU, true,true)
+				for i = 0,P_RandomRange(3,6)
+					Soap_ImpactVFX(me,me, 4*FU, Soap_RandomFixedRange(FU,2*FU), true,true)
 				end
 				return
 			end
@@ -660,10 +680,6 @@ addHook("PostThinkFrame",do
 				P_FlashPal(p, PAL_INVERT, TR / 2)
 				S_StartSound(me, sfx_buzz3)
 				me.soap_tumble_markedfordeathanim = true
-				
-				for i = 0,4
-					Soap_ImpactVFX(me,me, 4*FU, 2*FU, true,false)
-				end
 			end
 		end
 		if me.momz * P_MobjFlip(me) < -5 * me.scale

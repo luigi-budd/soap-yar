@@ -1,3 +1,21 @@
+local SpawnExplosions = Bloat_SpawnExplosions
+local explosiondata = {
+	radius = 70*FU,
+	offsetlowbound = -20*FU,
+	offsethighbound = 20*FU,
+	scale = 5*FU,
+	scalelowbound = -(4*FU + FU/2),
+	scalehighbound = 2*FU,
+	speed = 30*FU,
+	speedlowbound = -15*FU,
+	speedhighbound = 40*FU,
+	momz = 0,
+	momzlowbound = 3*FU,
+	momzhighbound = 60*FU,
+	scaletomobj = false,
+	fuse = 3*TR,
+}
+/*
 local function SpawnExplosions(mine, doquake, docount)
 	local radius = 70*FU
 	local minz = 3
@@ -51,6 +69,7 @@ local function SpawnExplosions(mine, doquake, docount)
 		)
 	end
 end
+*/
 
 sfxinfo[SafeFreeslot("sfx_sdn_0")] = {
 	flags = SF_X2AWAYSOUND|SF_X4AWAYSOUND|SF_X8AWAYSOUND,
@@ -169,7 +188,7 @@ addHook("MobjThinker", function(m)
 	if m.explodetime == TR*3/2
 		for p in players.iterate
 			local me = p.realmo
-			SpawnExplosions(me)
+			SpawnExplosions(me, explosiondata)
 			for i = 0,12
 				Soap_ImpactVFX(me,me, 6*FU, 6*FU, true,true)
 			end
@@ -198,8 +217,8 @@ addHook("MobjThinker", function(m)
 		
 		P_StartQuake(200*FU, 2*TR)
 		
-		SpawnExplosions(b)
-		SpawnExplosions(b)
+		SpawnExplosions(b, explosiondata)
+		SpawnExplosions(b, explosiondata)
 		for i = 0,12
 			Soap_ImpactVFX(b,b, 6*FU, 6*FU, true,true)
 		end
