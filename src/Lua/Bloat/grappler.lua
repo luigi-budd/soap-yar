@@ -28,6 +28,17 @@ local forcecollide = {
 	[MT_NIGHTSBUMPER] = true,
 	[MT_CYBRAKDEMON_ELECTRIC_BARRIER] = true,
 }
+local ringtypes = {
+	[MT_RING] = true,
+	[MT_FLINGRING] = true,
+	[MT_COIN] = true,
+	[MT_FLINGCOIN] = true,
+	[MT_BLUESPHERE] = true,
+	[MT_FLINGBLUESPHERE] = true,
+}
+local forcenocollide = {
+	[MT_STARPOST] = true,
+}
 local forcereel = {
 	[MT_NIGHTSBUMPER] = true
 }
@@ -39,10 +50,16 @@ addHook("MobjMoveCollide",function(m, other)
 	end
 	--print(other.info.typename, Soap_ZCollide(m,other))
 	
+	if other.grap_forcecollide == false
+	or ringtypes[other.type] == true
+	or forcenocollide[other.type] == true
+		return false
+	end
+	
 	if (
 		(other.flags & (MF_BOSS|MF_ENEMY|MF_SOLID|MF_MONITOR|MF_SPECIAL|MF_SPRING))
 		or forcecollide[other.type] == true
-		or (other.grap_forcecollide)
+		or other.grap_forcecollide
 	) and Soap_ZCollide(m,other)
 		m.target = other
 		P_KillMobj(m)
@@ -236,7 +253,10 @@ local function RopePart(p,me,cmd,g)
 	local angle, mang = R_PointTo3DAngles(me.x,me.y,me.z, m.x,m.y,m.z)
 	mang = InvAngle($)
 	
-	me.momz = $ + P_GetMobjGravity(me)*12/10
+	if not (me.eflags & (MF_NOGRAVITY|MF_NOTHINK))
+	and not me.hitlag
+		me.momz = $ + P_GetMobjGravity(me)*12/10
+	end
 	p.soaptable.noairdrag = max($, TR/2)
 	
 	do
@@ -365,6 +385,12 @@ local function ReelPart(p,me,cmd,g)
 		return
 	end
 	
+	searchBlockmap("objects",function(r, found)
+		if not (found and found.valid and found.health) then return end
+		if not ringtypes[found.type] then return end
+		if R_PointTo3DDist(me.x,me.y,me.z, found.x,found.y,found.z) >= 128*me.scale then return end
+		P_TouchSpecialThing(found, me)
+	end, me)
 	r.speed = $ + me.scale/12
 end
 
@@ -433,11 +459,10 @@ local function TryRayFire(p,me,cmd,g)
 	
 	local numhits = 0
 	local hits = {}
-	local curlag = (p.jointime % ANTILAG) + 1
+	local curlag = ((p.jointime-p.cmd.latency) % ANTILAG) + 1
 	local firsthit = 0
-	
-	for i = 1, ANTILAG
-		local step = g.antilag[i]
+	for j = 1, ANTILAG
+		local step = g.antilag[j]
 		local ang = step.angleturn << 16
 		local aim = step.aiming << 16
 		local vec = SphereToCartesian(ang,aim)
@@ -461,7 +486,6 @@ local function TryRayFire(p,me,cmd,g)
 		
 		for i = 0,255
 			if not (ray and ray.valid) then break; end
-			
 			if R_PointTo3DDist(me.x,me.y,me.z, ray.x,ray.y,ray.z) >= maxdist
 				P_RemoveMobj(ray)
 				break
@@ -479,8 +503,8 @@ local function TryRayFire(p,me,cmd,g)
 					dist = R_PointTo3DDist(me.x,me.y,me.z+me.height/2, ray.x,ray.y,ray.z),
 					grapmobj = ray.target
 				}
-				if i == curlag
-					firsthit = i
+				if j == curlag
+					firsthit = numhits
 				end
 				P_RemoveMobj(ray)
 				break
@@ -498,6 +522,9 @@ local function TryRayFire(p,me,cmd,g)
 			h = hits[firsthit]
 		else
 			table.sort(hits,function(a,b)
+				if a.grapmobj and (b and not b.grapmobj)
+					return true
+				end
 				return a.dist < b.dist
 			end)
 			h = hits[1]
