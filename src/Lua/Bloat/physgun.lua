@@ -876,6 +876,7 @@ local function repopulate()
 end
 repopulate()
 addHook("AddonLoaded",repopulate)
+addHook("MapLoad",repopulate)
 
 local FF_to_V = {
 	[0] = 0,
