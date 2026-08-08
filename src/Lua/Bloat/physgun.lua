@@ -43,6 +43,7 @@ Phys.createTable = function(p)
 		distance = 400*FU,
 		distance_nudge = Phys.DEFAULT_DISTNUDGE,
 		lost_timer = 0,
+		rotatemode = false,
 		
 		--shot range
 		range = Phys.DEFAULT_RANGE,
@@ -72,6 +73,7 @@ function Phys:holdMobj(p, mo, silent)
 		ph.holdmemory.mobj = mo
 	end
 	ph.holdtime = 0
+	ph.rotatemode = false
 	
 	mo.phys_held = true
 	if not silent
@@ -84,6 +86,7 @@ function Phys:releaseMobj(p, mo, silent)
 	ph.target = nil
 	ph.holdtime = 0
 	ph.holdmemory.mobj = nil
+	ph.rotatemode = false
 	
 	mo.flags = $ &~MF_NOGRAVITY
 	mo.flags = $|(mo.info.flags & MF_NOGRAVITY)|(ph.holdmemory.flags & MF_NOGRAVITY)
@@ -441,6 +444,7 @@ function Phys:physgun_thinker(p, ph, me)
 	
 	local fireinput = (p.cmd.buttons & BT_ATTACK) and not (p.lastbuttons & BT_ATTACK)
 	local throwinput = (p.cmd.buttons & BT_FIRENORMAL) and not (p.lastbuttons & BT_FIRENORMAL)
+	local rotateinput = (p.cmd.buttons & BT_CUSTOM3) and not (p.lastbuttons & BT_CUSTOM3)
 	local hold = ph.target
 	if (ph.queuethrow)
 		if (ph.target and ph.target.valid)
@@ -478,7 +482,9 @@ function Phys:physgun_thinker(p, ph, me)
 	elseif (p.cmd.buttons & BT_WEAPONPREV)
 		dist_change = -ph.distance_nudge
 	end
-	ph.distance = clamp(100*FU, $ + dist_change, 1000*FU)
+	if not ph.rotatemode
+		ph.distance = clamp(100*FU, $ + dist_change, 1000*FU)
+	end
 	--ph.range = ph.distance*14/10
 	
 	local inrange = false
@@ -498,6 +504,13 @@ function Phys:physgun_thinker(p, ph, me)
 	
 	if (hold and hold.valid)
 	and (inrange)
+		if rotateinput
+			ph.rotatemode = not $
+		end
+		if ph.rotatemode and dist_change ~= 0
+			hold.angle = $ + FixedAngle(dist_change)
+		end
+		
 		ph.holdtime = $ + 1
 		local ang = me.angle
 		local aim = p.aiming
@@ -508,23 +521,6 @@ function Phys:physgun_thinker(p, ph, me)
 			z = (41*(me.height)/48 - 8*FU) + FixedMul(range, sin(aim)),
 		}
 		hold.flags = $|MF_NOGRAVITY
-		local easing = FU/3
-		
-		/*
-		hold.momx = FixedMul((me.x + vec.x) - hold.x, easing)
-		hold.momy = FixedMul((me.y + vec.y) - hold.y, easing)
-		hold.momz = FixedMul((me.z + vec.z) - hold.z, easing)
-		if (hold.flags & MF_NOTHINK)
-			P_XYMovement(hold)
-			if (hold and hold.valid)
-				P_ZMovement(hold)
-			end
-			if not (hold and hold.valid)
-				ph.target = nil
-				return
-			end
-		end
-		*/
 		
 		P_TryMove(hold,
 			me.x + vec.x,-- + FixedMul((me.x + vec.x) - hold.x, easing),
@@ -570,6 +566,7 @@ function Phys:physgun_thinker(p, ph, me)
 			Phys:releaseMobj(p,ph.target)
 		end
 		ph.target = nil
+		ph.rotatemode = nil
 	end
 end
 
@@ -805,6 +802,9 @@ addHook("HUD",function(v,p,c)
 	do --if ph.mode == "physgun" or ph.mode == "toolgun" or ph.mode == "toolgun"
 		local mode = (ph.mode:sub(1,1):upper()) .. (ph.mode:sub(2))
 		v.drawString(160, 170, mode, V_ALLOWLOWERCASE|V_YELLOWMAP|V_50TRANS, "small-center")
+		if (ph.rotatemode)
+			v.drawString(160, 178, "(Rotating)", V_ALLOWLOWERCASE|V_YELLOWMAP|V_60TRANS, "small-center")
+		end
 	end
 	
 	v.dointerp = function(tag)
@@ -830,6 +830,9 @@ addHook("HUD",function(v,p,c)
 		
 	v.drawString(w2s.x,w2s.y+8*FU,
 		"\x82[W. NEXT/PREV]:\x80 Adjust Distance",
+		V_ALLOWLOWERCASE|V_20TRANS, "small-thin-fixed")
+	v.drawString(w2s.x,w2s.y+12*FU,
+		"\x82[CUSTOM3]:\x80 Toggle Rotation",
 		V_ALLOWLOWERCASE|V_20TRANS, "small-thin-fixed")
 	/*
 	v.drawString(w2s.x,w2s.y+12*FU,

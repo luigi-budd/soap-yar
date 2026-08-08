@@ -145,6 +145,11 @@ local function TraceRope(p,me,cmd,g,m, rpos)
 	step = FixedMul($, FixedDiv(g.ropefx, m.xyzdist))
 	step = $ / TRACE_LEN
 	
+	local wobblestrength = 70*FU
+	if (g.reeling)
+		wobblestrength = FixedMul($, FixedDiv(g.reel.progress, g.reel.distcover))
+	end
+	
 	local vec = SphereToCartesian(angle, InvAngle(mang))
 	local dist = step
 	for i = 1, TRACE_LEN
@@ -159,7 +164,8 @@ local function TraceRope(p,me,cmd,g,m, rpos)
 			end
 			
 			local ang = angle + ANGLE_90
-			local force = FixedMul(70*sin(FixedAngle((leveltime*3*((g.ropefx>=m.xyzdist and not g.reeling) and 2 or 1) + (i-TRACE_WOB)/3)*FU*20)), wobblefrac)
+			local force = FixedMul(wobblestrength, sin(FixedAngle((leveltime*3*((g.ropefx>=m.xyzdist and not g.reeling) and 2 or 1) + (i-TRACE_WOB)/3)*FU*20)))
+			force = FixedMul($, wobblefrac)
 			force = FixedMul($, g.wigglefx)
 			wx = FixedMul(force, cos(ang))
 			wy = FixedMul(force, sin(ang))
@@ -223,6 +229,23 @@ local function DestroyRope(p,me,cmd,g)
 	end
 end
 
+local function FollowGrapMobj(p,me,cmd,g,m, allowuntether)
+	if (m.mo and m.mo.valid and m.mo.health)
+		m.x = m.mo.x + P_ReturnThrustX(m.mo.angle + m.dispang, m.dispoff)
+		m.y = m.mo.y + P_ReturnThrustY(m.mo.angle + m.dispang, m.dispoff)
+		m.z = m.mo.z + m.dispz
+	elseif m.dispang ~= nil and allowuntether
+		S_StartSound(me, sfx_g_rea)
+		
+		me.state = S_PLAY_FALL
+		
+		p.pflags = $|PF_JUMPED|PF_THOKKED
+		g.grappoint = nil
+		DestroyRope(p,me,cmd,g)
+		return
+	end
+end
+
 local function RopePart(p,me,cmd,g)
 	local m = g.grappoint
 	
@@ -235,25 +258,12 @@ local function RopePart(p,me,cmd,g)
 		return
 	end
 	
-	if (m.mo and m.mo.valid and m.mo.health)
-		m.x = m.mo.x + P_ReturnThrustX(m.mo.angle + m.dispang, m.dispoff)
-		m.y = m.mo.y + P_ReturnThrustY(m.mo.angle + m.dispang, m.dispoff)
-		m.z = m.mo.z + m.dispz
-	elseif m.dispang ~= nil
-		S_StartSound(me, sfx_g_rea)
-		
-		me.state = S_PLAY_FALL
-		
-		p.pflags = $|PF_JUMPED|PF_THOKKED
-		g.grappoint = nil
-		DestroyRope(p,me,cmd,g)
-		return
-	end
+	FollowGrapMobj(p,me,cmd,g,m, true)
 	
 	local angle, mang = R_PointTo3DAngles(me.x,me.y,me.z, m.x,m.y,m.z)
 	mang = InvAngle($)
 	
-	if not (me.eflags & (MF_NOGRAVITY|MF_NOTHINK))
+	if not (me.flags & (MF_NOGRAVITY|MF_NOTHINK))
 	and not me.hitlag
 		me.momz = $ + P_GetMobjGravity(me)*12/10
 	end
@@ -324,6 +334,7 @@ local function ReelPart(p,me,cmd,g)
 	local m = g.grappoint
 	local reelspeed = r.speed  --FixedMul(r.speed, me.scale)
 	
+	FollowGrapMobj(p,me,cmd,g,m, false)
 	local prevprogress = FixedDiv(r.progress, r.distcover)
 	r.progress = $ + reelspeed
 	local progress = FixedDiv(r.progress, r.distcover)
@@ -537,7 +548,7 @@ local function TryRayFire(p,me,cmd,g)
 			a = h.a,
 			mo = h.grapmobj,
 			xydist = R_PointToDist2(me.x,me.y, h.x,h.y),
-			xyzdist = R_PointTo3DDist(me.x,me.y,me.z+me.height/2, h.x,h.y,h.z) - 64*me.scale
+			xyzdist = R_PointTo3DDist(me.x,me.y,me.z+me.height/2, h.x,h.y,h.z)
 		}
 		g.ropefx = 0
 		g.wigglefx = FU

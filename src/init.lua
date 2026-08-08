@@ -20,6 +20,7 @@ local filetree = {
 	"libs/LUA_hitlag.lua",
 	"libs/LUA_world2screen.lua",
 	"libs/LUA_customhud.lua",
+	"libs/lib_general.lua",
 	
 	--character inits MUST be run before any of their thinkers/funcs!
 	"character/LUA_soapinit.lua",
@@ -42,6 +43,8 @@ local filetree = {
 	"bloat/physgun.lua",
 	"bloat/nsoperator.lua",
 	"bloat/grappler.lua",
+	"bloat/extra.lua",
+	"bloat/kidnap.lua",
 	
 	"LUA_main.lua",
 	
