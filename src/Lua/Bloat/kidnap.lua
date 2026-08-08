@@ -50,13 +50,6 @@ for i = 0,12
 	sfxinfo[SafeFreeslot(("sfx_krte%.2d"):format(i))].caption = "/"
 end
 
-addHook("MapLoad",do
-	P_SpawnMobj(
-		1212*FU, 780*FU, 32*FU,
-		MT_BLOAT_VAN
-	).angle = ANGLE_45
-end)
-
 local vanhud = {
 	pos = nil,
 	side = nil,
