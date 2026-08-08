@@ -276,6 +276,7 @@ end
 
 local function TryRunOver(v,mo)
 	if not (v.tracer and v.tracer.valid) then return end
+	if not Soap_ZCollide(v,mo) then return end
 	if mo.type == MT_PLAYER
 		local play = mo.player
 		
