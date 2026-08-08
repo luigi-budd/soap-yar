@@ -1,3 +1,8 @@
+sfxinfo[SafeFreeslot("sfx_deez")] = {
+	caption = "!?",
+	flags = SF_X4AWAYSOUND
+}
+
 local prn = CONS_Printf
 local CMD_PREFIX = "sb_"
 
