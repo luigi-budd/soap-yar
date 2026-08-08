@@ -274,15 +274,7 @@ local function dotumble(p)
 	me.soap_tumble_oldmomz = me.momz
 end
 
-local function blockCollisonLong(v, mo)
-	if mo == v.tracer then return false end
-	if mo == v.target then return false end
-	
-	if not TBSlib.rectangleCollidor(mo, v, FixedMul(BoxInfo.wid,v.scale), FixedMul(BoxInfo.len,v.scale), v.angle) then return false end
-	if not Soap_ZCollide(v,mo) then return end
-	if mo.vancollision == leveltime then return end
-	mo.vancollision = leveltime
-	
+local function TryRunOver(v,mo)
 	if not (v.tracer and v.tracer.valid) then return end
 	if mo.type == MT_PLAYER
 		local play = mo.player
@@ -324,7 +316,20 @@ local function blockCollisonLong(v, mo)
 		)
 	end
 end
+
+local function blockCollisonLong(v, mo)
+	if mo == v.tracer then return false end
+	if mo == v.target then return false end
+	
+	if not TBSlib.rectangleCollidor(mo, v, FixedMul(BoxInfo.wid,v.scale), FixedMul(BoxInfo.len,v.scale), v.angle) then return false end
+	if not Soap_ZCollide(v,mo) then return end
+	if mo.vancollision == leveltime then return end
+	mo.vancollision = leveltime
+	
+	TryRunOver(v,mo)
+end
 addHook("MobjCollide", blockCollisonLong, MT_BLOAT_VAN)
+addHook("MobjMoveCollide", TryRunOver, MT_BLOAT_VAN)
 
 -- this game is upsetting
 local function P_ClosestPointOnLine3D(p, lstart, lend)
