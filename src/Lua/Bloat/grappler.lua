@@ -1,5 +1,5 @@
 local CV = SOAP_CV
-COM_AddCommand("grappler",function(p)
+COM_AddCommand("grappler",function(p, extra)
 	if not (p.soaptable and p.realmo and p.realmo.valid) then return end
 	
 	local certified = false
@@ -8,6 +8,11 @@ COM_AddCommand("grappler",function(p)
 		certified = true
 	end
 	if not certified then return end
+	
+	if extra ~= nil
+		p.grappler_extra = not $
+		return
+	end
 	
 	p.grappler = not $
 	if (p.grappler)
@@ -152,6 +157,7 @@ local function TraceRope(p,me,cmd,g,m, rpos)
 	
 	local vec = SphereToCartesian(angle, InvAngle(mang))
 	local dist = step
+	local ropecolor = (p.grappler_extra) and ColorOpposite(me.color) or me.color
 	for i = 1, TRACE_LEN
 		local wx,wy = 0,0
 		if i > TRACE_WOB
@@ -185,11 +191,11 @@ local function TraceRope(p,me,cmd,g,m, rpos)
 			dot.frame = $ &~FF_TRANSMASK
 			dot.renderflags = $|RF_FULLBRIGHT|RF_NOCOLORMAPS
 			dot.scale = FU/14 + FixedMul(FU/4, FixedDiv(i*FU, TRACE_LEN*FU))
-			dot.color = me.color
 			g.ropeparts[i] = dot
 		else
 			P_MoveOrigin(dot, pos.x,pos.y,pos.z)
 		end
+		dot.color = ropecolor
 		--dot.blendmode = AST_ADD
 		--dot.dontdrawforviewmobj = me
 		dist = $ + step
@@ -210,11 +216,11 @@ local function TraceRope(p,me,cmd,g,m, rpos)
 		dot.frame = $ &~FF_TRANSMASK
 		dot.renderflags = $|RF_FULLBRIGHT|RF_NOCOLORMAPS
 		dot.scale = FU / 2
-		dot.color = ColorOpposite(me.color)
 		g.destfx = dot
 	else
 		P_MoveOrigin(dot, pos.x,pos.y,pos.z)
 	end
+	dot.color = ColorOpposite(ropecolor)
 end
 local function DestroyRope(p,me,cmd,g)
 	for i = 1, TRACE_LEN
@@ -249,7 +255,7 @@ end
 local function RopePart(p,me,cmd,g)
 	local m = g.grappoint
 	
-	if (P_IsObjectOnGround(me) or P_PlayerInPain(p) or p.powers[pw_carry] ~= CR_NONE)
+	if ((P_IsObjectOnGround(me) and not p.grappler_extra) or P_PlayerInPain(p) or p.powers[pw_carry] ~= CR_NONE)
 	or (me.eflags & MFE_SPRUNG)
 		g.grappoint = nil
 		DestroyRope(p,me,cmd,g)
@@ -293,7 +299,7 @@ local function RopePart(p,me,cmd,g)
 	TraceRope(p,me,cmd,g,m)
 	
 	p.pflags = $|PF_THOKKED
-	if (g.jump == 1)
+	if (g.jump == 1) and not (P_IsObjectOnGround(me) or p.soaptable.last.onground)
 		S_StartSound(me, sfx_g_reb)
 		P_SetObjectMomZ(me, 6*FU, true)
 		
@@ -410,6 +416,7 @@ local ANTILAG = 10
 local function TryRayPrefire(p,me,cmd,g)
 	local speed = 16
 	local maxdist = FixedMul(MAX_ROPE_DIST, me.scale)
+	local ropecolor = (p.grappler_extra) and ColorOpposite(me.color) or me.color
 
 	local ang = cmd.angleturn << 16
 	local aim = cmd.aiming << 16
@@ -447,12 +454,14 @@ local function TryRayPrefire(p,me,cmd,g)
 			t.sprite = SPR_THOK
 			t.fuse = 2
 			t.tics = -1
-			t.color = ColorOpposite(me.color)
+			t.color = ColorOpposite(ropecolor)
 			t.renderflags = $|RF_ALWAYSONTOP|RF_FULLBRIGHT
 			t.drawonlyforplayer = p
 			local scaleadd = 0 --FixedDiv(R_PointToDist(t.x,t.y), 512*FU)
 			t.spritexscale = (FU/2) + scaleadd
 			t.spriteyscale = t.spritexscale
+			-- vanilla ughhh
+			P_SetOrigin(t, t.x,t.y,t.z)
 			
 			P_RemoveMobj(ray)
 			break
@@ -651,8 +660,12 @@ addHook("PlayerThink",function(p)
 		end
 	end
 	
+	local dontfire = false
+	if (not p.grappler_extra)
+		dontfire = P_IsObjectOnGround(me)
+	end
 	if oldfire and g.fire == 0
-	and not P_IsObjectOnGround(me)
+	and not dontfire
 	and not (g.grappoint or g.reeling)
 		TryRayFire(p,me,cmd,g)
 	end
@@ -674,6 +687,7 @@ addHook("PlayerThink",function(p)
 				
 				local angle = m.a
 				local frontpush = -15*FU
+				local ropecolor = (p.grappler_extra) and ColorOpposite(me.color) or me.color
 				for i = 0,10
 					local vertang = FixedAngle(Soap_RandomFixedRange(-70*FU,70*FU))
 					local sidepush = Soap_RandomFixedRange(-frontpush/3, frontpush/3)
@@ -691,7 +705,7 @@ addHook("PlayerThink",function(p)
 					)
 					s.angle = h + ANGLE_180
 					s.rollangle = v + InvAngle(vertang)
-					s.color = ColorOpposite(me.color)
+					s.color = ColorOpposite(ropecolor)
 					local offset = P_RandomRange(2, 10)
 					s.anim_duration = $ + offset
 					s.tics = $ + offset
@@ -711,14 +725,16 @@ addHook("PlayerThink",function(p)
 		me.eflags = $|MFE_NOPITCHROLLEASING
 		local frac = FU/2
 		local angle, mang = R_PointTo3DAngles(me.x,me.y,me.z, m.x,m.y,m.z)
-		p.drawangle = angle + ANGLE_90
+		if not (P_IsObjectOnGround(me) or P_PlayerInPain(p))
+			p.drawangle = angle + ANGLE_90
+		end
 		mang = InvAngle($) + ANGLE_90
 		
 		local destpitch = FixedMul(mang, cos(angle))
 		local destroll = FixedMul(mang, sin(angle))
-		me.pitch = P_Lerp(frac, $, destpitch)
-		me.roll  = P_Lerp(frac, $, destroll)
 		if not (P_IsObjectOnGround(me) or P_PlayerInPain(p))
+			me.pitch = P_Lerp(frac, $, destpitch)
+			me.roll  = P_Lerp(frac, $, destroll)
 			me.state = S_PLAY_GLIDE
 		end
 		
