@@ -932,6 +932,7 @@ addHook("KeyDown", function(key)
 	
 	-- number keys can select taunts as well
 	if tonumber(key.name) ~= nil
+	and taunt_cmd.active
 		local knum = tonumber(key.name)
 		if knum == 0 then knum = 10; end -- if we ever have 10 taunts
 		
