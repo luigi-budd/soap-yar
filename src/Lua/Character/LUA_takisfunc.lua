@@ -101,7 +101,7 @@ rawset(_G,"Takis_DoClutch",function(p,riding)
 	
 	clutch.time = 1
 	
-	local thrust = 8*FU
+	local thrust = 6*FU + FU/2
 	local fricfreeze = false
 	
 	local clutchadjust = clutch.tics --max((takis.clutchtime - p.cmd.latency),0)
@@ -134,7 +134,7 @@ rawset(_G,"Takis_DoClutch",function(p,riding)
 			if ccombo < 4
 				thrust = $ + ccombo*FU
 			else
-				thrust = $ + (ccombo*FU * 38/100)
+				thrust = $ + 5*FU + ((ccombo-5)*FU * 38/100)
 			end
 			fricfreeze = true
 			--thrust = $+(3*FU/2)+FU
@@ -160,13 +160,28 @@ rawset(_G,"Takis_DoClutch",function(p,riding)
 		end
 	end
 	
-	if (p.powers[pw_sneakers] or takis.doSuperBuffs)
-		thrust = $*8/5
+	local speedbuff = (p.powers[pw_sneakers] or takis.doSuperBuffs)
+	if speedbuff
+		thrust = $*7/5
+	else
+		local speedcap = 50*FU
+		if ccombo >= 10
+			speedcap = $ + 3*((ccombo-9)*FU * 41/100)
+		end
+		speedcap = min($, 110*FU)
+		local capstart = speedcap - 12*FU
+		
+		if takis.accspeed >= speedcap
+			thrust = 0
+		elseif takis.accspeed >= capstart
+			local range = speedcap - capstart
+			local speed = takis.accspeed - capstart
+			local frac = ease.inquint(clamp(0,FixedDiv(speed,range),FU), 0,FU)
+			thrust = FixedMul($, frac)
+		end
 	end
 	
-	if p.gotflag
-	or p.gotcrystal
-	or p.noactions
+	if p.gotflag or p.gotcrystal or p.noactions
 		thrust = $/6
 	end
 	
@@ -174,18 +189,15 @@ rawset(_G,"Takis_DoClutch",function(p,riding)
 	--us super speed for spamming
 	local penaltyslowdown = false
 	if thrust == 0
-	and not (p.powers[pw_sneakers] or takis.doSuperBuffs)
+	and not speedbuff
 	and (clutch.spamcount >= 3)
 		penaltyslowdown = true
 	end
 	
-	if (takis.accspeed > ((p.powers[pw_sneakers] or takis.doSuperBuffs) and 40*FU or 35*FU))
+	if (takis.accspeed > (speedbuff and 35*FU or 38*FU))
 	and fricfreeze
 		takis.frictionfreeze = TR/2
 		me.friction = FU
-		if not p.powers[pw_sneakers]
-			thrust = 5 * FU
-		end
 	end
 	
 	local mo = (riding and riding.valid) and riding or ((p.powers[pw_carry] == CR_ROLLOUT) and me.tracer or me)
@@ -263,7 +275,7 @@ rawset(_G,"Takis_DoClutch",function(p,riding)
 		end
 	end
 	
-	local runspeed = FixedMul(skins[TAKIS_SKIN].runspeed,speedmul) - 4*FU
+	local runspeed = FixedMul(skins[TAKIS_SKIN].runspeed,speedmul) - 5*FU
 	if takis.accspeed < runspeed
 		P_Thrust(mo,ang, FixedMul(runspeed - takis.accspeed,me.scale))
 	end
@@ -305,7 +317,7 @@ rawset(_G,"Takis_DoClutch",function(p,riding)
 	*/
 	
 	--takis.coyote = 0
-	takis.noability = $ &~NOABIL_AFTERIMAGE
+	--takis.noability = $ &~NOABIL_AFTERIMAGE
 	
 	local angrot = FixedDiv(P_RandomRange(40,80)*FU, 5*FU)
 	local angoff = ANGLE_45
@@ -945,133 +957,3 @@ rawset(_G,"Takis_DoHammerBlastLand",function(p,domoves)
 	end
 	hammer.down = 0
 end)
-
---table of helper funcs?
-rawset(_G,"Takis_AbilityHelpers",{
-	hammerthinker = function(p)
-		local me = p.realmo
-		local takis = p.soaptable
-		local hammer = takis.hammer
-		
-		if (me.flags & MF_NOTHINK)
-			Takis_ResetHammerTime(p)
-			takis.accspeed = 0
-			me.momx,me.momy,me.momz = 0,0,0
-			return
-		end
-		
-		p.charflags = $ &~SF_RUNONWATER
-		p.powers[pw_strong] = $|(STR_SPRING|STR_HEAVY|STR_SPIKE)
-		takis.noability = $|NOABIL_HAMMER
-		--control better
-		takis.setrolltrol = true
-		p.thrustfactor = skins[TAKIS_SKIN].thrustfactor*3/2
-		p.drawangle = me.angle
-		
-		if (p.pflags & PF_SHIELDABILITY)
-			p.pflags = $ &~PF_SHIELDABILITY
-		end
-		
-		--right side up lol
-		me.pitch = FixedMul($,FU*3/4)
-		me.roll = FixedMul($,FU*3/4)
-		
-		if me.state ~= S_PLAY_MELEE
-		and not (takis.inPain or me.state == S_PLAY_TAKIS_HSTART)
-			me.state = S_PLAY_MELEE
-		end
-		
-		hammer.jumped = 0
-		if hammer.down == 1
-			Soap_ZLaunch(me,12*FU)
-			hammer.wentdown = false
-		end
-		
-		takis.dived = true
-		if takis.in2D
-			p.drawangle = hammer.angle
-		end
-		me.momz = $+P_GetMobjGravity(me)
-		
-		local dontdostuff = false
-		
-		--the main stuff
-		local fallingspeed = (8*me.scale)
-		if (takis.inWater) then fallingspeed = $*3/4 end
-		
-		if me.momz*takis.gravflip <= fallingspeed
-		or hammer.wentdown == true
-			--me.momz = $*15/8
-			me.momz = $-((me.scale*11/10)*takis.gravflip)
-			if p.powers[pw_shield] & SH_FORCE
-				me.momz = $+P_GetMobjGravity(me)
-			end
-			
-			hammer.wentdown = true
-			
-			if not S_SoundPlaying(me,sfx_tk_hmd)
-				S_StartSoundAtVolume(me,sfx_tk_hmd,255*7/10)
-			end
-			
-			/*
-			if hammer.down
-			and (hammer.down % 5 == 0)
-			and (me.momz*takis.gravflip <= 16*me.scale)
-				P_SpawnGhostMobj(me)
-			end
-			*/
-			dontdostuff = Takis_HammerBlastHitbox(p)
-		end
-		
-		local superspeed = -60*me.scale
-		if (me.momz*takis.gravflip <= superspeed + 5*me.scale)
-		and not (takis.last.momz*takis.gravflip <= superspeed + 5*me.scale)
-			S_StartSound(me,sfx_tk_fst)
-		end
-		
-		hammer.down = $+1
-		
-		local domoves = true
-		--cancel conds.
-		if not (takis.notCarried)
-			hammer.down = 0
-			domoves = false
-		elseif (me.eflags & MFE_SPRUNG
-		or takis.fakesprung)
-			hammer.down = 0
-			me.state = S_PLAY_SPRING
-			Soap_ResetState(p)
-			
-			p.pflags = $ &~(PF_JUMPED|PF_THOKKED)
-			takis.dived = false
-			domoves = false
-		elseif not me.health
-		or (takis.inPain)
-		or not (takis.notCarried)
-			hammer.down = 0
-			domoves = false
-		elseif dontdostuff
-			hammer.down = 0
-			domoves = false				
-		end
-		if not domoves
-			Takis_ResetHammerTime(p)
-			return
-		end
-		if abs(me.momz) <= me.scale * 3/2
-			hammer.stuck = $ + 1
-			if hammer.stuck >= 2*TR
-				Takis_ResetHammerTime(p)
-				me.state = S_PLAY_FALL
-				return
-			end
-		end
-		
-		--hit ground
-		if (takis.onGround or P_CheckDeathPitCollide(me))
-		or (Soap_BouncyCheck(p))
-			Takis_DoHammerBlastLand(p,domoves)
-		end
-
-	end,
-})

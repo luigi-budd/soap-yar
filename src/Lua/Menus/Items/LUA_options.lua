@@ -14,6 +14,63 @@ SOAP_MENUS.drawRounded = function(v, x,y, w, size, clr)
 	v.draw(x+w,y, v.cachePatch("SMENU_CIRC_"..size), V_FLIP, clr)
 end
 
+local GPAD_A = 256 + 8
+local GPAD_B = GPAD_A + 1
+local GPAD_X = GPAD_A + 2
+local GPAD_Y = GPAD_A + 3
+
+local GPAD_LBUMPER = GPAD_A + 4
+local GPAD_RBUMPER = GPAD_A + 5
+
+local GPAD_LCENTER = GPAD_A + 6
+local GPAD_RCENTER = GPAD_A + 7
+
+local GPAD_LSTICK = GPAD_A + 8
+local GPAD_RSTICK = GPAD_A + 9
+
+local GPAD_DUP = 296
+local GPAD_DDOWN = 296 + 1
+local GPAD_DLEFT = 296 + 2
+local GPAD_DRIGHT = 296 + 3
+
+local gpbuttonnames = {
+	[GPAD_A] = "A",
+	[GPAD_B] = "B",
+	[GPAD_X] = "X",
+	[GPAD_Y] = "Y",
+
+	[GPAD_LBUMPER] = "Left Bumper",
+	[GPAD_RBUMPER] = "Right Bumper",
+
+	[GPAD_LCENTER] = "Select",
+	[GPAD_RCENTER] = "Start",
+
+	[GPAD_LSTICK] = "Left Stick",
+	[GPAD_RSTICK] = "Right Stick",
+
+	[GPAD_DUP] = "D-Pad Up",
+	[GPAD_DDOWN] = "D-Pad Down",
+	[GPAD_DLEFT] = "D-Pad Left",
+	[GPAD_DRIGHT] = "D-Pad Right",
+}
+
+/*
+	joy1 = A
+	joy2 = B
+	joy3 = X
+	joy4 = Y
+	
+	joy5 = left bumper
+	joy6 = right bumper
+	
+	joy7 = left center button
+	joy8 = right center button
+	
+	joy9 = left stick down
+	joy10 = right stick down
+	
+	hat keys = dpad
+*/
 SOAP_MENUS.tauntrebind = {
 	rebinding = false,
 	tobind = ""
@@ -62,7 +119,7 @@ SOAP_MENUS.buttontoggle = function(v, x,y, width, props)
 		local bhalf = bwid - (10 + 2)
 		local left = x + width - (bwid + 2)
 		local hover = false
-		if ML.mouseInZone(left,y+1, bwid,widths["MEDIUM"], false) and not sld_grabbed and canPress
+		if ML.mouseInZone(left,y+1, bwid,widths["MEDIUM"], false) and not sld_grabbed and canPress and not (#ML.client.popups)
 			ML.client.canPressSomething = true
 			hover = true
 		end
@@ -103,7 +160,7 @@ SOAP_MENUS.buttontoggle = function(v, x,y, width, props)
 		local strwid = v.stringWidth(cv_str,0,"thin")+6
 		
 		local hover = false
-		if ML.mouseInZone(left-strwid,y+1, wid+strwid,widths["MEDIUM"], false) and not sld_grabbed and canPress
+		if ML.mouseInZone(left-strwid,y+1, wid+strwid,widths["MEDIUM"], false) and not sld_grabbed and canPress and not (#ML.client.popups)
 			ML.client.canPressSomething = true
 			hover = true
 		end
@@ -148,7 +205,7 @@ SOAP_MENUS.buttontoggle = function(v, x,y, width, props)
 		y = $ + 1
 		do
 			local w = 20
-			hover = ML.mouseInZone(right-w, y, w,10) and not sld_grabbed
+			hover = ML.mouseInZone(right-w, y, w,10) and not sld_grabbed and not (#ML.client.popups)
 			local c = 0
 			if hover and canPress
 				menu_tooltip = {"Click to input a value"}
@@ -192,7 +249,7 @@ SOAP_MENUS.buttontoggle = function(v, x,y, width, props)
 			end
 			
 			if not sld_grabbed
-				if ML.mouseInZone(startx, y*FU, slider_w*FU, slider_h*FU, true) and canPress
+				if ML.mouseInZone(startx, y*FU, slider_w*FU, slider_h*FU, true) and canPress and not (#ML.client.popups)
 					hovering = true
 					ML.client.mouse_graphic = "ML_RBLX_DHOVER"
 					if ML.client.mouseHeld == 1
@@ -278,7 +335,7 @@ end
 local compver,compdate = (loadfile("Vars/compver.lua"))(), (loadfile("Vars/compdate.lua"))()
 local mbrelease = (loadfile("Vars/mbrelease.lua"))()
 local debug = (loadfile("Vars/debugflag.lua"))()
-local popup_id = MenuLib.addMenu({
+local kb_popup_id = MenuLib.addMenu({
 	stringId = "soap_tauntkeyprompt",
 	
 	x = 160 - 60,
@@ -337,6 +394,101 @@ local popup_id = MenuLib.addMenu({
 	end
 })
 
+local controller_hovered = false
+local selected_gpadbutton = 0
+local function drawControllerButton(v, x,y,scale, patch,gpbutton, px,py,pwid,phei)
+	local parent = v.cachePatch("SMENUC_BACK")
+	local sx = x - (parent.leftoffset * scale)
+	local sy = y - (parent.topoffset * scale)
+	
+	local hover = ML.mouseInZone(sx + px*scale, sy + py*scale, pwid*scale,phei*scale, true) and not controller_hovered
+	if hover
+		controller_hovered = true
+		selected_gpadbutton = gpbutton
+		
+		ML.client.canPressSomething = true
+		if (ML.client.mouseHeld == -1)
+			S_StartSound(nil,sfx_menu1)
+			ML.client.commandbuffer = "soap_tauntbutton "..gpbutton
+			ML.initPopup(-1)
+		end
+	end
+	
+	v.drawScaled(x,y, scale, v.cachePatch(patch), 0, v.getStringColormap(hover and V_YELLOWMAP or 0))
+end
+
+local gp_popup_id = MenuLib.addMenu({
+	stringId = "soap_tauntkeyprompt_gamepad",
+	
+	x = 160 - (260/2),
+	y = 100 - (184/2),
+	
+	width = 260,
+	height = 184,
+	color = 27,
+	outline = 30,
+	lifetime = 0,
+	
+	title = "",
+	ps_flags = PS_NOSLIDEIN,
+	
+	init = function()
+		trb_reset()
+		--trb.rebinding = true
+		ML.menus[ML.findMenu("soap_tauntkeyprompt_gamepad")].lifetime = 0
+	end,
+	drawer = function(v, ML, menu, props)
+		local x,y = props.corner_x, props.corner_y
+		local scale = FU
+		
+		v.drawString(x + menu.width/2, y + 2,
+			"Rebind Taunt Key", V_ALLOWLOWERCASE|V_YELLOWMAP,
+			"thin-center"
+		)
+		
+		controller_hovered = false
+		selected_gpadbutton = 0
+		x = (x + menu.width/2)*FU
+		y = (y + menu.height/2)*FU
+		
+		v.drawScaled(x,y, scale, v.cachePatch("SMENUC_BACK"), 0)
+		
+		drawControllerButton(v,x,y,scale, "SMENUC_BTN_A",GPAD_A, 180,66, 19,19)
+		drawControllerButton(v,x,y,scale, "SMENUC_BTN_B",GPAD_B, 196,51, 19,19)
+		drawControllerButton(v,x,y,scale, "SMENUC_BTN_X",GPAD_X, 164,51, 19,19)
+		drawControllerButton(v,x,y,scale, "SMENUC_BTN_Y",GPAD_Y, 180,35, 19,19)
+		
+		drawControllerButton(v,x,y,scale, "SMENUC_BTN_LBUMP",GPAD_LBUMPER, 44,12, 56,22)
+		drawControllerButton(v,x,y,scale, "SMENUC_BTN_RBUMP",GPAD_RBUMPER, 160,12, 56,22)
+		
+		drawControllerButton(v,x,y,scale, "SMENUC_BTN_L3",GPAD_LSTICK, 56,46, 29,29)
+		drawControllerButton(v,x,y,scale, "SMENUC_BTN_R3",GPAD_RSTICK, 146,82, 29,29)
+		
+		drawControllerButton(v,x,y,scale, "SMENUC_BTN_LCNTR",GPAD_LCENTER, 106,53, 15,15)
+		drawControllerButton(v,x,y,scale, "SMENUC_BTN_RCNTR",GPAD_RCENTER, 140,53, 15,15)
+		
+		drawControllerButton(v,x,y,scale, "SMENUC_BTN_DUP",GPAD_DUP, 94,80, 12,10)
+		drawControllerButton(v,x,y,scale, "SMENUC_BTN_DDOWN",GPAD_DDOWN, 94,102, 12,10)
+		drawControllerButton(v,x,y,scale, "SMENUC_BTN_DLEFT",GPAD_DLEFT, 84,90, 10,12)
+		drawControllerButton(v,x,y,scale, "SMENUC_BTN_DRIGHT",GPAD_DRIGHT, 105,90, 10,12)
+		
+		v.drawString(x, y + (165*scale)/2 - 10*FU,
+			"Click on a button to select it.",
+			V_ALLOWLOWERCASE, "thin-fixed-center"
+		)
+		if selected_gpadbutton
+			v.drawString(x, y + (165*scale)/2,
+				"Rebind to \x82" .. gpbuttonnames[selected_gpadbutton],
+				V_ALLOWLOWERCASE, "thin-fixed-center"
+			)
+		end
+	end,
+	exit = function(_,_, menu)
+		trb_reset()
+		ML.menus[ML.findMenu("soap_tauntkeyprompt_gamepad")].lifetime = 0
+	end
+})
+
 ML.addMenu({
 	stringId = "soap_options",
 	title = "Soap Options",
@@ -366,20 +518,44 @@ ML.addMenu({
 			cv_type = "customfunc", func = function(x,y,wd)
 				local right = (x + wd) - 4
 				local hover = false
-				local slider_w = 40
+				local slider_w = 120
 				local slider_h = 10
 				
 				y = $ + 1
+				local firsthover = false
 				do
-					local w = 36
+					local w = 11
 					hover = ML.mouseInZone(right-w, y, w,10) and not (#ML.client.popups)
+					firsthover = hover
 					local c = 0
 					if hover
+						menu_tooltip = {"Change which button opens the Taunt Menu.", "Gamepad only."}
 						c = (ML.client.mouseHeld > 0) and 4 or 2
 						ML.client.canPressSomething = true
 						if (ML.client.mouseHeld == -1)
 							S_StartSound(nil,sfx_menu1)
-							ML.initPopup(popup_id)
+							ML.initPopup(gp_popup_id)
+						end
+					end
+					v.drawFill((right - w),		y,   w,   10, 68 - c)
+					v.drawFill((right - w)+1,	y+1, w-2, 1,  70 - c)
+					v.drawFill((right - w)+1,	y+8, w-2, 1,  70 - c)
+					v.drawFill((right - w+1),	y+1, 1,   8,  70 - c)
+					v.drawFill((right - 2),		y+1, 1,   8,  70 - c)
+					v.drawString(right - w/2 - 1, y+1, "\29",V_ALLOWLOWERCASE,"center")
+					right = $ - w
+				end
+				do
+					local w = 36
+					hover = ML.mouseInZone(right-w, y, w,10) and not (#ML.client.popups) and not firsthover
+					local c = 0
+					if hover
+						menu_tooltip = {"Change which key opens the Taunt Menu.", "Keyboard only."}
+						c = (ML.client.mouseHeld > 0) and 4 or 2
+						ML.client.canPressSomething = true
+						if (ML.client.mouseHeld == -1)
+							S_StartSound(nil,sfx_menu1)
+							ML.initPopup(kb_popup_id)
 						end
 					end
 					v.drawFill((right - w),		y,   w,   10, 68 - c)
@@ -390,13 +566,19 @@ ML.addMenu({
 					v.drawString(right - w/2, y+1, "Change",V_ALLOWLOWERCASE,"thin-center")
 					right = $ - w
 				end
+				
 				local cwid = widths["MEDIUM"]/2
 				v.draw(right - slider_w - 1 - cwid, y, v.cachePatch("SMENU_CIRC_MEDIUM"), 0, v.getColormap(TC_DEFAULT,SKINCOLOR_BLACK))
 				v.drawFill(right - slider_w - 1, y, slider_w + 1, slider_h, 28)
+				local buttonstr = '"' .. CV.taunt_key.string .. '"'
+				if CV.taunt_button.value > 0
+					buttonstr = $..", <"..(gpbuttonnames[CV.taunt_button.value] or "???")..">"
+				end
+				
 				v.drawString(
 					(right - slider_w - 1 - cwid) + (slider_w)/2 + cwid, y + 1,
-					'"'..CV.taunt_key.string..'"', 0,
-					"center"
+					buttonstr, V_ALLOWLOWERCASE,
+					"thin-center"
 				)
 			end
 		})

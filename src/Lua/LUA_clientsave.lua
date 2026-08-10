@@ -5,6 +5,7 @@ local cv_save = {
 	CV.ai_style.name,
 	CV.quake_mul.name,
 	CV.taunt_key.name,
+	CV.taunt_button.name,
 	CV.rotations.name,
 	CV.boomboxsfx.name,
 	

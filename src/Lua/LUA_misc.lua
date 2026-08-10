@@ -52,8 +52,10 @@ addHook("MobjThinker",function(bump)
 	if not (bump and bump.valid) then return end
 	
 	-- this is just much better
+	local nofadein = false
 	if (bump.fusefade ~= nil) and bump.fuse < bump.fusefade
 		bump.alpha = $ - (FU / bump.fusefade)
+		nofadein = true
 	end
 	if (bump.fusesquish ~= nil)
 	and bump.fuse <= bump.fusesquish
@@ -64,6 +66,19 @@ addHook("MobjThinker",function(bump)
 		bump.momx = FixedMul($, bump.movefactor)
 		bump.momy = FixedMul($, bump.movefactor)
 	end
+	if (bump.alphafadein ~= nil) and bump.alpha < FU and not nofadein
+		bump.alpha = clamp(0, $ + bump.alphafadein, FU)
+	end
+	if (bump.xstretch ~= nil)
+		bump.spritexscale = $ + bump.xstretch
+	end
+	if (bump.ystretch ~= nil)
+		bump.spriteyscale = $ + bump.ystretch
+	end
+	if (bump.anglechange)
+		bump.angle = $ + bump.anglechange
+	end
+	
 	-- lol
 	if CV.rotations.value
 		bump.rollangle = $ + (bump.random or 0)

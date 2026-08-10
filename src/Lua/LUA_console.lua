@@ -97,6 +97,12 @@ CV.taunt_key = CV_RegisterVar({
 	defaultvalue = "B",
 	flags = CV_SHOWMODIF,
 })
+-- gamepad
+CV.taunt_button = CV_RegisterVar({
+	name = "soap_tauntbutton",
+	defaultvalue = "0",
+	flags = CV_SHOWMODIF,
+})
 
 local rotations_pv = {Off = 0, On = 1}
 CV.rotations = CV_RegisterVar({
