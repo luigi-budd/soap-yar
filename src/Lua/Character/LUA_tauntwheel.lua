@@ -4,16 +4,20 @@ local CV = SOAP_CV
 
 local taunt_cmd = {
 	active = false,
+	closed = false, -- keeps ignoregameinputs on for a tic
 	x = 0,
 	y = 0,
 	pointing = -1,
 	buttons = 0,
+	joystick = 0,
+	joy_spin = false,
+	joy_fire = false,
 	
 	forward = 0,
 	side = 0,
 }
 
-local function CheckTauntAvail(p)
+local function CheckTauntAvail(p, checkactive)
 	if gamestate ~= GS_LEVEL then return false; end
 	if not (p and p.valid) then return false; end
 	if p.spectator then return false; end
@@ -27,7 +31,7 @@ local function CheckTauntAvail(p)
 	local noabil_taunt = (skins[p.skin].name == TAKIS_SKIN) and NOABIL_TAUNTS or SNOABIL_TAUNTS
 	if (p.panim == PA_IDLE or p.panim == PA_RUN or soap.accspeed <= 5*FU)
 	and (P_IsObjectOnGround(me))
-	and not (taunt.active or taunt.tics)
+	and not ((taunt.active or taunt.tics) and checkactive)
 	and me.health
 	and (soap.notCarried)
 	and not (soap.noability & noabil_taunt)
@@ -43,6 +47,7 @@ local function StartMenu()
 	taunt_cmd.x = 0
 	taunt_cmd.y = 0
 	taunt_cmd.selected = -1
+	taunt_cmd.closed = false
 	input.ignoregameinputs = true
 end
 local function StopMenu()
@@ -51,6 +56,7 @@ local function StopMenu()
 	taunt_cmd.x = 0
 	taunt_cmd.y = 0
 	taunt_cmd.selected = -1
+	taunt_cmd.closed = true
 	input.ignoregameinputs = false
 end
 
@@ -96,6 +102,12 @@ local function cancelConds(p, nobuttons, checkspinonly)
 	and not nobuttons
 		cancel = true
 	end
+	
+	if me.soap_tauntforcecancel
+		me.soap_tauntforcecancel = nil
+		cancel = true
+	end
+	
 	return cancel
 end
 
@@ -177,6 +189,7 @@ SOAP_TAUNTS[SOAP_SKIN] = {
 	},
 	[3] = {
 		name = "Death",
+		cancelable = true,
 		
 		run = function(p, me, soap, taunt)
 			me.state = S_PLAY_DEAD
@@ -245,6 +258,7 @@ SOAP_TAUNTS[SOAP_SKIN] = {
 	},
 	[4] = {
 		name = "Breakdance",
+		cancelable = true,
 		
 		run = function(p, me, soap, taunt)
 			soap.stasistic = max($, 2)
@@ -277,6 +291,7 @@ SOAP_TAUNTS[SOAP_SKIN] = {
 	},
 	[5] = {
 		name = "Six-Seven",
+		cancelable = true,
 		
 		run = function(p, me, soap, taunt)
 			soap.stasistic = max($, 2)
@@ -670,6 +685,7 @@ SOAP_TAUNTS[SOAP_SKIN] = {
 	},
 	[7] = {
 		name = "Gangnam Style",
+		cancelable = true,
 		
 		run = function(p, me, soap, taunt)
 			me.state = S_PLAY_SOAP_GANGNAM
@@ -788,6 +804,7 @@ SOAP_TAUNTS[TAKIS_SKIN] = {
 	[3] = SOAP_TAUNTS[SOAP_SKIN][3],
 	[4] = {
 		name = "Surfin' Bird",
+		cancelable = true,
 		
 		run = function(p,me,soap, taunt)
 			soap.stasistic = max($, 2)
@@ -836,6 +853,7 @@ SOAP_TAUNTS[TAKIS_SKIN] = {
 	[5] = SOAP_TAUNTS[SOAP_SKIN][5],
 	[6] = {
 		name = "Caramelldansen",
+		cancelable = true,
 		run = SOAP_TAUNTS[SOAP_SKIN][7].run,
 		think = SOAP_TAUNTS[SOAP_SKIN][7].think,
 		drawer = SOAP_TAUNTS[SOAP_SKIN][7].drawer,
@@ -848,18 +866,31 @@ addHook("NetVars",function(n) cmd_sig = n($); end)
 
 COM_AddCommand("_soap_dotaunt",function(p, sig, selected)
 	if sig ~= cmd_sig then return end
-	if not CheckTauntAvail(p) then return end
+	if not CheckTauntAvail(p, false) then return end
 	selected = tonumber($)
 	
 	local soap = p.soaptable
 	local me = p.realmo
 	local taunt = soap.taunt
 	
-	taunt.num = selected + 1
-	taunt.prev = taunt.num
+	local prevnum = taunt.num
 	local taunt_t = SOAP_TAUNTS[me.skin][selected + 1]
 	if not taunt_t then return end
-	taunt_t.run(p, me, soap, taunt)
+	
+	if (taunt.active or taunt.tics) and prevnum == selected + 1
+	and taunt_t.cancelable
+		me.soap_tauntforcecancel = true
+		return
+	end
+	
+	if CheckTauntAvail(p, true)
+		taunt.num = selected + 1
+		taunt.prev = taunt.num
+		
+		taunt_t.run(p, me, soap, taunt)
+	else
+		return
+	end
 	
 	soap.jumplockout = 2
 end)
@@ -882,6 +913,11 @@ local control_gc = {
 }
 local keymovespeed = 7*FU
 local numberkey = -1
+
+local leftjoystick = {
+	x = 0, y = 0
+}
+
 addHook("KeyDown", function(key)
 	if isdedicatedserver then return end
 	if key.repeated then return end
@@ -969,12 +1005,54 @@ addHook("KeyUp", function(key)
 	end
 end)
 
+local TICCMD_RECIEVED = 1
+local KEY_JOY1 = KEY_JOY1 or ((KEY_MOUSE1 or 256) + (MOUSEBUTTONS or 8))
+addHook("PlayerCmd",function(p,cmd)
+	leftjoystick.x = input.joyAxis(JA_STRAFE)
+	leftjoystick.y = input.joyAxis(JA_MOVE)
+	
+	taunt_cmd.joy_spin = false
+	taunt_cmd.joy_fire = false
+	
+	if not (taunt_cmd.active or taunt_cmd.closed) then return end
+	
+	-- EAT SHIT AND DIE FUCK YOU GAME
+	-- im gonna cry
+	do -- gamepad buttons
+		local spin1, spin2 = input.gameControlToKeyNum(GC_SPIN)
+		local fire1, fire2 = input.gameControlToKeyNum(GC_FIRE)
+		local spinaxis = input.joyAxis(JA_SPIN)
+		local fireaxis = input.joyAxis(JA_FIRE)
+		
+		if ((spin1 > KEY_JOY1) and gamekeydown[spin1])
+		or ((spin2 > KEY_JOY1) and gamekeydown[spin2])
+		or (spinaxis > 0)
+			taunt_cmd.joy_spin = true
+		end
+
+		if ((fire1 > KEY_JOY1) and gamekeydown[fire1])
+		or ((fire2 > KEY_JOY1) and gamekeydown[fire2])
+		or (fireaxis > 0)
+			taunt_cmd.joy_fire = true
+		end
+	end
+	
+	input.ignoregameinputs = true
+	
+	cmd.forwardmove = 0
+	cmd.sidemove = 0
+	cmd.buttons = 0
+	cmd.angleturn = p.cmd.angleturn &~TICCMD_RECIEVED -- this game drives me insane
+	cmd.aiming = p.cmd.aiming
+end)
+
 local function ClientTauntHandle(p)
 	local soap = p.soaptable
 	local me = p.realmo
 	local cmd = p.cmd
 	
 	if not taunt_cmd.active then return end
+	input.ignoregameinputs = true
 	
 	-- nice one asshole
 	if SOAP_TAUNTS[me.skin] == nil
@@ -987,7 +1065,7 @@ local function ClientTauntHandle(p)
 		input.ignoregameinputs = true
 	end
 	
-	if (taunt_cmd.buttons & BT_SPIN)
+	if (taunt_cmd.buttons & BT_SPIN) or taunt_cmd.joy_spin
 	--or cancelConds(p, true)
 		StopMenu()
 	end
@@ -1008,6 +1086,29 @@ local function ClientTauntHandle(p)
 		dist = R_PointToDist2(0,0, taunt_cmd.x,taunt_cmd.y)
 	end
 	
+	if taunt_cmd.joystick
+		taunt_cmd.x = $ / 4
+		taunt_cmd.y = $ / 4
+		if (mouse.dx or mouse.dy)
+			taunt_cmd.joystick = 1
+		end
+		taunt_cmd.joystick = $ - 1
+	end
+	if leftjoystick.x ~= 0 or leftjoystick.y ~= 0
+		local maxmove = JOYAXISRANGE*FU
+		local move = Vec2.New(
+			FixedDiv(leftjoystick.x*FU, maxmove), 
+			FixedDiv(leftjoystick.y*FU, maxmove)
+		)
+		local force = min(FixedHypot(move.x, move.y), FU)
+		local ang = R_PointToAngle2(0,0, leftjoystick.x*FU,-leftjoystick.y*FU)
+		taunt_cmd.x = P_ReturnThrustX(nil,ang, FixedMul(wheel_radius, force))
+		taunt_cmd.y = P_ReturnThrustY(nil,ang, FixedMul(wheel_radius, force))
+		dist = R_PointToDist2(0,0, taunt_cmd.x,taunt_cmd.y)
+		
+		taunt_cmd.joystick = TR / 2
+	end
+	
 	local oldhover = taunt_cmd.pointing
 	local selected = -1
 	if (dist >= wheel_start)
@@ -1024,8 +1125,9 @@ local function ClientTauntHandle(p)
 		S_StartSound(nil,sfx_menu1,p)
 	end
 	
-	if (taunt_cmd.buttons & (BT_ATTACK|BT_JUMP))
+	if (taunt_cmd.buttons & (BT_ATTACK))
 	or (mouse.buttons & MB_BUTTON1)
+	or (taunt_cmd.joy_fire)
 	and (dist >= wheel_start)
 	or (numberkey > -1)
 		if numberkey > -1 then selected = numberkey; end
@@ -1078,6 +1180,13 @@ rawset(_G, "Soap_TauntWheelThink", function(p)
 		taunt.tics = 0
 		taunt.num = 0
 	end
+end)
+
+addHook("PostThinkFrame",do
+	if not (taunt_cmd.active or taunt_cmd.closed) then return end
+	input.ignoregameinputs = false
+	
+	taunt_cmd.closed = false
 end)
 
 -- its just easier to handle the hud here
@@ -1149,7 +1258,7 @@ addHook("HUD",function(v,p)
 		"thin-fixed-center"
 	)
 	v.drawString(160*FU, 100*FU + (wheel_radius + 20*FU),
-		"[JUMP/FIRE] - Select", V_ALLOWLOWERCASE,
+		"[FIRE] - Select", V_ALLOWLOWERCASE,
 		"thin-fixed-center"
 	)
 	v.drawString(160*FU, 100*FU + (wheel_radius + 28*FU),
