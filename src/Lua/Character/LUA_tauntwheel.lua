@@ -2,6 +2,46 @@
 -- so it gets its own file.
 local CV = SOAP_CV
 
+local GPAD_A = 256 + 8
+local GPAD_B = GPAD_A + 1
+local GPAD_X = GPAD_A + 2
+local GPAD_Y = GPAD_A + 3
+
+local GPAD_LBUMPER = GPAD_A + 4
+local GPAD_RBUMPER = GPAD_A + 5
+
+local GPAD_LCENTER = GPAD_A + 6
+local GPAD_RCENTER = GPAD_A + 7
+
+local GPAD_LSTICK = GPAD_A + 8
+local GPAD_RSTICK = GPAD_A + 9
+
+local GPAD_DUP = 296
+local GPAD_DDOWN = 296 + 1
+local GPAD_DLEFT = 296 + 2
+local GPAD_DRIGHT = 296 + 3
+
+local gpbuttonnames = {
+	[GPAD_A] = "A",
+	[GPAD_B] = "B",
+	[GPAD_X] = "X",
+	[GPAD_Y] = "Y",
+
+	[GPAD_LBUMPER] = "Left Bumper",
+	[GPAD_RBUMPER] = "Right Bumper",
+
+	[GPAD_LCENTER] = "Select",
+	[GPAD_RCENTER] = "Start",
+
+	[GPAD_LSTICK] = "Left Stick",
+	[GPAD_RSTICK] = "Right Stick",
+
+	[GPAD_DUP] = "D-Pad Up",
+	[GPAD_DDOWN] = "D-Pad Down",
+	[GPAD_DLEFT] = "D-Pad Left",
+	[GPAD_DRIGHT] = "D-Pad Right",
+}
+
 local taunt_cmd = {
 	active = false,
 	closed = false, -- keeps ignoregameinputs on for a tic
@@ -9,7 +49,7 @@ local taunt_cmd = {
 	y = 0,
 	pointing = -1,
 	buttons = 0,
-	joystick = 0,
+	joystick = true,
 	joy_spin = false,
 	joy_fire = false,
 	
@@ -917,6 +957,9 @@ local numberkey = -1
 local leftjoystick = {
 	x = 0, y = 0
 }
+local rightjoystick = {
+	x = 0, y = 0
+}
 
 addHook("KeyDown", function(key)
 	if isdedicatedserver then return end
@@ -1007,12 +1050,31 @@ end)
 
 local TICCMD_RECIEVED = 1
 local KEY_JOY1 = KEY_JOY1 or ((KEY_MOUSE1 or 256) + (MOUSEBUTTONS or 8))
+local gp_waskeydown = false
 addHook("PlayerCmd",function(p,cmd)
 	leftjoystick.x = input.joyAxis(JA_STRAFE)
 	leftjoystick.y = input.joyAxis(JA_MOVE)
 	
+	rightjoystick.x = input.joyAxis(JA_TURN)
+	rightjoystick.y = -input.joyAxis(JA_LOOK)
+	
 	taunt_cmd.joy_spin = false
 	taunt_cmd.joy_fire = false
+	
+	local gamepad_tb = CV.taunt_button.value
+	if (skins[p.skin].name == SOAP_SKIN or skins[p.skin].name == TAKIS_SKIN)
+	and (gamepad_tb > GPAD_A) and (gamekeydown[gamepad_tb] and not gp_waskeydown)
+		local menuactive = MenuLib.client.currentMenu.id ~= -1
+		
+		if taunt_cmd.active
+		and (p.soaptable and p.soaptable.taunt.prev > 0)
+			COM_BufInsertText(p, "_soap_dotaunt "..cmd_sig.." "..(p.soaptable.taunt.prev - 1))
+			StopMenu()
+		elseif not (menuactive or p.spectator)
+			StartMenu()
+		end
+	end
+	gp_waskeydown = gamekeydown[gamepad_tb]
 	
 	if not (taunt_cmd.active or taunt_cmd.closed) then return end
 	
@@ -1045,6 +1107,14 @@ addHook("PlayerCmd",function(p,cmd)
 	cmd.angleturn = p.cmd.angleturn &~TICCMD_RECIEVED -- this game drives me insane
 	cmd.aiming = p.cmd.aiming
 end)
+
+local DEADZONE = 32
+local function JoystickActive(stick)
+	if abs(stick.x) > DEADZONE or abs(stick.y) > DEADZONE
+		return true
+	end
+	return false
+end
 
 local function ClientTauntHandle(p)
 	local soap = p.soaptable
@@ -1090,23 +1160,27 @@ local function ClientTauntHandle(p)
 		taunt_cmd.x = $ / 4
 		taunt_cmd.y = $ / 4
 		if (mouse.dx or mouse.dy)
-			taunt_cmd.joystick = 1
+			taunt_cmd.joystick = false
 		end
-		taunt_cmd.joystick = $ - 1
 	end
-	if leftjoystick.x ~= 0 or leftjoystick.y ~= 0
+	if JoystickActive(leftjoystick) or JoystickActive(rightjoystick)
+		local stick = leftjoystick
+		if JoystickActive(rightjoystick)
+			stick = rightjoystick
+		end
+		
 		local maxmove = JOYAXISRANGE*FU
 		local move = Vec2.New(
-			FixedDiv(leftjoystick.x*FU, maxmove), 
-			FixedDiv(leftjoystick.y*FU, maxmove)
+			FixedDiv(stick.x*FU, maxmove), 
+			FixedDiv(stick.y*FU, maxmove)
 		)
 		local force = min(FixedHypot(move.x, move.y), FU)
-		local ang = R_PointToAngle2(0,0, leftjoystick.x*FU,-leftjoystick.y*FU)
-		taunt_cmd.x = P_ReturnThrustX(nil,ang, FixedMul(wheel_radius, force))
-		taunt_cmd.y = P_ReturnThrustY(nil,ang, FixedMul(wheel_radius, force))
+		local ang = R_PointToAngle2(0,0, stick.x*FU,-stick.y*FU)
+		taunt_cmd.x = P_ReturnThrustX(nil,ang, FixedMul(wheel_radius*3/4, force))
+		taunt_cmd.y = P_ReturnThrustY(nil,ang, FixedMul(wheel_radius*3/4, force))
 		dist = R_PointToDist2(0,0, taunt_cmd.x,taunt_cmd.y)
 		
-		taunt_cmd.joystick = TR / 2
+		taunt_cmd.joystick = true
 	end
 	
 	local oldhover = taunt_cmd.pointing
@@ -1238,7 +1312,7 @@ addHook("HUD",function(v,p)
 	v.drawScaled(
 		(160*FU) + taunt.x, --P_ReturnThrustX(nil,taunt.angle<<16, radius),
 		(100*FU) - taunt.y, --P_ReturnThrustY(nil,taunt.aim<<16, radius),
-		FU/4, v.cachePatch((dist >= wheel_start) and "ML_RBLX_POINT" or "ML_RBLX_CURS"),
+		FU/4, v.cachePatch((dist >= wheel_start) and (taunt_cmd.joystick and "STAUNT_GPOINT" or "ML_RBLX_POINT") or (taunt_cmd.joystick and "STAUNT_GCUR" or "ML_RBLX_CURS")),
 		0
 	)
 	v.dointerp(false)
