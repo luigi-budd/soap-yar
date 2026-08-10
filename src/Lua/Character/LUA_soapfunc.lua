@@ -2764,10 +2764,12 @@ local water_friction = tofixed("0.973")
 local function VFXWaterrun_WaterThrow(p,me,soap, water)
 	local s = P_SpawnMobjFromMobj(water, 0,0,0, MT_PARTICLE)
 	s.scale = FixedMul($, FU + Soap_RandomFixedRange(-FU/4,FU/4))
-	s.state = S_SOAP_IMPACT_LINE2F
+	s.state = P_RandomChance(FU/2) and S_SOAP_WATERDROPTRAIL or S_SOAP_IMPACT_LINE2F
+	if s.state == S_SOAP_WATERDROPTRAIL then s.scale = $ * 3/2; end
 	s.angle = water.angle + FixedAngle(Soap_RandomFixedRange(-10*FU,10*FU))
 	s.rollangle = FixedAngle(Soap_RandomFixedRange(10*FU,50*FU))
 	s.color = water.color or SKINCOLOR_WHITE
+	s.colorized = water.colorized
 	local offset = P_RandomRange(0, 2)
 	s.anim_duration = $ + offset
 	s.tics = $ + offset
@@ -2783,8 +2785,12 @@ local function VFXWaterrun_HandleSide(p,me,soap, fxmo, angle,water_top, scale,ro
 		water = P_SpawnMobjFromMobj(me,0,0,0,waterruntype)
 		water.angle = angle - ANGLE_180 - (ANGLE_22h*sign)
 		water.tracer = me
-		water.state = S_SOAP_WATERTRAIL
+		water.state = (sign == 0) and S_SOAP_WATERTRAILFRONT or S_SOAP_WATERTRAIL
 		water.nofxadjust = true
+		if sign == 0
+			water.spritexscale = $ * 2
+			water.dontdrawforviewmobj = me
+		end
 		P_SetOrigin(water,
 			(me.x + me.momx) + P_ReturnThrustX(nil, angle + ANGLE_90*sign, radius) + forward_push_x,
 			(me.y + me.momy) + P_ReturnThrustY(nil, angle + ANGLE_90*sign, radius) + forward_push_y,
@@ -2792,15 +2798,16 @@ local function VFXWaterrun_HandleSide(p,me,soap, fxmo, angle,water_top, scale,ro
 		)
 		P_SetScale(water, scale, true)
 	end
-	water.angle = angle - ANGLE_180 - (ANGLE_22h*sign)
+	water.angle = angle - (ANGLE_180*abs(sign)) - (ANGLE_22h*sign)
 	water.rollangle = rollangle
 	P_MoveOrigin(water,
-		(me.x + me.momx) + P_ReturnThrustX(nil, angle + ANGLE_90*sign, radius) + forward_push_x,
-		(me.y + me.momy) + P_ReturnThrustY(nil, angle + ANGLE_90*sign, radius) + forward_push_y,
+		(me.x + me.momx) + P_ReturnThrustX(nil, angle + ANGLE_90*sign, radius) + forward_push_x*abs(sign),
+		(me.y + me.momy) + P_ReturnThrustY(nil, angle + ANGLE_90*sign, radius) + forward_push_y*abs(sign),
 		water_top
 	)
 	if speedup_frame
 	and (water.state ~= S_SOAP_WATERTRAIL_FAST)
+	and sign ~= 0
 		water.state = S_SOAP_WATERTRAIL_FAST
 	end
 	if (me.eflags & MFE_TOUCHLAVA)
@@ -2816,6 +2823,7 @@ local function VFXWaterrun_HandleSide(p,me,soap, fxmo, angle,water_top, scale,ro
 	P_SetScale(water, scale)
 	
 	if ghostfreq ~= 0 and (leveltime % ghostfreq == 0)
+	and sign ~= 0
 		local g = P_SpawnMobjFromMobj(water, 0,0,0,MT_SOAP_WALLBUMP)
 		g.fuse = 4 + (10*ghostfrac)/FU
 		g.nothink = true
@@ -2959,6 +2967,8 @@ local function VFX_Waterrun(p,me,soap)
 		
 		--right
 		soap.fx.waterrun_R = VFXWaterrun_HandleSide(p,me,soap, $, angle,water_top, scale,rollangle,speedup_frame,ghostfreq,ghostfrac, radius,forward_push_x,forward_push_y, -1)
+		
+		--soap.fx.waterrun_F = VFXWaterrun_HandleSide(p,me,soap, $, angle,water_top, scale,rollangle,speedup_frame,ghostfreq,ghostfrac, radius,forward_push_x,forward_push_y, 0)
 		
 		if not S_SoundPlaying(me, sfx_s3kdbs)
 			local volume = (min(scale, FU) * 255) / FU

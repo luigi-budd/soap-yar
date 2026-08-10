@@ -1,3 +1,5 @@
+SafeFreeslot("SPR_SOAP_GFX")
+
 SafeFreeslot("SPR_NWF_WIND")
 SafeFreeslot("SPR_NWF_TOPDOWN")
 SafeFreeslot("SPR_NWF_BOOSTAURA")
@@ -68,15 +70,14 @@ mobjinfo[MT_SOAP_PEELOUT] = {
 	flags = MF_SCENERY|MF_NOGRAVITY|MF_NOBLOCKMAP|MF_NOCLIP|MF_NOCLIPHEIGHT|MF_NOCLIPTHING
 }
 
-SafeFreeslot("SPR_SOAP_SPEEDLINE")
 SafeFreeslot("S_SOAP_SPEEDLINE")
 SafeFreeslot("S_SOAP_SPEEDLINE_SLOW")
 SafeFreeslot("MT_SOAP_SPEEDLINE")
 local speedline_minmul = tofixed("1.63")
 local speedline_maxmul = tofixed("1.93")
 states[S_SOAP_SPEEDLINE] = {
-    sprite = SPR_SOAP_SPEEDLINE,
-    frame = A|FF_PAPERSPRITE|FF_SEMIBRIGHT|FF_ANIMATE,
+    sprite = SPR_SOAP_GFX,
+    frame = 53|FF_PAPERSPRITE|FF_SEMIBRIGHT|FF_ANIMATE,
 	tics = 6 * 1,
 	var1 = 5,
 	var2 = 1,
@@ -90,8 +91,8 @@ states[S_SOAP_SPEEDLINE] = {
 	end
 }
 states[S_SOAP_SPEEDLINE_SLOW] = {
-    sprite = SPR_SOAP_SPEEDLINE,
-    frame = A|FF_PAPERSPRITE|FF_SEMIBRIGHT|FF_ANIMATE,
+    sprite = SPR_SOAP_GFX,
+    frame = 53|FF_PAPERSPRITE|FF_SEMIBRIGHT|FF_ANIMATE,
 	tics = 6 * 2,
 	var1 = 5,
 	var2 = 2,
@@ -105,24 +106,45 @@ mobjinfo[MT_SOAP_SPEEDLINE] = {
 	flags = MF_NOCLIP|MF_NOCLIPHEIGHT|MF_NOGRAVITY|MF_RUNSPAWNFUNC
 }
 
-SafeFreeslot("SPR_SOAP_WATERTRAIL")
 SafeFreeslot("S_SOAP_WATERTRAIL")
 SafeFreeslot("S_SOAP_WATERTRAIL_FAST")
+SafeFreeslot("S_SOAP_WATERTRAILFRONT")
+SafeFreeslot("S_SOAP_WATERDROPTRAIL")
 states[S_SOAP_WATERTRAIL] = {
-    sprite = SPR_SOAP_WATERTRAIL,
-    frame = A|FF_PAPERSPRITE|FF_SEMIBRIGHT|FF_ANIMATE,
+    sprite = SPR_SOAP_GFX,
+    frame = 48|FF_PAPERSPRITE|FF_SEMIBRIGHT|FF_ANIMATE,
 	var1 = F,
 	var2 = 2,
 	tics = (F*2),
 	nextstate = S_SOAP_WATERTRAIL,
 }
 states[S_SOAP_WATERTRAIL_FAST] = {
-    sprite = SPR_SOAP_WATERTRAIL,
-    frame = A|FF_PAPERSPRITE|FF_SEMIBRIGHT|FF_ANIMATE,
+    sprite = SPR_SOAP_GFX,
+    frame = 48|FF_PAPERSPRITE|FF_SEMIBRIGHT|FF_ANIMATE,
 	var1 = F,
 	var2 = 1,
 	tics = (F),
 	nextstate = S_SOAP_WATERTRAIL,
+}
+
+states[S_SOAP_WATERTRAILFRONT] = {
+    sprite = SPR_SOAP_GFX,
+    frame = 59|FF_SEMIBRIGHT|FF_ANIMATE,
+	var1 = E,
+	var2 = 1,
+	tics = (E),
+	nextstate = S_SOAP_WATERTRAILFRONT,
+}
+
+-- im so sorry this sprite looks like an inappropriate
+-- but. im really sorry im so sorry.
+states[S_SOAP_WATERDROPTRAIL] = {
+    sprite = SPR_SOAP_GFX,
+    frame = 43|FF_PAPERSPRITE|FF_SEMIBRIGHT|FF_ANIMATE,
+	var1 = F,
+	var2 = 1,
+	tics = (F),
+	nextstate = S_NULL,
 }
 
 SafeFreeslot("MT_SOAP_AFTERIMAGE")
@@ -134,7 +156,6 @@ mobjinfo[MT_SOAP_AFTERIMAGE] = {
 	flags = MF_NOCLIP|MF_NOCLIPHEIGHT|MF_NOGRAVITY|MF_NOBLOCKMAP
 }
 
-SafeFreeslot("SPR_SOAP_GFX")
 SafeFreeslot("S_SOAP_WALLBUMP")
 states[S_SOAP_WALLBUMP] = {
     sprite = SPR_SOAP_GFX,
