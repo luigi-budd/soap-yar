@@ -585,6 +585,7 @@ addHook("PostThinkFrame",do
 				me.soap_tumble_oldmomz = nil
 				me.soap_tumble_down = nil
 				me.soap_tumble_bumps = nil
+				me.soap_kbvfx = nil
 			end
 			continue
 		end
@@ -597,6 +598,32 @@ addHook("PostThinkFrame",do
 				S_StartSound(me, sfx_sp_top)
 				me.wasinhitlag = nil
 				me.tumble_effect = TR / 2
+				
+				if R_PointTo3DDist(0,0,0, me.momx,me.momy,me.momz) >= 30*me.scale
+					S_StartSound(me, sfx_sp_kb2)
+					
+					local s = P_SpawnMobjFromMobj(me,
+						0,0,FixedDiv(me.height,me.scale) / 2, MT_SOAP_WALLBUMP
+					)
+					s.frame = 36|FF_PAPERSPRITE|FF_FULLBRIGHT
+					s.angle = R_PointToAngle2(0,0,me.momx,me.momy) + ANGLE_90
+					if (me.soap_inf and me.soap_inf.valid)
+					and me.soap_inf.color ~= SKINCOLOR_NONE
+						s.color = me.soap_inf.color
+					else
+						s.color = SKINCOLOR_WHITE
+					end
+					s.blendmode = AST_ADD
+					
+					s.tics = 16
+					s.fuse = 16
+					s.fusefade = 6
+					s.flags = $|MF_NOGRAVITY
+					
+					s.scale = $ / 4
+					s.destscale = me.scale * 5
+					s.scalespeed = FixedDiv(s.destscale - s.scale, s.tics*FU)
+				end
 			else
 				P_KillMobj(me)
 				me.soap_tumble = nil
@@ -604,7 +631,6 @@ addHook("PostThinkFrame",do
 				me.soap_tumble_down = nil
 				me.rollangle = 0
 				
-
 				Soap_StartQuake(60*FU, TR,
 					{me.x, me.y, me.z},
 					550*me.scale
@@ -633,6 +659,32 @@ addHook("PostThinkFrame",do
 			local frac = 32*FU
 			local ha,va = R_PointTo3DAngles(0,0,0, me.momx,me.momy,me.momz)
 			P_3DInstaThrust(me, ha,va, speed - FixedDiv(speed, frac))
+		end
+		
+		-- bruh
+		if (me.soap_kbvfx == nil) then me.soap_kbvfx = 0; end
+		if speed >= 32 * me.scale
+			me.soap_kbvfx = $ + FixedDiv(speed, 120*me.scale) / 4
+		end
+		while (me.soap_kbvfx > FU)
+			local s = P_SpawnMobjFromMobj(me,
+				0,0,FixedDiv(me.height,me.scale) / 2, MT_SOAP_WALLBUMP
+			)
+			s.frame = 36|FF_PAPERSPRITE|FF_FULLBRIGHT
+			s.angle = R_PointToAngle2(0,0, me.momx,me.momy) + ANGLE_90
+			s.blendmode = AST_ADD
+			
+			s.tics = 8
+			s.fuse = 8
+			s.fusefade = 6
+			s.flags = $|MF_NOGRAVITY
+			s.color = SKINCOLOR_WHITE
+			
+			s.scale = $ / 2
+			s.destscale = me.scale * 2
+			s.scalespeed = FixedDiv(s.destscale - s.scale, s.tics*FU)
+			
+			me.soap_kbvfx = $ - FU
 		end
 		
 		if (P_IsObjectOnGround(me) -- me.z + me.momz <= me.floorz

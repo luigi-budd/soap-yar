@@ -1,3 +1,8 @@
+local BoxInfo = {
+	wid = 150*FU,
+	len = 70*FU,
+	hei = 130*FU,
+}
 local function TraceRay(lstart,lend)
 	for i = 0,19
 		local frac = FixedDiv(i*FU, 20*FU)
@@ -15,7 +20,7 @@ local function TraceRay(lstart,lend)
 		t.flags = $|MF_NOBLOCKMAP
 	end
 end
-local function TraceBox(verts)
+local function TraceBox(v, verts)
 	TraceRay(verts[1], verts[2])
 	TraceRay(verts[2], verts[3])
 	TraceRay(verts[3], verts[4])
@@ -30,13 +35,21 @@ local function TraceBox(verts)
 	TraceRay(verts[2], verts[6])
 	TraceRay(verts[3], verts[7])
 	TraceRay(verts[4], verts[8])
+	
+	for i = -1,1, 2
+		local s = P_SpawnMobjFromMobj(v,
+			v.momx + P_ReturnThrustX(v.angle+ANGLE_90, BoxInfo.len*i),
+			v.momy + P_ReturnThrustY(v.angle+ANGLE_90, BoxInfo.len*i),
+			v.momz, MT_PARTICLE
+		)
+		s.sprite = SPR_SOAP_BLOATVFX
+		s.frame = 6|FF_PAPERSPRITE
+		s.angle = v.angle
+		s.fuse = 2
+		s.tics = s.fuse
+	end
 end
 
-local BoxInfo = {
-	wid = 100*FU,
-	len = 60*FU,
-	hei = 70*FU,
-}
 SafeFreeslot("MT_BLOAT_VAN")
 mobjinfo[MT_BLOAT_VAN] = {
 	doomednum = -1,
@@ -59,14 +72,14 @@ local function VanSearch(v)
 	local vanPos = Vec3.MobjPosToVec(v)
 	local driverPos = vanPos + (Vec3.SphereToCartesian(v.angle,0) * FixedMul(BoxInfo.wid / 2, v.scale))
 	driverPos = $ + (Vec3.SphereToCartesian(v.angle+ANGLE_90,0) * FixedMul(BoxInfo.len, v.scale))
-	driverPos.z = $ + v.height/2
+	driverPos.z = $ + v.height/4
 	local t1 = P_SpawnMobj(driverPos.x,driverPos.y,driverPos.z, MT_THOK)
 	t1.fuse = -1
 	t1.tics = 2
 	
 	local passengerPos = vanPos + (Vec3.SphereToCartesian(v.angle,0) * FixedMul(BoxInfo.wid / 2, v.scale))
 	passengerPos = $ + (Vec3.SphereToCartesian(v.angle-ANGLE_90,0) * FixedMul(BoxInfo.len, v.scale))
-	passengerPos.z = $ + v.height/2
+	passengerPos.z = $ + v.height/4
 	local t2 = P_SpawnMobj(passengerPos.x,passengerPos.y,passengerPos.z, MT_THOK)
 	t2.fuse = -1
 	t2.tics = 2
@@ -119,7 +132,7 @@ local function VanMovePlayer(v, me, side)
 	local vanPos = Vec3.MobjPosToVec(v) + Vec3.MobjMomToVec(v)
 	local sidePos = vanPos + (Vec3.SphereToCartesian(v.angle,0) * FixedMul(BoxInfo.wid / 2, v.scale))
 	sidePos = $ + (Vec3.SphereToCartesian(v.angle+ANGLE_90*side,0) * FixedMul(BoxInfo.len/4, v.scale))
-	sidePos.z = $ + v.height/2
+	sidePos.z = $ + v.height/4
 	sidePos:ToMobjPos(me, true)
 
 	me.angle = v.angle
@@ -152,22 +165,28 @@ local function VanControls(v)
 	local soap = p.soaptable
 	
 	local ford,side = soap.forwardmove, soap.sidemove
+	local turningangle = 0
 	if (side ~= 0)
 		local speed = FixedHypot(v.momx,v.momy)
-		local frac = min(FixedDiv(speed, 25*v.scale), FU)
+		local frac = min(FixedDiv(speed, 21*v.scale), FU)
 		frac = FixedMul($, FixedDiv(side*FU, 50*FU))
 		if not P_IsObjectOnGround(v)
 			frac = $ / 5
 		end
 		
 		local angturn = 6 * frac
-		v.angle = $ - FixedAngle(angturn)
+		if ford < 0
+			angturn = -$
+		end
+		turningangle = FixedAngle(angturn)
 	end
-		
+	v.turnangle = P_Lerp(FU/10, ($ or 0), turningangle)
+	v.angle = $ - v.turnangle
+	
 	if (ford ~= 0)
 		local wishangle = (v.angle) + R_PointToAngle2(0, 0, ford << 16, 0)
 		local wishspeed = FixedMul(80*FU,v.scale)
-		local acceleration = FU/110 + (v.acceltime*8)
+		local acceleration = FU/105 + (v.acceltime*8)
 		if not P_IsObjectOnGround(v)
 			acceleration = 0
 		end
@@ -189,9 +208,17 @@ local function VanControls(v)
 			v.momy = y
 		end
 		
-		v.acceltime = min($ + 1, 40*TR)
-	else
-		v.acceltime = ($ or 0) / 2
+		local adjustspeed = FixedMul(wishspeed, FU*906/1000)
+		local topspeed = FixedMul(adjustspeed, FixedDiv(v.acceltime,20*TR) * 12/10)
+		if FixedHypot(v.momx,v.momy) < topspeed * 9/10
+		and P_IsObjectOnGround(v)
+			v.acceltime = min($, FixedMul(20*TR*FU, FixedDiv(FixedHypot(v.momx,v.momy), adjustspeed)) / FU)
+			v.acceltime = max($ - 1, 0)
+		end
+		
+		v.acceltime = min($ + 1, 20*TR)
+	elseif P_IsObjectOnGround(v)
+		v.acceltime = ($ or 0) * 98/100
 	end	
 
 	if (leveltime % 8 == 0)
@@ -243,7 +270,7 @@ addHook("MobjThinker",function(v)
 			z = v.z+v.momz + localZ[i]
 		}
 	end
-	TraceBox(corners)
+	TraceBox(v, corners)
 	v.verts = corners
 	
 	local a = P_SpawnMobjFromMobj(v,
@@ -277,6 +304,7 @@ end
 local function TryRunOver(v,mo)
 	if not (v.tracer and v.tracer.valid) then return end
 	if not Soap_ZCollide(v,mo) then return end
+	if mo.soap_tumble then return false end
 	if mo.type == MT_PLAYER
 		local play = mo.player
 		
@@ -304,6 +332,7 @@ local function TryRunOver(v,mo)
 				512*mo.scale
 			)
 		end
+		return false
 	end
 	
 	if Soap_CanDamageEnemy(nil, mo)
@@ -315,6 +344,7 @@ local function TryRunOver(v,mo)
 			mo,
 			512*mo.scale
 		)
+		return false
 	end
 end
 
@@ -327,7 +357,9 @@ local function blockCollisonLong(v, mo)
 	if mo.vancollision == leveltime then return end
 	mo.vancollision = leveltime
 	
-	TryRunOver(v,mo)
+	if TryRunOver(v,mo) == false
+		return false
+	end
 end
 addHook("MobjCollide", blockCollisonLong, MT_BLOAT_VAN)
 addHook("MobjMoveCollide", TryRunOver, MT_BLOAT_VAN)
@@ -399,7 +431,17 @@ addHook("HUD",function(v,p,c)
 		local speed = FixedDiv(FixedHypot(van.momx,van.momy), van.scale)
 		
 		v.drawString(160,160, ("%.2f fracs/t"):format(speed), V_ALLOWLOWERCASE, "thin-center")
-		v.drawString(160,170, "[C3] - Exit", V_ALLOWLOWERCASE|V_50TRANS, "thin-center")
+		if Soap_CheckSRB2Edit()
+			local progress = FixedDiv((van.acceltime or 0)*FU, 20*TR*FU)
+			local width = 50*FU
+			v.drawFixedFill(160*FU - width/2, 170*FU,
+				FixedMul(width, progress), 3*FU, 26
+			)
+			v.drawFixedFill(160*FU - width/2, 170*FU,
+				max(FixedMul(width, progress) - FU, 0), 2*FU, 3
+			)
+		end
+		v.drawString(160,175, "[C3] - Exit", V_ALLOWLOWERCASE|V_50TRANS, "thin-center")
 	end
 end,"game")
 addHook("PreThinkFrame",do
