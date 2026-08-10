@@ -1990,7 +1990,7 @@ rawset(_G,"Soap_HandleNoAbils", function(p)
 				debugmode = true
 			end
 		elseif gametype == GT_ZE2
-			if ZE2.cv_debug.value
+			if CV.FindVar("z_debug").value
 				debugmode = true
 			end
 		end
@@ -4023,6 +4023,7 @@ end
 
 local function CheckHitbox(tempatk, p,me,soap, from, range,fakerange, power, maxpower,scalemul, hitlagtics, spike)
 	local enemyhit = false
+	local damage = (200 * FixedDiv(power,maxpower))/FU
 	searchBlockmap("objects", function(ref, found)
 		if found == me or found == from then return end
 		if R_PointToDist2(found.x, found.y, from.x, from.y) > range + found.radius
