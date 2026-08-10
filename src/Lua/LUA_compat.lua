@@ -315,19 +315,19 @@ local function SetCompat()
 				"Hefty and reliable!",
 			};
 			items = {
-				"red_ring",
-				"auto_ring"
+				"auto_ring",
+				"scatter_ring"
 			};
 		})
 		ZE2.AddSurvivor(TAKIS_SKIN, {
-            weight = 3,
+            weight = 2,
 			description = {
 				"Ready to blast!",
 				"On the lighter side.",
 			};
 			items = {
-				"scatter_ring",
-				"red_ring"
+				"red_ring",
+				"flame_ring"
 			};
 		})
 		
