@@ -72,7 +72,8 @@ SafeFreeslot("SPR_SOAP_SPEEDLINE")
 SafeFreeslot("S_SOAP_SPEEDLINE")
 SafeFreeslot("S_SOAP_SPEEDLINE_SLOW")
 SafeFreeslot("MT_SOAP_SPEEDLINE")
-local speedlinemul = tofixed("1.93")
+local speedline_minmul = tofixed("1.63")
+local speedline_maxmul = tofixed("1.93")
 states[S_SOAP_SPEEDLINE] = {
     sprite = SPR_SOAP_SPEEDLINE,
     frame = A|FF_PAPERSPRITE|FF_SEMIBRIGHT|FF_ANIMATE,
@@ -80,7 +81,7 @@ states[S_SOAP_SPEEDLINE] = {
 	var1 = 5,
 	var2 = 1,
 	action = function(mo)
-		mo.spritexscale = FixedMul($, speedlinemul)
+		mo.spritexscale = FixedMul($, Soap_RandomFixedRange(speedline_minmul, speedline_maxmul))
 		mo.spriteyscale = mo.spritexscale
 		
 		if P_RandomChance(FU/2)

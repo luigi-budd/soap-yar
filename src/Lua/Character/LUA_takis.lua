@@ -405,6 +405,130 @@ local function ninjabelt_vfx(p,me,soap, type, alt)
 	end
 end
 
+local function hammerblast_thinker(p,me,takis)
+	local hammer = takis.hammer
+	
+	if (me.flags & MF_NOTHINK)
+		Takis_ResetHammerTime(p)
+		takis.accspeed = 0
+		me.momx,me.momy,me.momz = 0,0,0
+		return
+	end
+	
+	p.charflags = $ &~SF_RUNONWATER
+	p.powers[pw_strong] = $|(STR_SPRING|STR_HEAVY|STR_SPIKE)
+	takis.noability = $|NOABIL_HAMMER
+	--control better
+	takis.setrolltrol = true
+	p.thrustfactor = skins[TAKIS_SKIN].thrustfactor*3/2
+	p.drawangle = me.angle
+	
+	if (p.pflags & PF_SHIELDABILITY)
+		p.pflags = $ &~PF_SHIELDABILITY
+	end
+	
+	--right side up lol
+	me.pitch = FixedMul($,FU*3/4)
+	me.roll = FixedMul($,FU*3/4)
+	
+	if me.state ~= S_PLAY_MELEE
+	and not (takis.inPain or me.state == S_PLAY_TAKIS_HSTART)
+		me.state = S_PLAY_MELEE
+	end
+	
+	hammer.jumped = 0
+	if hammer.down == 1
+		Soap_ZLaunch(me,12*FU)
+		hammer.wentdown = false
+	end
+	
+	takis.dived = true
+	if takis.in2D
+		p.drawangle = hammer.angle
+	end
+	me.momz = $+P_GetMobjGravity(me)
+	
+	local dontdostuff = false
+	
+	--the main stuff
+	local fallingspeed = (8*me.scale)
+	if (takis.inWater) then fallingspeed = $*3/4 end
+	
+	if me.momz*takis.gravflip <= fallingspeed
+	or hammer.wentdown == true
+		--me.momz = $*15/8
+		me.momz = $-((me.scale*11/10)*takis.gravflip)
+		if p.powers[pw_shield] & SH_FORCE
+			me.momz = $+P_GetMobjGravity(me)
+		end
+		
+		hammer.wentdown = true
+		
+		if not S_SoundPlaying(me,sfx_tk_hmd)
+			S_StartSoundAtVolume(me,sfx_tk_hmd,255*7/10)
+		end
+		
+		/*
+		if hammer.down
+		and (hammer.down % 5 == 0)
+		and (me.momz*takis.gravflip <= 16*me.scale)
+			P_SpawnGhostMobj(me)
+		end
+		*/
+		dontdostuff = Takis_HammerBlastHitbox(p)
+	end
+	
+	local superspeed = -60*me.scale
+	if (me.momz*takis.gravflip <= superspeed + 5*me.scale)
+	and not (takis.last.momz*takis.gravflip <= superspeed + 5*me.scale)
+		S_StartSound(me,sfx_tk_fst)
+	end
+	
+	hammer.down = $+1
+	
+	local domoves = true
+	--cancel conds.
+	if not (takis.notCarried)
+		hammer.down = 0
+		domoves = false
+	elseif (me.eflags & MFE_SPRUNG
+	or takis.fakesprung)
+		hammer.down = 0
+		me.state = S_PLAY_SPRING
+		Soap_ResetState(p)
+		
+		p.pflags = $ &~(PF_JUMPED|PF_THOKKED)
+		takis.dived = false
+		domoves = false
+	elseif not me.health
+	or (takis.inPain)
+	or not (takis.notCarried)
+		hammer.down = 0
+		domoves = false
+	elseif dontdostuff
+		hammer.down = 0
+		domoves = false				
+	end
+	if not domoves
+		Takis_ResetHammerTime(p)
+		return
+	end
+	if abs(me.momz) <= me.scale * 3/2
+		hammer.stuck = $ + 1
+		if hammer.stuck >= 2*TR
+			Takis_ResetHammerTime(p)
+			me.state = S_PLAY_FALL
+			return
+		end
+	end
+	
+	--hit ground
+	if (takis.onGround or P_CheckDeathPitCollide(me))
+	or (Soap_BouncyCheck(p))
+		Takis_DoHammerBlastLand(p,domoves)
+	end
+end
+
 Takis_Hook.addHook("PreThinkFrame",function(p)
 	local me = p.realmo
 	if (me.skin ~= TAKIS_SKIN) then return end
@@ -1256,6 +1380,10 @@ Takis_Hook.addHook("Takis_Thinker",function(p)
 				-- so you literally cant even run on water for long lol
 				p.charflags = $|SF_RUNONWATER
 			else
+				if soap.onWater
+					me.state = S_PLAY_FALL
+				end
+				
 				p.charflags = $ &~(SF_RUNONWATER)
 			end
 			
@@ -1314,7 +1442,7 @@ Takis_Hook.addHook("Takis_Thinker",function(p)
 	--hammerblast stuff
 	--this is a bad spot for this but eh fuck it
 	if hammer.down
-		Takis_AbilityHelpers.hammerthinker(p)
+		hammerblast_thinker(p,me,soap)
 	else
 		p.powers[pw_strong] = $ &~(STR_SPRING|STR_HEAVY)
 		/*
