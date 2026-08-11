@@ -584,6 +584,7 @@ Takis_Hook.addHook("Takis_Thinker",function(p)
 		
 		if me.friction > ORIG_FRICTION
 		and not (p.spectator or p.pflags & PF_SPINNING)
+		and not (p.charability == CA_NONE and p.charability2 == CA2_NONE)
 			if (soap.frictionfreeze == 0)
 				local offset = soap.accspeed - topspeed
 				
