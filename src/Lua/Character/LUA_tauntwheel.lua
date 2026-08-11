@@ -49,7 +49,7 @@ local taunt_cmd = {
 	y = 0,
 	pointing = -1,
 	buttons = 0,
-	joystick = true,
+	joystick = false,
 	joy_spin = false,
 	joy_fire = false,
 	
@@ -1072,6 +1072,7 @@ addHook("PlayerCmd",function(p,cmd)
 			StopMenu()
 		elseif not (menuactive or p.spectator)
 			StartMenu()
+			taunt_cmd.joystick = true
 		end
 	end
 	gp_waskeydown = gamekeydown[gamepad_tb]
