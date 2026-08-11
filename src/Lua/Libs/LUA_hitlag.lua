@@ -77,7 +77,7 @@ hl.iterateHitlagged = function()
 		
 		if mo.hitlag > 0
 			--hitlag takes priority
-			if mo.soap_stunned
+			if mo.soap_stunned and not mo.soap_stunned_allowhitlag
 				mo.soap_stunned = 0
 				mo.flags = mo.hldata_st_lastflags ~= nil 
 					and mo.hldata_st_lastflags or lastflags
@@ -181,14 +181,23 @@ hl.iterateHitlagged = function()
 			continue
 		end
 		
+		local inhitlag = mo.hitlag
+		if mo.soap_stunned_allowhitlag
+			inhitlag = false
+		end
+		
 		if mo.soap_stunned
 		and (mo.health > 0)
-		and not mo.hitlag
+		and not inhitlag
 			mo.flags = $|MF_NOTHINK|MF_SLIDEME &~(MF_SPECIAL|MF_ENEMY|MF_FLOAT|MF_NOGRAVITY|MF_PAIN)
 			mo.hldata_st_lastflags = lastflags
 			
+			-- if we're actually in hitlag then
+			-- let it take effect before we do our thinking
+			if mo.hitlag then continue end
+			
 			if mo.health
-			and not mo.hitlag
+			and not inhitlag
 				local hasstunstate = mo.info.stunstate ~= nil
 				local stunstate = hasstunstate and mo.info.stunstate or mo.info.spawnstate
 				if hasstunstate
@@ -450,7 +459,7 @@ hl.addHitlag = function(
 	-- nothing here is named idk why im so sorry
 	table.insert(hitlagged, {
 		mo,
-		mo.flags,
+		mo.hldata_hl_lastflags or mo.flags,
 		(mo.player and mo.player.valid) and mo.player.drawangle,
 		(mo.player and mo.player.valid) and mo.player.pflags,
 		mo.state, mo.sprite, mo.frame, mo.sprite2, mo.momx,mo.momy, -- indexes 9 and 10 are saved for old momx/y
@@ -460,7 +469,7 @@ hl.addHitlag = function(
 	hl.numhitlagged = $ + 1
 end
 
-hl.stunEnemy = function(mo,tics)
+hl.stunEnemy = function(mo,tics, allowhitlag)
 	if not (mo and mo.valid) then return end
 	if not (mo.health) then return end
 	if mo.nohitlagforme or mo.foolhardy then return end
@@ -493,9 +502,12 @@ hl.stunEnemy = function(mo,tics)
 		end
 	end
 	
+	mo.soap_stunned_allowhitlag = allowhitlag
 	mo.soap_stunned = $+tics
 	local oldflags = mo.flags
-	mo.flags = $|MF_NOTHINK|MF_SLIDEME &~(MF_SPECIAL|MF_ENEMY|MF_FLOAT|MF_NOGRAVITY|MF_PAIN)
+	if not mo.hitlag
+		mo.flags = $|MF_NOTHINK|MF_SLIDEME &~(MF_SPECIAL|MF_ENEMY|MF_FLOAT|MF_NOGRAVITY|MF_PAIN)
+	end
 	
 	local stunned = hl.stunned
 	for i = 1,hl.numstunned
@@ -514,7 +526,9 @@ hl.stunEnemy = function(mo,tics)
 		tics = 0,
 	})
 	hl.numstunned = $ + 1
-	S_StartSound(mo,sfx_kc38)
+	if not mo.hitlag
+		S_StartSound(mo,sfx_kc38)
+	end
 end
 
 addHook("PreThinkFrame",hl.iterateHitlagged)

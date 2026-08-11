@@ -697,6 +697,11 @@ rawset(_G,"Takis_HammerBlastHitbox",function(p)
 			end
 			
 			P_DamageMobj(found,me,me, damage)
+			if (found and found.valid and found.flags & MF_BOSS and (found.health <= 0))
+				S_StartSound(me, sfx_sp_kco)
+				takis.hud.painsurge = 6
+				strong = true
+			end
 			enemyhit = true
 			didit = true
 		--Most likely a spike thing

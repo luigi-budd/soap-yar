@@ -2064,6 +2064,11 @@ local function try_pvp_collide(me,thing)
 	if thinghit and (thing and thing.valid and thing.type == MT_ROLLOUTROCK)
 		thing.soap_flingcooldown = max((thing.hitlag or 0)* 2, 10)
 		thing.takis_flingme = false
+		return
+	end
+
+	if thinghit and (thing and thing.valid and thing.health) and not (thing.flags & MF_BOSS)
+		Soap_Hitlag.stunEnemy(thing, TR * 3/2, true)
 	end
 end
 
