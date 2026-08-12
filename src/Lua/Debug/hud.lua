@@ -356,7 +356,7 @@ addHook("HUD",function(v,p)
 		local rad = 30*FU
 		local tinyrad = 5*FU
 		local x = hudinfo[HUD_LIVES].x*FU + rad
-		local y = hudinfo[HUD_LIVES].y*FU - 20*FU
+		local y = hudinfo[HUD_LIVES].y*FU - 30*FU
 		local flags = hudinfo[HUD_LIVES].f|V_HUDTRANS
 		local speed = soap.accspeed
 		local speedcap = 200*FU
@@ -383,6 +383,7 @@ addHook("HUD",function(v,p)
 			rad/FU, 3|flags
 		)
 		v.drawString(x - rad, y + 8*FU, string.format("%.9f",speed), flags, "thin-fixed")
+		v.drawString(x - rad, y + 16*FU, string.format("Friction: %.2f%%",me.friction*100), flags|V_ALLOWLOWERCASE, "thin-fixed")
 	end
 	
 	oldflags = SOAP_DEBUG
