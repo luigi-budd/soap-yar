@@ -2939,7 +2939,7 @@ end)
 addHook("PlayerSpawn",function(p)
 	local soap = p.soaptable
 	if not soap then return end
-	local me = p.mo
+	local me = p.realmo
 	
 	--reset any dangling variables
 	soap.doublejumped = false 
@@ -2969,8 +2969,12 @@ addHook("PlayerSpawn",function(p)
 	soap.deathtype = 0
 	Soap_ResetLunge(p)
 	soap.squash = {}
-
-	soap.last.onground = P_IsObjectOnGround(me)
+	
+	if me and me.valid
+		soap.last.onground = P_IsObjectOnGround(me)
+	else
+		soap.last.onground = false
+	end
 	
 	if skins[p.skin].name ~= SOAP_SKIN then return end
 	if mariomode

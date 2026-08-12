@@ -534,7 +534,7 @@ CMDConstructor("editmobj", {prefix = SOAP_DEVPREFIX, func = function(p,...)
 	local args = {...}
 	if not #args
 	or (#args < 4)
-		prn(p, "\x82"..SOAP_DEVPREFIX.."_editmobj <node> <name> <type> <value> [<strict>]\x80: Edits \"name\" in \"node's\" mobj.")
+		prn(p, "\x82"..SOAP_DEVPREFIX.."editmobj <node> <type> <value> <index1> [<index2> ...]\x80: Edits \"name\" in \"node's\" mobj.")
 		prn(p, "\x82\Availiable types:")
 		for prefix,_ in pairs(valid_types)
 			prn(p, "\t\x83"..prefix)
@@ -546,16 +546,16 @@ CMDConstructor("editmobj", {prefix = SOAP_DEVPREFIX, func = function(p,...)
 	if not p2 then return end
 	table.remove(args, 1)
 	
+	local numargs = #args
 	local mo_entry
 	local mobj = p2.realmo
-	local obtype = type
+	local index = mobj
+	
 	local type = "string"
-	local strict = (#args == 4)
+	local value
 	for num, entry in ipairs(args)
+		prn(p, "\x86traveling... (arg "..num.." = "..entry..")")
 		if num == 1
-			mo_entry = entry
-			continue
-		elseif num == 2
 			if valid_types[entry] ~= nil
 				type = entry
 			else
@@ -563,55 +563,90 @@ CMDConstructor("editmobj", {prefix = SOAP_DEVPREFIX, func = function(p,...)
 				return
 			end
 			continue
+		elseif num == 2
+			local real_value = entry
+			if type == "nil"
+				real_value = nil
+			elseif type == "boolean"
+				real_value = ($:upper()) == "TRUE"
+			elseif type == "number" or type == "int"
+				real_value = tonumber($)
+			elseif type == "fixed" or type == "fixed_t"
+				real_value = tofixed($)
+			elseif type == "angle" or type == "angle_t"
+				real_value = tofixed($)
+				if real_value ~= nil
+					real_value = FixedAngle($)
+				end
+			elseif type == "global"
+				local result,status = pcall(function() return _G[real_value]; end)
+				if (result)
+					real_value = _G[$]
+				else
+					real_value = nil
+					prn(p,"\x83NOTICE: global is nil")
+				end
+			end
+			if real_value == nil and type ~= "nil"
+				prn(p,"\x85Value does not fit type")
+				return
+			end
+			value = real_value
+			continue
 		end
 		
-		if mobj[mo_entry] == nil
-			if strict
-				prn(p,"\x85NOTICE: current entry is nil, stopping")
+		-- try table indicies
+		if num ~= numargs
+			prn(p, '\t\x86searching table "'..entry..'" ('..tostring(index[entry])..')')
+			
+			local oldind = index
+			index = index[entry]
+			if index == nil
+				prn(p, '\t\x86table not found!')
+				-- try integer indicies
+				if tonumber(entry) ~= nil
+					prn(p, '\t\x86trying number index...')
+					index = oldind[tonumber(entry)]
+				end
+				if index == nil
+					local result,status = pcall(function() return _G[entry]; end)
+					if result
+						prn(p, '\t\x86trying global index...')
+						index = oldind[_G[entry]]
+					end
+					
+					if index == nil
+						prn(p,"\x85NOTICE: table is nil, stopping.")
+					else
+						prn(p, '\t\x86searching table "'..entry..'" ('..tostring(oldind[_G[entry]])..')')
+						continue
+					end
+				else
+					prn(p, '\t\x86searching table "'..entry..'" ('..tostring(oldind[tonumber(entry)])..')')
+					continue
+				end
 				return
-			else
+			end
+			continue
+		else
+			mo_entry = entry
+		end
+		
+		if index[mo_entry] == nil
+			if tonumber(mo_entry) ~= nil
+				mo_entry = tonumber($)
+			end
+			if index[mo_entry] == nil
 				prn(p,"\x83NOTICE: current entry is nil, continuing")
 			end
 		end
-		if obtype(mobj[mo_entry]) == "table"
-			prn(p,"\x85NOTICE: Can't edit tables yet! Stopping.")
-			return
-		end
 		
-		local real_value = entry
-		if type == "nil"
-			real_value = nil
-		elseif type == "boolean"
-			real_value = ($:upper()) == "TRUE"
-		elseif type == "number" or type == "int"
-			real_value = tonumber($)
-		elseif type == "fixed" or type == "fixed_t"
-			real_value = tofixed($)
-		elseif type == "angle" or type == "angle_t"
-			real_value = tofixed($)
-			if real_value ~= nil
-				real_value = FixedAngle($)
-			end
-		elseif type == "global"
-			local result,status = pcall(function() return _G[real_value]; end)
-			if (result)
-				real_value = _G[$]
-			else
-				real_value = nil
-				prn(p,"\x83NOTICE: global is nil")
-			end
-		end
-		if real_value == nil and type ~= "nil"
-			prn(p,"\x85Value does not fit type")
-			return
-		end
-		
-		local result,status = pcall(function() mobj[mo_entry] = real_value; end)
+		local result,status = pcall(function() index[mo_entry] = value; end)
 		if not result
 			prn(p,"\x85\Failed to set entry: \x80"..status)
 			return
 		else
-			mobj[mo_entry] = real_value
+			index[mo_entry] = value
 		end
 		prn(p,"\x83Success!")
 	end
@@ -620,7 +655,7 @@ CMDConstructor("editplayer", {prefix = SOAP_DEVPREFIX, func = function(p,...)
 	local args = {...}
 	if not #args
 	or (#args < 4)
-		prn(p, "\x82"..SOAP_DEVPREFIX.."_editplayer <node> <name> <type> <value> [<strict>]\x80: Edits \"name\" in \"node's\" player struct.")
+		prn(p, "\x82"..SOAP_DEVPREFIX.."editplayer <node> <type> <value> <index1> [<index2> ...]\x80: Edits \"name\" in \"node's\" player struct.")
 		prn(p, "\x82\Availiable types:")
 		for prefix,_ in pairs(valid_types)
 			prn(p, "\t\x83"..prefix)
@@ -632,16 +667,16 @@ CMDConstructor("editplayer", {prefix = SOAP_DEVPREFIX, func = function(p,...)
 	if not p2 then return end
 	table.remove(args, 1)
 	
+	local numargs = #args
 	local mo_entry
-	local mobj = p2
-	local obtype = type
+	local mobj = p2.realmo
+	local index = mobj
+	
 	local type = "string"
-	local strict = (#args == 4)
+	local value
 	for num, entry in ipairs(args)
+		prn(p, "\x86traveling... (arg "..num.." = "..entry..")")
 		if num == 1
-			mo_entry = entry
-			continue
-		elseif num == 2
 			if valid_types[entry] ~= nil
 				type = entry
 			else
@@ -649,55 +684,308 @@ CMDConstructor("editplayer", {prefix = SOAP_DEVPREFIX, func = function(p,...)
 				return
 			end
 			continue
+		elseif num == 2
+			local real_value = entry
+			if type == "nil"
+				real_value = nil
+			elseif type == "boolean"
+				real_value = ($:upper()) == "TRUE"
+			elseif type == "number" or type == "int"
+				real_value = tonumber($)
+			elseif type == "fixed" or type == "fixed_t"
+				real_value = tofixed($)
+			elseif type == "angle" or type == "angle_t"
+				real_value = tofixed($)
+				if real_value ~= nil
+					real_value = FixedAngle($)
+				end
+			elseif type == "global"
+				local result,status = pcall(function() return _G[real_value]; end)
+				if (result)
+					real_value = _G[$]
+				else
+					real_value = nil
+					prn(p,"\x83NOTICE: global is nil")
+				end
+			end
+			if real_value == nil and type ~= "nil"
+				prn(p,"\x85Value does not fit type")
+				return
+			end
+			value = real_value
+			continue
 		end
 		
-		if mobj[mo_entry] == nil
-			if strict
-				prn(p,"\x85NOTICE: current entry is nil, stopping")
+		-- try table indicies
+		if num ~= numargs
+			prn(p, '\t\x86searching table "'..entry..'" ('..tostring(index[entry])..')')
+			
+			local oldind = index
+			index = index[entry]
+			if index == nil
+				prn(p, '\t\x86table not found!')
+				-- try integer indicies
+				if tonumber(entry) ~= nil
+					prn(p, '\t\x86trying number index...')
+					index = oldind[tonumber(entry)]
+				end
+				if index == nil
+					local result,status = pcall(function() return _G[entry]; end)
+					if result
+						prn(p, '\t\x86trying global index...')
+						index = oldind[_G[entry]]
+					end
+					
+					if index == nil
+						prn(p,"\x85NOTICE: table is nil, stopping.")
+					else
+						prn(p, '\t\x86searching table "'..entry..'" ('..tostring(oldind[_G[entry]])..')')
+						continue
+					end
+				else
+					prn(p, '\t\x86searching table "'..entry..'" ('..tostring(oldind[tonumber(entry)])..')')
+					continue
+				end
 				return
-			else
+			end
+			continue
+		else
+			mo_entry = entry
+		end
+		
+		if index[mo_entry] == nil
+			if tonumber(mo_entry) ~= nil
+				mo_entry = tonumber($)
+			end
+			if index[mo_entry] == nil
 				prn(p,"\x83NOTICE: current entry is nil, continuing")
 			end
 		end
-		if obtype(mobj[mo_entry]) == "table"
-			prn(p,"\x85NOTICE: Can't edit tables yet! Stopping.")
-			return
-		end
 		
-		local real_value = entry
-		if type == "nil"
-			real_value = nil
-		elseif type == "boolean"
-			real_value = ($:upper()) == "TRUE"
-		elseif type == "number" or type == "int"
-			real_value = tonumber($)
-		elseif type == "fixed" or type == "fixed_t"
-			real_value = tofixed($)
-		elseif type == "angle" or type == "angle_t"
-			real_value = tofixed($)
-			if real_value ~= nil
-				real_value = FixedAngle($)
-			end
-		elseif type == "global"
-			local result,status = pcall(function() return _G[real_value]; end)
-			if (result)
-				real_value = _G[$]
-			else
-				real_value = nil
-				prn(p,"\x83NOTICE: global is nil")
-			end
-		end
-		if real_value == nil and type ~= "nil"
-			prn(p,"\x85Value does not fit type")
-			return
-		end
-		
-		local result,status = pcall(function() mobj[mo_entry] = real_value; end)
+		local result,status = pcall(function() index[mo_entry] = value; end)
 		if not result
 			prn(p,"\x85\Failed to set entry: \x80"..status)
 			return
 		else
-			mobj[mo_entry] = real_value
+			index[mo_entry] = value
+		end
+		prn(p,"\x83Success!")
+	end
+end})
+
+local powers_list = {
+	["pw_invulnerability"] = pw_invulnerability,
+	["pw_sneakers"] = pw_sneakers,
+	["pw_flashing"] = pw_flashing,
+	["pw_shield"] = pw_shield,
+	["pw_carry"] = pw_carry,
+	["pw_tailsfly"] = pw_tailsfly,
+	["pw_underwater"] = pw_underwater,
+	["pw_spacetime"] = pw_spacetime,
+	["pw_extralife"] = pw_extralife,
+	["pw_pushing"] = pw_pushing,
+	["pw_justsprung"] = pw_justsprung,
+	["pw_noautobrake"] = pw_noautobrake,
+	["pw_super"] = pw_super,
+	["pw_gravityboots"] = pw_gravityboots,
+	["pw_infinityring"] = pw_infinityring,
+	["pw_automaticring"] = pw_automaticring,
+	["pw_bouncering"] = pw_bouncering,
+	["pw_scatterring"] = pw_scatterring,
+	["pw_grenadering"] = pw_grenadering,
+	["pw_explosionring"] = pw_explosionring,
+	["pw_railring"] = pw_railring,
+	["pw_emeralds"] = pw_emeralds,
+	["pw_nights_superloop"] = pw_nights_superloop,
+	["pw_nights_helper"] = pw_nights_helper,
+	["pw_nights_linkfreeze"] = pw_nights_linkfreeze,
+	["pw_nocontrol"] = pw_nocontrol,
+	["pw_dye"] = pw_dye,
+	["pw_justlaunched"] = pw_justlaunched,
+	["pw_ignorelatch"] = pw_ignorelatch,
+	["pw_strong"] = pw_strong,
+}
+CMDConstructor("editpowers", {prefix = SOAP_DEVPREFIX, func = function(p,...)
+	local args = {...}
+	if not #args
+	or (#args < 4)
+		prn(p, "\x82"..SOAP_DEVPREFIX.."editpowers <node> <power> <type> <value>\x80: Edits \"power\" in \"node's\" player.powers array.")
+		prn(p, "\x82\Availiable types:")
+		for prefix,_ in pairs(valid_types)
+			prn(p, "\t\x83"..prefix)
+		end
+		return
+	end
+	
+	local p2 = GetPlayer(p,args[1])
+	if not p2 then return end
+	table.remove(args, 1)
+	
+	local mypower = powers_list[args[1]]
+	if mypower == nil
+		prn(p, '\x85Power "'..tostring(args[1])..'" does not exist.')
+		return
+	end
+	
+	local type
+	if valid_types[args[2]] ~= nil
+		type = args[2]
+	else
+		prn(p,"\x85Type value '"..tostring(args[2]).."' not valid")
+		return
+	end
+	
+	local real_value = args[3]
+	if type == "nil"
+		real_value = nil
+	elseif type == "boolean"
+		real_value = ($:upper()) == "TRUE"
+	elseif type == "number" or type == "int"
+		real_value = tonumber($)
+	elseif type == "fixed" or type == "fixed_t"
+		real_value = tofixed($)
+	elseif type == "angle" or type == "angle_t"
+		real_value = tofixed($)
+		if real_value ~= nil
+			real_value = FixedAngle($)
+		end
+	elseif type == "global"
+		local result,status = pcall(function() return _G[real_value]; end)
+		if (result)
+			real_value = _G[$]
+		else
+			real_value = nil
+			prn(p,"\x83NOTICE: global is nil")
+		end
+	end
+	if real_value == nil and type ~= "nil"
+		prn(p,"\x85Value does not fit type")
+		return
+	end
+
+	local result,status = pcall(function() p2.powers[mypower] = real_value; end)
+	if not result
+		prn(p,"\x85\Failed to set power: \x80"..status)
+		return
+	else
+		p2.powers[mypower] = real_value
+	end
+	prn(p,"\x83Success!")
+end})
+
+CMDConstructor("editglobal", {prefix = SOAP_DEVPREFIX, func = function(p,...)
+	local args = {...}
+	if not #args
+	or (#args < 3)
+		prn(p, "\x82"..SOAP_DEVPREFIX.."editglobal <type> <value> <index1> [<index2> ...]\x80: Edits a global variable.")
+		prn(p, "\x82\Availiable types:")
+		for prefix,_ in pairs(valid_types)
+			prn(p, "\t\x83"..prefix)
+		end
+		return
+	end
+	
+	local numargs = #args
+	local mo_entry
+	local mobj = _G
+	local index = mobj
+	
+	local type = "string"
+	local value
+	for num, entry in ipairs(args)
+		prn(p, "\x86traveling... (arg "..num.." = "..entry..")")
+		if num == 1
+			if valid_types[entry] ~= nil
+				type = entry
+			else
+				prn(p,"\x85Type value '"..entry.."' not valid")
+				return
+			end
+			continue
+		elseif num == 2
+			local real_value = entry
+			if type == "nil"
+				real_value = nil
+			elseif type == "boolean"
+				real_value = ($:upper()) == "TRUE"
+			elseif type == "number" or type == "int"
+				real_value = tonumber($)
+			elseif type == "fixed" or type == "fixed_t"
+				real_value = tofixed($)
+			elseif type == "angle" or type == "angle_t"
+				real_value = tofixed($)
+				if real_value ~= nil
+					real_value = FixedAngle($)
+				end
+			elseif type == "global"
+				local result,status = pcall(function() return _G[real_value]; end)
+				if (result)
+					real_value = _G[$]
+				else
+					real_value = nil
+					prn(p,"\x83NOTICE: global is nil")
+				end
+			end
+			if real_value == nil and type ~= "nil"
+				prn(p,"\x85Value does not fit type")
+				return
+			end
+			value = real_value
+			continue
+		end
+		
+		-- try table indicies
+		if num ~= numargs
+			prn(p, '\t\x86searching table "'..entry..'" ('..tostring(index[entry])..')')
+			
+			local oldind = index
+			index = index[entry]
+			if index == nil
+				prn(p, '\t\x86table not found!')
+				-- try integer indicies
+				if tonumber(entry) ~= nil
+					prn(p, '\t\x86trying number index...')
+					index = oldind[tonumber(entry)]
+				end
+				if index == nil
+					local result,status = pcall(function() return _G[entry]; end)
+					if result
+						prn(p, '\t\x86trying global index...')
+						index = oldind[_G[entry]]
+					end
+					
+					if index == nil
+						prn(p,"\x85NOTICE: table is nil, stopping.")
+					else
+						prn(p, '\t\x86searching table "'..entry..'" ('..tostring(oldind[_G[entry]])..')')
+						continue
+					end
+				else
+					prn(p, '\t\x86searching table "'..entry..'" ('..tostring(oldind[tonumber(entry)])..')')
+					continue
+				end
+				return
+			end
+			continue
+		else
+			mo_entry = entry
+		end
+		
+		if index[mo_entry] == nil
+			if tonumber(mo_entry) ~= nil
+				mo_entry = tonumber($)
+			end
+			if index[mo_entry] == nil
+				prn(p,"\x83NOTICE: current entry is nil, continuing")
+			end
+		end
+		
+		local result,status = pcall(function() index[mo_entry] = value; end)
+		if not result
+			prn(p,"\x85\Failed to set entry: \x80"..status)
+			return
+		else
+			index[mo_entry] = value
 		end
 		prn(p,"\x83Success!")
 	end
@@ -813,6 +1101,22 @@ CMDConstructor("rings", {prefix = SOAP_DEVPREFIX, func = function(p,...)
 	if rings == nil then return end
 	
 	p.rings = rings
+end})
+CMDConstructor("shoes", {prefix = SOAP_DEVPREFIX, func = function(p,...)
+	local args = {...}
+	local rings = args[1]
+	rings = tonumber($)
+	if rings == nil then return end
+	
+	p.powers[pw_sneakers] = rings*TR
+end})
+CMDConstructor("invuln", {prefix = SOAP_DEVPREFIX, func = function(p,...)
+	local args = {...}
+	local rings = args[1]
+	rings = tonumber($)
+	if rings == nil then return end
+	
+	p.powers[pw_invulnerability] = rings*TR
 end})
 
 CMDConstructor("knockback", {prefix = SOAP_DEVPREFIX, func = function(p,...)
