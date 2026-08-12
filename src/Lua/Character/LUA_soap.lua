@@ -2939,7 +2939,7 @@ end)
 addHook("PlayerSpawn",function(p)
 	local soap = p.soaptable
 	if not soap then return end
-	local me = p.mo
+	local me = p.realmo
 	
 	--reset any dangling variables
 	soap.doublejumped = false 
@@ -2969,8 +2969,12 @@ addHook("PlayerSpawn",function(p)
 	soap.deathtype = 0
 	Soap_ResetLunge(p)
 	soap.squash = {}
-
-	soap.last.onground = P_IsObjectOnGround(me)
+	
+	if me and me.valid
+		soap.last.onground = P_IsObjectOnGround(me)
+	else
+		soap.last.onground = false
+	end
 	
 	if skins[p.skin].name ~= SOAP_SKIN then return end
 	if mariomode
@@ -3676,10 +3680,15 @@ local function try_pvp_collide(me,thing)
 	if thinghit == false
 		return false
 	end
-	
+
 	if thinghit and (thing and thing.valid and thing.type == MT_ROLLOUTROCK)
 		thing.soap_flingcooldown = max((thing.hitlag or 0)* 2, 10)
 		thing.takis_flingme = false
+		return
+	end
+	
+	if thinghit and (thing and thing.valid and thing.health) and not (thing.flags & MF_BOSS)
+		Soap_Hitlag.stunEnemy(thing, TR * 3/2, true)
 	end
 end
 

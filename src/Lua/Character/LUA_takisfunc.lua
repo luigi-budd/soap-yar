@@ -461,13 +461,21 @@ rawset(_G,"Takis_HandleNoAbils", function(p)
 				debugmode = true
 			end
 		elseif gametype == GT_ZE2
-			if ZE2.cv_debug.value
+			if CV.FindVar("z_debug").value
 				debugmode = true
 			end
 		end
 		
 		if not debugmode
-			na = $|NOABIL_ALL &~NOABIL_TAUNTS
+			na = $|SNOABIL_TAUNTSONLY|SNOABIL_BREAKDANCE
+		end
+		if gametype == GT_ZE2
+			if ZE2.game_ended or ZE2.round_active == false
+				na = 0
+				-- lulll
+				p.charability = skins[p.skin].ability
+				p.charability2 = skins[p.skin].ability2
+			end
 		end
 	end
 	
@@ -697,6 +705,11 @@ rawset(_G,"Takis_HammerBlastHitbox",function(p)
 			end
 			
 			P_DamageMobj(found,me,me, damage)
+			if (found and found.valid and found.flags & MF_BOSS and (found.health <= 0))
+				S_StartSound(me, sfx_sp_kco)
+				takis.hud.painsurge = 6
+				strong = true
+			end
 			enemyhit = true
 			didit = true
 		--Most likely a spike thing

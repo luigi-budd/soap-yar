@@ -1997,10 +1997,16 @@ rawset(_G,"Soap_HandleNoAbils", function(p)
 		
 		if not debugmode
 			na = $|SNOABIL_TAUNTSONLY|SNOABIL_BREAKDANCE
+		elseif (p.charability == CA_NONE and p.charability2 == CA_NONE) -- lol
+			p.charability = skins[p.skin].ability
+			p.charability2 = skins[p.skin].ability2
 		end
 		if gametype == GT_ZE2
-			if ZE2.game_ended
-				na = $ &~SNOABIL_BREAKDANCE
+			if ZE2.game_ended or ZE2.round_active == false
+				na = 0
+				-- lulll
+				p.charability = skins[p.skin].ability
+				p.charability2 = skins[p.skin].ability2
 			end
 		end
 	end

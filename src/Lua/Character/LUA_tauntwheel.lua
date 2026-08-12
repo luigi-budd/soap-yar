@@ -49,7 +49,7 @@ local taunt_cmd = {
 	y = 0,
 	pointing = -1,
 	buttons = 0,
-	joystick = true,
+	joystick = false,
 	joy_spin = false,
 	joy_fire = false,
 	
@@ -540,6 +540,7 @@ SOAP_TAUNTS[SOAP_SKIN] = {
 					thok.flags2 = $|MF2_DONTDRAW
 					thok.angle = ang
 					
+					S_StartSound(me, sfx_sp_bsl)
 					local fakerange = 128*FU
 					local range = thok.radius*3/2
 					local enemyhit = false
@@ -1072,6 +1073,7 @@ addHook("PlayerCmd",function(p,cmd)
 			StopMenu()
 		elseif not (menuactive or p.spectator)
 			StartMenu()
+			taunt_cmd.joystick = true
 		end
 	end
 	gp_waskeydown = gamekeydown[gamepad_tb]
