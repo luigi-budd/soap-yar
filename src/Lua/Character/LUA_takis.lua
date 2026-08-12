@@ -579,6 +579,7 @@ Takis_Hook.addHook("Takis_Thinker",function(p)
 		and soap.accspeed >= topspeed
 		and me.friction < FU
 		and not (p.pflags & PF_SPINNING)
+		and not (p.charability == CA_NONE and p.charability2 == CA2_NONE)
 			me.friction = FU - FU/50
 		end
 		
