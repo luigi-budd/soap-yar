@@ -467,7 +467,7 @@ rawset(_G,"Takis_HandleNoAbils", function(p)
 		end
 		
 		if not debugmode
-			na = $|SNOABIL_TAUNTSONLY|SNOABIL_BREAKDANCE
+			na = $|NOABIL_ALL &~NOABIL_TAUNTS
 		end
 		if gametype == GT_ZE2
 			if ZE2.game_ended or ZE2.round_active == false
