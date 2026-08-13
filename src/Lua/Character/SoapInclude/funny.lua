@@ -455,6 +455,9 @@ addHook("PostThinkFrame",do
 			me.tumble_effect = $ - 1
 		end
 		
+		-- FUCK IT! WHATEVER!!
+		me.flags2 = $ &~MF2_OBJECTFLIP
+		
 		local soap = p.soaptable
 		local speed = R_PointTo3DDist(0,0,0, me.momx,me.momy,me.momz)
 		p.drawangle = $ + FixedAngle(speed / 2)
@@ -471,7 +474,7 @@ addHook("PostThinkFrame",do
 		and not (P_CheckDeathPitCollide(me) or P_CheckPredictedPitCollide(p, me, me.z))
 			local bounce = me.soap_tumble_oldmomz
 			if soap.accspeed > 5*FU
-				bounce = max(abs($), 20 * me.scale) * sign($)
+				bounce = max(abs($), 20 * me.scale) * sign(me.soap_tumble_oldmomz)
 			end
 			if not (me.z + me.height >= me.ceilingz)
 				me.momz = -(bounce / 3)
@@ -498,7 +501,7 @@ addHook("PostThinkFrame",do
 			end
 			
 			if not me.health
-			or ((me.momz * P_MobjFlip(me)) <= 5 * me.scale and soap.accspeed <= 5*FU)
+			or (abs(me.momz) <= 5 * me.scale and soap.accspeed <= 5*FU)
 				me.soap_tumble = nil
 			end
 			if not P_IsObjectOnGround(me)
