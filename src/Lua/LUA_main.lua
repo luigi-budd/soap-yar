@@ -36,7 +36,6 @@ addHook("PreThinkFrame",function()
 				Takis_Hook.tryRunHook("PreThinkFrame", events[i], p)
 			end
 		end
-		Soap_TauntWheelThink(p)
 		
 		--Cool.
 		--see also: https://git.do.srb2.org/STJr/SRB2/-/merge_requests/2656
@@ -49,6 +48,7 @@ addHook("PreThinkFrame",function()
 		elseif (me.skin == TAKIS_SKIN)
 			Takis_HandleNoAbils(p)
 		end
+		Soap_TauntWheelThink(p)
 		
 		--PostPreThinkFrame takishook ooma
 	end
