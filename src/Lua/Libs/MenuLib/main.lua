@@ -2,7 +2,64 @@ local ML = MenuLib
 local waittoupdate = false --for mouse
 local waittoupdate_esc = false
 
+local leftjoystick = {
+	x = 0, y = 0
+}
+local rightjoystick = {
+	x = 0, y = 0
+}
+
+ML.handleEscape = function()
+	if (ML.client.textbuffer_id == nil)
+		if #ML.client.popups
+			if ML.menus[ML.client.popups[#ML.client.popups].id].ps_flags & PS_NOESCAPE --holy SHIT
+				--do nothing
+			else
+				ML.initPopup(-1)
+			end
+		else
+			if ML.menus[ML.client.currentMenu.id].ms_flags & MS_NOESCAPE
+				-- do nothing
+			else
+				ML.initMenu(-1)
+			end
+		end
+	else
+		if ML.client.textbuffer_funcs.close ~= nil
+			if ML.client.textbuffer_funcs.close()
+				return true
+			end
+		end
+		ML.stopTextInput()
+	end
+	ML.client.doEscapePress = true
+	ML.client.escapeHeld = 1
+	waittoupdate_esc = true
+	return true
+end
+
+local KEY_JOY1 = KEY_JOY1 or ((KEY_MOUSE1 or 256) + (MOUSEBUTTONS or 8))
+local joyadown = 0
+local joybdown = 0
 ML.mainThinker = function()
+	if gamekeydown[KEY_JOY1]
+		joyadown = $ + 1
+	else
+		joyadown = 0
+	end
+	if gamekeydown[KEY_JOY1+1]
+		joybdown = $ + 1
+	else
+		joybdown = 0
+	end
+	
+	if joyadown == 1
+	and (ML.client.textbuffer_id == nil)
+	and not chatactive
+		ML.client.doMousePress = true
+		waittoupdate = true
+	end
+	
 	if ML.client.doMousePress
 		if ML.client.mouseTime == -1
 			ML.client.mouseTime = 0
@@ -10,6 +67,10 @@ ML.mainThinker = function()
 			ML.client.doMousePress = false
 			ML.client.mouseTime = -1
 		end
+	-- joy input bug i cant be bothered to properly fix
+	elseif not waittoupdate
+	and ML.client.mouseTime == 0
+		ML.client.mouseTime = -1
 	end
 	if not waittoupdate
 		if ML.client.mouseHeld == 1
@@ -19,6 +80,16 @@ ML.mainThinker = function()
 		end
 	end
 	waittoupdate = false
+	
+	if joybdown == 1
+	and not chatactive
+	and not ML.noMenuOpenAtAll()
+		-- haaaaaaaack
+		ML.handleEscape()
+		
+		ML.client.doEscapePress = true
+		waittoupdate_esc = true
+	end
 	
 	if ML.client.doEscapePress
 		if ML.client.escapeTime == -1
@@ -51,11 +122,21 @@ ML.mainThinker = function()
 	ML.client.menuactive = true
 	ML.client.menuTime = $ + 1
 	
-	ML.client.mouse_x = $ + mouse.dx * 3700
-	ML.client.mouse_y = $ + mouse.dy * 3700
+	ML.client.mouse_x = $ + (mouse.dx * 3700) + (leftjoystick.x * 470)
+	ML.client.mouse_y = $ + (mouse.dy * 3700) + (leftjoystick.y * 470)
 	
 	ML.client.mouse_x = ML.clamp(0, $, BASEVIDWIDTH*FU)
 	ML.client.mouse_y = ML.clamp(0, $, BASEVIDHEIGHT*FU)
+	
+	print("m1",ML.client.doMousePress, ML.client.mouseTime)
+	print("esc",ML.client.doEscapePress, ML.client.escapeHeld)
+end
+
+-- this is a hacky way to add joystick support
+ML.postThinker = function()
+	if ML.noMenuOpenAtAll() then return end
+	
+	input.ignoregameinputs = false
 end
 
 --keyhandler object stuff
@@ -125,32 +206,8 @@ ML.controlHandler = function(key)
 		waittoupdate = true
 	elseif key.name == "escape"
 	and not chatactive
-		if (ML.client.textbuffer_id == nil)
-			if #ML.client.popups
-				if ML.menus[ML.client.popups[#ML.client.popups].id].ps_flags & PS_NOESCAPE --holy SHIT
-					--do nothing
-				else
-					ML.initPopup(-1)
-				end
-			else
-				if ML.menus[ML.client.currentMenu.id].ms_flags & MS_NOESCAPE
-					-- do nothing
-				else
-					ML.initMenu(-1)
-				end
-			end
-		else
-			if ML.client.textbuffer_funcs.close ~= nil
-				if ML.client.textbuffer_funcs.close()
-					return true
-				end
-			end
-			ML.stopTextInput()
-		end
-		ML.client.doEscapePress = true
-		ML.client.escapeHeld = 1
-		waittoupdate_esc = true
-		return true
+		local res = ML.handleEscape()
+		if res ~= nil then return res end
 	elseif key.name == "enter"
 	and not chatactive
 	and (ML.client.textbuffer_id ~= nil)
@@ -160,6 +217,29 @@ ML.controlHandler = function(key)
 		S_StartSound(nil,sfx_menu1,consoleplayer)
 		ML.stopTextInput()
 	end
+end
+
+local TICCMD_RECIEVED = 1
+ML.joystickHandler = function(p, cmd)
+	leftjoystick.x = input.joyAxis(JA_STRAFE)
+	leftjoystick.y = input.joyAxis(JA_MOVE)
+	if abs(leftjoystick.x) < 210
+		leftjoystick.x = 0; end
+	if abs(leftjoystick.y) < 210
+		leftjoystick.y = 0; end
+	
+	rightjoystick.x = input.joyAxis(JA_TURN)
+	rightjoystick.y = -input.joyAxis(JA_LOOK)
+	
+	if ML.noMenuOpenAtAll() then return end
+	
+	input.ignoregameinputs = true
+	
+	cmd.forwardmove = 0
+	cmd.sidemove = 0
+	cmd.buttons = 0
+	cmd.angleturn = p.cmd.angleturn &~TICCMD_RECIEVED -- this game drives me insane
+	cmd.aiming = p.cmd.aiming
 end
 
 if not ML.replacing
@@ -177,5 +257,11 @@ if not ML.replacing
 	addHook("KeyDown", function(key)
 		local res = ML.controlHandler(key)
 		if res ~= nil then return res end
+	end)
+	addHook("PlayerCmd", function(p,cmd)
+		ML.joystickHandler(p,cmd)
+	end)
+	addHook("PostThinkFrame", do
+		ML.postThinker()
 	end)
 end
