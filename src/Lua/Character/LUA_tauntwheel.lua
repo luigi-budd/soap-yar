@@ -42,6 +42,7 @@ local gpbuttonnames = {
 	[GPAD_DRIGHT] = "D-Pad Right",
 }
 
+local TAUNT_ANIM = TR
 local taunt_cmd = {
 	active = false,
 	closed = false, -- keeps ignoregameinputs on for a tic
@@ -55,6 +56,8 @@ local taunt_cmd = {
 	
 	forward = 0,
 	side = 0,
+	
+	animation = 0,
 }
 
 local function CheckTauntAvail(p, checkactive)
@@ -74,7 +77,7 @@ local function CheckTauntAvail(p, checkactive)
 	and not ((taunt.active or taunt.tics) and checkactive)
 	and me.health
 	and (soap.notCarried)
-	and not (soap.noability & noabil_taunt)
+	and not (soap.noability & noabil_taunt == noabil_taunt and checkactive)
 	and (SOAP_TAUNTS[me.skin] ~= nil and #SOAP_TAUNTS[me.skin])
 		return true
 	end
@@ -98,6 +101,10 @@ local function StopMenu()
 	taunt_cmd.selected = -1
 	taunt_cmd.closed = true
 	input.ignoregameinputs = false
+end
+local function TauntWarning()
+	S_StartSoundAtVolume(nil, sfx_sp_cnt, 255 / 2)
+	taunt_cmd.animation = TAUNT_ANIM
 end
 
 local scroll_fact = 400
@@ -145,6 +152,12 @@ local function cancelConds(p, nobuttons, checkspinonly)
 	
 	if me.soap_tauntforcecancel
 		me.soap_tauntforcecancel = nil
+		cancel = true
+	end
+	
+	-- special case
+	if (gametype == GT_ZE2)
+	and (me.sprite2 == SPR2_ROLL)
 		cancel = true
 	end
 	
@@ -657,6 +670,12 @@ SOAP_TAUNTS[SOAP_SKIN] = {
 								P_Thrust(found, ang, speed)
 								P_SetObjectMomZ(found, 30*me.scale, true)
 								p2.powers[pw_flashing] = flashingtics
+								
+								-- lolllll
+								if (gametype == GT_ZE2)
+								and (p2.xSlinger and p2.xSlinger.team == 2)
+									P_DamageMobj(found, me,me, 100)
+								end
 							else --lol
 								P_DoPlayerPain(p2, me,me)
 								found.momx = 0
@@ -962,6 +981,17 @@ local rightjoystick = {
 	x = 0, y = 0
 }
 
+local function CheckNoAbil(allowtaunting)
+	local p = consoleplayer
+	local noabil_taunt = (skins[p.skin].name == TAKIS_SKIN) and NOABIL_TAUNTS or SNOABIL_TAUNTS
+	
+	if (p.soaptable.noability & noabil_taunt)
+	and not ((p.soaptable.taunt.active or p.soaptable.taunt.tics) and allowtaunting)
+		return true
+	end
+	return false
+end
+
 addHook("KeyDown", function(key)
 	if isdedicatedserver then return end
 	if key.repeated then return end
@@ -980,9 +1010,11 @@ addHook("KeyDown", function(key)
 			COM_BufInsertText(consoleplayer, "_soap_dotaunt "..cmd_sig.." "..(consoleplayer.soaptable.taunt.prev - 1))
 			StopMenu()
 			return true
-		elseif not (menuactive or consoleplayer.spectator)
+		elseif not (menuactive or consoleplayer.spectator) and not CheckNoAbil(true)
 			StartMenu()
 			return true
+		elseif CheckNoAbil(true)
+			TauntWarning()
 		end
 	elseif kname == "escape"
 	and taunt_cmd.active
@@ -1071,9 +1103,11 @@ addHook("PlayerCmd",function(p,cmd)
 		and (p.soaptable and p.soaptable.taunt.prev > 0)
 			COM_BufInsertText(p, "_soap_dotaunt "..cmd_sig.." "..(p.soaptable.taunt.prev - 1))
 			StopMenu()
-		elseif not (menuactive or p.spectator)
+		elseif not (menuactive or p.spectator) and not CheckNoAbil(true)
 			StartMenu()
 			taunt_cmd.joystick = true
+		elseif CheckNoAbil(true)
+			TauntWarning()
 		end
 	end
 	gp_waskeydown = gamekeydown[gamepad_tb]
@@ -1128,7 +1162,9 @@ local function ClientTauntHandle(p)
 	
 	-- nice one asshole
 	if SOAP_TAUNTS[me.skin] == nil
+	or CheckNoAbil(false)
 		StopMenu()
+		if CheckNoAbil(false) then TauntWarning(); end
 		return
 	end
 	
@@ -1277,6 +1313,24 @@ addHook("HUD",function(v,p)
 	if not (skins[p.skin].name == SOAP_SKIN or skins[p.skin].name == TAKIS_SKIN) then return end
 	local hud = soap.hud
 	local taunt = taunt_cmd
+	
+	if taunt_cmd.animation
+		local x = 160
+		local cmap = 0
+		if taunt_cmd.animation > TAUNT_ANIM - 10
+			x = $ + (taunt_cmd.animation % 2 and 1 or -1)
+			cmap = (taunt_cmd.animation % 2 and V_REDMAP or 0)
+		end
+		
+		v.draw(x, 140, v.cachePatch("STAUNT_CNTBG"), V_SNAPTOBOTTOM|V_30TRANS)
+		v.draw(x - 42, 139, v.cachePatch("STAUNT_ERR"), V_SNAPTOBOTTOM, v.getStringColormap(V_REDMAP))
+		v.drawString(x + 6, 140,
+			"Can't use taunts.", V_ALLOWLOWERCASE|V_SNAPTOBOTTOM|cmap,
+			"thin-center"
+		)
+		
+		taunt_cmd.animation = $ - 1
+	end
 	
 	if not taunt.active then return end
 	

@@ -316,17 +316,17 @@ local function SetCompat()
 			};
 			items = {
 				"auto_ring",
-				"scatter_ring"
+				"scatter_ring",
 			};
 		})
 		ZE2.AddSurvivor(TAKIS_SKIN, {
-            weight = 2,
+            weight = 1,
 			description = {
 				"Ready to blast!",
 				"On the lighter side.",
 			};
 			items = {
-				"red_ring",
+				"accel_ring",
 				"flame_ring"
 			};
 		})
