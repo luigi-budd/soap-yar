@@ -1866,6 +1866,7 @@ Takis_Hook.addHook("MoveBlocked",function(me,thing,line, goingup)
 		end
 		
 		local bonkeffect
+		local lessbump = false
 		if not soap.onGround
 			local wasgliding = (me.state == S_PLAY_GLIDE)
 			me.state = S_PLAY_FALL
@@ -1875,9 +1876,19 @@ Takis_Hook.addHook("MoveBlocked",function(me,thing,line, goingup)
 				me.sprite2 = SPR2_MSC0
 				P_MovePlayer(p) -- resets height
 				
-				soap.hammer.lockout = TR / 2
-				me.tics = soap.hammer.lockout
-				P_SetObjectMomZ(me, 7*FU)
+				-- no shield = bonk
+				if (p.powers[pw_shield] & SH_NOSTACK == 0)
+					soap.hammer.lockout = TR / 2
+					me.tics = soap.hammer.lockout
+					P_SetObjectMomZ(me, 7*FU)
+				else
+					me.momx = $ / 2
+					me.momy = $ / 2
+					lessbump = true
+					
+					me.state = S_PLAY_FALL
+					P_SetObjectMomZ(me, 15*FU)
+				end
 				
 				local spr_scale = FU * 7/6
 				local top_layer = P_SpawnMobjFromMobj(me, 0,0,0, MT_PARTICLE)
@@ -1940,6 +1951,10 @@ Takis_Hook.addHook("MoveBlocked",function(me,thing,line, goingup)
 		end
 		if (bonkeffect and bonkeffect.valid)
 			P_Thrust(bonkeffect, me.soap_bumpangle + ANGLE_90, Soap_RandomFixedRange(-4 * me.scale, 4 * me.scale))
+		end
+		if lessbump
+			me.momx = $ / 4
+			me.momy = $ / 4
 		end
 		if bumped then return true end
 	end
