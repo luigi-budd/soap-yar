@@ -669,7 +669,7 @@ CMDConstructor("editplayer", {prefix = SOAP_DEVPREFIX, func = function(p,...)
 	
 	local numargs = #args
 	local mo_entry
-	local mobj = p2.realmo
+	local mobj = p2
 	local index = mobj
 	
 	local type = "string"
