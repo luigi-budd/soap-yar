@@ -3688,6 +3688,7 @@ local function try_pvp_collide(me,thing)
 	end
 	
 	if thinghit and (thing and thing.valid and thing.health) and not (thing.flags & MF_BOSS)
+	and not (thing.type == MT_PLAYER)
 		Soap_Hitlag.stunEnemy(thing, TR * 3/2, true)
 	end
 end
