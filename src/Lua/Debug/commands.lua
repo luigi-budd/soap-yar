@@ -985,7 +985,11 @@ CMDConstructor("editglobal", {prefix = SOAP_DEVPREFIX, func = function(p,...)
 			prn(p,"\x85\Failed to set entry: \x80"..status)
 			return
 		else
-			index[mo_entry] = value
+			if numargs == 3
+				rawset(_G, mo_entry, value)
+			else
+				index[mo_entry] = value
+			end
 		end
 		prn(p,"\x83Success!")
 	end
