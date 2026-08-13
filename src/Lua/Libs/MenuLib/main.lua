@@ -45,6 +45,10 @@ ML.mainThinker = function()
 	if gamekeydown[KEY_JOY1]
 		joyadown = $ + 1
 	else
+		if joyadown
+			ML.client.mouseHeld = -1
+			waittoupdate = true
+		end
 		joyadown = 0
 	end
 	if gamekeydown[KEY_JOY1+1]
@@ -57,6 +61,7 @@ ML.mainThinker = function()
 	and (ML.client.textbuffer_id == nil)
 	and not chatactive
 		ML.client.doMousePress = true
+		ML.client.mouseHeld = 1
 		waittoupdate = true
 	end
 	
