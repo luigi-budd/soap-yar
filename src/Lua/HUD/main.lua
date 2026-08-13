@@ -204,7 +204,7 @@ addHook("HUD",function(v,p, cam)
 		local bg = v.cachePatch(pre .. "BACK")
 		local fill = v.cachePatch(pre .. "FILL")
 		
-		v.drawScaled(x, y, scale, bg, V_PERPLAYER|V_HUDTRANS)
+		v.drawScaled(x, y, scale, bg, V_HUDTRANS)
 		
 		local maxtic = CLUTCH_TICS*FU
 		local timer = maxtic - (clutch.tics*FU)
@@ -214,13 +214,13 @@ addHook("HUD",function(v,p, cam)
 		
 		v.drawCropped(x,y+FixedMul(width,scale),scale,scale,
 			fill,
-			V_PERPLAYER|V_HUDTRANS, 
+			V_HUDTRANS, 
 			v.getColormap(nil,color,nil),
 			0,width,
 			fill.width*FU,fill.height*FU
 		)
 		
-		v.drawScaled(x, y, scale, v.cachePatch(pre .. "MARK"), V_PERPLAYER|V_HUDTRANS)
+		v.drawScaled(x, y, scale, v.cachePatch(pre .. "MARK"), V_HUDTRANS)
 	else
 		clutchfade = min($ + 1, CLUTCH_FADEOUT)
 	end
@@ -232,13 +232,13 @@ addHook("HUD",function(v,p, cam)
 	if stra
 		v.drawString(x,y,
 			stra,
-			V_PERPLAYER|V_ALLOWLOWERCASE|fade, thina and "thin-fixed" or "fixed"
+			V_ALLOWLOWERCASE|fade, thina and "thin-fixed" or "fixed"
 		)
 	end
 	if strb
 		v.drawString(x,y+8*FU,
 			strb,
-			V_PERPLAYER|V_ALLOWLOWERCASE|fade, thinb and "thin-fixed" or "fixed"
+			V_ALLOWLOWERCASE|fade, thinb and "thin-fixed" or "fixed"
 		)
 	end
 	v.dointerp(false)
