@@ -127,9 +127,6 @@ ML.mainThinker = function()
 	
 	ML.client.mouse_x = ML.clamp(0, $, BASEVIDWIDTH*FU)
 	ML.client.mouse_y = ML.clamp(0, $, BASEVIDHEIGHT*FU)
-	
-	print("m1",ML.client.doMousePress, ML.client.mouseTime)
-	print("esc",ML.client.doEscapePress, ML.client.escapeHeld)
 end
 
 -- this is a hacky way to add joystick support
