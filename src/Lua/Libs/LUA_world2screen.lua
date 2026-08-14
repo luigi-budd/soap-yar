@@ -1,6 +1,22 @@
 local cv_fov
 local cv_glshearing
 
+local LocalAngles = {
+	[0] = { -- consoleplayer
+		angle = 0, aiming = 0,
+	},
+	[1] = { -- secondarydisplayplayer
+		angle = 0, aiming = 0
+	}
+}
+local LOCAL_ANGLETURN = 0
+local LOCAL_AIMING = 0
+addHook("PlayerCmd",function(p,cmd)
+	local angset = (p == consoleplayer) and LocalAngles[0] or LocalAngles[1]
+	angset.angle = cmd.angleturn << 16
+	angset.aiming = cmd.aiming << 16
+end)
+
 /*
 	Code updated in Lua by GenericHeroGuy for libSG
 	Ported to C by NepDisk and acutally made to work and fixed by Indev!(Thanks so much!)
@@ -42,7 +58,7 @@ rawset(_G, "K_GetScreenCoords",function(vid,p,cam, point, props)
 		return {x=0,y=0,onscreen=onscreen}
 	end
 	
-	if (Soap_CheckSRB2Edit() and interpmobj)
+	if (takis_custombuild and interpmobj)
 		targx,targy,targz = vid.interpolateMobj(point)
 	else
 		targx = point.x
@@ -66,10 +82,15 @@ rawset(_G, "K_GetScreenCoords",function(vid,p,cam, point, props)
 		elseif (SUBVERSION < 16) --assuming camera fix was merged into 2.2.16, and we're on 2.2.15
 			local m = p.realmo
 			camPos = {x = m.x, y = m.y, z = p.viewz}
-			--sglib uses p.realmo.angle, so...
-			camAngle = m.angle
-			camAiming = p.aiming
-		--if we ARE on 2.2.16 then do nothing, everythings already correct
+			
+			if (p == consoleplayer or p == secondarydisplayplayer)
+				local angset = LocalAngles[(p == secondarydisplayplayer and 1 or 0)]
+				camAngle = angset.angle
+				camAiming = angset.aiming
+			else
+				camAngle = m.angle
+				camAiming = p.aiming
+			end
 		end
 	end
 	if (p.awayviewmobj and p.awayviewmobj.valid and p.awayviewtics > 0)
@@ -185,16 +206,15 @@ rawset(_G, "K_GetScreenCoords",function(vid,p,cam, point, props)
 	if splitscreen
 		x = ($/2) + (x/8)
 	end
+	x = $ + xres
 	
 	/*
-	-- too much roll
 	if viewroll
 		local tempx = x
 		x = FixedMul(cos(viewroll), tempx) - FixedMul(sin(viewroll), y)
 		y = FixedMul(sin(viewroll), tempx) + FixedMul(cos(viewroll), y)
 	end
 	*/
-	x = $ + xres
 	
 	-- adjust coords for splitscreen
 	if splitscreen

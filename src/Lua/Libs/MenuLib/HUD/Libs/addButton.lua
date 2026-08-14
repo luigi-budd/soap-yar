@@ -93,6 +93,7 @@ return function(v, props)
 			if (ML.client.doMousePress)
 				props.pressFunc()
 				S_StartSound(nil, sfx_menu1)
+				ML.client.doMousePress = false
 			end
 		end
 	end
