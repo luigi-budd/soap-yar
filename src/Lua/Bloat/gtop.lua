@@ -123,14 +123,10 @@ addHook("MobjThinker",function(spark)
 	anchor_spark(spark)
 end,MT_GARDENTOPSPARK)
 
-COM_AddCommand("hawktuah",function(p)
+COM_AddCommand("gardentop",function(p)
 	if not (p.soaptable) then return end
 	
-	local certified = false
-	if ((p.name == "Epix" and not mbrelease) --lol
-	or p.soaptable.isElevated)
-		certified = true
-	end
+	local certified = Bloat_CheckAdmin(p)
 	if not certified then return end
 	
 	local me = p.mo

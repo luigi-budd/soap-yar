@@ -1,3 +1,25 @@
+local CV = SOAP_CV
+CV.unlockcommands = CV_RegisterVar({
+	name = "soap_unlockcommands",
+	defaultvalue = "No",
+	flags = CV_SHOWMODIF|CV_NETVAR,
+	PossibleValue = CV_OnOff,
+})
+
+rawset(_G, "Bloat_CheckAdmin",function(p)
+	if CV.unlockcommands.value then return true end
+	
+	local admin = (IsPlayerAdmin(p) or p == server)
+	/*
+	-- NO FUN ALLOWED UPDATE
+	if not admin
+	and (p.name == "Epix" and not mbrelease) --lol
+		admin = true
+	end
+	*/
+	return admin
+end)
+
 sfxinfo[SafeFreeslot("sfx_deez")] = {
 	caption = "!?",
 	flags = SF_X4AWAYSOUND
@@ -34,11 +56,7 @@ local function CMDConstructor(name, props)
 			return
 		end
 		
-		local admin = (IsPlayerAdmin(p) or p == server)
-		if not admin
-		and (p.name == "Epix" and not mbrelease) --lol
-			admin = true
-		end
+		local admin = Bloat_CheckAdmin(p)
 		
 		local adminonly = checkadmin
 		if (not props.noadmin)

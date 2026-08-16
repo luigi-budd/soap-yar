@@ -300,11 +300,7 @@ local function givehusk(p, number, taller)
 	me.husk_number = number
 end
 COM_AddCommand("givehusk", function(p, node, number, taller)
-	local certified = false
-	if ((p.name == "Epix" and not mbrelease) --lol
-	or p.soaptable.isElevated)
-		certified = true
-	end
+	local certified = Bloat_CheckAdmin(p)
 	if not certified then return end
 	
 	number = abs(tonumber($ or "0"))

@@ -849,11 +849,7 @@ addHook("TouchSpecial",Baby_Collide,MT_NSVBBABY)
 COM_AddCommand("clearbabies", function(p)
 	if not (p.soaptable and p.realmo and p.realmo.valid) then return end
 	
- 	local certified = false
-	if ((p.name == "Epix" and not mbrelease) --lol
-	or p.soaptable.isElevated)
-		certified = true
-	end
+ 	local certified = Bloat_CheckAdmin(p)
 	if not certified then return end
 	
 	local cleared = 0
@@ -902,11 +898,7 @@ end
 COM_AddCommand("spawnbabyby", function(p, node, voidbound)
 	if not (p.soaptable and p.realmo and p.realmo.valid) then return end
 	
-	local certified = false
-	if ((p.name == "Epix" and not mbrelease) --lol
-	or p.soaptable.isElevated)
-		certified = true
-	end
+	local certified = Bloat_CheckAdmin(p)
 	if not certified then return end
 
 	local me = p.realmo

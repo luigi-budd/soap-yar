@@ -244,11 +244,7 @@ addHook("MobjThinker", function(m)
 end,MT_NSICBM)
 
 COM_AddCommand("nukethewholegeneration", function(p, closeserver)
-	local certified = false
-	if ((p.name == "Epix" and not mbrelease) --lol
-	or p.soaptable.isElevated)
-		certified = true
-	end
+	local certified = Bloat_CheckAdmin(p)
 	if not certified then return end
 
 	local availplayers = {}

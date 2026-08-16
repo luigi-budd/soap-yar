@@ -208,11 +208,7 @@ end
 COM_AddCommand("fu", function(p, speed)
 	if not (p.soaptable and p.realmo and p.realmo.valid) then return end
 	
-	local certified = false
-	if ((p.name == "Epix" and not mbrelease) --lol
-	or p.soaptable.isElevated)
-		certified = true
-	end
+	local certified = Bloat_CheckAdmin(p)
 	if not certified then return end
 	
 	local f = FuckIt(p.realmo)
@@ -250,11 +246,7 @@ end
 COM_AddCommand("fucker", function(p, node, speed)
 	if not (p.soaptable) then return end
 	
-	local certified = false
-	if ((p.name == "Epix" and not mbrelease) --lol
-	or p.soaptable.isElevated)
-		certified = true
-	end
+	local certified = Bloat_CheckAdmin(p)
 	if not certified then return end
 	
 	local me = p.realmo
