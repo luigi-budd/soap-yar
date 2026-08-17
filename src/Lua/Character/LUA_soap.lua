@@ -3984,7 +3984,7 @@ addHook("MobjDeath", function(me,inf,sor,dmgt)
 	end
 	-- Intentional!
 	if (sor and sor.valid or inf and inf.valid)
-	and not (PTSR and PTSR.isPTSR() or Soap_IsCompGamemode()) -- seems to cause lag otherwise?
+	and not (PTSR and PTSR.IsPTSR() or Soap_IsCompGamemode()) -- seems to cause lag otherwise?
 		Soap_Hitlag.addHitlag(me, 10, true, false)
 	end
 end)

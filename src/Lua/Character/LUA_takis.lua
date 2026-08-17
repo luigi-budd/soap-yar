@@ -628,9 +628,10 @@ Takis_Hook.addHook("Takis_Thinker",function(p)
 	
 	--clutch timers
 	do
-		if soap.accspeed <= 9*FU
+		if (soap.accspeed <= 9*FU
 		or (p.playerstate ~= PST_LIVE)
-		or (soap.inPain)
+		or (soap.inPain))
+		and not clutch.grace
 		--or (takis.pitanim)
 			clutch.tics = 0
 			clutch.time = 0
@@ -647,20 +648,21 @@ Takis_Hook.addHook("Takis_Thinker",function(p)
 		*/
 		
 		if clutch.good > 0
-			clutch.good = max($-1, 0)
+			clutch.good = max($ - 1, 0)
 		--spammed
 		elseif clutch.good < 0
-			clutch.good = min($+1, 0)
+			clutch.good = min($ + 1, 0)
 		end
-		clutch.spin = max($-1,0)
+		clutch.spin = max($ - 1,0)
 		
 		if clutch.tics > 0
-			clutch.tics = $-1
+			clutch.tics = $ - 1
 		elseif clutch.time == 0
-		and not hammer.down
+		and not (hammer.down or clutch.grace)
 			clutch.combo = 0
 		end
 		clutch.time = max($,0)
+		clutch.grace = max($ - 1, 0)
 		
 		if clutch.spamtime
 			clutch.spamtime = $ - 1
@@ -1601,6 +1603,21 @@ Takis_Hook.addHook("Takis_Thinker",function(p)
 	if (soap.fx.uppercut_aura and soap.fx.uppercut_aura.valid)
 		P_RemoveMobj(soap.fx.uppercut_aura)
 		soap.fx.uppercut_aura = nil
+	end
+	if (soap.fx.dash_aura and soap.fx.dash_aura.valid)
+		P_RemoveMobj(soap.fx.dash_aura)
+		soap.fx.dash_aura = nil
+	end
+	
+	-- i hate that i have to do this shit
+	if (PTSR and PTSR.IsPTSR())
+		p.vphysnspeed = skins[p.skin].normalspeed
+		p.vphyslasttop = p.vphysnspeed
+		p.hasnomomentum = true
+		
+		if (me.pizza_in or me.pizza_out)
+			clutch.grace = max($, TR)
+		end
 	end
 	
 	Soap_VFX(p,me,soap, {

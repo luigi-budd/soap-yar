@@ -965,6 +965,7 @@ rawset(_G,"Takis_DoHammerBlastLand",function(p,domoves)
 		elseif (takis.use > 0)
 		and me.health
 		and not (takis.noability & NOABIL_CLUTCH)
+			takis.clutch.grace = max($, TR/3)
 			Takis_DoClutch(p)
 		end
 	end
