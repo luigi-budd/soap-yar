@@ -504,6 +504,10 @@ rawset(_G,"Takis_HandleNoAbils", function(p)
 		na = $|NOABIL_CLUTCH|NOABIL_HAMMER|NOABIL_SLIDE
 	end
 	
+	if not me.health
+		na = $|NOABIL_TAUNTS
+	end
+	
 	--return value: new noabilities field (absolute)
 	if (Event_Char_NoAbility.numhooks)
 		local events = Event_Char_NoAbility.events
