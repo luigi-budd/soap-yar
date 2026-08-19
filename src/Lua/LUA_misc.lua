@@ -562,8 +562,8 @@ addHook("MobjThinker",function(rock)
 	end
 end,MT_ROLLOUTROCK)
 
-local amp_tics = 41
-local amp_longtics = 55
+local amp_tics = 44
+local amp_longtics = 58
 local amp_frac = (FU / amp_tics)
 local amp_longfrac = (FU / amp_longtics)
 local amp_drag = FU * 6/7
@@ -595,6 +595,7 @@ addHook("MobjThinker",function(amp)
 			amp.renderflags = $ &~RF_ALWAYSONTOP
 		else
 			amp.renderflags = $|RF_ALWAYSONTOP
+			amp.alpha = FU
 		end
 	end
 	
@@ -612,6 +613,11 @@ addHook("MobjThinker",function(amp)
 		amp.soap_newvfx = false
 		amp.tics = -1
 		amp.fuse = -1
+		
+		amp.momx = $ * 2
+		amp.momy = $ * 2
+		amp.momz = $ * 2
+		amp.blendmode = AST_ADD
 	end
 	amp.ticker = $ + 1
 	
@@ -627,17 +633,16 @@ addHook("MobjThinker",function(amp)
 	
 	local frac = min(myfrac * amp.ticker, FU)
 	P_MoveOrigin(amp,
-		ease.inexpo(frac, amp.startx, me.x),
-		ease.inexpo(frac, amp.starty, me.y),
-		ease.inexpo(frac, amp.startz, me.z + me.height / 2)
+		ease.inoutback(frac, amp.startx, me.x, 3*FU),
+		ease.inoutback(frac, amp.starty, me.y, 3*FU),
+		ease.inoutback(frac, amp.startz, me.z + me.height / 2, FU*3/2)
 	)
 	if CV.rotations.value
 		amp.rollangle = $ + FixedAngle(ease.inexpo(frac, 0, 60*FU))
 	end
-	if (amp.startscale ~= me.scale)
-		amp.spritexscale = ease.inexpo(frac, amp.startscale, me.scale / 2)
-		amp.spriteyscale = amp.spritexscale
-	end
+	amp.spritexscale = ease.inexpo(frac, amp.startscale, me.scale / 20)
+	amp.spriteyscale = amp.spritexscale
+	amp.alpha = FixedMul($, ease.inexpo(frac, FU * 3/4, 0))
 	
 	if amp.ticker == mytics + 1
 		if me.soap_lifetimeamps == nil then me.soap_lifetimeamps = 0 end
@@ -645,15 +650,13 @@ addHook("MobjThinker",function(amp)
 			if (amp.awardrings)
 				me.player.rings = $ + 1
 				S_StartSoundAtVolume(me, sfx_itemup, 255 * 4/5, p)
-			elseif not Soap_IsCompGamemode()
-				P_AddPlayerScore(me.player, 80)
+			else --if not Soap_IsCompGamemode()
+				P_AddPlayerScore(me.player, 90)
 			end
 		end
 		me.soap_lifetimeamps = $ + 1
 		
-		if (amp.awardrings)
-			S_StartSound(me, sfx_sp_amp, p)
-		end
+		S_StartSound(me, sfx_sp_amp, p)
 		me.soap_amps = $ - 1
 		if me.soap_amps == 0
 			S_StartSound(me, sfx_sp_ap0 + me.soap_amplevel, p)

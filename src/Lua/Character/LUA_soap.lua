@@ -207,24 +207,36 @@ local function sixseven_callback(spark, me)
 	spark.frame = 34|FF_PAPERSPRITE|FF_ADD
 	spark.momz = 0
 	spark.renderflags = $|RF_NOCOLORMAPS|RF_FULLBRIGHT|(P_RandomChance(FU/2) and RF_HORIZONTALFLIP or 0)
+	spark.type = MT_SOAP_WALLBUMP
 	local frac = FixedDiv(me.player.soaptable.supertranstime, SOAP_TRANSFORMTIME)
-	local speed = 8
+	local speed = 14
+	spark.alpha = min(frac*8/6, FU)
 	if (me.soap_supertemp)
 		frac = FU
 		speed = 12
-		spark.type = MT_SOAP_WALLBUMP
 		spark.sixseveneffect = true
-		spark.fuse = spark.tics
 		if (me.soap_poundvfx)
+			spark.sixseveneffect = nil
 			spark.drawonlyforplayer = me.player
-			spark.fuse = 25
-			speed = 16
+			spark.tics = 20
+			speed = 30
+			
+			spark.scale = FU * 5
+			spark.spritexscale = $ / 5
+			spark.fusesquish = 10
+			spark.xstretch = FU/6
+			spark.alpha = FU / 5
 		end
+	else
+		spark.fusesquish = 5
+		spark.scale = frac*2
+		spark.spritexscale = $ / 2
+		spark.movefactor = FU * 89/100
 	end
+	spark.fuse = spark.tics
 	P_ThrustEvenIn2D(spark, spark.angle - ANGLE_90, speed*frac)
 	spark.momx = $ + me.momx
 	spark.momy = $ + me.momy
-	spark.alpha = min(frac * 2, FU)
 end
 local function transformvfx(p,me,soap)
 	local scale = 2*FU
@@ -390,7 +402,7 @@ local function soap_poundonland(p,me,soap)
 			me.soap_supertemp = true
 			me.soap_poundvfx = true
 			Soap_DustRing(me,
-				MT_PARTICLE, 16,
+				MT_PARTICLE, 24,
 				{me.x,me.y,me.z},
 				8*FU, 10*FU,
 				me.scale / 10,
@@ -1145,7 +1157,7 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 		spark.random = P_RandomRange(-limit,limit) * ANG1
 		
 		if not S_SoundPlaying(me, sfx_sp_trn)
-			S_StartSound(me,sfx_sp_trn, p)
+			S_StartSoundAtVolume(me,sfx_sp_trn, (p == displayplayer) and 255 or 255/3)
 		end
 	else
 		soap.supertranstime = 0
@@ -1192,7 +1204,7 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 		S_StopSoundByID(me,sfx_sp_dtn)
 	end
 	
-	-- due to popular demmand spinning top
+	-- due to popular demand spinning top
 	-- can now be toggled in co-op
 	if (CV.allowtop.value and soap.fire)
 		if soap.fire == 1
@@ -3989,7 +4001,7 @@ addHook("MobjDeath", function(me,inf,sor,dmgt)
 	end
 	-- Intentional!
 	if (sor and sor.valid or inf and inf.valid)
-	and not (PTSR and PTSR.isPTSR() or Soap_IsCompGamemode()) -- seems to cause lag otherwise?
+	and not (PTSR and PTSR.IsPTSR() or Soap_IsCompGamemode()) -- seems to cause lag otherwise?
 		Soap_Hitlag.addHitlag(me, 10, true, false)
 	end
 end)
