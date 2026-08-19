@@ -55,4 +55,7 @@ sfxinfo[sfx_tk_whp].caption = "Whipcrack"
 SafeFreeslot("sfx_tk_omg")
 sfxinfo[sfx_tk_omg].caption = "Shock"
 SafeFreeslot("sfx_tk_om2")
-sfxinfo[sfx_tk_om2].caption = "Shock"
+sfxinfo[sfx_tk_om2] = {
+	caption = "Shock",
+	flags = SF_X4AWAYSOUND
+}

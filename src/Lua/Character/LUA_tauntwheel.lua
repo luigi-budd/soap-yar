@@ -269,7 +269,7 @@ SOAP_TAUNTS[SOAP_SKIN] = {
 				soap.stasistic = TR / 2
 				me.tics = soap.stasistic
 				
-				if P_RandomChance(FU)
+				if P_RandomChance(FU / 20)
 					sound = sfx_tk_om2
 					Soap_SquashMacro(p, {ease_func = "inoutback", ease_time = TR, strength = 2*FU, squish = -FU, back = 2*FU})
 					me.soap_supertemp = true
@@ -287,6 +287,7 @@ SOAP_TAUNTS[SOAP_SKIN] = {
 					
 					if Soap_IsLocalPlayer(p)
 						Soap_StartQuake(6*FU, TR/2)
+						P_FlashPal(p, PAL_INVERT, 4)
 					end
 				elseif Soap_IsLocalPlayer(p)
 					Soap_StartQuake(FU, TR/6)
