@@ -663,6 +663,7 @@ Takis_Hook.addHook("Takis_Thinker",function(p)
 		end
 		clutch.time = max($,0)
 		clutch.grace = max($ - 1, 0)
+		clutch.goodanim = max($ - 1, 0)
 		
 		if clutch.spamtime
 			clutch.spamtime = $ - 1
