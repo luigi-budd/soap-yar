@@ -794,24 +794,36 @@ local function sixseven_callback(spark, me)
 	spark.frame = 34|FF_PAPERSPRITE|FF_ADD
 	spark.momz = 0
 	spark.renderflags = $|RF_NOCOLORMAPS|RF_FULLBRIGHT|(P_RandomChance(FU/2) and RF_HORIZONTALFLIP or 0)
-	local frac = FU
-	local speed = 8
+	spark.type = MT_SOAP_WALLBUMP
+	local frac = FixedDiv(me.player.soaptable.supertranstime, SOAP_TRANSFORMTIME)
+	local speed = 14
+	spark.alpha = min(frac*8/6, FU)
 	if (me.soap_supertemp)
 		frac = FU
 		speed = 12
-		spark.type = MT_SOAP_WALLBUMP
 		spark.sixseveneffect = true
-		spark.fuse = spark.tics
 		if (me.soap_poundvfx)
+			spark.sixseveneffect = nil
 			spark.drawonlyforplayer = me.player
-			spark.fuse = 25
-			speed = 16
+			spark.tics = 20
+			speed = 30
+			
+			spark.scale = FU * 5
+			spark.spritexscale = $ / 5
+			spark.fusesquish = 10
+			spark.xstretch = FU/6
+			spark.alpha = FU / 5
 		end
+	else
+		spark.fusesquish = 5
+		spark.scale = frac*2
+		spark.spritexscale = $ / 2
+		spark.movefactor = FU * 89/100
 	end
+	spark.fuse = spark.tics
 	P_ThrustEvenIn2D(spark, spark.angle - ANGLE_90, speed*frac)
 	spark.momx = $ + me.momx
 	spark.momy = $ + me.momy
-	spark.alpha = min(frac * 2, FU)
 end
 rawset(_G,"Takis_DoHammerBlastLand",function(p,domoves)
 	local me = p.realmo
@@ -905,7 +917,7 @@ rawset(_G,"Takis_DoHammerBlastLand",function(p,domoves)
 		me.soap_supertemp = true
 		me.soap_poundvfx = true
 		Soap_DustRing(me,
-			MT_PARTICLE, 16,
+			MT_PARTICLE, 24,
 			{me.x,me.y,me.z},
 			8*FU, 10*FU,
 			me.scale / 10,
