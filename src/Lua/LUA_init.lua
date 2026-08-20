@@ -310,6 +310,7 @@ rawset(_G, "Soap_InitTable", function(p)
 			tics = 0, --clutchtime
 			time = 0, --clutchingtime
 			good = 0,
+			goodanim = 0,
 			-- dont remove clutch combo during this
 			-- this is only for ptsr cause i like
 			-- my speedslops

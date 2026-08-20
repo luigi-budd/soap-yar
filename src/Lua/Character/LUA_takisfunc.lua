@@ -115,6 +115,7 @@ rawset(_G,"Takis_DoClutch",function(p,riding)
 			clutch.combo = $+1
 			clutch.combotime = 2*TR
 			clutch.good = TR
+			clutch.goodanim = 4
 			
 			S_StartSoundAtVolume(me,sfx_kc5b,255/2)
 			
@@ -176,7 +177,7 @@ rawset(_G,"Takis_DoClutch",function(p,riding)
 		elseif takis.accspeed >= capstart
 			local range = speedcap - capstart
 			local speed = takis.accspeed - capstart
-			local frac = ease.inquint(clamp(0,FixedDiv(speed,range),FU), 0,FU)
+			local frac = ease.outsine(clamp(0,FixedDiv(speed,range),FU), 0,FU)
 			thrust = FixedMul($, frac)
 		end
 	end
@@ -504,6 +505,10 @@ rawset(_G,"Takis_HandleNoAbils", function(p)
 		na = $|NOABIL_CLUTCH|NOABIL_HAMMER|NOABIL_SLIDE
 	end
 	
+	if not me.health
+		na = $|NOABIL_TAUNTS
+	end
+	
 	--return value: new noabilities field (absolute)
 	if (Event_Char_NoAbility.numhooks)
 		local events = Event_Char_NoAbility.events
@@ -795,7 +800,7 @@ local function sixseven_callback(spark, me)
 	spark.momz = 0
 	spark.renderflags = $|RF_NOCOLORMAPS|RF_FULLBRIGHT|(P_RandomChance(FU/2) and RF_HORIZONTALFLIP or 0)
 	spark.type = MT_SOAP_WALLBUMP
-	local frac = FixedDiv(me.player.soaptable.supertranstime, SOAP_TRANSFORMTIME)
+	local frac = 0
 	local speed = 14
 	spark.alpha = min(frac*8/6, FU)
 	if (me.soap_supertemp)

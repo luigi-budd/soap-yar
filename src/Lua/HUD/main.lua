@@ -230,6 +230,12 @@ addHook("HUD",function(v,p, cam)
 		fade = (clutchfade - (CLUTCH_FADEOUT - CLUTCH_FADE))<<V_ALPHASHIFT
 	end
 	if stra
+		local x = x
+		local fade = fade
+		if clutch.goodanim
+			x = $ + (FU * clutch.goodanim)
+			fade = $|V_YELLOWMAP
+		end
 		v.drawString(x,y,
 			stra,
 			V_ALLOWLOWERCASE|fade, thina and "thin-fixed" or "fixed"

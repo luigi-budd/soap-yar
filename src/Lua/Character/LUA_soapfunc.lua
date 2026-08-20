@@ -1521,7 +1521,7 @@ rawset(_G, "Soap_TickSquashes",function(p,me,soap, donttick)
 					(FU / squash.x.timetake) * squash.x.tics,
 					squash.x.start_v,
 					squash.x.end_v,
-					squash.x.back
+					squash.x.back_v
 				)
 				if not donttick
 					squash.x.tics = min($ + 1, squash.x.timetake)
@@ -1534,7 +1534,7 @@ rawset(_G, "Soap_TickSquashes",function(p,me,soap, donttick)
 					(FU / squash.y.timetake) * squash.y.tics,
 					squash.y.start_v,
 					squash.y.end_v,
-					squash.y.back
+					squash.y.back_v
 				)
 				if not donttick
 					squash.y.tics = min($ + 1, squash.y.timetake)
@@ -2036,6 +2036,10 @@ rawset(_G,"Soap_HandleNoAbils", function(p)
 	-- spin moves
 	if (p.charability2 ~= CA2_SOAPMOVE)
 		na = $|SNOABIL_RDASH|SNOABIL_AIRDASH
+	end
+	
+	if not me.health
+		na = $|SNOABIL_BOTHTAUNTS
 	end
 	
 	local hadcombat = (na & SNOABIL_COMBAT)
