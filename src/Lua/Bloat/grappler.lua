@@ -274,21 +274,23 @@ local function RopePart(p,me,cmd,g)
 	do
 		local ford = cmd.forwardmove
 		local side = cmd.sidemove
-		local wishangle = cmd.angleturn<<16 + R_PointToAngle2(0, 0, ford << 16, -side << 16)
-		local wishspeed = 350*me.scale
-		local acceleration = FU/4220 + (FixedDiv(FixedHypot(FixedHypot(me.momx,me.momy), me.momz), wishspeed)/120)
-		
-		local addspeed = wishspeed - FixedHypot(FixedHypot(me.momx,me.momy), me.momz)
-		if (addspeed > 0)
-			local accelspeed = FixedMul(acceleration, wishspeed)
-			if accelspeed > addspeed then accelspeed = addspeed; end
+		if (ford ~= 0 and side ~= 0)
+			local wishangle = cmd.angleturn<<16 + R_PointToAngle2(0, 0, ford << 16, -side << 16)
+			local wishspeed = 350*me.scale
+			local acceleration = FU/4220 + (FixedDiv(FixedHypot(FixedHypot(me.momx,me.momy), me.momz), wishspeed)/120)
 			
-			local momvec = Vec2.MobjMomToVec(me)
-			wishangle = Vec2.SphereToCartesian($, 0)
-			local x = momvec.x + FixedMul(accelspeed, wishangle.x)
-			local y = momvec.y + FixedMul(accelspeed, wishangle.y)
-			me.momx = x
-			me.momy = y
+			local addspeed = wishspeed - FixedHypot(FixedHypot(me.momx,me.momy), me.momz)
+			if (addspeed > 0)
+				local accelspeed = FixedMul(acceleration, wishspeed)
+				if accelspeed > addspeed then accelspeed = addspeed; end
+				
+				local momvec = Vec2.MobjMomToVec(me)
+				wishangle = Vec2.SphereToCartesian($, 0)
+				local x = momvec.x + FixedMul(accelspeed, wishangle.x)
+				local y = momvec.y + FixedMul(accelspeed, wishangle.y)
+				me.momx = x
+				me.momy = y
+			end
 		end
 	end
 	RopeSolver(me, m, m.xyzdist)
