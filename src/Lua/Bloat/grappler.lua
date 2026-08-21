@@ -274,7 +274,7 @@ local function RopePart(p,me,cmd,g)
 	do
 		local ford = cmd.forwardmove
 		local side = cmd.sidemove
-		if (ford ~= 0 and side ~= 0)
+		if (ford ~= 0 or side ~= 0)
 			local wishangle = cmd.angleturn<<16 + R_PointToAngle2(0, 0, ford << 16, -side << 16)
 			local wishspeed = 350*me.scale
 			local acceleration = FU/4220 + (FixedDiv(FixedHypot(FixedHypot(me.momx,me.momy), me.momz), wishspeed)/120)
