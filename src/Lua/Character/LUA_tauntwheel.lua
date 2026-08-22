@@ -193,7 +193,6 @@ local function ooomagawd_callback(spark, me)
 		spark.sixseveneffect = true
 		if (me.soap_poundvfx)
 			spark.sixseveneffect = nil
-			spark.drawonlyforplayer = me.player
 			spark.tics = 20
 			speed = 30
 			
@@ -285,9 +284,13 @@ SOAP_TAUNTS[SOAP_SKIN] = {
 					me.soap_supertemp = nil
 					me.soap_poundvfx = nil
 					
-					if Soap_IsLocalPlayer(p)
-						Soap_StartQuake(6*FU, TR/2)
-						P_FlashPal(p, PAL_INVERT, 4)
+					for play in players.iterate
+						if R_PointToDist2(play.mo.x,play.mo.y, me.x,me.y) > 4096*me.scale then continue end
+						
+						if Soap_IsLocalPlayer(play)
+							Soap_StartQuake(6*FU, TR/2)
+						end
+						P_FlashPal(play, PAL_INVERT, 4)
 					end
 				elseif Soap_IsLocalPlayer(p)
 					Soap_StartQuake(FU, TR/6)
