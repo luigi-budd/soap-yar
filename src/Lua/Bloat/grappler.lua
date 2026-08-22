@@ -19,8 +19,8 @@ end)
 freeslot("MT_GRAPPLERAY")
 mobjinfo[MT_GRAPPLERAY] = {
 	doomednum = -1,
-	radius = 8*FU,
-	height = 16*FU,
+	radius = 12*FU,
+	height = 24*FU,
 	spawnstate = S_PARTICLE,
 	deathstate = S_PARTICLE,
 	flags = MF_NOGRAVITY|MF_SOLID
