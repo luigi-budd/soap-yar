@@ -47,16 +47,20 @@ states[S_MM_TRIPMINE_EXPLODE] = {
 			new.colorized = mo.colorized
 			new.spritexscale = mo.spritexscale
 			new.spriteyscale = mo.spriteyscale
-		else
-		
 		end
+		
 		if P_IsObjectOnGround(mo)
-			mo.momz = -$
+		and mo.oldmomz ~= nil
+			mo.momz = -mo.oldmomz / 2
 			local scale = max(mo.scale, mo.forcescale or 0)
 			if abs(mo.momz) <= 10*scale
 				mo.momz = 10*scale * sign($)
 			end
+		else
+			mo.momx = $ * 978/1000
+			mo.momy = $ * 978/1000
 		end
+		mo.oldmomz = mo.momz
 		mo.thought = true
 	end,
 	var1 = 13,
@@ -90,13 +94,14 @@ rawset(_G, "Bloat_SpawnExplosions", function(mine, props)
 	local speedhi	= parse(props.speedhighbound, 2*FU)
 	local fuse		= parse(props.fuse, -1)
 	local scaletome	= parse(props.scaletomobj, true)
+	local color		= parse(props.color, nil)
 
 	local anglecount = FixedDiv(360*FU,count*FU)
 	for i = 0,count
 		local fa = FixedAngle(anglecount*i)
         -- adjusted fixed angle
         local afa = fa + FixedAngle(360*P_RandomFixed())
-
+		
 		local mobj = P_SpawnMobjFromMobj(mine,
 			FixedMul(cos(afa),radius) + Soap_RandomFixedRange(offlow, offhi),
 			FixedMul(sin(afa),radius) + Soap_RandomFixedRange(offlow, offhi),
@@ -113,6 +118,10 @@ rawset(_G, "Bloat_SpawnExplosions", function(mine, props)
 		mobj.angle = R_PointToAngle2(mobj.x,mobj.y, mine.x,mine.y)
 		mobj.forcescale = scale + Soap_RandomFixedRange(scalelow, scalehi)
 		mobj.scale = mobj.forcescale
+		if color
+			mobj.color = color
+			mobj.colorized = true
+		end
 		
 		P_Thrust(mobj, mobj.angle,
 			-FixedMul(speed + Soap_RandomFixedRange(speedlow,speedhi), scaletome and mobj.scale or FU)
@@ -134,6 +143,10 @@ rawset(_G, "Bloat_SpawnExplosions", function(mine, props)
 		static.angle = R_PointToAngle2(mobj.x,mobj.y, mine.x,mine.y)
 		static.forcescale = scale + Soap_RandomFixedRange(scalelow, scalehi)
 		static.scale = static.forcescale
+		if color
+			static.color = color
+			static.colorized = true
+		end
 		
 		P_Thrust(static, static.angle,
 			-FixedMul(speed + Soap_RandomFixedRange(speedlow,speedhi), scaletome and static.scale or FU)

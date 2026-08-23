@@ -46,6 +46,7 @@ local filetree = {
 	"bloat/extra.lua",
 	"bloat/kidnap.lua",
 	"bloat/feeeeetyum.lua",
+	"bloat/tripmines.lua",
 	
 	"LUA_main.lua",
 	
