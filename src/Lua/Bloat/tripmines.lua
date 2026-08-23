@@ -194,11 +194,6 @@ local function T_PrimeVFX(mine, me)
 				v.renderflags = $|(i and RF_HORIZONTALFLIP or 0)|(j and RF_VERTICALFLIP or 0)
 				v.angle = mine.angle + (ANGLE_90 * k)
 				v.scale = $ * 3
-				
-				v = P_SpawnMobjFromMobj(mine, 0,0,0, MT_PARTICLE)
-				v.state = S_TMV_FLAIR
-				v.angle = mine.angle + (ANGLE_90 * k) + ANGLE_45 + (ANGLE_90*i)
-				v.scale = $ * 4
 			end
 		end
 		
@@ -206,7 +201,14 @@ local function T_PrimeVFX(mine, me)
 		v.state = S_TMV_SHCK2_WAIT
 		v.angle = mine.angle + (ANGLE_90 * k) + ANGLE_45
 		v.scale = $ * 4
-		
+	end
+	
+	-- k
+	for i = 0,3
+		local v = P_SpawnMobjFromMobj(mine, 0,0,0, MT_PARTICLE)
+		v.state = S_TMV_FLAIR
+		v.angle = mine.angle + (ANGLE_90 * i) + ANGLE_45
+		v.scale = $ * 4
 	end
 	
 	local offset = 800*FU
