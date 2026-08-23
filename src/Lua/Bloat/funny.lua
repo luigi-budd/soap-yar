@@ -93,6 +93,8 @@ rawset(_G, "Bloat_SpawnExplosions", function(mine, props)
 	local speedlow	= parse(props.speedlowbound, -2*FU)
 	local speedhi	= parse(props.speedhighbound, 2*FU)
 	local fuse		= parse(props.fuse, -1)
+	local fuselow	= parse(props.fuselowbound, 0)
+	local fusehi	= parse(props.fusehighbound, 0)
 	local scaletome	= parse(props.scaletomobj, true)
 	local color		= parse(props.color, nil)
 
@@ -113,7 +115,7 @@ rawset(_G, "Bloat_SpawnExplosions", function(mine, props)
 		mobj.momz = 0
 		--mobj.spritexscale,mobj.spriteyscale = FU*2,FU*2
 		mobj.flags2 = $ &~MF2_DONTDRAW
-		if fuse ~= -1 then mobj.fuse = fuse; end
+		if fuse ~= -1 then mobj.fuse = fuse + P_RandomRange(fuselow,fusehi); end
 		
 		mobj.angle = R_PointToAngle2(mobj.x,mobj.y, mine.x,mine.y)
 		mobj.forcescale = scale + Soap_RandomFixedRange(scalelow, scalehi)

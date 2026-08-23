@@ -277,9 +277,43 @@ Takis_Hook.addHook("PostThinkFrame",function(p)
 			scale = FU,
 			speed = 8*FU,
 			color = SKINCOLOR_MAGENTA,
-			fuse = 2*TR
+			fuse = 2*TR,
+			fuselowbound = -15,
+			fusehighbound = TR,
 		})
-		P_KillMobj(me, mine,mine)
+		local scale = 3*FU
+		local limit = 28
+		for i = 0, 31
+			local spark = P_SpawnMobjFromMobj(me,
+				Soap_RandomFixedRange(-64*FU, 64*FU),
+				Soap_RandomFixedRange(-64*FU, 64*FU),
+				Soap_RandomFixedRange(0, 128*FU), MT_SOAP_WALLBUMP
+			)
+			P_SetScale(spark,scale / 10, true)
+			spark.destscale = scale
+			--5 tics
+			spark.scalespeed = FixedDiv(scale - (scale / 10), 5*FU)
+			spark.color = SKINCOLOR_MAGENTA
+			spark.colorized = true
+			--spark.mirrored = P_RandomChance(FU/2)
+			spark.fuse = 6 * TR
+			spark.startfuse = spark.fuse
+			spark.flags = $|MF_NOGRAVITY
+			spark.angle = FixedAngle(360 * P_RandomFixed())
+			
+			local speed = P_RandomRange(3, 8) * me.scale
+			local ha,va = spark.angle, FixedAngle(P_RandomRange(-20,160)*FU)
+			P_3DThrust(spark, ha,va, speed)
+			
+			spark.random = P_RandomRange(-limit,limit) * ANG1
+			spark.movefactor = FU * 998/1000
+		end
+		for i = 0,6
+			Soap_ImpactVFX(me,nil, 6*FU, Soap_RandomFixedRange(FU/4,4*FU), false,false, DMG_ELECTRIC)
+		end
+		if not (p.pflags & PF_GODMODE)
+			P_KillMobj(me, mine,mine)
+		end
 		
 		for play in players.iterate
 			if R_PointToDist2(play.mo.x,play.mo.y, me.x,me.y) > 4096*2*FU then continue end
