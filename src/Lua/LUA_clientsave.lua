@@ -28,7 +28,6 @@ local function loadfromfile(localonly)
 		-- while this is meant to load client-side cvars,
 		-- we'll also save and load our synched cvars here, and send
 		-- the data on our PlayerJoin
-		printf("Loading preferences from '"..filepath.."'...")
 		local count = 1
 		local cvarname = ''
 		local skip = false
@@ -50,16 +49,7 @@ local function loadfromfile(localonly)
 				count = $ + 1
 				continue
 			else
-				local cvar_local = cv_synched[line] ~= true
-				-- debug
-				if cv_synched[line]
-					printf("Found synched cvar... localonly="..tostring(localonly))
-					if (cvar_local and not localonly)
-					or (not cvar_local and localonly)
-						printf("Can't parse this synched cvar!")
-					end
-				end
-				
+				local cvar_local = cv_synched[line] ~= true				
 				if (cvar_local and not localonly)
 				or (not cvar_local and localonly)
 					skip = true
@@ -71,7 +61,6 @@ local function loadfromfile(localonly)
 			count = $ + 1
 		end
 		file:close()
-		printf("Done.")
 	end
 end
 loadfromfile(true)
