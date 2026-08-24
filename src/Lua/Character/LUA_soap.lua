@@ -3590,6 +3590,7 @@ local function try_damage_cases(me,thing, p,soap,DealDamage,damagetype)
 		Soap_ImpactVFX(thing,me, nil, FU/3, nil,nil,damagetype)
 		Soap_DamageSfx(thing, FU/3, 2*FU, damagetype)
 		Soap_SpawnBumpSparks(me, thing, nil, true)
+		Soap_Hitlag.addHitlag(me, 3, false)
 		
 		DealDamage(thing, me,me, nil,damagetype)
 		if (thing and thing.valid and thing.flags & MF_BOSS and (thing.health <= 0))
