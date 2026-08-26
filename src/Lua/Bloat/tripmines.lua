@@ -316,7 +316,7 @@ Takis_Hook.addHook("PostThinkFrame",function(p)
 		end
 		
 		for play in players.iterate
-			if R_PointToDist2(play.mo.x,play.mo.y, me.x,me.y) > 4096*2*FU then continue end
+			if R_PointToDist2(play.realmo.x,play.realmo.y, me.x,me.y) > 4096*2*FU then continue end
 			
 			play.mo.tripmine_blink = 10
 			play.mo.tripmine_dark = 8*TR

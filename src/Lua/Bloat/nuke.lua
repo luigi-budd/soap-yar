@@ -261,4 +261,10 @@ COM_AddCommand("nukethewholegeneration", function(p, closeserver)
 	local nuke = P_SpawnMobjFromMobj(target, 0,0,0, MT_NSICBM)
 	nuke.target = target
 	nuke.closeserver = (closeserver ~= nil)
+	
+	if closeserver
+		CONS_Printf(p, "\x85Sending out a servernuke, Goodbye!")
+	else
+		CONS_Printf(p, "\x85Sending out a nuke!")
+	end
 end)

@@ -6,10 +6,38 @@ CV.unlockcommands = CV_RegisterVar({
 	PossibleValue = CV_OnOff,
 })
 
+local function GetPlayerHelper(pname)
+	-- Find a player using their node or part of their name.
+	local N = tonumber(pname)
+	if N ~= nil and N >= 0 and N < 32 then
+		for player in players.iterate do
+			if #player == N then
+	return player
+			end
+		end
+	end
+	for player in players.iterate do
+		if string.find(string.lower(player.name), string.lower(pname)) then
+			return player
+		end
+	end
+	return nil
+end
+local function GetPlayer(player, pname)
+	local player2 = GetPlayerHelper(pname)
+	if not player2 then
+		CONS_Printf(player, "No one here has that name.")
+	end
+	return player2
+end
+
 rawset(_G, "Bloat_CheckAdmin",function(p)
 	if CV.unlockcommands.value then return true end
 	
 	local admin = (IsPlayerAdmin(p) or p == server)
+	if (not admin) and p.soaptable.bloataccess
+		admin = true
+	end
 	/*
 	-- NO FUN ALLOWED UPDATE
 	if not admin
@@ -195,3 +223,51 @@ Takis_Hook.addHook("PostThinkFrame",function(p)
 		p.viewz = me.z + me.height - viewheight
 	end
 end)
+
+-- special promote functions for bloat commands
+CMDConstructor("promote", {prefix = CMD_PREFIX, func = function(p,...)
+	local args = {...}
+	if CV.unlockcommands.value
+		prn(p,"soap_unlockcommands is in effect, everyone has access to Soap commands.")
+		return
+	end
+	
+	local node = args[1]
+	local p2 = GetPlayer(p,node)
+	if not p2
+		prn(p, "sb_promote [player]: Allows a player to use commands from Soap. \x85\Does not give them real admin.\x80")
+		return
+	end
+	
+	if (IsPlayerAdmin(p) or p == server)
+		prn(p, "\x85This player is an admin, they have access to commands by default.")
+		return
+	end
+	
+	p2.soaptable.bloataccess = true
+	prn(p, "\x82Promoted " .. p2.name .. ".")
+	prn(p2, "\x82You can now use Soap commands!")
+end})
+CMDConstructor("demote", {prefix = CMD_PREFIX, func = function(p,...)
+	local args = {...}
+	if CV.unlockcommands.value
+		prn(p,"soap_unlockcommands is in effect, everyone has access to Soap commands.")
+		return
+	end
+	
+	local node = args[1]
+	local p2 = GetPlayer(p,node)
+	if not p2
+		prn(p, "sb_demote [player]: Disallows a player from using commands from Soap. \x85\Does not give nor remove real admin.\x80")
+		return
+	end
+	
+	if (IsPlayerAdmin(p) or p == server)
+		prn(p, "\x85This player is an admin, they will maintain access to commands by default.")
+		return
+	end
+	
+	p2.soaptable.bloataccess = false
+	prn(p, "\x82\Demoted " .. p2.name .. ".")
+	prn(p2, "\x85You can no longer use Soap commands.")
+end})

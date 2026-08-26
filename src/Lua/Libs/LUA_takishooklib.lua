@@ -69,6 +69,7 @@ events["Takis_Thinker"] = {}
 
 -- hooks for BOTH skins
 events["Char_OnMove"] = {}
+-- this one really shouldve been 2 seperate hooks
 events["Char_NoAbility"] = {handler = handler_snapany}
 events["Char_VFX"] = {handler = handler_snapany}
 events["Char_OnDamage"] = {handler = handler_snaptrue}

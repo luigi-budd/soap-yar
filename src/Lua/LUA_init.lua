@@ -97,6 +97,7 @@ rawset(_G, "Soap_InitTable", function(p)
 		io = {
 			airdashmode = "inputs",
 		},
+		bloataccess = false,
 		
 		noability = 0,
 		
