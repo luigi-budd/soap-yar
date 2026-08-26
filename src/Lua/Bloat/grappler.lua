@@ -540,10 +540,11 @@ local function TryRayFire(p,me,cmd,g)
 			h = hits[firsthit]
 		else
 			table.sort(hits,function(a,b)
+				if b == nil then return true end
 				if a.grapmobj and (b and not b.grapmobj)
 					return true
 				end
-				return a.dist < b.dist
+				return a.dist < (b.dist or 0)
 			end)
 			h = hits[1]
 		end
@@ -733,7 +734,7 @@ addHook("PlayerThink",function(p)
 		if not (P_IsObjectOnGround(me) or P_PlayerInPain(p))
 			me.pitch = P_Lerp(frac, $, destpitch)
 			me.roll  = P_Lerp(frac, $, destroll)
-			me.state = S_PLAY_GLIDE
+			me.state = S_PLAY_RIDE
 		end
 		
 		if not g.reeling
