@@ -37,6 +37,10 @@ fakeenum("SNOABIL_BOTHTAUNTS",
 rawset(_G,"CA_SOAPMOVE", 100)
 rawset(_G,"CA2_SOAPMOVE", 100)
 
+-- [GT_*] = true/false
+-- Overrides Soap_IsCompGamemode output for a gametype
+rawset(_G,"SOAP_COMPGTOVERRIDE", {})
+
 local includes = {
 	"mobjs.lua",
 	"funny.lua",
