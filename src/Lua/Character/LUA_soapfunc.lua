@@ -2779,7 +2779,7 @@ local function VFXWaterrun_WaterThrow(p,me,soap, water)
 	s.scale = FixedMul($, FU + Soap_RandomFixedRange(-FU/4,FU/4))
 	s.state = P_RandomChance(FU/2) and S_SOAP_WATERDROPTRAIL or S_SOAP_IMPACT_LINE2F
 	if s.state == S_SOAP_WATERDROPTRAIL then s.scale = $ * 3/2; end
-	s.angle = water.angle + FixedAngle(Soap_RandomFixedRange(-10*FU,10*FU))
+	s.angle = water.angle + FixedAngle(Soap_RandomFixedRange(-20*FU,20*FU))
 	s.rollangle = FixedAngle(Soap_RandomFixedRange(10*FU,50*FU))
 	s.color = water.color or SKINCOLOR_WHITE
 	s.colorized = water.colorized

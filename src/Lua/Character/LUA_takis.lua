@@ -614,10 +614,12 @@ Takis_Hook.addHook("Takis_Thinker",function(p)
 		end
 		
 		if not soap.noairdrag
+			local airdragcap = (p.powers[pw_shield] & SH_NOSTACK == SH_WHIRLWIND) and TAKIS_AIRDRAGCAPWHIRL or TAKIS_AIRDRAGCAP
+			
 			if not soap.onGround
-			and soap.accspeed >= TAKIS_AIRDRAGCAP
+			and soap.accspeed >= airdragcap
 			and not (me.soap_tumble)
-				local newspeed = soap.accspeed - FixedMul(soap.accspeed - TAKIS_AIRDRAGCAP, TAKIS_AIRDRAGFRAC)
+				local newspeed = soap.accspeed - FixedMul(soap.accspeed - airdragcap, TAKIS_AIRDRAGFRAC)
 				me.momx = FixedMul(FixedDiv(me.momx,soap.accspeed), newspeed)
 				me.momy = FixedMul(FixedDiv(me.momy,soap.accspeed), newspeed)
 			end
@@ -844,6 +846,9 @@ Takis_Hook.addHook("Takis_Thinker",function(p)
 			
 			local momz = FixedDiv(me.momz,me.scale)*soap.gravflip
 			local thrust = min((momz/2)+7*FU,18*FU)
+			if (me.momz*soap.gravflip < 0)
+				me.momz = -($ / 2)
+			end
 			Soap_ZLaunch(me,thrust)
 			
 			p.drawangle = ang
@@ -886,13 +891,15 @@ Takis_Hook.addHook("Takis_Thinker",function(p)
 					s.momz = $ + me.momz / 2
 				end
 			end
-			Soap_SquashMacro(p, {ease_func = "outsine", ease_time = 12, x = -FU*7/10, y = -FU*3/10})
+			Soap_SquashMacro(p, {ease_func = "outsine", ease_time = 12, x = FU*7/10, y = FU*3/10})
 			Soap_RemoveSquash(p, "jumpeffect")
 			
 			p.pflags = $|PF_JUMPED|PF_THOKKED|PF_JUMPDOWN &~(PF_SPINNING)
 			soap.dived = true
 			soap.sprung = false
 			soap.noability = $|NOABIL_SLIDE
+			
+			soap.noairdrag = min($ + TR / 2, TR)
 			
 			-- for ninja belt
 			p.rmomx = me.momx - p.cmomx
@@ -1377,6 +1384,7 @@ Takis_Hook.addHook("Takis_Thinker",function(p)
 			p.pflags = $ &~(PF_JUMPED|PF_SHIELDABILITY)
 			local prevspeed = soap.accspeed - 20*FU
 			Soap_DoLunge(p, false)
+			
 			if (p.powers[pw_shield] & SH_NOSTACK) == SH_WHIRLWIND
 				local thrust = 4 * FU
 				thrust = $ + (11 * clamp(0, FixedDiv(prevspeed, 50*FU), FU))
@@ -1394,6 +1402,16 @@ Takis_Hook.addHook("Takis_Thinker",function(p)
 				S_StartSound(me, sfx_wdjump)
 				soap.divewhirl = TAKIS_WDIVEVFX
 				p.pflags = $|PF_STARTJUMP|PF_JUMPDOWN
+			else -- uhhm
+				if (p.cmd.forwardmove == 0 and p.cmd.sidemove == 0)
+					me.momx = $ / 5
+					me.momy = $ / 5
+					if (me.momz*soap.gravflip < 17*me.scale)
+						P_SetObjectMomZ(me, 17*FU)
+					end
+					
+					p.pflags = $|PF_STARTJUMP|PF_JUMPDOWN
+				end
 			end
 			soap.noability = $|NOABIL_DIVE
 			soap.setrolltrol = false
