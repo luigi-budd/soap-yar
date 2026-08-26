@@ -203,7 +203,7 @@ addHook("PostThinkFrame",do for p in players.iterate
 			
 			me.soap_tumble = true
 			me.soap_tumble_oldmomz = me.momz
-			me.soap_tumble_markedfordeath = CV.babykills.value
+			me.soap_tumble_markedfordeath = CV.babykills.value and not p.exiting
 			
 			local ang = R_PointToAngle2(me.x,me.y, h.x,h.y)
 			me.state = S_PLAY_PAIN
