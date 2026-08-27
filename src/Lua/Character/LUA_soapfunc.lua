@@ -3497,6 +3497,10 @@ rawset(_G,"Soap_VFX",function(p,me,soap, props)
 end)
 
 rawset(_G, "Soap_IsCompGamemode",function()
+	if SOAP_COMPGTOVERRIDE[gametype] ~= nil
+		return SOAP_COMPGTOVERRIDE[gametype]
+	end
+	
 	local iscomp = (gametyperules & GTR_FRIENDLY) == 0
 	if (gametyperules & GTR_RACE)
 		iscomp = false
