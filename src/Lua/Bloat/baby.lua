@@ -887,7 +887,7 @@ local function GetPlayer(player, pname)
 	return player2
 end
 
-local function thebaby(mo)
+local function thebaby(mo, voidbound)
 	local baby = P_SpawnMobjFromMobj(mo,
 		P_RandomRange(-256, 256)*FU,
 		P_RandomRange(-256, 256)*FU,
