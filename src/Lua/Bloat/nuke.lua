@@ -250,7 +250,7 @@ COM_AddCommand("nukethewholegeneration", function(p, closeserver)
 	local availplayers = {}
 	for play in players.iterate
 		if play.spectator then continue end
-		local me = p.mo
+		local me = play.mo
 		if not (me and me.valid and me.health) then continue end
 		
 		table.insert(availplayers, play)
