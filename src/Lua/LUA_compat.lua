@@ -7,6 +7,7 @@ local compat = {
 	mmportrait = false,
 	orbitcompat = false,
 	rsr = false,
+	manhunt = false,
 }
 local compat_names = {
 	["takiskart"]	= "TakisKart        ",
@@ -17,6 +18,7 @@ local compat_names = {
 	["mmportrait"]	= "EPIC!MM support  ",
 	["orbitcompat"] = "Orbit Compat.    ",
 	["rsr"]			= "RingSlinger Rev. ",
+	["manhunt"]		= "Saxa's Manhunt   ",
 }
 
 local function dust_type(me)
@@ -38,6 +40,10 @@ local function printf(...)
 	Tprtable("compat",compat)
 	*/
 end
+
+local last_airdrag = TAKIS_AIRDRAGCAP
+local last_airfrac = TAKIS_AIRDRAGFRAC
+local last_airstate = 1
 
 local function SetCompat()
 	if TakisKart_Karters
@@ -421,6 +427,61 @@ local function SetCompat()
 		
 		compat.rsr = true
 		printf("Added RSR stuff.")
+	end
+	
+	if MHN and not compat.manhunt
+		SOAP_COMPGTOVERRIDE[GT_MANHUNT] = false
+		
+		Takis_Hook.addHook("Char_NoAbility", function(p, na)
+			if gametype ~= GT_MANHUNT then return na; end
+			if not p.manhunt then return na; end
+			if not MHN.preStartTime then return na; end
+			
+			-- Countdown
+			if p.manhunt.hunter
+				na = SNOABIL_ALL
+			end
+			return na
+		end)
+		
+		Takis_Hook.addHook("CanPlayerHurtPlayer", function(p, p2)
+			if gametype ~= GT_MANHUNT then return end
+			if MHN.preStartTime then return false; end
+			
+			if p.manhunt.hunter
+				if p2.manhunt.hunter
+					return false
+				end
+				return true
+			else
+				return false
+			end
+		end)
+		
+		addHook("MapLoad",do
+			if gametype == GT_MANHUNT
+				if last_airstate
+					last_airdrag = TAKIS_AIRDRAGCAP
+					last_airfrac = TAKIS_AIRDRAGFRAC
+					
+					rawset(_G, "TAKIS_AIRDRAGCAP", 33*FU)
+					rawset(_G, "TAKIS_AIRDRAGFRAC", FU - (FU * 934/1000))
+					last_airstate = 0
+				end
+			elseif last_airstate == 0
+				rawset(_G, "TAKIS_AIRDRAGCAP", last_airdrag)
+				rawset(_G, "TAKIS_AIRDRAGFRAC", last_airfrac)
+				last_airdrag = TAKIS_AIRDRAGCAP
+				last_airfrac = TAKIS_AIRDRAGFRAC
+				last_airstate = 1
+			end
+		end)
+		
+local last_airdrag = TAKIS_AIRDRAGCAP
+local last_airfrac = TAKIS_AIRDRAGFRAC
+
+		compat.manhunt = true
+		printf("Added Manhunt stuff.")
 	end
 end
 SetCompat()
