@@ -54,7 +54,9 @@ addHook("MobjThinker",function(m)
 	if m.null_init == nil
 		m.renderflags = $|(P_RandomChance(FU/2) and RF_HORIZONTALFLIP or 0)
 		m.null_rot = FixedAngle(-rotlimit*FU + (rotlimit*2)*P_RandomFixed())
-		m.rollangle = FixedAngle(-90 + 180*P_RandomFixed())
+		if CV.rotations.value
+			m.rollangle = FixedAngle(-90 + 180*P_RandomFixed())
+		end
 		-- m.shadowscale = $ * 4
 		
 		local offset = P_RandomRange(0, 20)
@@ -231,6 +233,7 @@ local function T_PrimeVFX(mine, me)
 	sfx.flags2 = $|MF2_DONTDRAW
 	sfx.fuse = 12*TR
 	sfx.tics = sfx.fuse
+	S_StartSound(sfx, sfx_trpmn)
 	S_StartSound(sfx, sfx_trpmn)
 	
 	P_FlashPal(me.player, PAL_INVERT, 2)
