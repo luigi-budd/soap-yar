@@ -247,7 +247,7 @@ CMDConstructor("promote", {prefix = CMD_PREFIX, func = function(p,...)
 	p2.soaptable.bloataccess = true
 	prn(p, "\x82Promoted " .. p2.name .. ".")
 	prn(p2, "\x82You can now use Soap commands!")
-end})
+end, flags = COM_ADMIN})
 CMDConstructor("demote", {prefix = CMD_PREFIX, func = function(p,...)
 	local args = {...}
 	if CV.unlockcommands.value
@@ -270,4 +270,4 @@ CMDConstructor("demote", {prefix = CMD_PREFIX, func = function(p,...)
 	p2.soaptable.bloataccess = false
 	prn(p, "\x82\Demoted " .. p2.name .. ".")
 	prn(p2, "\x85You can no longer use Soap commands.")
-end})
+end, flags = COM_ADMIN})
