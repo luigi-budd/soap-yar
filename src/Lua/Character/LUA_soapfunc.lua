@@ -1981,7 +1981,7 @@ rawset(_G,"Soap_HandleNoAbils", function(p)
 		na = $ ^^ SNOABIL_COMBAT
 	end
 	if CV.allowtop.value
-		na = $ ^^ SNOABIL_TOP
+		na = $ &~SNOABIL_TOP
 	end
 	
 	--Gametypes
