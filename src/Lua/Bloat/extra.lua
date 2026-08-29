@@ -35,7 +35,7 @@ rawset(_G, "Bloat_CheckAdmin",function(p)
 	if CV.unlockcommands.value then return true end
 	
 	local admin = (IsPlayerAdmin(p) or p == server)
-	if (not admin) and p.soaptable.bloataccess
+	if (admin == false) and p.soaptable.bloataccess
 		admin = true
 	end
 	/*
@@ -232,14 +232,14 @@ CMDConstructor("promote", {prefix = CMD_PREFIX, func = function(p,...)
 		return
 	end
 	
-	local node = args[1]
+	local node = args[1] or ""
 	local p2 = GetPlayer(p,node)
 	if not p2
 		prn(p, "sb_promote [player]: Allows a player to use commands from Soap. \x85\Does not give them real admin.\x80")
 		return
 	end
 	
-	if (IsPlayerAdmin(p) or p == server)
+	if (IsPlayerAdmin(p2) or p2 == server)
 		prn(p, "\x85This player is an admin, they have access to commands by default.")
 		return
 	end
@@ -255,14 +255,14 @@ CMDConstructor("demote", {prefix = CMD_PREFIX, func = function(p,...)
 		return
 	end
 	
-	local node = args[1]
+	local node = args[1] or ""
 	local p2 = GetPlayer(p,node)
 	if not p2
 		prn(p, "sb_demote [player]: Disallows a player from using commands from Soap. \x85\Does not give nor remove real admin.\x80")
 		return
 	end
 	
-	if (IsPlayerAdmin(p) or p == server)
+	if (IsPlayerAdmin(p2) or p2 == server)
 		prn(p, "\x85This player is an admin, they will maintain access to commands by default.")
 		return
 	end
