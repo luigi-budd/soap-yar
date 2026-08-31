@@ -78,6 +78,7 @@ end)
 
 --save
 addHook("GameQuit",do
+	if (isdedicatedserver) then return end
 	-- probably some demo stuff
 	if not consoleplayer and consoleplayer.valid then return end
 	
