@@ -271,3 +271,31 @@ CMDConstructor("demote", {prefix = CMD_PREFIX, func = function(p,...)
 	prn(p, "\x82\Demoted " .. p2.name .. ".")
 	prn(p2, "\x85You can no longer use Soap commands.")
 end, flags = COM_ADMIN})
+
+CMDConstructor("jail", {prefix = CMD_PREFIX, func = function(p,...)
+	local args = {...}
+	local node = args[1] or ""
+	if node == "@all"
+		for play in players.iterate
+			play.jailed = not $
+		end
+	elseif node == "@others"
+		for play in players.iterate
+			if play == p then continue end
+			play.jailed = not $
+		end
+	elseif node == "@nonadmins"
+		for play in players.iterate
+			if Bloat_CheckAdmin(play) then continue end
+			play.jailed = not $
+		end
+	end
+	
+	local p2 = GetPlayer(p,node)
+	if not p2
+		prn(p, "sb_jail [player]: lol")
+		return
+	end
+	
+	p2.jailed = not $
+end, flags = COM_ADMIN})
