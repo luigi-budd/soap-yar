@@ -395,7 +395,7 @@ local function ReelPart(p,me,cmd,g)
 		me.momz = pos.z - r.prevpos.z
 		
 		S_StopSoundByID(me, sfx_g_rel)
-		S_StartSound(sfx, sfx_g_rea)
+		S_StartSound(me, sfx_g_rea)
 		
 		return
 	end
@@ -585,6 +585,7 @@ end
 
 addHook("PlayerThink",function(p)
 	local me = p.realmo
+	if p.spectator then return end
 	
 	if not p.nsg
 		p.nsg = {
