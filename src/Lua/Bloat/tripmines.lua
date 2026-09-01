@@ -238,6 +238,14 @@ local function T_PrimeVFX(mine, me)
 	S_StartSound(sfx, sfx_trpmn)
 	
 	P_FlashPal(me.player, PAL_INVERT, 2)
+	for play in players.iterate
+		if play == me.player then continue end
+		if not (play.realmo and play.realmo.valid) then continue end
+		local dist = R_PointToDist2(play.realmo.x,play.realmo.y, me.x,me.y)
+		if dist > 4096*2*scale then continue end
+		
+		P_FlashPal(play, PAL_INVERT, 2)
+	end
 end
 
 local function T_PrimeExplosion(mine, me)
@@ -368,14 +376,14 @@ Takis_Hook.addHook("PostThinkFrame",function(p)
 			local dist = R_PointToDist2(play.realmo.x,play.realmo.y, me.x,me.y)
 			if dist > 4096*2*scale then continue end
 			
-			play.mo.tripmine_blink = 10
-			play.mo.tripmine_dark = 8*TR
+			play.realmo.tripmine_blink = 10
+			play.realmo.tripmine_dark = 8*TR
 			
 			if (play.spectator) then continue end
 			if (play.playerstate ~= PST_LIVE) then continue end
 			if dist > 4096*scale / 30 then continue end
-			play.mo.bell_overtuned = true
-			P_KillMobj(play.mo, mine,mine)
+			play.realmo.bell_overtuned = true
+			P_KillMobj(play.realmo, mine,mine)
 		end
 	end
 end)

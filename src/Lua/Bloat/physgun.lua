@@ -75,6 +75,7 @@ function Phys:holdMobj(p, mo, silent)
 	ph.holdtime = 0
 	ph.rotatemode = false
 	
+	mo.flags = $|MF_SLIDEME
 	mo.phys_held = true
 	if not silent
 		S_StartSound(me, sfx_gpick)
@@ -167,9 +168,9 @@ local function ZCollide(mo1,mo2)
 end
 
 freeslot("S_PHYSGUN",/*"SPR_PHYSGUNSPR",*/"MT_PHYSGUN")
-freeslot("SPR_RVOL")
-freeslot("SPR_LUGR")
-freeslot("SPR_HYPERLASERGUN")
+SafeFreeslot("SPR_RVOL")
+SafeFreeslot("SPR_LUGR")
+SafeFreeslot("SPR_HYPERLASERGUN")
 states[S_PHYSGUN] = {
 	sprite = SPR_LUGR,
 	frame = A,
@@ -527,6 +528,7 @@ function Phys:physgun_thinker(p, ph, me)
 			me.y + vec.y,-- + FixedMul((me.y + vec.y) - hold.y, easing),
 			true
 		)
+		P_SlideMove(hold)
 		hold.z = clamp(hold.floorz, me.z + vec.z, hold.ceilingz - hold.height)
 		hold.momx = 0
 		hold.momy = 0
