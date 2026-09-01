@@ -267,9 +267,9 @@ addHook("PlayerThink",function(p)
 			me.bell_overtunevfx = true
 			local vfx = P_SpawnMobjFromMobj(me, 0,0,0,MT_PARTICLE)
 			vfx.target = me
-			vfx.state = S_NSBELL_OVERTUNED
 			vfx.scale = $
 			vfx.dispoffset = -100
+			vfx.state = S_NSBELL_OVERTUNED
 		end
 		
 		if not S_SoundPlaying(me, sfx_nbl_5)

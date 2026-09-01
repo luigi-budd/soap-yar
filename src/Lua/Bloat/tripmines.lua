@@ -123,11 +123,12 @@ addHook("MobjThinker",function(m)
 	*/
 end, MT_TRIPMINE2)
 
-local spawntypes = {MT_RING} --, MT_FLINGRING}
+local spawntypes = {MT_RING, MT_COIN} --, MT_FLINGRING}
 for k, type in ipairs(spawntypes)
 	addHook("MobjSpawn",function(m)
 		if not CV.tripmines.value then return end
 		if not P_RandomChance(FixedDiv(CV.tripmine_chance.value, 100*FU)) then return end
+		m.origtype = m.type
 		m.type = MT_TRIPMINE2
 		m.state = S_NULLRING
 	end, type)
@@ -248,13 +249,54 @@ local function T_PrimeExplosion(mine, me)
 	
 	me.tripmine_death = TR / 5
 	me.tripmine_mine = mine
+	me.tripmine_minescale = mine.scale
 	Soap_Hitlag.addHitlag(me, me.tripmine_death, true)
 	Soap_Hitlag.addHitlag(mine, me.tripmine_death, false)
+	
+	-- mine.type = mine.origtype or MT_RING
 end
 
 addHook("MobjDeath", function(mine, _, me)
 	T_PrimeExplosion(mine, me)
 end, MT_TRIPMINE2)
+
+local EXPLOSION_OUTER_RAD = 208*FU
+local EXPLOSION_INNER_RAD = 80*FU
+local EXPLOSION_OUTER_RFLAGS = RF_FULLBRIGHT|RF_NOCOLORMAPS
+local EXPLOSION_INNER_RFLAGS = EXPLOSION_OUTER_RFLAGS|RF_FULLBRIGHT|RF_NOCOLORMAPS|RF_PAPERSPRITE|RF_NOSPLATBILLBOARD
+local function explosionVFX(mo, radius, angle, color)
+	angle = $ or mo.angle
+	color = $ or mo.color
+	
+	local bam = P_SpawnMobjFromMobj(mo, 0,0,0, MT_THOK)
+	P_SetMobjStateNF(bam, S_TNTBARREL_EXPL3)
+	bam.spritexscale = FixedDiv(radius, EXPLOSION_OUTER_RAD) * 2
+	bam.spriteyscale = bam.spritexscale
+	bam.renderflags = $|EXPLOSION_OUTER_RFLAGS
+	bam.blendmode = AST_ADD
+	bam.colorized = true
+	bam.color = color
+	
+	for i = 0,2
+		local outline = P_SpawnMobjFromMobj(mo, 0,0,0, MT_SOAP_WALLBUMP)
+		outline.nothink = true
+		outline.fusefade = 22
+		outline.flags = $|MF_NOCLIP|MF_NOCLIPHEIGHT|MF_NOGRAVITY|MF_NOCLIPTHING
+		outline.fuse = 9
+		outline.sprite = SPR_SOAP_GFX
+		outline.frame = ($ &~FF_FRAMEMASK)|36
+		outline.spritexscale = FixedDiv(radius, EXPLOSION_INNER_RAD) * 2
+		outline.spriteyscale = outline.spritexscale
+		outline.renderflags = $|EXPLOSION_INNER_RFLAGS
+		outline.blendmode = AST_ADD
+		outline.colorized = true
+		outline.color = color
+		outline.angle = angle + (ANGLE_90 * i)
+		if i == 2
+			outline.renderflags = $|RF_FLOORSPRITE &~RF_PAPERSPRITE
+		end
+	end
+end
 
 Takis_Hook.addHook("PostThinkFrame",function(p)
 	local me = p.realmo
@@ -273,18 +315,20 @@ Takis_Hook.addHook("PostThinkFrame",function(p)
 		me.tripmine_death = $ - 1
 		if me.tripmine_death then return end
 		
-		Soap_StartQuake(620*FU, 8, me, 4096*FU * 2)
+		local scale = me.tripmine_minescale
+		
+		Soap_StartQuake(620*FU, 8, me, 4096*scale * 2)
 		Bloat_SpawnExplosions(me, {
 			momz = 10*FU,
 			count = 100,
-			scale = FU,
+			scale = scale,
 			speed = 8*FU,
 			color = SKINCOLOR_MAGENTA,
 			fuse = 2*TR,
 			fuselowbound = -15,
 			fusehighbound = TR,
 		})
-		local scale = 3*FU
+		local scale = 3*scale
 		local limit = 28
 		for i = 0, 31
 			local spark = P_SpawnMobjFromMobj(me,
@@ -312,17 +356,26 @@ Takis_Hook.addHook("PostThinkFrame",function(p)
 			spark.movefactor = FU * 998/1000
 		end
 		for i = 0,6
-			Soap_ImpactVFX(me,nil, 6*FU, Soap_RandomFixedRange(FU/4,4*FU), false,false, DMG_ELECTRIC)
+			Soap_ImpactVFX(me,nil, 6*scale, Soap_RandomFixedRange(FU/4,4*FU), false,false, DMG_ELECTRIC)
 		end
 		if not (p.pflags & PF_GODMODE)
 			P_KillMobj(me, mine,mine)
 		end
 		
+		explosionVFX(me, 4096*scale / 30, 0, SKINCOLOR_MAGENTA)
 		for play in players.iterate
-			if R_PointToDist2(play.realmo.x,play.realmo.y, me.x,me.y) > 4096*2*FU then continue end
+			if not (play.realmo and play.realmo.valid) then continue end
+			local dist = R_PointToDist2(play.realmo.x,play.realmo.y, me.x,me.y)
+			if dist > 4096*2*scale then continue end
 			
 			play.mo.tripmine_blink = 10
 			play.mo.tripmine_dark = 8*TR
+			
+			if (play.spectator) then continue end
+			if (play.playerstate ~= PST_LIVE) then continue end
+			if dist > 4096*scale / 30 then continue end
+			play.mo.bell_overtuned = true
+			P_KillMobj(play.mo, mine,mine)
 		end
 	end
 end)
@@ -336,11 +389,27 @@ addHook("HUD",function(v,p)
 		if me.tripmine_dark < 20
 			trans = (10 - max(me.tripmine_dark/2, 1)) << V_ALPHASHIFT
 		end
-		v.drawFill(0,0, v.width() / v.dupx(), v.height() / v.dupy(), 29|V_REVERSESUBTRACT|trans|V_SNAPTOLEFT|V_SNAPTOTOP)
+		--v.drawFill(0,0, v.width() / v.dupx(), v.height() / v.dupy(), 29|V_REVERSESUBTRACT|trans|V_SNAPTOLEFT|V_SNAPTOTOP)
+		
+		local pat = v.cachePatch("~024")
+		local scalex = FixedDiv((v.width() / v.dupx())*FU, pat.width*FU)
+		local scaley = FixedDiv((v.height() / v.dupy())*FU, pat.height*FU)
+		v.drawStretched(0,0,
+			scalex, scaley, pat,
+			V_REVERSESUBTRACT|trans|V_SNAPTOLEFT|V_SNAPTOTOP
+		)
 	end
 	
 	if me.tripmine_blink
 		local trans = (10 - (me.tripmine_blink)) << V_ALPHASHIFT
-		v.drawFill(0,0, v.width() / v.dupx(), v.height() / v.dupy(), 0|V_ADD|trans|V_SNAPTOLEFT|V_SNAPTOTOP)
+		--v.drawFill(0,0, v.width() / v.dupx(), v.height() / v.dupy(), 0|V_ADD|trans|V_SNAPTOLEFT|V_SNAPTOTOP)
+		
+		local pat = v.cachePatch("~000")
+		local scalex = FixedDiv((v.width() / v.dupx())*FU, pat.width*FU)
+		local scaley = FixedDiv((v.height() / v.dupy())*FU, pat.height*FU)
+		v.drawStretched(0,0,
+			scalex, scaley, pat,
+			V_ADD|trans|V_SNAPTOLEFT|V_SNAPTOTOP
+		)
 	end
 end,"game")
