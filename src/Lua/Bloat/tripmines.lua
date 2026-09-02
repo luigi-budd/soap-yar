@@ -238,6 +238,7 @@ local function T_PrimeVFX(mine, me)
 	S_StartSound(sfx, sfx_trpmn)
 	
 	P_FlashPal(me.player, PAL_INVERT, 2)
+	local scale = mine.scale
 	for play in players.iterate
 		if play == me.player then continue end
 		if not (play.realmo and play.realmo.valid) then continue end
