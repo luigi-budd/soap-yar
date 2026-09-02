@@ -523,12 +523,17 @@ function Phys:physgun_thinker(p, ph, me)
 		}
 		hold.flags = $|MF_NOGRAVITY
 		
-		P_TryMove(hold,
+		if not P_TryMove(hold,
 			me.x + vec.x,-- + FixedMul((me.x + vec.x) - hold.x, easing),
 			me.y + vec.y,-- + FixedMul((me.y + vec.y) - hold.y, easing),
 			true
 		)
-		P_SlideMove(hold)
+			hold.momx = (me.x + vec.x) - hold.x
+			hold.momy = (me.y + vec.y) - hold.y
+			P_SlideMove(hold)
+			hold.momx = 0
+			hold.momy = 0
+		end
 		hold.z = clamp(hold.floorz, me.z + vec.z, hold.ceilingz - hold.height)
 		hold.momx = 0
 		hold.momy = 0
