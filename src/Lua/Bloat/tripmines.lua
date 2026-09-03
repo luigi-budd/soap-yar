@@ -389,6 +389,7 @@ Takis_Hook.addHook("PostThinkFrame",function(p)
 	end
 end)
 
+local blinktime = 0
 addHook("HUD",function(v,p)
 	local me = p.realmo
 	if not (me and me.valid) then return end
@@ -409,7 +410,7 @@ addHook("HUD",function(v,p)
 		)
 	end
 	
-	if me.tripmine_blink
+	if me.tripmine_blink and blinktime < TR
 		local trans = (10 - (me.tripmine_blink)) << V_ALPHASHIFT
 		--v.drawFill(0,0, v.width() / v.dupx(), v.height() / v.dupy(), 0|V_ADD|trans|V_SNAPTOLEFT|V_SNAPTOTOP)
 		
@@ -420,5 +421,8 @@ addHook("HUD",function(v,p)
 			scalex, scaley, pat,
 			V_ADD|trans|V_SNAPTOLEFT|V_SNAPTOTOP
 		)
+		blinktime = $ + 1
+	else
+		blinktime = 0
 	end
 end,"game")
