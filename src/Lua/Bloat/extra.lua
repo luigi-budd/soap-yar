@@ -35,7 +35,7 @@ rawset(_G, "Bloat_CheckAdmin",function(p)
 	if CV.unlockcommands.value then return true end
 	
 	local admin = (IsPlayerAdmin(p) or p == server)
-	if (admin == false) and p.soaptable.bloataccess
+	if (admin == false) and (p.soaptable and p.soaptable.bloataccess)
 		admin = true
 	end
 	/*

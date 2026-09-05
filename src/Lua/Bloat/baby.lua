@@ -896,8 +896,6 @@ local function thebaby(mo, voidbound)
 	)
 end
 COM_AddCommand("spawnbabyby", function(p, node, voidbound)
-	if not (p.soaptable and p.realmo and p.realmo.valid) then return end
-	
 	local certified = Bloat_CheckAdmin(p)
 	if not certified then return end
 
