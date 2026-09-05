@@ -1985,14 +1985,15 @@ rawset(_G,"Soap_HandleNoAbils", function(p)
 	end
 	
 	--Gametypes
+	local inze2 = (gametype == GT_ZE2 or (ZE2 and ZE2.isGametype()))
 	if (MM and MM:isMM())
-	or gametype == GT_ZE2
+	or inze2
 		local debugmode = false
 		if (MM and MM:isMM())
 			if CV_MM.debug.value
 				debugmode = true
 			end
-		elseif gametype == GT_ZE2
+		elseif inze2
 			if CV.FindVar("z_debug").value
 				debugmode = true
 			end
@@ -2004,7 +2005,7 @@ rawset(_G,"Soap_HandleNoAbils", function(p)
 			p.charability = skins[p.skin].ability
 			p.charability2 = skins[p.skin].ability2
 		end
-		if gametype == GT_ZE2
+		if inze2
 			if ZE2.game_ended or ZE2.round_active == false
 				na = 0
 				-- lulll

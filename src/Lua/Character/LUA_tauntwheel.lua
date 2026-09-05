@@ -156,7 +156,7 @@ local function cancelConds(p, nobuttons, checkspinonly)
 	end
 	
 	-- special case
-	if (gametype == GT_ZE2)
+	if (gametype == GT_ZE2 or (ZE2 and ZE2.isGametype()))
 	and (me.sprite2 == SPR2_ROLL)
 		cancel = true
 	end
@@ -749,7 +749,7 @@ SOAP_TAUNTS[SOAP_SKIN] = {
 								p2.powers[pw_flashing] = flashingtics
 								
 								-- lolllll
-								if (gametype == GT_ZE2)
+								if (gametype == GT_ZE2 or (ZE2 and ZE2.isGametype()))
 								and (p2.xSlinger and p2.xSlinger.team == 2)
 									P_DamageMobj(found, me,me, 100)
 								end
