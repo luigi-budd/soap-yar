@@ -54,7 +54,7 @@ jobs:
     - name: Upload build to Discord
       uses: sinshutu/upload-to-discord@master
       env:
-        DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
+        DISCORD_WEBHOOK: ${{ secrets.BLOAT_WEBHOOK }}
       with:
         message: "Test"
         args: build/Soap_YAR-${{ env.BUILD_DATE }}-${{ env.BUILD_SHASH }}.pk3
