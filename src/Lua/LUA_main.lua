@@ -156,7 +156,7 @@ addHook("PostThinkFrame",function()
 		
 		if not p.soaptable then continue end
 		
-		local me = p.mo
+		local me = p.realmo
 		local soap = p.soaptable
 		
 		if not (me and me.valid) then continue end

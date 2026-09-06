@@ -422,7 +422,7 @@ addHook("HUD",function(v,p)
 			V_ADD|trans|V_SNAPTOLEFT|V_SNAPTOTOP
 		)
 		blinktime = $ + 1
-	else
+	elseif not me.tripmine_blink
 		blinktime = 0
 	end
 end,"game")
