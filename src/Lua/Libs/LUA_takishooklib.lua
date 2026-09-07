@@ -117,7 +117,9 @@ for event_name, event_t in pairs(events)
 	end
 end
 
-Takis_Hook.addHook = function(hooktype, func, typefor)
+-- optional name argument if you want to name a hook
+-- in case it errors
+Takis_Hook.addHook = function(hooktype, func, typefor, name)
 	local TH_events = Takis_Hook.events
 	local event_t = TH_events[hooktype]
 	
@@ -134,18 +136,20 @@ Takis_Hook.addHook = function(hooktype, func, typefor)
 				print("\x83TAKIS: \x82WARNING:\x80 Hook type \""..hooktype.."\" has been deprecated and will be removed. Use \""..dep_t.correct.."\" instead.")
 				S_StartSound(nil,sfx_skid)
 			end
-			hooktype = dep_t.correct
+			event_t = TH_events[dep_t.correct]
 		end
 		
 		table.insert(event_t.events, {
 			func = func,
 			typedef = typefor,
+			name = name or "anonymous hook",
 			
+			-- deprecated
 			errored = false,
 			
 			-- debugging
 			id = event_t.numhooks,
-			src = takis_lumpname or "???",
+			src = edit_lumpname or "???",
 			us_taken = 0, -- microseconds
 			activity = 0,
 			tic_called = -1,
@@ -157,6 +161,16 @@ Takis_Hook.addHook = function(hooktype, func, typefor)
 	end
 end
 
+local work_hooktype = nil
+local work_event = nil
+local function ErrorCatcher(err)
+	S_StartSound(nil,sfx_lose)
+	print(
+		("\x83TAKIS: \x82WARNING:\x80 Error in hooktype '%s' for hook '%s'\n\t\x86-> %s"):format(
+			work_hooktype, work_event.name, err
+		)
+	)
+end
 Takis_Hook.tryRunHook = function(hooktype, v, ...)
 	local TH_events = Takis_Hook.events
 	local handler = TH_events[hooktype].handler or handler_default
@@ -169,20 +183,19 @@ Takis_Hook.tryRunHook = function(hooktype, v, ...)
 	end
 	if debugmode then starttime = getTimeMicros(); end
 	
-	local results = {pcall(v.func, ...)}
-	local status = results[1] or nil
-	table.remove(results,1)
+	work_hooktype = hooktype
+	work_event = v
+	local args = {...}
+	local results = {xpcall(do
+		v.func(unpack(args))
+	end, ErrorCatcher)}
+	local status = table.remove(results,1)
 	
 	if status then
 		override = {handler.func(
 			override,
 			unpack(results)
 		)}
-	elseif (not v.errored) then
-		v.errored = true
-		S_StartSound(nil,sfx_lose)
-		print("\x83TAKIS: \x82WARNING:\x80 Hook " .. hooktype .. " handler #" .. i .. " error:")
-		print(unpack(results))
 	end
 
 	if debugmode
