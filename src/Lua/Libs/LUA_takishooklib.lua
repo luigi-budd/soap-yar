@@ -143,7 +143,6 @@ Takis_Hook.addHook = function(hooktype, func, typefor, name)
 			typedef = typefor,
 			name = name or "anonymous hook",
 			
-			-- deprecated
 			errored = false,
 			
 			-- debugging
@@ -163,6 +162,9 @@ end
 local work_hooktype = nil
 local work_event = nil
 local function ErrorCatcher(err)
+	if work_event.errored then return end
+	work_event.errored = true
+	
 	S_StartSound(nil,sfx_lose)
 	print(
 		("\x83TAKIS: \x82WARNING:\x80 Error in hooktype '%s' for hook '%s'\n\t\x86-> %s"):format(
