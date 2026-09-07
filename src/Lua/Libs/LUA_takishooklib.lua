@@ -133,7 +133,7 @@ Takis_Hook.addHook = function(hooktype, func, typefor)
 				print("\x83TAKIS: \x82WARNING:\x80 Hook type \""..hooktype.."\" has been deprecated and will be removed. Use \""..dep_t.correct.."\" instead.")
 				S_StartSound(nil,sfx_skid)
 			end
-			hooktype = dep_t.correct
+			event_t = TH_events[dep_t.correct]
 		end
 		
 		table.insert(event_t.events, {
