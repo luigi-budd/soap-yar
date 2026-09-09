@@ -690,6 +690,7 @@ addHook("PlayerThink",function(p)
 end)
 
 COM_AddCommand("phys_toggle",function(p)
+	if not Bloat_CheckAdmin(p) then return end
 	if not (p.physgun) then return end
 	p.physgun.active = not $
 	if (p.physgun.active)
@@ -697,13 +698,15 @@ COM_AddCommand("phys_toggle",function(p)
 	else
 		S_StartSound(p.realmo, sfx_gndrop)
 	end
-end,COM_ADMIN)
+end)
 COM_AddCommand("phys_togglebinds",function(p)
+	if not Bloat_CheckAdmin(p) then return end
 	if not (p.physgun) then return end
 	p.physgun.bindsactive = not $
-end,COM_ADMIN)
+end)
 
 COM_AddCommand("phys_mode",function(p, mode)
+	if not Bloat_CheckAdmin(p) then return end
 	if not (p.physgun) then return end
 	
 	local valid = false
@@ -722,7 +725,7 @@ COM_AddCommand("phys_mode",function(p, mode)
 		p.physgun.mode = mode
 	end
 	CONS_Printf(p, str)
-end,COM_ADMIN)
+end)
 
 COM_AddCommand("phys_toolgun_type",function(p, type)
 	if not (p.physgun) then return end
