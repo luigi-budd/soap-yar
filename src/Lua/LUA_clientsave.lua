@@ -8,11 +8,14 @@ local cv_save = {
 	CV.taunt_button.name,
 	CV.rotations.name,
 	CV.boomboxsfx.name,
+	CV.autoside.name,
 	
 	CV.SYNC_airdashmode.name,
+	CV.SYNC_rdashmode.name,
 }
 local cv_synched = {
 	[CV.SYNC_airdashmode.name] = true,
+	[CV.SYNC_rdashmode.name] = true,
 }
 
 local function printf(...)
