@@ -25,6 +25,7 @@ followitem = MT_SOAP_PEELOUT
 dsjump = dsajum
 dsaltow4 = dsslip
 dsaltdi4 = dshlds
+dsaltdi3 = dssp_di2
 
 normalspeed = 25
 runspeed = 45
