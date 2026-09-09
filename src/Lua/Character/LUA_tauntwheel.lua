@@ -148,6 +148,9 @@ local function cancelConds(p, nobuttons, checkspinonly)
 	if (buttoncancel)
 	and not nobuttons
 		cancel = true
+		p.cmd.buttons = $ &~(BT_JUMP|BT_SPIN)
+		soap.use = 0
+		soap.jump = 0
 	end
 	
 	if me.soap_tauntforcecancel

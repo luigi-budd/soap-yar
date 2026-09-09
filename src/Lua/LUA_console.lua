@@ -141,6 +141,22 @@ CV.SYNC_airdashmode = CV_RegisterVar({
 CV.SYNC_airdashmode = CV.FindVar("soap_b-rushmode")
 CV.PossibleValues["soap_b-rushmode"] = {values = brush_pv, length = 2}
 
+CMD_Constructor("r-dashmode", "rdashmode", CMD_STRING)
+local rdash_pv = {Hold = 0, Toggle = 1}
+CV.SYNC_airdashmode = CV_RegisterVar({
+	name = "soap_r-dashmode",
+	defaultvalue = "Hold", --MUST have matching init values in soaptable
+	flags = CV_CALL,
+	PossibleValue = rdash_pv,
+	func = function(cv)
+		if not (consoleplayer and consoleplayer.valid) then return end
+		COM_BufInsertText(consoleplayer, "_soap_r-dashmode "..iAmLua..' "'..cv.string..'"')
+	end,
+	can_change = CVSynched_CanChange,
+})
+CV.SYNC_airdashmode = CV.FindVar("soap_r-dashmode")
+CV.PossibleValues["soap_r-dashmode"] = {values = rdash_pv, length = 2}
+
 -- lol
 CV.forcecombatmode = CV_RegisterVar({
 	name = "soap_combatmode",

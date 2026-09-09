@@ -35,6 +35,14 @@ local supernotif = {
 	tics = 0,
 }
 
+local autoanim = {
+	texttics = 0,
+	ticker = 0
+}
+local arrowfill = {
+	1, 2, 3, 4, 3, 2, 1
+}
+
 addHook("HUD",function(v,p, cam)
 	local soap = p.soaptable
 	if not soap then return end
@@ -143,6 +151,60 @@ addHook("HUD",function(v,p, cam)
 			v.drawString(x - off*sign,y+8*FU, str, V_ALLOWLOWERCASE|flags, "thin-fixed"..align)
 		end
 		v.dointerp(false)
+	end
+	
+	if soap.rdashtoggle
+	and (soap.io.rdashmode == "toggle")
+	and (skins[p.skin].name == SOAP_SKIN)
+		local x,y = 200*FU, 150*FU
+		local scale = FU
+		local result = K_GetScreenCoords(v,p,cam, me, {anglecliponly = true})
+		local align = "-right"
+		local sign = -1
+		if cam.chase
+			if not result.onscreen then return end
+			
+			scale = abs(FixedMul(result.scale, me.scale)) * 8/5
+			x = result.x + (25 * scale * sign)
+			y = result.y
+		elseif (sign == -1)
+			x = 120*FU
+		end
+		
+		if autoanim.texttics < 16
+			v.dointerp(11432)
+			local t = autoanim.texttics
+			local flags = 0
+			local off = 0
+			if t < 4
+				off = (5 - t)*FU * 5/2
+			elseif t >= (16 - 9)
+				flags = (t - (16 - 9)) << V_ALPHASHIFT
+			end
+			
+			v.drawString(x - off*sign - 15*FU,y, "AUTO", V_ALLOWLOWERCASE|flags, "thin-fixed"..align)
+			autoanim.texttics = $ + 1
+		end
+		
+		for i = 0, 2
+			v.dointerp(10130 + i)
+			if i and (autoanim.ticker < i*6) then continue end
+			local trans = (5 * cos(FixedAngle((autoanim.ticker - i*6)*FU*12))) + 5*FU
+			trans = (clamp(0, $, 10*FU) / FU)
+			
+			local yof = 0
+			for j = 1,7
+				local of = arrowfill[j]*FU
+				v.drawFixedFill(x - of - (5*FU * i),y + yof, of,FU, (1 + (3*trans)))
+				yof = $ + FU
+			end
+		end
+		
+		v.dointerp(false)
+		autoanim.ticker = $ + 1
+	else
+		autoanim.texttics = 0
+		autoanim.ticker = 0
 	end
 	
 	if supernotif.tics
