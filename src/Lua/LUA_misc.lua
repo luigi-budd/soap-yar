@@ -562,6 +562,22 @@ addHook("MobjThinker",function(rock)
 	end
 end,MT_ROLLOUTROCK)
 
+local function Vec3_Lerp(frac, start, dest)
+	local final = Vec3.New(start.x, start.y, start.z)
+	final.x = $ + FixedMul((dest.x - start.x), frac)
+	final.y = $ + FixedMul((dest.y - start.y), frac)
+	final.z = $ + FixedMul((dest.z - start.z), frac)
+	return final
+end
+
+local function QubicBezier(frac, start, ctrl1,ctrl2, dest)
+	local line1 = Vec3_Lerp(frac, start, ctrl1)
+	local line2 = Vec3_Lerp(frac, ctrl1, ctrl2)
+	local line3 = Vec3_Lerp(frac, ctrl2, dest)
+	local cubic = Vec3_Lerp(frac, line1, line2)
+	return Vec3_Lerp(frac, cubic, line3)
+end
+
 local amp_tics = 44
 local amp_longtics = 58
 local amp_frac = (FU / amp_tics)
@@ -613,6 +629,8 @@ addHook("MobjThinker",function(amp)
 		amp.soap_newvfx = false
 		amp.tics = -1
 		amp.fuse = -1
+		amp.lerpang = nil
+		amp.zoff = 150*sin(FixedAngle(360 * P_RandomFixed()))
 		
 		amp.momx = $ * 2
 		amp.momy = $ * 2
@@ -631,18 +649,79 @@ addHook("MobjThinker",function(amp)
 	local mytics = (amp.extended and amp_longtics or amp_tics)
 	local myfrac = (amp.extended and amp_longfrac or amp_frac)
 	
-	local frac = min(myfrac * amp.ticker, FU)
-	P_MoveOrigin(amp,
-		ease.inoutback(frac, amp.startx, me.x, 3*FU),
-		ease.inoutback(frac, amp.starty, me.y, 3*FU),
-		ease.inoutback(frac, amp.startz, me.z + me.height / 2, FU*3/2)
-	)
+	local frac = ease.inquad(min(myfrac * amp.ticker, FU), 0,FU)
+	do
+		local ang = R_PointToAngle2(amp.startx,amp.starty, me.x,me.y)
+		local organg = ang
+		local asign = (AngleFixed(ang) > 180*FU and 1 or -1)
+		ang = $ + ANGLE_90*asign
+		if amp.lerpang == nil
+			amp.lerpang = ang
+		else
+			amp.lerpang = P_Lerp(FU/2, $, ang)
+			ang = amp.lerpang
+		end
+		
+		local dist = R_PointToDist2(amp.startx,amp.starty, me.x,me.y)
+		dist = max(128 * me.scale, $*3/2)
+		
+		local thirddist = dist/3
+		local sidedist = 150*FU + thirddist
+		local bouncedist = 128*FU + thirddist
+		local halfheight = me.height/2
+		
+		local start = Vec3.New(amp.startx, amp.starty, amp.startz)
+		local dest = Vec3.New(me.x, me.y, me.z + halfheight)
+		local ctrl1 = Vec3.New((start.x + dest.x) / 2, (start.y + dest.y) / 2, (start.z + dest.z) / 2)
+		ctrl1.x = $ + P_ReturnThrustX(ang, sidedist)
+		ctrl1.y = $ + P_ReturnThrustY(ang, sidedist)
+		
+		ctrl1.z = $ + amp.zoff
+		ctrl1.z = $ + (dest.z - start.z)
+		
+		local ctrl2 = Vec3.New(me.x, me.y, me.z - halfheight)
+		ctrl2.x = $ + P_ReturnThrustX(organg, bouncedist)
+		ctrl2.y = $ + P_ReturnThrustY(organg, bouncedist)
+		ctrl2.z = $ + dist / 8
+		
+		/*
+		for i = 0,64
+			local frac = FixedDiv(i*FU, 64*FU)
+			local pos = QubicBezier(frac, start,ctrl1,ctrl2,dest)
+			local t = P_SpawnMobj(pos.x,pos.y,pos.z, MT_THOK)
+			t.scale = $ / 6
+			t.blendmode = AST_ADD
+			t.fuse = -1
+			t.tics = 2
+			t.renderflags = $|RF_ALWAYSONTOP
+		end
+		local t = P_SpawnMobj(ctrl1.x, ctrl1.y, ctrl1.z, MT_THOK)
+		t.scale = $ / 2
+		t.blendmode = AST_ADD
+		t.fuse = -1
+		t.tics = 2
+		t.color = SKINCOLOR_RED
+		t.renderflags = $|RF_ALWAYSONTOP
+		
+		local t = P_SpawnMobj(ctrl2.x, ctrl2.y, ctrl2.z, MT_THOK)
+		t.scale = $ / 2
+		t.blendmode = AST_ADD
+		t.fuse = -1
+		t.tics = 2
+		t.color = SKINCOLOR_RED
+		t.renderflags = $|RF_ALWAYSONTOP
+		*/
+		
+		local pos = QubicBezier(frac, start,ctrl1,ctrl2,dest)
+		P_MoveOrigin(amp, pos.x, pos.y, pos.z)
+	end
+	
 	if CV.rotations.value
 		amp.rollangle = $ + FixedAngle(ease.inexpo(frac, 0, 60*FU))
 	end
 	amp.spritexscale = ease.inexpo(frac, amp.startscale, me.scale / 20)
 	amp.spriteyscale = amp.spritexscale
-	amp.alpha = FixedMul($, ease.inexpo(frac, FU * 3/4, 0))
+	-- amp.alpha = FixedMul($, ease.inexpo(frac, FU * 3/4, 0))
 	
 	if amp.ticker == mytics + 1
 		if me.soap_lifetimeamps == nil then me.soap_lifetimeamps = 0 end
