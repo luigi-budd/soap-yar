@@ -820,6 +820,189 @@ local function dash_speeds(p,me,soap, dash, time, noadjust)
 	return dash, time, noadjust
 end
 
+local function handlerdashinit(p,me,soap, old_maxdash)
+	local lunge = soap.lunge
+	local skin_t = skins[p.skin]
+	local maximumspeed = skin_t.normalspeed + soap._maxdash
+	soap.rdashing = true
+	
+	if soap.onGround
+		local old_speed = p.normalspeed
+		local extracharge = 0
+		
+		--speed boost when landing from an airdash, pizza tower style
+		if (soap.airdashed
+		and soap.accspeed >= 28*FU)
+		or (lunge.angle ~= nil
+		and soap.accspeed >= 20*FU) -- landing from a lunge
+			--lunges give more speed
+			if lunge.angle ~= nil
+				-- lunge caps out at 35*FU
+				p.normalspeed = $ + FixedMul(soap._maxdash, clamp(0,FixedDiv(soap.accspeed, 45*FU),FU))
+			else
+				p.normalspeed = $ + soap._maxdash/2
+			end
+		end
+		
+		if me.standingslope
+			local slope = me.standingslope
+			local xydiff = R_PointToAngle2(0,0,me.momx,me.momy) - slope.xydirection
+			local zangle = FixedMul(slope.zangle, cos(xydiff))
+			
+			zangle = AngleFixed($)/FU
+			if zangle >= 180 then zangle = $ - 360 end
+			zangle = -$
+			
+			--only add speed going DOWN slopes,
+			--and never remove speed... (butteredslope should handle that)
+			if zangle > 0
+				local frac_zangle = zangle * (FU/38)
+				
+				--GFZ2 slope-compliant
+				p.normalspeed = $ + frac_zangle
+				soap.chargingtime = $ + zangle/4
+				
+				if p.normalspeed > maximumspeed
+					if (frac_zangle >= FU*56/100)
+						soap.chargingtime = 3*TR
+						extracharge = (p.normalspeed - maximumspeed)/5
+					--weak
+					else
+						soap.chargingtime = $ + zangle/7
+						extracharge = (p.normalspeed - maximumspeed)/16
+					end
+				end
+				soap.chargingtime =  min($, 3*TR)
+				soap.speedlenient = max($, 3)
+			--...BUT!!!	if we're going uphill while waterrunning,
+			--we should be getting speed back, since water should
+			--give almost no resistance
+			elseif soap.onWater
+				local angle,thrust = Soap_SlopeInfluence(me,p, {
+					allowstand = true, allowmult = true
+				})
+				if angle ~= nil
+					P_Thrust(me,angle, -thrust)
+				end
+			end
+		end
+		
+		local slow_speed = (skin_t.normalspeed - 7*FU)
+		if soap.inWater
+			slow_speed = $/3
+		end
+		if soap.in2D
+			slow_speed = $/2
+		end
+		
+		if (soap.accspeed > slow_speed)
+			p.normalspeed = min(
+				$ + (soap._maxdash/soap._maxdashtime),
+				--dont go over
+				maximumspeed
+			)
+		end
+		
+		--readjust our normalspeed if the dash threshold changed
+		if not soap._noadjust
+			if soap._maxdash < old_maxdash
+				p.normalspeed = $ - (old_maxdash - soap._maxdash)
+			elseif soap._maxdash > old_maxdash
+				p.normalspeed = $ + (soap._maxdash - old_maxdash)
+			end
+		end
+		
+		--charge sfx
+		if p.normalspeed >= maximumspeed
+		and old_speed < maximumspeed
+			S_StartSound(me,sfx_sp_dss)
+			soap.chargedtime = 10
+			soap.speedlenient = max($,4)
+			
+			Soap_SquashMacro(p, {ease_func = "insine", ease_time = soap.chargedtime * 3/4, strength = (FU/3)})
+			local shield = p.powers[pw_shield] & SH_NOSTACK
+			if (shield == SH_FLAMEAURA)
+				local s = P_SpawnMobjFromMobj(me,
+					0,0,FixedDiv(me.height,me.scale) / 2, MT_SOAP_WALLBUMP
+				)
+				s.frame = 36|FF_PAPERSPRITE|FF_FULLBRIGHT
+				s.angle = p.drawangle + ANGLE_90
+				s.color = SKINCOLOR_KETCHUP
+				s.blendmode = AST_ADD
+				
+				s.tics = 12
+				s.fuse = 12
+				s.sixseveneffect = true
+				
+				s.scale = $ / 4
+				s.destscale = me.scale * 2
+				s.scalespeed = FixedDiv(s.destscale - s.scale, s.tics*FU)
+				
+				s.momx = $ + me.momx --/ 5
+				s.momy = $ + me.momy --/ 5
+				s.momz = $ + me.momz --/ 5
+				S_StartSound(me,sfx_s3k43)
+			elseif (shield == SH_WHIRLWIND)
+				soap.divewhirl = TAKIS_WDIVEVFX * 3/4
+			else
+				Soap_DustRing(me, dust_type(me), 16, {me.x,me.y,me.z + me.height/2},
+					126*me.scale, 20*me.scale,
+					me.scale/2, me.scale,
+					true, function(s)
+						s.momx = $ + me.momx * 3/4
+						s.momy = $ + me.momy * 3/4
+						s.momz = $ + me.momz * 3/4
+						dust_noviewmobj(s)
+					end,
+					p.drawangle, 0
+				)
+			end
+		end
+		
+		--add extra speed
+		if p.normalspeed >= maximumspeed
+		and not Soap_IsCompGamemode()
+			local chargetime = soap.inWater and TR*3 or TR
+			local frac = (FU/chargetime)
+			if (p.powers[pw_sneakers])
+				frac = $ * 3/2
+			end
+			
+			if soap.chargingtime < 3*TR
+				soap.dashcharge = 0
+				soap.chargingtime = $ + (p.powers[pw_sneakers] and 2 or 1)
+				
+			elseif soap.dashcharge < SOAP_EXTRADASH
+				soap.dashcharge = $ + frac + extracharge
+				
+				if soap.dashcharge >= SOAP_EXTRADASH
+					S_StartSound(me,sfx_sp_max)
+					soap.dashcharge = SOAP_EXTRADASH
+					soap.speedlenient = max($,4)
+				end
+			--overcharge
+			else
+				soap.dashcharge = $ + frac + extracharge/2
+				if soap.dashcharge >= 100*FU
+					soap.dashcharge = P_Lerp(FU/3, $, 100*FU)
+				end
+			end
+			
+			p.normalspeed = maximumspeed + soap.dashcharge
+		else
+			soap.dashcharge = 0
+			soap.chargingtime = 0
+		end
+		
+		local speed_diff = maximumspeed - p.normalspeed
+		if speed_diff < 0
+		and speed_diff >= -FU
+		and (soap.dashcharge == 0)
+			p.normalspeed = maximumspeed
+		end
+	end
+end
+
 Takis_Hook.addHook("Soap_Thinker",function(p)
 	local me = p.realmo
 	local soap = p.soaptable
@@ -1284,186 +1467,9 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 		--not going backwards
 		if (rightway and soap.onGround or p.powers[pw_carry] == CR_MINECART)
 		and (soap.notCarried or p.powers[pw_carry] == CR_MINECART)
+		and (soap.io.rdashmode == "hold")
 		and not (soap.noability & (SNOABIL_RDASH|SNOABIL_COMBAT))
-			local skin_t = skins[p.skin]
-			local maximumspeed = skin_t.normalspeed + soap._maxdash
-			soap.rdashing = true
-			
-			if soap.onGround
-				local old_speed = p.normalspeed
-				local extracharge = 0
-				
-				--speed boost when landing from an airdash, pizza tower style
-				if (soap.airdashed
-				and soap.accspeed >= 28*FU)
-				or (lunge.angle ~= nil
-				and soap.accspeed >= 20*FU) -- landing from a lunge
-					--lunges give more speed
-					if lunge.angle ~= nil
-						-- lunge caps out at 35*FU
-						p.normalspeed = $ + FixedMul(soap._maxdash, clamp(0,FixedDiv(soap.accspeed, 45*FU),FU))
-					else
-						p.normalspeed = $ + soap._maxdash/2
-					end
-				end
-				
-				if me.standingslope
-					local slope = me.standingslope
-					local xydiff = R_PointToAngle2(0,0,me.momx,me.momy) - slope.xydirection
-					local zangle = FixedMul(slope.zangle, cos(xydiff))
-					
-					zangle = AngleFixed($)/FU
-					if zangle >= 180 then zangle = $ - 360 end
-					zangle = -$
-					
-					--only add speed going DOWN slopes,
-					--and never remove speed... (butteredslope should handle that)
-					if zangle > 0
-						local frac_zangle = zangle * (FU/38)
-						
-						--GFZ2 slope-compliant
-						p.normalspeed = $ + frac_zangle
-						soap.chargingtime = $ + zangle/4
-						
-						if p.normalspeed > maximumspeed
-							if (frac_zangle >= FU*56/100)
-								soap.chargingtime = 3*TR
-								extracharge = (p.normalspeed - maximumspeed)/5
-							--weak
-							else
-								soap.chargingtime = $ + zangle/7
-								extracharge = (p.normalspeed - maximumspeed)/16
-							end
-						end
-						soap.chargingtime =  min($, 3*TR)
-						soap.speedlenient = max($, 3)
-					--...BUT!!!	if we're going uphill while waterrunning,
-					--we should be getting speed back, since water should
-					--give almost no resistance
-					elseif soap.onWater
-						local angle,thrust = Soap_SlopeInfluence(me,p, {
-							allowstand = true, allowmult = true
-						})
-						if angle ~= nil
-							P_Thrust(me,angle, -thrust)
-						end
-					end
-				end
-				
-				local slow_speed = (skin_t.normalspeed - 7*FU)
-				if soap.inWater
-					slow_speed = $/3
-				end
-				if soap.in2D
-					slow_speed = $/2
-				end
-				
-				if (soap.accspeed > slow_speed)
-					p.normalspeed = min(
-						$ + (soap._maxdash/soap._maxdashtime),
-						--dont go over
-						maximumspeed
-					)
-				end
-				
-				--readjust our normalspeed if the dash threshold changed
-				if not soap._noadjust
-					if soap._maxdash < old_maxdash
-						p.normalspeed = $ - (old_maxdash - soap._maxdash)
-					elseif soap._maxdash > old_maxdash
-						p.normalspeed = $ + (soap._maxdash - old_maxdash)
-					end
-				end
-				
-				--charge sfx
-				if p.normalspeed >= maximumspeed
-				and old_speed < maximumspeed
-					S_StartSound(me,sfx_sp_dss)
-					soap.chargedtime = 10
-					soap.speedlenient = max($,4)
-					
-					Soap_SquashMacro(p, {ease_func = "insine", ease_time = soap.chargedtime * 3/4, strength = (FU/3)})
-					local shield = p.powers[pw_shield] & SH_NOSTACK
-					if (shield == SH_FLAMEAURA)
-						local s = P_SpawnMobjFromMobj(me,
-							0,0,FixedDiv(me.height,me.scale) / 2, MT_SOAP_WALLBUMP
-						)
-						s.frame = 36|FF_PAPERSPRITE|FF_FULLBRIGHT
-						s.angle = p.drawangle + ANGLE_90
-						s.color = SKINCOLOR_KETCHUP
-						s.blendmode = AST_ADD
-						
-						s.tics = 12
-						s.fuse = 12
-						s.sixseveneffect = true
-						
-						s.scale = $ / 4
-						s.destscale = me.scale * 2
-						s.scalespeed = FixedDiv(s.destscale - s.scale, s.tics*FU)
-						
-						s.momx = $ + me.momx --/ 5
-						s.momy = $ + me.momy --/ 5
-						s.momz = $ + me.momz --/ 5
-						S_StartSound(me,sfx_s3k43)
-					elseif (shield == SH_WHIRLWIND)
-						soap.divewhirl = TAKIS_WDIVEVFX * 3/4
-					else
-						Soap_DustRing(me, dust_type(me), 16, {me.x,me.y,me.z + me.height/2},
-							126*me.scale, 20*me.scale,
-							me.scale/2, me.scale,
-							true, function(s)
-								s.momx = $ + me.momx * 3/4
-								s.momy = $ + me.momy * 3/4
-								s.momz = $ + me.momz * 3/4
-								dust_noviewmobj(s)
-							end,
-							p.drawangle, 0
-						)
-					end
-				end
-				
-				--add extra speed
-				if p.normalspeed >= maximumspeed
-				and not Soap_IsCompGamemode()
-					local chargetime = soap.inWater and TR*3 or TR
-					local frac = (FU/chargetime)
-					if (p.powers[pw_sneakers])
-						frac = $ * 3/2
-					end
-					
-					if soap.chargingtime < 3*TR
-						soap.dashcharge = 0
-						soap.chargingtime = $ + (p.powers[pw_sneakers] and 2 or 1)
-						
-					elseif soap.dashcharge < SOAP_EXTRADASH
-						soap.dashcharge = $ + frac + extracharge
-						
-						if soap.dashcharge >= SOAP_EXTRADASH
-							S_StartSound(me,sfx_sp_max)
-							soap.dashcharge = SOAP_EXTRADASH
-							soap.speedlenient = max($,4)
-						end
-					--overcharge
-					else
-						soap.dashcharge = $ + frac + extracharge/2
-						if soap.dashcharge >= 100*FU
-							soap.dashcharge = P_Lerp(FU/3, $, 100*FU)
-						end
-					end
-					
-					p.normalspeed = maximumspeed + soap.dashcharge
-				else
-					soap.dashcharge = 0
-					soap.chargingtime = 0
-				end
-				
-				local speed_diff = maximumspeed - p.normalspeed
-				if speed_diff < 0
-				and speed_diff >= -FU
-				and (soap.dashcharge == 0)
-					p.normalspeed = maximumspeed
-				end
-			end
+			handlerdashinit(p,me,soap, old_maxdash)
 		else
 			if soap.onGround
 				if not soap.dashgrace
@@ -1475,6 +1481,7 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 			end
 		end
 		
+		local notoggle = false
 		--b-rush
 		--airdash
 		if (soap.use == 1)
@@ -1625,8 +1632,15 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 			soap.rdashing = true
 			soap.sprung = false
 			setstate = true
+			notoggle = true
 		end
 		
+		--rdash toggle
+		if (soap.use == 1)
+		and (soap.io.rdashmode == "toggle")
+		and not notoggle
+			soap.rdashtoggle = not $
+		end
 	else
 		if soap.onGround
 			if not soap.dashgrace
@@ -1636,6 +1650,30 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 				soap.dashgrace = max($ - 1, 0)
 			end
 		end
+	end
+	
+	if soap.io.rdashmode == "toggle"
+		-- holding spin while landing from an airdash
+		-- will automatically turn on the toggle
+		if soap.onGround and soap.airdashed
+		and soap.use
+			soap.rdashtoggle = true
+		end
+		
+		if p.charability2 ~= CA2_SOAPMOVE
+			soap.rdashtoggle = false
+		end
+		
+		if soap.rdashtoggle
+		and (soap.accspeed >= skins[p.skin].normalspeed - 8*FU)
+		and (p.cmd.forwardmove ~= 0 or p.cmd.sidemove ~= 0)
+		and (soap.onGround or p.powers[pw_carry] == CR_MINECART)
+		and (soap.notCarried or p.powers[pw_carry] == CR_MINECART)
+		and not (soap.noability & (SNOABIL_RDASH|SNOABIL_COMBAT))
+			handlerdashinit(p,me,soap, old_maxdash)
+		end
+	else
+		soap.rdashtoggle = false
 	end
 	
 	--c1 specials
@@ -2966,6 +3004,7 @@ addHook("PlayerSpawn",function(p)
 	
 	soap.rdashing = false
 	soap.airdashed = false
+	soap.rdashtoggle = false
 	
 	soap.toptics = 0
 	if soap.topwindup

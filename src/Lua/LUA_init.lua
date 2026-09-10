@@ -96,6 +96,7 @@ rawset(_G, "Soap_InitTable", function(p)
 		
 		io = {
 			airdashmode = "inputs",
+			rdashmode = "hold",
 		},
 		bloataccess = false,
 		
@@ -188,6 +189,7 @@ rawset(_G, "Soap_InitTable", function(p)
 		airdashcharge = 0,
 		noairdashforme = false,
 		
+		rdashtoggle = false,
 		rdashing = false,
 		lastrdash = false,
 		dashangle = p.drawangle,

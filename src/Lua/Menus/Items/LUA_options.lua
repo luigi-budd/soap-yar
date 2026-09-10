@@ -111,7 +111,7 @@ SOAP_MENUS.buttontoggle = function(v, x,y, width, props)
 	sld_id = $ + 1
 	SOAP_MENUS.drawRounded(v,x,y, width, "BIG", v.getColormap(TC_DEFAULT, SKINCOLOR_CARBON))
 	
-	v.drawString(x + 6, y + 1, name, V_ALLOWLOWERCASE, "left")
+	v.drawString(x + 6, y + (props.thinstring and 2 or 1), name, V_ALLOWLOWERCASE, props.thinstring and "thin" or "left")
 	
 	local cv = CV.FindVar(cv_name)
 	if cv_type == "boolean"
@@ -582,9 +582,13 @@ ML.addMenu({
 				)
 			end
 		})
-		SOAP_MENUS.buttontoggle(v, cx,cy+39, menu.width - 4, {
-			cv_name = "soap_b-rushmode", name = "B-Rush Mode",
+		SOAP_MENUS.buttontoggle(v, cx,cy+39, (menu.width - 4) / 2, {
+			cv_name = "soap_b-rushmode", name = "B-Rush Mode", thinstring = true,
 			cv_type = "custom", tooltip = {"Change which direction Soap's B-Rush and", "Takis' Dive will send you."}
+		})
+		SOAP_MENUS.buttontoggle(v, cx+(menu.width - 4) / 2,cy+39, (menu.width - 4) / 2, {
+			cv_name = "soap_r-dashmode", name = "R-Dash Mode", thinstring = true,
+			cv_type = "custom", tooltip = {"Changes the behavior of Soap's R-Dash."}
 		})
 		SOAP_MENUS.buttontoggle(v, cx,cy+52, menu.width - 4, {
 			cv_name = "soap_boomboxsfx", name = "Taunt Audio",
