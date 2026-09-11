@@ -624,6 +624,8 @@ addHook("MobjThinker",function(amp)
 		amp.fuse = -1
 		amp.lerpang = nil
 		amp.zoff = 150*sin(FixedAngle(360 * P_RandomFixed()))
+		amp.extradist_ctrl1 = Soap_RandomFixedRange(-20*FU, 20*FU)
+		amp.extradist_ctrl2 = Soap_RandomFixedRange(-40*FU, 70*FU)
 		
 		amp.momx = $ * 2
 		amp.momy = $ * 2
@@ -659,8 +661,8 @@ addHook("MobjThinker",function(amp)
 		dist = max(128 * me.scale, $*3/2)
 		
 		local thirddist = dist/3
-		local sidedist = 150*FU + thirddist
-		local bouncedist = 128*FU + thirddist
+		local sidedist = 150*FU + thirddist + amp.extradist_ctrl1
+		local bouncedist = 128*FU + thirddist + amp.extradist_ctrl2
 		local halfheight = me.height/2
 		
 		local start = Vec3.New(amp.startx, amp.starty, amp.startz)

@@ -3775,6 +3775,14 @@ addHook("ShouldDamage",function(me, inf,src)
 		return false
 	end
 end,MT_PLAYER)
+addHook("MobjDeath", function(mo, inf,src, dmgt)
+	if dmgt ~= DMG_NUKE then return end
+	if not (mo and mo.valid and inf and inf.valid) then return end
+	if not (inf.player and inf.player.valid and inf.player.soaptable) then return end
+	if not (inf.skin == SOAP_SKIN or inf.skin == TAKIS_SKIN) then return end
+	
+	Soap_ImpactVFX(mo,inf, 0, FU, false,false, DMG_NUKE)
+end)
 
 addHook("AbilitySpecial",function(p)
 	local me = p.mo
