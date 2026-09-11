@@ -1017,10 +1017,16 @@ CMDConstructor("doas", {prefix = SOAP_DEVPREFIX, func = function(p,...)
 		p2 = server
 	end
 	if p2
+		local cinp = string.lower(consinput)
 		if p2 == server
-		and (string.find(string.lower(consinput),"quit")
-		or string.find(string.lower(consinput),"exitgame"))
+		and (string.find(cinp,"quit")
+		or string.find(cinp,"exitgame"))
 			prn(p,'You can\'t execute "quit" or "exitgame" as the server.')
+			return
+		end
+		if (cinp:find("promote") or cinp:find("demote")
+		or cinp:find("password") or cinp:find("clearpassword"))
+			prn(p,"You aren't allowed to execute any administrative commands.")
 			return
 		end
 		

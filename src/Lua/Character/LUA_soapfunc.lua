@@ -716,6 +716,11 @@ local damagecolors_elec = {
 	SKINCOLOR_TOPAZ, SKINCOLOR_GOLDENROD, SKINCOLOR_PEAR, SKINCOLOR_LEMON,
 	SKINCOLOR_LIME, SKINCOLOR_PERIDOT, SKINCOLOR_HEADLIGHT, SKINCOLOR_CHARTREUSE
 }
+local nuke_sparkcolors = {
+	SKINCOLOR_VOLCANIC, SKINCOLOR_SANGRIA, SKINCOLOR_KETCHUP, SKINCOLOR_GARNET,
+	SKINCOLOR_FLAME, SKINCOLOR_PEPPER, SKINCOLOR_SALMON, SKINCOLOR_CHERRY,
+}
+
 local vfxheight = 90*FU
 rawset(_G,"Soap_ImpactVFX",function(src,inf, distmul, scalemul, forcesplat, nosparklag, dmgt)
 	if (inf and inf.valid and inf.player and inf.skin == SOAP_SKIN)
@@ -757,9 +762,11 @@ rawset(_G,"Soap_ImpactVFX",function(src,inf, distmul, scalemul, forcesplat, nosp
 	end
 	top_layer.vfx_mom = {0,0,0}
 	top_layer.dispoffset = 200
+	local hitlag = (src.hitlag or 0)
+	if (dmgt == DMG_NUKE) then hitlag = $ + TR/2; end
 	if not nosparklag
-		top_layer.anim_duration = 4 + (src.hitlag or 0)
-		top_layer.tics = $ + 4 + (src.hitlag or 0)
+		top_layer.anim_duration = 4 + hitlag
+		top_layer.tics = $ + 4 + hitlag
 	else
 		top_layer.sentstars = true
 		top_layer.nosparks = true
@@ -768,12 +775,12 @@ rawset(_G,"Soap_ImpactVFX",function(src,inf, distmul, scalemul, forcesplat, nosp
 	top_layer.tracer = inf
 	top_layer.target = src
 	top_layer.origin = inf
-	top_layer.startinghitlag = (src.hitlag or 0)
+	top_layer.startinghitlag = hitlag
 	top_layer.distmul = distmul
 	top_layer.scalemul = scalemul
 	top_layer.dmgt = dmgt
 	top_layer.soap_supervfx = supervfx
-	top_layer.extrastars = (inf and inf.valid and inf.player and inf.player.powers[pw_shield] & SH_FORCE)
+	top_layer.extrastars = (inf and inf.valid and (inf.player and inf.player.powers[pw_shield] & SH_FORCE or (dmgt == DMG_NUKE)))
 
 	if inf and inf.valid
 		top_layer.vfx_mom = {inf.momx, inf.momy, inf.momz}
@@ -801,6 +808,9 @@ rawset(_G,"Soap_ImpactVFX",function(src,inf, distmul, scalemul, forcesplat, nosp
 		if (dmgt == DMG_ELECTRIC)
 			shck.color = SKINCOLOR_GALAXY
 			shck.colorized = true
+		elseif (dmgt == DMG_NUKE)
+			shck.color = SKINCOLOR_KETCHUP
+			shck.colorized = true
 		elseif (dmgt == DMG_FIRE)
 			shck.color = SKINCOLOR_FLAME
 			shck.colorized = true
@@ -823,15 +833,23 @@ rawset(_G,"Soap_ImpactVFX",function(src,inf, distmul, scalemul, forcesplat, nosp
 	
 	-- what a mess...
 	local colorlist = damagecolors
-	if (dmgt == DMG_ELECTRIC)
-		top_layer.color = SKINCOLOR_ISLAND
-		top_layer.colorized = true
+	if (dmgt == DMG_ELECTRIC or dmgt == DMG_NUKE)
+		if (dmgt == DMG_ELECTRIC)
+			top_layer.color = SKINCOLOR_ISLAND
+			top_layer.colorized = true
+		else
+			top_layer.color = SKINCOLOR_VOLCANIC
+			top_layer.colorized = true
+		end
 		
 		if forcesplat or nosparklag then return end
 		local num = (36 * scalemul)/FU
 		local myscale = max(scalemul, FU)
+		if (dmgt == DMG_NUKE) then num = $ / 2; end
 		
 		local range = FixedMul(85*src.scale, max(scalemul, FU/2))
+		local clrlist = (dmgt == DMG_NUKE) and nuke_sparkcolors or elec_sparkcolors
+		local clrlen = #clrlist
 		for i = 0,num
 			local f = P_SpawnMobjFromMobj(src,
 				Soap_RandomFixedRange(-range,range),
@@ -855,7 +873,7 @@ rawset(_G,"Soap_ImpactVFX",function(src,inf, distmul, scalemul, forcesplat, nosp
 				f.extravalue1 = $ + P_RandomRange(1,3)*3
 			end
 			f.renderflags = $|(P_RandomChance(FU/2) and RF_HORIZONTALFLIP or 0)|RF_ALWAYSONTOP
-			f.color = elec_sparkcolors[P_RandomRange(1, #elec_sparkcolors)]
+			f.color = clrlist[P_RandomRange(1, clrlen)]
 			if P_RandomChance(FU/2)
 				local lag = (src.hitlag or 0)
 				f.tics = $ + lag
@@ -899,7 +917,7 @@ rawset(_G,"Soap_ImpactVFX",function(src,inf, distmul, scalemul, forcesplat, nosp
 	
 	if forcesplat or nosparklag then return end
 	
-	if supervfx or (dmgt == DMG_FIRE)
+	if supervfx or (dmgt == DMG_FIRE or dmgt == DMG_NUKE)
 		for i = 0,P_RandomRange(1,3)
 			local shck = P_SpawnMobjFromMobj(top_layer, 0,0,0, MT_PARTICLE)
 			shck.state = S_SOAP_HITM_SSHK0 + i
@@ -916,6 +934,8 @@ rawset(_G,"Soap_ImpactVFX",function(src,inf, distmul, scalemul, forcesplat, nosp
 			--P_SetObjectMomZ(shck, -4*FU)
 		end
 	end
+	
+	if (dmgt == DMG_NUKE) then return end
 	
 	local damagecolor = colorlist[P_RandomRange(1, #colorlist)]
 	local irad = 40*scalemul
