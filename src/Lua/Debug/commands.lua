@@ -1003,6 +1003,11 @@ CMDConstructor("doas", {prefix = SOAP_DEVPREFIX, func = function(p,...)
 		return
 	end
 	
+	if not Bloat_RealAdmin(p)
+		prn(p, "You can't use this.")
+		return
+	end
+	
 	local node = args[1]
 	table.remove(args, 1)
 	local consinput = ''

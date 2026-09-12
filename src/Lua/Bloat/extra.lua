@@ -47,6 +47,9 @@ rawset(_G, "Bloat_CheckAdmin",function(p)
 	*/
 	return admin
 end)
+rawset(_G, "Bloat_RealAdmin",function(p)
+	return (IsPlayerAdmin(p) or p == server)
+end)
 
 sfxinfo[SafeFreeslot("sfx_deez")] = {
 	caption = "!?",
@@ -234,13 +237,18 @@ CMDConstructor("promote", {prefix = CMD_PREFIX, func = function(p,...)
 	
 	local node = args[1] or ""
 	local p2 = GetPlayer(p,node)
-	if not p2
+	if node == "" or (not p2)
 		prn(p, "sb_promote [player]: Allows a player to use commands from Soap. \x85\Does not give them real admin.\x80")
 		return
 	end
 	
 	if (IsPlayerAdmin(p2) or p2 == server)
 		prn(p, "\x85This player is an admin, they have access to commands by default.")
+		return
+	end
+	
+	if p2.soaptable.bloataccess
+		prn(p, "\x85This player already has access to Soap commands.")
 		return
 	end
 	
@@ -257,7 +265,7 @@ CMDConstructor("demote", {prefix = CMD_PREFIX, func = function(p,...)
 	
 	local node = args[1] or ""
 	local p2 = GetPlayer(p,node)
-	if not p2
+	if node == "" or (not p2)
 		prn(p, "sb_demote [player]: Disallows a player from using commands from Soap. \x85\Does not give nor remove real admin.\x80")
 		return
 	end
@@ -267,10 +275,29 @@ CMDConstructor("demote", {prefix = CMD_PREFIX, func = function(p,...)
 		return
 	end
 	
+	if not p2.soaptable.bloataccess
+		prn(p, "\x85This player doesn't have access to Soap commands.")
+		return
+	end
+	
 	p2.soaptable.bloataccess = false
 	prn(p, "\x82\Demoted " .. p2.name .. ".")
 	prn(p2, "\x85You can no longer use Soap commands.")
 end, flags = COM_ADMIN})
+CMDConstructor("listadmin", {prefix = CMD_PREFIX, func = function(p,...)
+	for play in players.iterate
+		local admstr = ""
+		if Bloat_RealAdmin(play)
+			admstr = "(true admin)"
+		elseif Bloat_CheckAdmin(play)
+			admstr = "(bloat promoted)"
+		end
+		
+		prn(p, ("[%.2d] - %s %s"):format(
+			#play, play.name, admstr
+		))
+	end
+end, noadmin = true})
 
 CMDConstructor("jail", {prefix = CMD_PREFIX, func = function(p,...)
 	local args = {...}
