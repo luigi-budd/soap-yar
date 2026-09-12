@@ -293,7 +293,7 @@ CMDConstructor("listadmin", {prefix = CMD_PREFIX, func = function(p,...)
 			admstr = "(bloat promoted)"
 		end
 		
-		prn(p, ("[%.2d] - %s %s"):format(
+		prn(p, ("[%.2d] - %s\t%s"):format(
 			#play, play.name, admstr
 		))
 	end
