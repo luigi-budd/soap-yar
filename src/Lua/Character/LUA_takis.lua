@@ -408,6 +408,12 @@ end
 local function hammerblast_thinker(p,me,takis)
 	local hammer = takis.hammer
 	
+	if not me.health
+		Takis_ResetHammerTime(p)
+		takis.accspeed = 0
+		return
+	end
+	
 	if (me.flags & MF_NOTHINK)
 		Takis_ResetHammerTime(p)
 		takis.accspeed = 0

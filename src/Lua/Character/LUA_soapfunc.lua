@@ -979,6 +979,7 @@ rawset(_G,"Soap_CanDamageEnemy",function(p, mobj,flags,exclude, nobs)
 	exclude = $ or 0
 	
 	if not (mobj and mobj.valid) then return false end
+	if (mobj.type == MT_RAY) then return false end
 	
 	if (mobj.flags2 & MF2_FRET and not nobs)
 		return false

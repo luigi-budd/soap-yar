@@ -187,15 +187,15 @@ Takis_Hook.tryRunHook = function(hooktype, v, ...)
 	work_hooktype = hooktype
 	work_event = v
 	local args = {...}
-	local results = {xpcall(do
-		v.func(unpack(args))
-	end, ErrorCatcher)}
-	local status = table.remove(results,1)
+	local funcresults
+	local status = xpcall(do
+		funcresults = {v.func(unpack(args))}
+	end, ErrorCatcher)
 	
 	if status then
 		override = {handler.func(
 			override,
-			unpack(results)
+			unpack(funcresults)
 		)}
 	end
 
