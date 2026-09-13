@@ -1455,7 +1455,9 @@ Takis_Hook.addHook("Takis_Thinker",function(p)
 	if noafterimages
 		if not p.inkart
 			p.charflags = $ &~(SF_RUNONWATER)
-			p.runspeed = skins[TAKIS_SKIN].runspeed/2
+			if (p.charability2 == CA2_SOAPMOVE)
+				p.runspeed = skins[TAKIS_SKIN].runspeed/2
+			end
 		end
 		clutch.time = 0
 	end
