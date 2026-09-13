@@ -251,7 +251,7 @@ end
 local function RopePart(p,me,cmd,g)
 	local m = g.grappoint
 	
-	if ((P_IsObjectOnGround(me) and not p.grappler_extra) or P_PlayerInPain(p) or p.powers[pw_carry] ~= CR_NONE)
+	if ((P_IsObjectOnGround(me) and not p.grappler_extra) or (P_PlayerInPain(p) and not p.grappler_extra) or p.powers[pw_carry] ~= CR_NONE)
 	or (me.eflags & MFE_SPRUNG)
 		g.grappoint = nil
 		DestroyRope(p,me,cmd,g)
@@ -294,6 +294,10 @@ local function RopePart(p,me,cmd,g)
 		end
 	end
 	RopeSolver(me, m, m.xyzdist)
+	if (p.grappler_extra) and (m.mo and m.mo.valid)
+		RopeSolver(m.mo, me, m.xyzdist)
+	end
+	
 	TraceRope(p,me,cmd,g,m)
 	
 	p.pflags = $|PF_THOKKED
