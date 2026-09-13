@@ -1664,8 +1664,13 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 			soap.rdashtoggle = false
 		end
 		
+		local minspeed = skins[p.skin].normalspeed - 10*FU
+		if soap.inWater
+			minspeed = $ / 2
+		end
+		
 		if soap.rdashtoggle
-		and (soap.accspeed >= skins[p.skin].normalspeed - 8*FU)
+		and (soap.accspeed >= minspeed)
 		and (p.cmd.forwardmove ~= 0 or p.cmd.sidemove ~= 0)
 		and (soap.onGround or p.powers[pw_carry] == CR_MINECART)
 		and (soap.notCarried or p.powers[pw_carry] == CR_MINECART)
