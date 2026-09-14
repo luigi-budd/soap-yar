@@ -408,6 +408,12 @@ end
 local function hammerblast_thinker(p,me,takis)
 	local hammer = takis.hammer
 	
+	if not me.health
+		Takis_ResetHammerTime(p)
+		takis.accspeed = 0
+		return
+	end
+	
 	if (me.flags & MF_NOTHINK)
 		Takis_ResetHammerTime(p)
 		takis.accspeed = 0
@@ -2091,6 +2097,9 @@ local function try_pvp_collide(me,thing)
 	if (shield & SH_PROTECTWATER)
 		damagetype = DMG_WATER
 	end
+	if (shield == SH_ARMAGEDDON)
+		damagetype = DMG_ELECTRIC
+	end
 	
 	--if the thing we're killing ISNT a player, then theyre probably an enemy
 	local candamagemobj = false
@@ -2173,7 +2182,7 @@ local function try_pvp_collide(me,thing)
 				soap.clutch.misfire = CLUTCH_MISFIRE
 			end
 		end
-		Soap_ImpactVFX(thing,me, nil,FixedDiv(power,60*FU),nil,nil, damagetype)
+		Soap_ImpactVFX(thing,me, nil,FixedDiv(power,60*FU),nil,nil, (shield == SH_ARMAGEDDON) and DMG_NUKE or damagetype)
 		DealDamage(thing, me,me, nil, damagetype)
 		
 		if (thing and thing.valid and thing.type == MT_ROLLOUTROCK)
@@ -2197,7 +2206,7 @@ local function try_pvp_collide(me,thing)
 		and not (thing == me.target or thing == me.tracer)
 	
 	if basicdamage
-		Soap_ImpactVFX(thing,me, nil, FU/3, nil,nil, damagetype)
+		Soap_ImpactVFX(thing,me, nil, FU/3, nil,nil, (shield == SH_ARMAGEDDON) and DMG_NUKE or damagetype)
 		Soap_DamageSfx(thing, FU/3, 2*FU, damagetype)
 		Soap_SpawnBumpSparks(me, thing, nil, true)
 		

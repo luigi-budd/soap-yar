@@ -3407,6 +3407,11 @@ local function dotumble(p)
 end
 
 local function try_damage_cases(me,thing, p,soap,DealDamage,damagetype)
+	local vfxdmgt = damagetype
+	if (p.powers[pw_shield] & SH_NOSTACK == SH_ARMAGEDDON)
+		vfxdmgt = DMG_NUKE
+	end
+	
 	--hit by pound
 	if ((soap.pounding)
 	and (thing.health))
@@ -3419,7 +3424,7 @@ local function try_damage_cases(me,thing, p,soap,DealDamage,damagetype)
 		local damage = 1
 		local power = 5*FU + FixedDiv(abs(me.momz),me.scale*3)
 		local hitlag_tics = 10 + ((power/FU) / 5)
-		Soap_ImpactVFX(thing, me, nil,FixedDiv(power,35*FU),nil,nil,damagetype)
+		Soap_ImpactVFX(thing, me, nil,FixedDiv(power,35*FU),nil,nil,vfxdmgt)
 		Soap_DamageSfx(thing, power, 35*FU, damagetype)
 		
 		-- spike!
@@ -3428,7 +3433,7 @@ local function try_damage_cases(me,thing, p,soap,DealDamage,damagetype)
 			S_StartSound(me,sfx_sp_dm4)
 			local work = FixedDiv(power, 35*FU) - FU/2
 			repeat
-				Soap_ImpactVFX(thing,me, FU + work*7, FU + work/2,nil,nil,damagetype)
+				Soap_ImpactVFX(thing,me, FU + work*7, FU + work/2,nil,nil,vfxdmgt)
 				work = $ - FU/4
 				damage = $ + 2
 			until (work <= 0)
@@ -3496,7 +3501,7 @@ local function try_damage_cases(me,thing, p,soap,DealDamage,damagetype)
 		soap.canuppercut = true
 		
 		local power = 5*FU + FixedDiv(FixedHypot(FixedHypot(me.momx,me.momy)*3/4, me.momz), me.scale)
-		Soap_ImpactVFX(thing,me, nil,FixedDiv(power,35*FU),nil,nil,damagetype)
+		Soap_ImpactVFX(thing,me, nil,FixedDiv(power,35*FU),nil,nil,vfxdmgt)
 		Soap_DamageSfx(thing, power, 35*FU, damagetype)
 		
 		local hitlag_tics = 6 + (power/FU / 5)
@@ -3546,7 +3551,7 @@ local function try_damage_cases(me,thing, p,soap,DealDamage,damagetype)
 	and not (thing.type == MT_ROLLOUTROCK and me.tracer == thing)
 		
 		local power = FixedMul(10*FU + max(soap.accspeed - 20*FU,0), me.scale)
-		Soap_ImpactVFX(thing,me, nil,FixedDiv(power,60*FU),nil,nil,damagetype)
+		Soap_ImpactVFX(thing,me, nil,FixedDiv(power,60*FU),nil,nil,vfxdmgt)
 		Soap_DamageSfx(thing, power, 60*FU, damagetype)
 		
 		local hitlag_tics = 4 + (power/FU / 10)
@@ -3631,7 +3636,7 @@ local function try_damage_cases(me,thing, p,soap,DealDamage,damagetype)
 	
 	-- just so you wont miss out on amps
 	if basicdamage
-		Soap_ImpactVFX(thing,me, nil, FU/3, nil,nil,damagetype)
+		Soap_ImpactVFX(thing,me, nil, FU/3, nil,nil,vfxdmgt)
 		Soap_DamageSfx(thing, FU/3, 2*FU, damagetype)
 		Soap_SpawnBumpSparks(me, thing, nil, true)
 		Soap_Hitlag.addHitlag(me, 3, false)
@@ -3731,6 +3736,9 @@ local function try_pvp_collide(me,thing)
 	end
 	if (shield & SH_PROTECTWATER)
 		damagetype = DMG_WATER
+	end
+	if (shield == SH_ARMAGEDDON)
+		damagetype = DMG_ELECTRIC
 	end
 	
 	thinghit = try_damage_cases(me,thing, p,soap,DealDamage, damagetype)
