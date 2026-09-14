@@ -1672,7 +1672,7 @@ addHook("KeyDown",function(key)
 	if (chatactive) then return end
 	if (key.repeated) then return end
 	if ML.client.currentMenu.id ~= -1 then return end
-	if not (consoleplayer == server or IsPlayerAdmin(consoleplayer)) then return end
+	if not Bloat_CheckAdmin(consoleplayer) then return end
 	
 	if (key.name == "]")
 		MenuLib.initMenu(MenuLib.findMenu("Phys_TypeSelector"))
