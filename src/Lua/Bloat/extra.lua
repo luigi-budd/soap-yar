@@ -297,7 +297,7 @@ CMDConstructor("listadmin", {prefix = CMD_PREFIX, func = function(p,...)
 			#play, play.name, admstr
 		))
 	end
-end, noadmin = true})
+end, forcenoadmin = true})
 
 CMDConstructor("jail", {prefix = CMD_PREFIX, func = function(p,...)
 	local args = {...}
