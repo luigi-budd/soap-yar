@@ -1258,6 +1258,7 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 	local me = p.realmo
 	local soap = p.soaptable
 	
+	soap.noability = $|SNOABIL_RDASH
 	soap.afterimage = false
 	local cos_height = 6
 	--for reset state
@@ -1889,6 +1890,7 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 		--rdash toggle
 		if (soap.use == 1)
 		and (soap.io.rdashmode == "toggle")
+		and (p.charability2 == CA2_SOAPMOVE)
 		and not notoggle
 			soap.rdashtoggle = not $
 		end
@@ -2301,7 +2303,9 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 		--print("case3: "..(getTimeMicros() - micros))
 	end
 	soap.lastrdash = soap.rdashing
-	soap.speedlenient = max($-1,0)
+	if soap.speedlenient
+		soap.speedlenient = $ - 1
+	end
 	
 	--stuff to do while pounding
 	local do_poundaura = false

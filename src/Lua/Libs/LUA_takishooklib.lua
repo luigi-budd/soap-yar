@@ -151,6 +151,7 @@ Takis_Hook.addHook = function(hooktype, func, typefor, name)
 			us_taken = 0, -- microseconds
 			activity = 0,
 			tic_called = -1,
+			history = {},
 		})
 		event_t.numhooks = $ + 1
 	else
@@ -168,7 +169,7 @@ local function ErrorCatcher(err)
 	S_StartSound(nil,sfx_lose)
 	print(
 		("\x83TAKIS: \x82WARNING:\x80 Error in hooktype '%s' for hook '%s'\n\t\x86-> %s"):format(
-			work_hooktype, work_event.name, err
+			tostring(work_hooktype), tostring(work_event.name), tostring(err)
 		)
 	)
 end
@@ -206,6 +207,15 @@ Takis_Hook.tryRunHook = function(hooktype, v, ...)
 		else
 			v.us_taken = taken
 		end
+		
+		local samplesize = SOAP_CV.debug_hooksamplesize.value
+		if samplesize > 0
+			table.insert(v.history, taken)
+			if (#v.history > samplesize)
+				table.remove(v.history, 1)
+			end
+		end
+		
 		v.activity = min($ + taken, TR)
 		v.tic_called = leveltime
 	end

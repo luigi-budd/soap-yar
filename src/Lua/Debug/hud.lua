@@ -302,6 +302,7 @@ addHook("HUD",function(v,p)
 		local y = 2
 		local flags = V_SNAPTOLEFT|V_SNAPTOTOP|V_ALLOWLOWERCASE
 		local frametime = 0
+		local samplesize = SOAP_CV.debug_hooksamplesize.value
 		for etype, event_t in pairs(Takis_Hook.events)
 			local starty = y
 			local totaltime = 0
@@ -320,11 +321,30 @@ addHook("HUD",function(v,p)
 				end
 				local clr = hook_t.activity and "\x80" or "\x86"
 				
-				v.drawString(x,y, "\x82["..tostring(key)..","..tostring(hook_t.id).."] - \x86"..path.." = "..clr..tostring(hook_t.us_taken).."us", flags, "small")
+				local timetaken = hook_t.us_taken
+				if samplesize > 0
+					local tablelen = #hook_t.history
+					if tablelen > 0
+						if (tablelen < samplesize)
+							color = "\x85"
+						end
+						local work = 0
+						for i = 1, min(samplesize, tablelen)
+							work = $ + hook_t.history[i]
+						end
+						timetaken = work / min(samplesize, tablelen)
+					end
+				end
+				
+				v.drawString(x,y, string.format(
+					"\x82[%s,%s]\x80 (%s) %s = %s%sus",
+					tostring(key),tostring(hook_t.id), hook_t.name, path, clr,tostring(timetaken)),
+					flags, "small"
+				)
 				if (hook_t.activity > 0)
 					hook_t.activity = max($ - 1, 0)
-					frametime = $ + hook_t.us_taken
-					totaltime = $ + hook_t.us_taken
+					frametime = $ + timetaken
+					totaltime = $ + timetaken
 				elseif (hook_t.activity < 0)
 					hook_t.activity = 0
 				end
@@ -339,6 +359,7 @@ addHook("HUD",function(v,p)
 		end
 		y = $ + 4
 		v.drawString(x,y, "Frame time taken: "..(frametime).."us", flags|V_YELLOWMAP, "small")
+		v.drawString(x,y + 4, "Sample size: "..(samplesize).." ticks", flags|V_YELLOWMAP, "small")
 		
 	elseif oldflags & DEBUG_HOOKS
 		for k,v in pairs(oldstr)

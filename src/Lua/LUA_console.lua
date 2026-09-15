@@ -194,3 +194,9 @@ CV.debug_novfx = CV_RegisterVar({
 	flags = CV_SHOWMODIF|CV_NETVAR,
 	PossibleValue = CV_OnOff,
 })
+CV.debug_hooksamplesize = CV_RegisterVar({
+	name = "soap_debug_hooksamplesize",
+	defaultvalue = "175",
+	flags = CV_SHOWMODIF|CV_NETVAR,
+	PossibleValue = {MIN = 0, MAX = 1000},
+})
