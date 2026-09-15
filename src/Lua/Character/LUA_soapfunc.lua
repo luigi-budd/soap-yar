@@ -441,6 +441,7 @@ local function CheckAndCrumble(me, sec)
 end
 
 rawset(_G, "Soap_BreakFloors", function(p, me)
+	if CV.debug_novfx.value then return false; end
 	return CheckAndCrumble(me, me.subsector.sector)
 end)
 
@@ -477,6 +478,7 @@ local function check_for_bustables(p,me, x,y)
 end
 
 rawset(_G, "Soap_DirBreak", function(p, me, angle, nomom, noqsteps)
+	if CV.debug_novfx.value then return false; end
 	local soap = p.soaptable
 	local broke = false
 	
@@ -1242,6 +1244,7 @@ local WIND_PUSHANG_MIN = 29*FU
 local WIND_PUSHANG_MAX = 35*FU
 local playerrad = mobjinfo[MT_PLAYER].radius
 rawset(_G, "Soap_WindLines", function(me,rmomz,color,forceang,forceside)
+	if (CV.debug_novfx.value) then return end
 	if not (me and me.valid) then return end --?
 	if not me.health then return end
 	local p = me.player

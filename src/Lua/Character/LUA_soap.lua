@@ -836,6 +836,7 @@ local function handledashinit(p,me,soap, old_maxdash)
 	local extracharge = 0
 	
 	--speed boost when landing from an airdash, pizza tower style
+	--[[
 	if (soap.airdashed
 	and soap.accspeed >= 28*FU)
 	or (lunge.angle ~= nil
@@ -901,14 +902,16 @@ local function handledashinit(p,me,soap, old_maxdash)
 	end
 	
 	if (soap.accspeed > slow_speed)
+	]]--
 		p.normalspeed = min(
 			$ + (soap._maxdash/soap._maxdashtime),
 			--dont go over
 			maximumspeed
 		)
-	end
+	--end
 	
 	--readjust our normalspeed if the dash threshold changed
+	--[[
 	if not soap._noadjust
 		if soap._maxdash < old_maxdash
 			p.normalspeed = $ - (old_maxdash - soap._maxdash)
@@ -1005,6 +1008,7 @@ local function handledashinit(p,me,soap, old_maxdash)
 	and (soap.dashcharge == 0)
 		p.normalspeed = maximumspeed
 	end
+	]]--
 end
 
 local function handledashthinker(p,me,soap)
@@ -1013,6 +1017,7 @@ local function handledashthinker(p,me,soap)
 	local dashspeed = skin_normalspeed + soap._maxdash
 	local setangle = false
 	
+	--[[
 	if (p.powers[pw_carry] == CR_MINECART)
 		local cart = me.tracer
 		
@@ -1053,6 +1058,7 @@ local function handledashthinker(p,me,soap)
 		
 		soap.speedlenient = max($,4)
 	end
+	]]
 	
 	local speedprogress = FixedDiv(p.normalspeed - skin_normalspeed, soap._maxdash or FU)
 	local momentums = ORIG_FRICTION + FixedMul(
@@ -1071,6 +1077,7 @@ local function handledashthinker(p,me,soap)
 		slow_speed = $/2
 	end
 	
+	--[[
 	if (soap.accspeed < slow_speed
 	and p.normalspeed > skin_normalspeed + soap._maxdash/3)
 	and soap.onGround
@@ -1086,6 +1093,7 @@ local function handledashthinker(p,me,soap)
 	else
 		soap.dashlose = 0
 	end
+	]]
 	
 	if not (p.pflags & PF_SPINNING)
 		if p.normalspeed < dashspeed
@@ -1125,7 +1133,7 @@ local function handledashthinker(p,me,soap)
 		end
 		
 		if P_RandomChance(eased)
-			spawn_sweat_mobjs(p,me,soap)
+			--spawn_sweat_mobjs(p,me,soap)
 			if soap.onGround
 			and (me.state ~= S_PLAY_SKID)
 				S_StartSound(me,
@@ -1133,14 +1141,15 @@ local function handledashthinker(p,me,soap)
 				)
 			end
 		end
-		S_StopSoundByID(me,sfx_sp_mac)
-		S_StopSoundByID(me,sfx_sp_mc2)
+		--S_StopSoundByID(me,sfx_sp_mac)
+		--S_StopSoundByID(me,sfx_sp_mc2)
 		soap.dashangle = p.drawangle
 	else
 		--None of this in free fall
 		if not (soap.uppercutted and me.state == S_PLAY_FALL)
 			soap.afterimage = true
 			
+			--[[
 			local color = soap_rdashwind_base
 			if (soap.dashcharge)
 				local speed_frac = FixedDiv(
@@ -1155,6 +1164,7 @@ local function handledashthinker(p,me,soap)
 				)/FU
 			end
 			color = max(0, min($, #skincolors - 1))
+			]]
 			/*
 			Soap_WindLines(me,nil,color)
 			accelerative_speedlines(p,me,soap, FixedDiv(R_PointTo3DDist(0,0,0,me.momx,me.momy,me.momz),me.scale), 65*FU, color)
@@ -1191,6 +1201,7 @@ local function handledashthinker(p,me,soap)
 			p.powers[pw_strong] = $|STR_SPIKE|STR_ANIM|STR_HEAVY
 		end
 		
+		--[[
 		if not Soap_IsCompGamemode()
 			--test shallowness, so we dont get "stuck" on water
 			local floor = ((soap.gravflip == -1) and P_CeilingzAtPos or P_FloorzAtPos)(me.x,me.y,me.z,me.height)
@@ -1211,8 +1222,10 @@ local function handledashthinker(p,me,soap)
 				p.charflags = $|SF_RUNONWATER
 			end
 		end
+		]]
 		
 		if me.state == S_PLAY_DASH or me.state == S_PLAY_SOAP_RAM
+			--[[
 			if not soap.onGround
 				S_StopSoundByID(me, sfx_sp_mc2)
 				if not S_SoundPlaying(me,sfx_sp_mac)
@@ -1225,6 +1238,7 @@ local function handledashthinker(p,me,soap)
 					S_StartSound(me,sfx_sp_mc2)
 				end
 			end
+			]]
 			if soap.accspeed >= 3*FU
 				soap.dashangle = P_Lerp((me.eflags & MFE_SPRUNG and FU or FU/4), $, R_PointToAngle2(0,0,me.momx,me.momy))
 				p.drawangle = soap.dashangle
@@ -1234,14 +1248,15 @@ local function handledashthinker(p,me,soap)
 			
 			me.soap_spawnaura = true
 		elseif (p.powers[pw_carry] ~= CR_MINECART)
-			S_StopSoundByID(me,sfx_sp_mac)
-			S_StopSoundByID(me,sfx_sp_mc2)
+			--S_StopSoundByID(me,sfx_sp_mac)
+			--S_StopSoundByID(me,sfx_sp_mc2)
 		end
 		if not setangle
 			soap.dashangle = p.drawangle
 		end
 	end
 	
+	--[[
 	if soap.airdashed
 		if (me.state == S_PLAY_RUN)
 			me.state = S_PLAY_FLOAT_RUN
@@ -1252,13 +1267,13 @@ local function handledashthinker(p,me,soap)
 			P_PitchRoll(me, FU/6)
 		end
 	end
+	]]
 end
 
 Takis_Hook.addHook("Soap_Thinker",function(p)
 	local me = p.realmo
 	local soap = p.soaptable
 	
-	soap.noability = $|SNOABIL_RDASH
 	soap.afterimage = false
 	local cos_height = 6
 	--for reset state
@@ -1276,6 +1291,7 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 		p.charflags = $ &~SF_SUPER
 	end
 	
+	--[[
 	if (
 		(
 			((soap.weaponnext and soap.weaponprev)
@@ -1383,6 +1399,7 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 	if not (soap.boombox and soap.boombox.valid and soap.boombox.health)
 		soap.boombox = nil
 	end
+	]]
 	
 	soap.pound_cooldown = max($ - 1, 0)
 	Soap_Combat(p)
@@ -2530,6 +2547,7 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 	
 	--spinning top
 	--EXCEPT for when this happens
+	--[[
 	if soap.inPain
 	or soap.inSlide
 	or (not me.health)
@@ -2651,6 +2669,7 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 			end
 		end
 	end
+	]]
 	
 	if not (p.pflags & PF_JUMPED)
 		soap.doublejumped = false
@@ -2678,6 +2697,7 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 	end
 	
 	--things to do while in pain
+	--[[
 	if soap.inPain
 		local ticker = leveltime/2
 		local painflash = TR/2
@@ -2741,6 +2761,7 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 			soap.setpaintrans = false
 		end
 	end
+	]]
 	
 	--stuff to do while carried
 	if (p.powers[pw_carry] == CR_NIGHTSMODE)
@@ -3055,6 +3076,7 @@ addHook("PlayerSpawn",function(p)
 	end
 end)
 
+--[[
 addHook("PlayerCanDamage",function(p, targ)
 	if not p.soaptable then return end
 	
@@ -3100,6 +3122,7 @@ local peelout_off = FixedAngle(17*FU)
 local cv_pitchroll = CV.FindVar("pitchroll-tation")
 addHook("FollowMobj",function(p, m_peel) --master peel
 	if m_peel.outs == nil then m_peel.outs = {} end
+	if CV.debug_novfx.value then return end
 	
 	local me = p.mo
 	local soap = p.soaptable
@@ -4076,6 +4099,7 @@ addHook("MobjDeath", function(me,inf,sor,dmgt)
 		Soap_Hitlag.addHitlag(me, 10, true, false)
 	end
 end)
+]]
 
 --jump effect
 addHook("JumpSpecial", function(p)
