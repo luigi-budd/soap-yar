@@ -293,8 +293,13 @@ CMDConstructor("listadmin", {prefix = CMD_PREFIX, func = function(p,...)
 			admstr = "(bloat promoted)"
 		end
 		
-		prn(p, ("[%.2d] - %s\t%s"):format(
-			#play, play.name, admstr
+		local name = play.name
+		if name:len() < 23
+			name = (" "):rep(23 - name:len()) .. $
+		end
+		
+		prn(p, ("%s[%.2d] - %s\t%s"):format(
+			(play == consoleplayer) and "\x82" or "", #play, name, admstr
 		))
 	end
 end, forcenoadmin = true})
