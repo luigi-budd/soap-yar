@@ -187,3 +187,10 @@ CV.tauntinterference = CV_RegisterVar({
 	PossibleValue = CV_OnOff,
 })
 CV.PossibleValues["soap_tauntinterference"] = {values = rotations_pv, length = 2}
+
+CV.debug_novfx = CV_RegisterVar({
+	name = "soap_debug_novfx",
+	defaultvalue = "Off",
+	flags = CV_SHOWMODIF|CV_NETVAR,
+	PossibleValue = CV_OnOff,
+})

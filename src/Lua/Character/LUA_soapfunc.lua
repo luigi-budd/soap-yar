@@ -270,6 +270,7 @@ local AI_MINALPHA = FU/4
 local AICOLOR_RANDOM = {SKINCOLOR_FLAME, SKINCOLOR_SUNSET, SKINCOLOR_AQUA, SKINCOLOR_VAPOR, SKINCOLOR_PURPLE}
 local AI_OFFSET = 4*FU
 rawset(_G,"Soap_CreateAfterimage", function(p,me)
+	if CV.debug_novfx.value then return end
 	if not (me and me.valid) then return end
 	
 	local soap = p.soaptable
@@ -723,6 +724,7 @@ local nuke_sparkcolors = {
 
 local vfxheight = 90*FU
 rawset(_G,"Soap_ImpactVFX",function(src,inf, distmul, scalemul, forcesplat, nosparklag, dmgt)
+	if CV.debug_novfx.value then return end
 	if (inf and inf.valid and inf.player and inf.skin == SOAP_SKIN)
 		inf.player.soaptable.calledvfxthistic = true
 	end
@@ -1041,6 +1043,7 @@ rawset(_G,"Soap_DustRing",function(src,
 	callback,
 	angle,aim -- for threeaxis
 )
+	if CV.debug_novfx.value then return end
 	radius = $ or 0
 	speed = $ or 0
 	initscale = $ or FU/2
@@ -3358,6 +3361,7 @@ rawset(_G, "Soap_VFXFuncs",{
 
 --preferrably we could handle the auras here but ehh whatever
 rawset(_G,"Soap_VFX",function(p,me,soap, props)
+	if CV.debug_novfx.value then return end
 	if p.spectator then return end
 	local allowed = {
 		waterrun = true,

@@ -28,6 +28,8 @@ end,MT_SOAP_AFTERIMAGE)
 --this isnt hardcode so get the state_t from states
 local halftics = states[mobjinfo[MT_SOAP_SPEEDLINE].spawnstate].tics/2
 addHook("MobjThinker",function(wind)
+	if CV.debug_novfx.value then P_RemoveMobj(wind); return end
+	
 	if not (wind and wind.valid) then return end
 	if (wind.source and wind.source.valid and wind.source.hitlag)
 		return true
@@ -49,6 +51,7 @@ addHook("MobjThinker",function(wind)
 end,MT_SOAP_SPEEDLINE)
 
 addHook("MobjThinker",function(bump)
+	if CV.debug_novfx.value then P_RemoveMobj(bump); return end
 	if not (bump and bump.valid) then return end
 	
 	-- this is just much better
@@ -163,6 +166,7 @@ addHook("MobjThinker",function(spark)
 end,MT_SOAP_SPARK)
 
 addHook("MobjThinker",function(mo)
+	if CV.debug_novfx.value then P_RemoveMobj(mo); return end
 	if not (mo.target and mo.target.valid)
 	or not (mo.target.health)
 	or not (mo.target.soap_stunned)
@@ -377,6 +381,8 @@ end
 
 --lol
 local function FreezeInHitlag(mo)
+	if CV.debug_novfx.value then P_RemoveMobj(mo); return end
+	
 	-- this is handled here because i cant be bothered to make a new mobj
 	-- only really meant for the hitmark vfx
 	if mo.soap_newvfx

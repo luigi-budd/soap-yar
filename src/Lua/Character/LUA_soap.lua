@@ -61,6 +61,9 @@ local CV = SOAP_CV
 local max_mentums = (FU - ORIG_FRICTION) * 95 / 100
 local soap_lowfriction = tofixed("0.97")
 
+local soap_linebump_movefactor = tofixed("0.345")
+local soap_linebump_friction = tofixed("0.983")
+
 local soap_rdashwind_base = SKINCOLOR_SAPPHIRE
 local soap_rdashwind_dest = SKINCOLOR_YELLOW
 local soap_rdashwind_inc = (soap_rdashwind_dest - soap_rdashwind_base)
@@ -624,6 +627,7 @@ local function destroy_uppercut_aura(p,me,soap)
 end
 
 local function spawn_sweat_mobjs(p,me,soap)
+	if CV.debug_novfx.value then return end
 	if soap.inWater then return end
 	
 	local height = FixedDiv(me.height,me.scale)/FU
@@ -820,185 +824,432 @@ local function dash_speeds(p,me,soap, dash, time, noadjust)
 	return dash, time, noadjust
 end
 
-local function handlerdashinit(p,me,soap, old_maxdash)
+local function handledashinit(p,me,soap, old_maxdash)
 	local lunge = soap.lunge
 	local skin_t = skins[p.skin]
 	local maximumspeed = skin_t.normalspeed + soap._maxdash
 	soap.rdashing = true
 	
-	if soap.onGround
-		local old_speed = p.normalspeed
-		local extracharge = 0
-		
-		--speed boost when landing from an airdash, pizza tower style
-		if (soap.airdashed
-		and soap.accspeed >= 28*FU)
-		or (lunge.angle ~= nil
-		and soap.accspeed >= 20*FU) -- landing from a lunge
-			--lunges give more speed
-			if lunge.angle ~= nil
-				-- lunge caps out at 35*FU
-				p.normalspeed = $ + FixedMul(soap._maxdash, clamp(0,FixedDiv(soap.accspeed, 45*FU),FU))
-			else
-				p.normalspeed = $ + soap._maxdash/2
-			end
+	if not soap.onGround then return end
+	
+	local old_speed = p.normalspeed
+	local extracharge = 0
+	
+	--speed boost when landing from an airdash, pizza tower style
+	if (soap.airdashed
+	and soap.accspeed >= 28*FU)
+	or (lunge.angle ~= nil
+	and soap.accspeed >= 20*FU) -- landing from a lunge
+		--lunges give more speed
+		if lunge.angle ~= nil
+			-- lunge caps out at 35*FU
+			p.normalspeed = $ + FixedMul(soap._maxdash, clamp(0,FixedDiv(soap.accspeed, 45*FU),FU))
+		else
+			p.normalspeed = $ + soap._maxdash/2
 		end
+	end
+	
+	if me.standingslope
+		local slope = me.standingslope
+		local xydiff = R_PointToAngle2(0,0,me.momx,me.momy) - slope.xydirection
+		local zangle = FixedMul(slope.zangle, cos(xydiff))
 		
-		if me.standingslope
-			local slope = me.standingslope
-			local xydiff = R_PointToAngle2(0,0,me.momx,me.momy) - slope.xydirection
-			local zangle = FixedMul(slope.zangle, cos(xydiff))
+		zangle = AngleFixed($)/FU
+		if zangle >= 180 then zangle = $ - 360 end
+		zangle = -$
+		
+		--only add speed going DOWN slopes,
+		--and never remove speed... (butteredslope should handle that)
+		if zangle > 0
+			local frac_zangle = zangle * (FU/38)
 			
-			zangle = AngleFixed($)/FU
-			if zangle >= 180 then zangle = $ - 360 end
-			zangle = -$
+			--GFZ2 slope-compliant
+			p.normalspeed = $ + frac_zangle
+			soap.chargingtime = $ + zangle/4
 			
-			--only add speed going DOWN slopes,
-			--and never remove speed... (butteredslope should handle that)
-			if zangle > 0
-				local frac_zangle = zangle * (FU/38)
-				
-				--GFZ2 slope-compliant
-				p.normalspeed = $ + frac_zangle
-				soap.chargingtime = $ + zangle/4
-				
-				if p.normalspeed > maximumspeed
-					if (frac_zangle >= FU*56/100)
-						soap.chargingtime = 3*TR
-						extracharge = (p.normalspeed - maximumspeed)/5
-					--weak
-					else
-						soap.chargingtime = $ + zangle/7
-						extracharge = (p.normalspeed - maximumspeed)/16
-					end
-				end
-				soap.chargingtime =  min($, 3*TR)
-				soap.speedlenient = max($, 3)
-			--...BUT!!!	if we're going uphill while waterrunning,
-			--we should be getting speed back, since water should
-			--give almost no resistance
-			elseif soap.onWater
-				local angle,thrust = Soap_SlopeInfluence(me,p, {
-					allowstand = true, allowmult = true
-				})
-				if angle ~= nil
-					P_Thrust(me,angle, -thrust)
+			if p.normalspeed > maximumspeed
+				if (frac_zangle >= FU*56/100)
+					soap.chargingtime = 3*TR
+					extracharge = (p.normalspeed - maximumspeed)/5
+				--weak
+				else
+					soap.chargingtime = $ + zangle/7
+					extracharge = (p.normalspeed - maximumspeed)/16
 				end
 			end
+			soap.chargingtime =  min($, 3*TR)
+			soap.speedlenient = max($, 3)
+		--...BUT!!!	if we're going uphill while waterrunning,
+		--we should be getting speed back, since water should
+		--give almost no resistance
+		elseif soap.onWater
+			local angle,thrust = Soap_SlopeInfluence(me,p, {
+				allowstand = true, allowmult = true
+			})
+			if angle ~= nil
+				P_Thrust(me,angle, -thrust)
+			end
 		end
+	end
+	
+	local slow_speed = (skin_t.normalspeed - 7*FU)
+	if soap.inWater
+		slow_speed = $/3
+	end
+	if soap.in2D
+		slow_speed = $/2
+	end
+	
+	if (soap.accspeed > slow_speed)
+		p.normalspeed = min(
+			$ + (soap._maxdash/soap._maxdashtime),
+			--dont go over
+			maximumspeed
+		)
+	end
+	
+	--readjust our normalspeed if the dash threshold changed
+	if not soap._noadjust
+		if soap._maxdash < old_maxdash
+			p.normalspeed = $ - (old_maxdash - soap._maxdash)
+		elseif soap._maxdash > old_maxdash
+			p.normalspeed = $ + (soap._maxdash - old_maxdash)
+		end
+	end
+	
+	--charge sfx
+	if p.normalspeed >= maximumspeed
+	and old_speed < maximumspeed
+		S_StartSound(me,sfx_sp_dss)
+		soap.chargedtime = 10
+		soap.speedlenient = max($,4)
 		
-		local slow_speed = (skin_t.normalspeed - 7*FU)
-		if soap.inWater
-			slow_speed = $/3
-		end
-		if soap.in2D
-			slow_speed = $/2
-		end
-		
-		if (soap.accspeed > slow_speed)
-			p.normalspeed = min(
-				$ + (soap._maxdash/soap._maxdashtime),
-				--dont go over
-				maximumspeed
+		Soap_SquashMacro(p, {ease_func = "insine", ease_time = soap.chargedtime * 3/4, strength = (FU/3)})
+		local shield = p.powers[pw_shield] & SH_NOSTACK
+		if (shield == SH_FLAMEAURA)
+			local s = P_SpawnMobjFromMobj(me,
+				0,0,FixedDiv(me.height,me.scale) / 2, MT_SOAP_WALLBUMP
+			)
+			s.frame = 36|FF_PAPERSPRITE|FF_FULLBRIGHT
+			s.angle = p.drawangle + ANGLE_90
+			s.color = SKINCOLOR_KETCHUP
+			s.blendmode = AST_ADD
+			
+			s.tics = 12
+			s.fuse = 12
+			s.sixseveneffect = true
+			
+			s.scale = $ / 4
+			s.destscale = me.scale * 2
+			s.scalespeed = FixedDiv(s.destscale - s.scale, s.tics*FU)
+			
+			s.momx = $ + me.momx --/ 5
+			s.momy = $ + me.momy --/ 5
+			s.momz = $ + me.momz --/ 5
+			S_StartSound(me,sfx_s3k43)
+		elseif (shield == SH_WHIRLWIND)
+			soap.divewhirl = TAKIS_WDIVEVFX * 3/4
+		else
+			Soap_DustRing(me, dust_type(me), 16, {me.x,me.y,me.z + me.height/2},
+				126*me.scale, 20*me.scale,
+				me.scale/2, me.scale,
+				true, function(s)
+					s.momx = $ + me.momx * 3/4
+					s.momy = $ + me.momy * 3/4
+					s.momz = $ + me.momz * 3/4
+					dust_noviewmobj(s)
+				end,
+				p.drawangle, 0
 			)
 		end
-		
-		--readjust our normalspeed if the dash threshold changed
-		if not soap._noadjust
-			if soap._maxdash < old_maxdash
-				p.normalspeed = $ - (old_maxdash - soap._maxdash)
-			elseif soap._maxdash > old_maxdash
-				p.normalspeed = $ + (soap._maxdash - old_maxdash)
-			end
+	end
+	
+	--add extra speed
+	if p.normalspeed >= maximumspeed
+	and not Soap_IsCompGamemode()
+		local chargetime = soap.inWater and TR*3 or TR
+		local frac = (FU/chargetime)
+		if (p.powers[pw_sneakers])
+			frac = $ * 3/2
 		end
 		
-		--charge sfx
-		if p.normalspeed >= maximumspeed
-		and old_speed < maximumspeed
-			S_StartSound(me,sfx_sp_dss)
-			soap.chargedtime = 10
-			soap.speedlenient = max($,4)
+		if soap.chargingtime < 3*TR
+			soap.dashcharge = 0
+			soap.chargingtime = $ + (p.powers[pw_sneakers] and 2 or 1)
 			
-			Soap_SquashMacro(p, {ease_func = "insine", ease_time = soap.chargedtime * 3/4, strength = (FU/3)})
-			local shield = p.powers[pw_shield] & SH_NOSTACK
-			if (shield == SH_FLAMEAURA)
-				local s = P_SpawnMobjFromMobj(me,
-					0,0,FixedDiv(me.height,me.scale) / 2, MT_SOAP_WALLBUMP
-				)
-				s.frame = 36|FF_PAPERSPRITE|FF_FULLBRIGHT
-				s.angle = p.drawangle + ANGLE_90
-				s.color = SKINCOLOR_KETCHUP
-				s.blendmode = AST_ADD
-				
-				s.tics = 12
-				s.fuse = 12
-				s.sixseveneffect = true
-				
-				s.scale = $ / 4
-				s.destscale = me.scale * 2
-				s.scalespeed = FixedDiv(s.destscale - s.scale, s.tics*FU)
-				
-				s.momx = $ + me.momx --/ 5
-				s.momy = $ + me.momy --/ 5
-				s.momz = $ + me.momz --/ 5
-				S_StartSound(me,sfx_s3k43)
-			elseif (shield == SH_WHIRLWIND)
-				soap.divewhirl = TAKIS_WDIVEVFX * 3/4
-			else
-				Soap_DustRing(me, dust_type(me), 16, {me.x,me.y,me.z + me.height/2},
-					126*me.scale, 20*me.scale,
-					me.scale/2, me.scale,
-					true, function(s)
-						s.momx = $ + me.momx * 3/4
-						s.momy = $ + me.momy * 3/4
-						s.momz = $ + me.momz * 3/4
-						dust_noviewmobj(s)
-					end,
-					p.drawangle, 0
-				)
-			end
-		end
-		
-		--add extra speed
-		if p.normalspeed >= maximumspeed
-		and not Soap_IsCompGamemode()
-			local chargetime = soap.inWater and TR*3 or TR
-			local frac = (FU/chargetime)
-			if (p.powers[pw_sneakers])
-				frac = $ * 3/2
-			end
+		elseif soap.dashcharge < SOAP_EXTRADASH
+			soap.dashcharge = $ + frac + extracharge
 			
-			if soap.chargingtime < 3*TR
-				soap.dashcharge = 0
-				soap.chargingtime = $ + (p.powers[pw_sneakers] and 2 or 1)
-				
-			elseif soap.dashcharge < SOAP_EXTRADASH
-				soap.dashcharge = $ + frac + extracharge
-				
-				if soap.dashcharge >= SOAP_EXTRADASH
-					S_StartSound(me,sfx_sp_max)
-					soap.dashcharge = SOAP_EXTRADASH
-					soap.speedlenient = max($,4)
-				end
-			--overcharge
-			else
-				soap.dashcharge = $ + frac + extracharge/2
-				if soap.dashcharge >= 100*FU
-					soap.dashcharge = P_Lerp(FU/3, $, 100*FU)
-				end
+			if soap.dashcharge >= SOAP_EXTRADASH
+				S_StartSound(me,sfx_sp_max)
+				soap.dashcharge = SOAP_EXTRADASH
+				soap.speedlenient = max($,4)
 			end
-			
-			p.normalspeed = maximumspeed + soap.dashcharge
+		--overcharge
 		else
+			soap.dashcharge = $ + frac + extracharge/2
+			if soap.dashcharge >= 100*FU
+				soap.dashcharge = max($ - 4*FU, 100*FU)
+			end
+		end
+		
+		p.normalspeed = maximumspeed + soap.dashcharge
+	else
+		soap.dashcharge = 0
+		soap.chargingtime = 0
+	end
+	
+	local speed_diff = maximumspeed - p.normalspeed
+	if speed_diff < 0
+	and speed_diff >= -FU
+	and (soap.dashcharge == 0)
+		p.normalspeed = maximumspeed
+	end
+end
+
+local function handledashthinker(p,me,soap)
+	local skin_t = skins[p.skin]
+	local skin_normalspeed = skin_t.normalspeed
+	local dashspeed = skin_normalspeed + soap._maxdash
+	local setangle = false
+	
+	if (p.powers[pw_carry] == CR_MINECART)
+		local cart = me.tracer
+		
+		cart.rdashed = true
+		if (FixedHypot(cart.momx,cart.momy) < dashspeed)
+			P_Thrust(cart, cart.angle, p.normalspeed / 32)
+		end
+		
+		local wasabove = p.normalspeed > dashspeed
+		p.normalspeed = min(FixedHypot(cart.momx,cart.momy), dashspeed)
+		if (p.normalspeed >= dashspeed)
+			if not wasabove
+				S_StartSound(cart,sfx_sp_dss)
+			end
+			
+			if not S_SoundPlaying(me,sfx_sp_mc2)
+				S_StartSound(me,sfx_sp_mc2)
+			end
+		end
+		me.soap_spawnaura = true
+	end
+	
+	--5 tics to let you get back on your feet
+	if (me.eflags & MFE_SPRUNG)
+		soap.dashgrace = 5
+	end
+	p.charflags = $|SF_NOSKID
+	
+	local uncurled = false
+	if soap.use == 1
+	and (p.pflags & PF_SPINNING)
+	and soap.onGround
+		uncurled = me.state == S_PLAY_SOAP_SLIP
+		
+		p.pflags = $ &~PF_SPINNING
+		p.thrustfactor = skin_t.thrustfactor
+		me.state = S_PLAY_RUN
+		
+		soap.speedlenient = max($,4)
+	end
+	
+	local speedprogress = FixedDiv(p.normalspeed - skin_normalspeed, soap._maxdash or FU)
+	local momentums = ORIG_FRICTION + FixedMul(
+		max_mentums, min(speedprogress, FU)
+	)
+	momentums = min($, ORIG_FRICTION + max_mentums)
+	if me.friction < momentums
+		me.friction = momentums
+	end
+	
+	local slow_speed = (p.normalspeed - 7*FU)
+	if soap.inWater
+		slow_speed = $/3
+	end
+	if soap.in2D
+		slow_speed = $/2
+	end
+	
+	if (soap.accspeed < slow_speed
+	and p.normalspeed > skin_normalspeed + soap._maxdash/3)
+	and soap.onGround
+	and not ((me.eflags & MFE_SPRUNG)
+	or soap.speedlenient)
+		p.normalspeed = max(soap.accspeed, skin_normalspeed)
+		if soap.dashlose > 5
 			soap.dashcharge = 0
 			soap.chargingtime = 0
+		else
+			soap.dashlose = $ + 1
+		end
+	else
+		soap.dashlose = 0
+	end
+	
+	if not (p.pflags & PF_SPINNING)
+		if p.normalspeed < dashspeed
+			if (me.state == S_PLAY_DASH)
+				me.state = S_PLAY_RUN
+			end
+			if (soap.dashgrace
+			or p.powers[pw_justsprung])
+			and soap.onGround
+				if soap.accspeed > dashspeed
+					p.normalspeed = max($, dashspeed)
+				end
+			end
+		else
+			--mrce
+			if not soap.onGround
+				p.wallCling = true
+			end
+			if (me.state == S_PLAY_RUN)
+			or (me.state == S_PLAY_WALK)
+				me.state = S_PLAY_DASH
+				p.panim = PA_DASH
+			end
+		end
+	end
+	
+	p.runspeed = max(soap.accspeed - 5*FU, FU)
+	if p.normalspeed < dashspeed
+		if uncurled
+			me.momx = FixedMul($, FU*5/6)
+			me.momy = FixedMul($, FU*5/6)
 		end
 		
-		local speed_diff = maximumspeed - p.normalspeed
-		if speed_diff < 0
-		and speed_diff >= -FU
-		and (soap.dashcharge == 0)
-			p.normalspeed = maximumspeed
+		local eased = 0
+		if soap._maxdash ~= 0
+			eased = speedprogress
+		end
+		
+		if P_RandomChance(eased)
+			spawn_sweat_mobjs(p,me,soap)
+			if soap.onGround
+			and (me.state ~= S_PLAY_SKID)
+				S_StartSound(me,
+					P_RandomRange(sfx_sp_st0,sfx_sp_st2)
+				)
+			end
+		end
+		S_StopSoundByID(me,sfx_sp_mac)
+		S_StopSoundByID(me,sfx_sp_mc2)
+		soap.dashangle = p.drawangle
+	else
+		--None of this in free fall
+		if not (soap.uppercutted and me.state == S_PLAY_FALL)
+			soap.afterimage = true
+			
+			local color = soap_rdashwind_base
+			if (soap.dashcharge)
+				local speed_frac = FixedDiv(
+					p.normalspeed - dashspeed,
+					SOAP_EXTRADASH
+				)
+				if (speed_frac > FU) then speed_frac = FU; end
+				
+				color = $ + (FixedMul(
+					soap_rdashwind_inc*FU,
+					speed_frac)
+				)/FU
+			end
+			color = max(0, min($, #skincolors - 1))
+			/*
+			Soap_WindLines(me,nil,color)
+			accelerative_speedlines(p,me,soap, FixedDiv(R_PointTo3DDist(0,0,0,me.momx,me.momy,me.momz),me.scale), 65*FU, color)
+			
+			if Soap_DirBreak(p,me, R_PointToAngle2(0,0,me.momx,me.momy), nil, true)
+				me.state = S_PLAY_SOAP_RAM
+				local follow = P_SpawnMobjFromMobj(me,0,0,0,MT_SOAP_FREEZEGFX)
+				follow.tics = -1
+				follow.fuse = -1
+				follow.tracer = me
+				follow.bigwind = true
+				follow.state = S_TAKIS_SLINGFX
+				follow.dontdrawforviewmobj = me
+				follow.zcorrect = true
+				follow.angle = me.angle - ANGLE_90
+				follow.firstangle = follow.angle
+				follow.dist = 20*FU
+				Soap_SquashMacro(p, {
+					ease_func = "inexpo",
+					ease_time = 6,
+					x = -FU * 1/5,
+					y = -FU/4,
+					singular = true
+				})
+				Soap_DamageSfx(me, FU*3/4,FU,nil, {volume = 255/2})
+				Soap_StartQuake(20*FU, 19,
+					{me.x,me.y,me.z},
+					512*me.scale
+				)
+				Soap_Hitlag.addHitlag(me, 14, false)
+			end
+			*/
+			
+			p.powers[pw_strong] = $|STR_SPIKE|STR_ANIM|STR_HEAVY
+		end
+		
+		if not Soap_IsCompGamemode()
+			--test shallowness, so we dont get "stuck" on water
+			local floor = ((soap.gravflip == -1) and P_CeilingzAtPos or P_FloorzAtPos)(me.x,me.y,me.z,me.height)
+			local watertop = (soap.gravflip == -1) and me.waterbottom - me.height or me.watertop
+			
+			--maybe not while we're water running
+			if (floor ~= watertop)
+			--we DO have a water fof near us...
+			and (me.watertop ~= me.z - 1000*FU
+			and me.waterbottom ~= me.z - 1000*FU)
+				if (watertop - floor)*soap.gravflip <= 38 * me.scale
+					p.charflags = $ &~SF_RUNONWATER
+				else
+					p.charflags = $|SF_RUNONWATER
+				end
+			--otherwise, dont bother
+			else
+				p.charflags = $|SF_RUNONWATER
+			end
+		end
+		
+		if me.state == S_PLAY_DASH or me.state == S_PLAY_SOAP_RAM
+			if not soap.onGround
+				S_StopSoundByID(me, sfx_sp_mc2)
+				if not S_SoundPlaying(me,sfx_sp_mac)
+					S_StartSound(me,sfx_sp_mac)
+				end
+				P_PitchRoll(me, FU/2)
+			else
+				S_StopSoundByID(me, sfx_sp_mac)
+				if not S_SoundPlaying(me,sfx_sp_mc2)
+					S_StartSound(me,sfx_sp_mc2)
+				end
+			end
+			if soap.accspeed >= 3*FU
+				soap.dashangle = P_Lerp((me.eflags & MFE_SPRUNG and FU or FU/4), $, R_PointToAngle2(0,0,me.momx,me.momy))
+				p.drawangle = soap.dashangle
+				--TODO: drifting vfx
+				setangle = true
+			end
+			
+			me.soap_spawnaura = true
+		elseif (p.powers[pw_carry] ~= CR_MINECART)
+			S_StopSoundByID(me,sfx_sp_mac)
+			S_StopSoundByID(me,sfx_sp_mc2)
+		end
+		if not setangle
+			soap.dashangle = p.drawangle
+		end
+	end
+	
+	if soap.airdashed
+		if (me.state == S_PLAY_RUN)
+			me.state = S_PLAY_FLOAT_RUN
+			p.panim = PA_DASH
+		end
+		p.runspeed = soap.accspeed - 10*FU
+		if Soap_AirdashState(me)
+			P_PitchRoll(me, FU/6)
 		end
 	end
 end
@@ -1469,7 +1720,7 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 		and (soap.notCarried or p.powers[pw_carry] == CR_MINECART)
 		and (soap.io.rdashmode == "hold")
 		and not (soap.noability & (SNOABIL_RDASH|SNOABIL_COMBAT))
-			handlerdashinit(p,me,soap, old_maxdash)
+			handledashinit(p,me,soap, old_maxdash)
 		else
 			if soap.onGround
 				if not soap.dashgrace
@@ -1675,7 +1926,9 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 		and (soap.onGround or p.powers[pw_carry] == CR_MINECART)
 		and (soap.notCarried or p.powers[pw_carry] == CR_MINECART)
 		and not (soap.noability & (SNOABIL_RDASH|SNOABIL_COMBAT))
-			handlerdashinit(p,me,soap, old_maxdash)
+			local micros = getTimeMicros()
+			handledashinit(p,me,soap, old_maxdash)
+			print("handledashinit ".. (getTimeMicros() - micros))
 		end
 	else
 		soap.rdashtoggle = false
@@ -1829,7 +2082,7 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 	
 	if soap.airdashed
 		if Soap_AirdashState(me)
-			if Soap_DirBreak(p,me, R_PointToAngle2(0,0,me.momx,me.momy))
+			if Soap_DirBreak(p,me, R_PointToAngle2(0,0,me.momx,me.momy), nil, true)
 				soap.extraairdash = true
 				soap.canuppercut = true
 				
@@ -1990,253 +2243,11 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 	--just take it off when we dont need it
 	p.charflags = $ &~(SF_RUNONWATER|SF_NOSKID)|(lunge.effect and SF_NOSKID or 0)
 	if soap.rdashing and not soap.resetdash
-		--local micros = getTimeMicros()
-		local skin_t = skins[p.skin]
-		local skin_normalspeed = skin_t.normalspeed
-		local dashspeed = skin_normalspeed + soap._maxdash
-		local setangle = false
-		
-		if (p.powers[pw_carry] == CR_MINECART)
-			local cart = me.tracer
-			
-			cart.rdashed = true
-			if (FixedHypot(cart.momx,cart.momy) < dashspeed)
-				P_Thrust(cart, cart.angle, p.normalspeed / 32)
-			end
-			
-			local wasabove = p.normalspeed > dashspeed
-			p.normalspeed = min(FixedHypot(cart.momx,cart.momy), dashspeed)
-			if (p.normalspeed >= dashspeed)
-				if not wasabove
-					S_StartSound(cart,sfx_sp_dss)
-				end
-				
-				if not S_SoundPlaying(me,sfx_sp_mc2)
-					S_StartSound(me,sfx_sp_mc2)
-				end
-			end
-			spawn_aura = true
-		end
-		
-		--5 tics to let you get back on your feet
-		if (me.eflags & MFE_SPRUNG)
-			soap.dashgrace = 5
-		end
-		p.charflags = $|SF_NOSKID
-		
-		local uncurled = false
-		if soap.use == 1
-		and (p.pflags & PF_SPINNING)
-		and soap.onGround
-			uncurled = me.state == S_PLAY_SOAP_SLIP
-			
-			p.pflags = $ &~PF_SPINNING
-			p.thrustfactor = skin_t.thrustfactor
-			me.state = S_PLAY_RUN
-			
-			soap.speedlenient = max($,4)
-		end
-		
-		local momentums = ORIG_FRICTION + FixedMul(
-			max_mentums,
-			min(
-				FixedDiv(p.normalspeed - skin_normalspeed, soap._maxdash or FU),
-				FU
-			)
-		)
-		momentums = min($, ORIG_FRICTION + max_mentums)
-		if me.friction < momentums
-			me.friction = momentums
-		end
-		
-		local slow_speed = (p.normalspeed - 7*FU)
-		if soap.inWater
-			slow_speed = $/3
-		end
-		if soap.in2D
-			slow_speed = $/2
-		end
-		
-		if (soap.accspeed < slow_speed
-		and p.normalspeed > skin_normalspeed + soap._maxdash/3)
-		and soap.onGround
-		and not ((me.eflags & MFE_SPRUNG)
-		or soap.speedlenient)
-			p.normalspeed = max(soap.accspeed, skin_normalspeed)
-			if soap.dashlose > 5
-				soap.dashcharge = 0
-				soap.chargingtime = 0
-			else
-				soap.dashlose = $ + 1
-			end
-		else
-			soap.dashlose = 0
-		end
-		
-		if not (p.pflags & PF_SPINNING)
-			if p.normalspeed < dashspeed
-				if (me.state == S_PLAY_DASH)
-					me.state = S_PLAY_RUN
-				end
-				if (soap.dashgrace
-				or p.powers[pw_justsprung])
-				and soap.onGround
-					if soap.accspeed > dashspeed
-						p.normalspeed = max($, dashspeed)
-					end
-				end
-			else
-				--mrce
-				if not soap.onGround
-					p.wallCling = true
-				end
-				if (me.state == S_PLAY_RUN)
-				or (me.state == S_PLAY_WALK)
-					me.state = S_PLAY_DASH
-					p.panim = PA_DASH
-				end
-			end
-		end
-		
-		p.runspeed = max(soap.accspeed - 5*FU, FU)
-		if p.normalspeed < dashspeed
-			if uncurled
-				me.momx = FixedMul($, FU*5/6)
-				me.momy = FixedMul($, FU*5/6)
-			end
-			
-			local eased = 0
-			if soap._maxdash ~= 0
-				eased = FixedDiv(p.normalspeed - skin_normalspeed, soap._maxdash)
-			end
-			
-			if P_RandomChance(eased)
-				spawn_sweat_mobjs(p,me,soap)
-				if soap.onGround
-				and (me.state ~= S_PLAY_SKID)
-					S_StartSound(me,
-						P_RandomRange(sfx_sp_st0,sfx_sp_st2)
-					)
-				end
-			end
-			S_StopSoundByID(me,sfx_sp_mac)
-			S_StopSoundByID(me,sfx_sp_mc2)
-			soap.dashangle = p.drawangle
-		else
-			--None of this in free fall
-			if not (soap.uppercutted and me.state == S_PLAY_FALL)
-				soap.afterimage = true
-				
-				local color = soap_rdashwind_base
-				if (soap.dashcharge)
-					local speed_frac = FixedDiv(
-						p.normalspeed - dashspeed,
-						SOAP_EXTRADASH
-					)
-					if (speed_frac > FU) then speed_frac = FU; end
-					
-					color = $ + (FixedMul(
-						soap_rdashwind_inc*FU,
-						speed_frac)
-					)/FU
-				end
-				color = max(0, min($, #skincolors - 1))
-				Soap_WindLines(me,nil,color)
-				accelerative_speedlines(p,me,soap, FixedDiv(R_PointTo3DDist(0,0,0,me.momx,me.momy,me.momz),me.scale), 65*FU, color)
-				
-				if Soap_DirBreak(p,me, R_PointToAngle2(0,0,me.momx,me.momy))
-					me.state = S_PLAY_SOAP_RAM
-					local follow = P_SpawnMobjFromMobj(me,0,0,0,MT_SOAP_FREEZEGFX)
-					follow.tics = -1
-					follow.fuse = -1
-					follow.tracer = me
-					follow.bigwind = true
-					follow.state = S_TAKIS_SLINGFX
-					follow.dontdrawforviewmobj = me
-					follow.zcorrect = true
-					follow.angle = me.angle - ANGLE_90
-					follow.firstangle = follow.angle
-					follow.dist = 20*FU
-					Soap_SquashMacro(p, {
-						ease_func = "inexpo",
-						ease_time = 6,
-						x = -FU * 1/5,
-						y = -FU/4,
-						singular = true
-					})
-					Soap_DamageSfx(me, FU*3/4,FU,nil, {volume = 255/2})
-					Soap_StartQuake(20*FU, 19,
-						{me.x,me.y,me.z},
-						512*me.scale
-					)
-					Soap_Hitlag.addHitlag(me, 14, false)
-				end
-				
-				p.powers[pw_strong] = $|STR_SPIKE|STR_ANIM|STR_HEAVY
-			end
-			
-			if not Soap_IsCompGamemode()
-				--test shallowness, so we dont get "stuck" on water
-				local floor = ((soap.gravflip == -1) and P_CeilingzAtPos or P_FloorzAtPos)(me.x,me.y,me.z,me.height)
-				local watertop = (soap.gravflip == -1) and me.waterbottom - me.height or me.watertop
-				
-				--maybe not while we're water running
-				if (floor ~= watertop)
-				--we DO have a water fof near us...
-				and (me.watertop ~= me.z - 1000*FU
-				and me.waterbottom ~= me.z - 1000*FU)
-					if (watertop - floor)*soap.gravflip <= 38 * me.scale
-						p.charflags = $ &~SF_RUNONWATER
-					else
-						p.charflags = $|SF_RUNONWATER
-					end
-				--otherwise, dont bother
-				else
-					p.charflags = $|SF_RUNONWATER
-				end
-			end
-			
-			if me.state == S_PLAY_DASH or me.state == S_PLAY_SOAP_RAM
-				if not soap.onGround
-					S_StopSoundByID(me, sfx_sp_mc2)
-					if not S_SoundPlaying(me,sfx_sp_mac)
-						S_StartSound(me,sfx_sp_mac)
-					end
-					P_PitchRoll(me, FU/2)
-				else
-					S_StopSoundByID(me, sfx_sp_mac)
-					if not S_SoundPlaying(me,sfx_sp_mc2)
-						S_StartSound(me,sfx_sp_mc2)
-					end
-				end
-				if soap.accspeed >= 3*FU
-					soap.dashangle = P_Lerp((me.eflags & MFE_SPRUNG and FU or FU/4), $, R_PointToAngle2(0,0,me.momx,me.momy))
-					p.drawangle = soap.dashangle
-					--TODO: drifting vfx
-					setangle = true
-				end
-				
-				spawn_aura = true
-			elseif (p.powers[pw_carry] ~= CR_MINECART)
-				S_StopSoundByID(me,sfx_sp_mac)
-				S_StopSoundByID(me,sfx_sp_mc2)
-			end
-			if not setangle
-				soap.dashangle = p.drawangle
-			end
-		end
-		
-		if soap.airdashed
-			if (me.state == S_PLAY_RUN)
-				me.state = S_PLAY_FLOAT_RUN
-				p.panim = PA_DASH
-			end
-			p.runspeed = soap.accspeed - 10*FU
-			if Soap_AirdashState(me)
-				P_PitchRoll(me, FU/6)
-			end
-		end
-		--print(getTimeMicros() - micros)
+		local micros = getTimeMicros()
+		me.soap_spawnaura = spawn_aura
+		handledashthinker(p,me,soap)
+		spawn_aura = me.soap_spawnaura
+		print(getTimeMicros() - micros)
 	elseif soap.lastrdash or soap.resetdash
 		--local micros = getTimeMicros()
 		me.friction = ORIG_FRICTION
@@ -2265,7 +2276,7 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 		if me.state == S_PLAY_DASH
 		and not p.guard
 			me.state = S_PLAY_WALK
-			P_MovePlayer(p)
+			Soap_ResetState(p)
 		end
 		
 		p.normalspeed = skins[p.skin].normalspeed
@@ -2283,7 +2294,7 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 		if me.state == S_PLAY_DASH
 		and soap.onGround
 			me.state = S_PLAY_WALK
-			P_MovePlayer(p)
+			Soap_ResetState(p)
 		end
 		soap.dashangle = p.drawangle
 		
@@ -2642,8 +2653,8 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 	end
 	if soap.linebump
 		if soap.onGround
-			me.movefactor = tofixed("0.345")
-			me.friction = tofixed("0.983")
+			me.movefactor = soap_linebump_movefactor
+			me.friction = soap_linebump_friction
 		end
 		soap.linebump = $ - 1
 		p.powers[pw_noautobrake] = max($, 1)
@@ -2815,7 +2826,7 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 		soap.pounding = false
 	end
 	
-	if spawn_aura and me.health
+	if spawn_aura and me.health and (CV.debug_novfx.value == 0)
 		local super = (soap.doSuperBuffs or (p.powers[pw_sneakers] > 0)) --sneakers too lol
 		--Show when the extra attack point will be applied
 		if (soap.inBattle and soap.accspeed >= 45*FU)
