@@ -577,6 +577,8 @@ local amp_frac = (FU / amp_tics)
 local amp_longfrac = (FU / amp_longtics)
 local amp_drag = FU * 6/7
 local amp_dist = 1200 * FU
+local ease_inexpo = ease.inexpo
+local ease_inquad = ease.inquad
 addHook("MobjThinker",function(amp)
 	if amp.wait
 		amp.wait = $ - 1
@@ -644,8 +646,8 @@ addHook("MobjThinker",function(amp)
 	local mytics = (amp.extended and amp_longtics or amp_tics)
 	local myfrac = (amp.extended and amp_longfrac or amp_frac)
 	
-	local frac = ease.inquad(min(myfrac * amp.ticker, FU), 0,FU)
-	do
+	local frac = ease_inquad(min(myfrac * amp.ticker, FU), 0,FU)
+	if (p == consoleplayer)
 		local ang = R_PointToAngle2(amp.startx,amp.starty, me.x,me.y)
 		local organg = ang
 		local asign = (AngleFixed(ang) > 180*FU and 1 or -1)
@@ -709,14 +711,13 @@ addHook("MobjThinker",function(amp)
 		
 		local pos = QubicBezier(frac, start,ctrl1,ctrl2,dest)
 		P_MoveOrigin(amp, pos.x, pos.y, pos.z)
+		
+		if CV.rotations.value
+			amp.rollangle = $ + FixedAngle(ease_inexpo(frac, 0, 60*FU))
+		end
+		amp.spritexscale = ease_inexpo(frac, amp.startscale, me.scale / 20)
+		amp.spriteyscale = amp.spritexscale
 	end
-	
-	if CV.rotations.value
-		amp.rollangle = $ + FixedAngle(ease.inexpo(frac, 0, 60*FU))
-	end
-	amp.spritexscale = ease.inexpo(frac, amp.startscale, me.scale / 20)
-	amp.spriteyscale = amp.spritexscale
-	-- amp.alpha = FixedMul($, ease.inexpo(frac, FU * 3/4, 0))
 	
 	if amp.ticker == mytics + 1
 		if me.soap_lifetimeamps == nil then me.soap_lifetimeamps = 0 end
