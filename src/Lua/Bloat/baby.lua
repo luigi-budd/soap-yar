@@ -467,7 +467,9 @@ local function Baby_DoLunge(baby, angle,aim, dist, tics)
 		baby.end_z = baby.z + FixedMul(dist, vec.z)
 		
 		--baby.flags = $|MF_SPECIAL
-		baby.touchlist = {}
+		while (baby.touchlist[1] ~= nil)
+			table.remove(baby.touchlist, 1)
+		end
 	end
 	
 	local easetype = easefuncs[baby.type]
