@@ -1639,6 +1639,7 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 		if (soap.use == 1)
 		and (soap.io.rdashmode == "toggle")
 		and not notoggle
+		and not p.spectator
 			soap.rdashtoggle = not $
 		end
 	else
@@ -1661,6 +1662,7 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 		end
 		
 		if p.charability2 ~= CA2_SOAPMOVE
+		or p.spectator
 			soap.rdashtoggle = false
 		end
 		

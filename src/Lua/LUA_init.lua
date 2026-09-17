@@ -82,8 +82,10 @@ rawset(_G, "Soap_InitTable", function(p)
 		weaponnext_R = 0,
 		weaponprev_R = 0,
 		
-		-- sum stupid bullshit for the taunt menu
-		jumplockout = 0,
+		--lockout variants
+		jumplockout = false,
+		uselockout = false,
+		
 		
 		--forwardmove/sidemove dupes for when stasis is active
 		forwardmove = 0,

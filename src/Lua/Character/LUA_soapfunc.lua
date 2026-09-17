@@ -125,14 +125,19 @@ rawset(_G,"Soap_ButtonStuff", function(p)
 	end
 	
 	if (soap.jumplockout)
-		if not (p.cmd.buttons & BT_JUMP)
-			if soap.jumplockout == 1
-				soap.jumplockout = 0
-			else
-				soap.jumplockout = 1
-			end
-		else
+		if (p.cmd.buttons & BT_JUMP)
 			soap.jump = 0
+			soap.jump_R = 0
+		else
+			soap.jumplockout = false
+		end
+	end
+	if (soap.uselockout)
+		if (p.cmd.buttons & BT_USE)
+			soap.use = 0
+			soap.use_R = 0
+		else
+			soap.uselockout = false
 		end
 	end
 	
@@ -2063,7 +2068,7 @@ rawset(_G,"Soap_HandleNoAbils", function(p)
 		na = $|SNOABIL_RDASH|SNOABIL_AIRDASH
 	end
 	
-	if not me.health
+	if (not me.health) or (soap.inPain)
 		na = $|SNOABIL_BOTHTAUNTS
 	end
 	

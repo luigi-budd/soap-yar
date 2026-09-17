@@ -241,6 +241,7 @@ addHook("HUD",function(v,p, cam)
 	if soap.rdashtoggle
 	and (soap.io.rdashmode == "toggle")
 	and (skins[p.skin].name == SOAP_SKIN)
+	and not (p.spectator)
 		local x,y = 200*FU, 150*FU
 		local scale = FU
 		local result = K_GetScreenCoords(v,p,cam, me, {anglecliponly = true})

@@ -151,6 +151,8 @@ local function cancelConds(p, nobuttons, checkspinonly)
 		p.cmd.buttons = $ &~(BT_JUMP|BT_SPIN)
 		soap.use = 0
 		soap.jump = 0
+		soap.jumplockout = true
+		soap.uselockout = true
 	end
 	
 	if me.soap_tauntforcecancel
@@ -1037,9 +1039,10 @@ COM_AddCommand("_soap_dotaunt",function(p, sig, selected)
 		return
 	end
 	
-	soap.jumplockout = 2
+	soap.jumplockout = true
 end)
 
+local fakespinlockout = false
 local gc2bt = {
 	[GC_FIRE]		= BT_ATTACK,
 	[GC_FIRENORMAL]	= BT_FIRENORMAL,
@@ -1197,6 +1200,14 @@ addHook("PlayerCmd",function(p,cmd)
 	end
 	gp_waskeydown = gamekeydown[gamepad_tb]
 	
+	if fakespinlockout
+		if (cmd.buttons & BT_SPIN)
+			cmd.buttons = $ &~BT_SPIN
+		else
+			fakespinlockout = false
+		end
+	end
+	
 	if not (taunt_cmd.active or taunt_cmd.closed) then return end
 	
 	-- EAT SHIT AND DIE FUCK YOU GAME
@@ -1261,6 +1272,7 @@ local function ClientTauntHandle(p)
 	if (taunt_cmd.buttons & BT_SPIN) or taunt_cmd.joy_spin
 	--or cancelConds(p, true)
 		StopMenu()
+		fakespinlockout = true
 	end
 	
 	-- negative angleturn is rightwards
