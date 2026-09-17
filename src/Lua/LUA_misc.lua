@@ -589,25 +589,12 @@ addHook("MobjThinker",function(amp)
 	if not (me and me.valid) then P_RemoveMobj(amp); return end
 	local p = me.player
 
-	if (displayplayer and displayplayer.valid)
-		if (displayplayer ~= me.player)
-			local dp = displayplayer
-			local me = dp.realmo
-			local dist = min(
-				R_PointToDist(amp.x,amp.y),
-				R_PointToDist2(me.x,me.y, amp.x,amp.y)
-			)
-			local cap = FixedMul(amp_dist, amp.scale)
-			local alpha = FU
-			if dist < cap
-				alpha = FixedDiv(dist, cap)
-			end
-			amp.alpha = P_Lerp(FU/2, $, alpha)
-			amp.renderflags = $ &~RF_ALWAYSONTOP
-		else
-			amp.renderflags = $|RF_ALWAYSONTOP
-			amp.alpha = FU
-		end
+	if (displayplayer ~= p)
+		amp.alpha = P_Lerp(FU/2, $, 0)
+		amp.renderflags = $ &~RF_ALWAYSONTOP
+	else
+		amp.renderflags = $|RF_ALWAYSONTOP
+		amp.alpha = FU
 	end
 	
 	if me.hitlag or me.flags & MF_NOTHINK
@@ -647,7 +634,7 @@ addHook("MobjThinker",function(amp)
 	local myfrac = (amp.extended and amp_longfrac or amp_frac)
 	
 	local frac = ease_inquad(min(myfrac * amp.ticker, FU), 0,FU)
-	if (p == consoleplayer)
+	if (p == displayplayer)
 		local ang = R_PointToAngle2(amp.startx,amp.starty, me.x,me.y)
 		local organg = ang
 		local asign = (AngleFixed(ang) > 180*FU and 1 or -1)
