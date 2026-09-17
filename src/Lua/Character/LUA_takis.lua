@@ -787,17 +787,7 @@ Takis_Hook.addHook("Takis_Thinker",function(p)
 	if (soap.c1)
 		
 		--dive
-		local divecheck = false
-		if (p.powers[pw_shield] & SH_NOSTACK == SH_FLAMEAURA)
-			-- You can dive even while youre grounded
-			-- with the ninja belt shield
-			divecheck = true
-		else
-			divecheck = not soap.onGround
-		end
-		
 		if soap.c1 == 1
-		and divecheck
 		and not (soap.dived)
 		and (soap.notCarried)
 		and me.state ~= S_PLAY_PAIN
@@ -1896,6 +1886,8 @@ Takis_Hook.addHook("MoveBlocked",function(me,thing,line, goingup)
 				bonkeffect.drawonlyforplayer = p
 				bonkeffect.renderflags = $|RF_NOCOLORMAPS|RF_ALWAYSONTOP
 				P_SetObjectMomZ(bonkeffect, 4 * FU)
+				
+				S_StartSound(me, sfx_tk_bnk)
 			end
 		else
 			me.state = S_PLAY_WALK
