@@ -669,7 +669,7 @@ addHook("MobjThinker",function(amp)
 		
 		local start = Vec3.New(amp.startx, amp.starty, amp.startz)
 		local dest = Vec3.New(me.x, me.y, me.z + halfheight)
-		local ctrl1 = Vec3.New((start.x + dest.x) / 2, (start.y + dest.y) / 2, (start.z + dest.z) / 2)
+		local ctrl1 = Vec3.New((start.x/2) + (dest.x/2), (start.y/2) + (dest.y/2), (start.z/2) + (dest.z/2))
 		ctrl1.x = $ + P_ReturnThrustX(ang, sidedist)
 		ctrl1.y = $ + P_ReturnThrustY(ang, sidedist)
 		
