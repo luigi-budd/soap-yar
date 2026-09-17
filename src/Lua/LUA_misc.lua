@@ -389,7 +389,10 @@ local function FreezeInHitlag(mo)
 		return
 	end
 	local p = me.player
-	local soap = p.soaptable
+	local soap
+	if (p and p.valid)
+		soap = p.soaptable
+	end
 	
 	local eat = false
 	if (mo.state == S_SOAP_NWF_WIND)
@@ -490,7 +493,11 @@ local function FreezeInHitlag(mo)
 		mo.offsetspeed = FixedMul($, mo.movefactor)
 		mo.offsetparentmom = mo.offsetparentmom * mo.movefactor
 		
-		if mo.fadeat and mo.tics < mo.fadeat
+		local fade = mo.tics
+		if mo.fadewithfuse
+			fade = mo.fuse
+		end
+		if mo.fadeat and fade < mo.fadeat
 			mo.alpha = $ - (FU/mo.fadeat)
 		end
 		

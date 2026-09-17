@@ -895,7 +895,7 @@ rawset(_G,"Soap_ImpactVFX",function(src,inf, distmul, scalemul, forcesplat, nosp
 		colorlist = damagecolors_elec
 	elseif (dmgt == DMG_FIRE)
 		if forcesplat or nosparklag then return end
-		local num = (28 * scalemul)/FU
+		local num = (12 * scalemul)/FU
 		
 		local range = FixedMul(20*src.scale, scalemul)
 		for i = 0,num
@@ -912,13 +912,63 @@ rawset(_G,"Soap_ImpactVFX",function(src,inf, distmul, scalemul, forcesplat, nosp
 			f.tics = $ + P_RandomRange(0, 5 + (20*scalemul)/FU)
 			
 			local ha,va = R_PointTo3DAngles(f.x,f.y,f.z, src.x,src.y,src.z)
-			P_3DThrust(f, ha,va, -Soap_RandomFixedRange(8*scalemul, 20*scalemul))
+			P_3DThrust(f, ha,va, -Soap_RandomFixedRange(15*scalemul, 20*scalemul))
+			
+			local progress = P_RandomFixed()
+			f.momx = $ + FixedMul(inf.momx, progress)
+			f.momy = $ + FixedMul(inf.momy, progress)
+			f.momz = $ + FixedMul(inf.momz, progress)
 			
 			local lag = (src.hitlag or 0)
 			f.tics = $ + lag
 			f.anim_duration = $ + lag
 		end
 		
+		num = (16 * scalemul) / FU
+		local flamestate = S_SOAP_NEWFLAME
+		for i = 0, num
+			local s = P_SpawnMobjFromMobj(src,
+				Soap_RandomFixedRange(-range,range),
+				Soap_RandomFixedRange(-range,range),
+				Soap_RandomFixedRange(0,range*2),
+				MT_SOAP_FREEZEGFX
+			)
+			s.state = flamestate
+			s.tracer = inf
+			s.nofxadjust = true
+			s.ninjadive = true
+			s.spritexscale = Soap_RandomFixedRange(scalemul/2, scalemul*3/2) * 3/4
+			s.spriteyscale = s.spritexscale
+			
+			s.renderflags = $|RF_FULLBRIGHT
+			s.blendmode = AST_ADD
+			s.alpha = FU / 2
+			
+			-- honestly im not sure how netsafe
+			-- it is to have one of these vectors
+			-- in a mobj
+			s.anchor = Vec3.New(
+				src.x,src.y,src.z
+			)
+			s.offset = Vec3.MobjPosToVec(s) - s.anchor
+			
+			s.fuse = P_RandomRange(12, 20 + (40*scalemul)/FU)
+			
+			s.offsetmom = Vec3.New(0,0,0)
+			s.offsetparentmom = Vec3.MobjMomToVec(inf)
+			s.offsetspeed = Soap_RandomFixedRange(5*scalemul, 25*scalemul)
+			s.movefactor = P_RandomRange(FU*7/8, FU*98/100)
+			s.angles = {
+				h = FixedAngle(360*P_RandomFixed()),
+				hc = Soap_RandomFixedRange(-18*scalemul, 18*scalemul),
+				v = FixedAngle(Soap_RandomFixedRange(-180*FU, 180*FU)),
+				vc = Soap_RandomFixedRange(-20*scalemul, 20*scalemul),
+			}
+			--s.fadewithfuse = true
+			--s.fadeat = P_RandomRange(6,10)
+			s.destscale = 0
+			s.scalespeed = FixedDiv(s.scale, s.fuse*FU)
+		end
 		colorlist = damagecolors_elec
 	end
 	

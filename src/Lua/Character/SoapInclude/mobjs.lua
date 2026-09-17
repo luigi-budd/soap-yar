@@ -363,3 +363,20 @@ mobjinfo[MT_SOAP_AMP] = {
 	height = 16*FRACUNIT,
 	flags = MF_NOCLIPTHING|MF_NOCLIPHEIGHT|MF_NOGRAVITY
 }
+
+-- bruh
+SafeFreeslot("S_SOAP_NEWFLAME")
+states[S_SOAP_NEWFLAME] = {
+	sprite = SPR_FLME,
+	frame = FF_FULLBRIGHT,
+	tics = 1,
+	action = function(m)
+		local fr = m.extravalue1
+		if (fr > C)
+			fr = D - ($ - C)
+		end
+		m.frame = $|fr
+		m.extravalue1 = $ % 6
+	end,
+	nextstate = S_SOAP_NEWFLAME
+}

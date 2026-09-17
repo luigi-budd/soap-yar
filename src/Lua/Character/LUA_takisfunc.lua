@@ -636,6 +636,7 @@ rawset(_G,"Takis_HammerBlastHitbox",function(p)
 	end
 	
 	local damagetype
+	local vfxdamagetype
 	local shield = p.powers[pw_shield] & SH_NOSTACK
 	if (shield & SH_PROTECTELECTRIC)
 		damagetype = DMG_ELECTRIC
@@ -646,7 +647,13 @@ rawset(_G,"Takis_HammerBlastHitbox",function(p)
 	if (shield & SH_PROTECTWATER)
 		damagetype = DMG_WATER
 	end
-	
+	if (shield == SH_ARMAGEDDON)
+		damagetype = DMG_ELECTRIC
+		vfxdamagetype = DMG_NUKE
+	else
+		vfxdamagetype = damagetype
+	end
+
 	local fakerange = 250*FU
 	local range = thok.radius*3/2
 	local enemyhit = false
@@ -673,7 +680,7 @@ rawset(_G,"Takis_HammerBlastHitbox",function(p)
 			didit = true
 		elseif Soap_CanDamageEnemy(p, found,MF_ENEMY|MF_BOSS|MF_MONITOR|MF_SHOOTABLE)
 			
-			Soap_ImpactVFX(found, me, nil,nil, true, nil,damagetype)
+			Soap_ImpactVFX(found, me, nil,nil, true, nil,vfxdamagetype)
 			Soap_SpawnBumpSparks(found, me, nil,false, found.scale * 3/2, true)
 			Soap_DamageSfx(found, abs(me.momz), 30*me.scale, damagetype)
 			local damage = 1
@@ -764,7 +771,7 @@ rawset(_G,"Takis_HammerBlastHitbox",function(p)
 			local p2 = found.player
 			
 			if Soap_CanHurtPlayer(p, p2)
-				Soap_ImpactVFX(found, me, nil,nil, true, nil,damagetype)
+				Soap_ImpactVFX(found, me, nil,nil, true, nil,vfxdamagetype)
 				Soap_SpawnBumpSparks(found, me, nil,false, found.scale * 3/2, true)
 				Soap_DamageSfx(found, abs(me.momz), 30*me.scale, damagetype)
 				P_DamageMobj(found,me,me)
