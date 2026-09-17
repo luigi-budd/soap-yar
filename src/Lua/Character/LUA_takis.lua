@@ -1949,6 +1949,7 @@ Takis_Hook.addHook("MoveBlocked",function(me,thing,line, goingup)
 	end
 end)
 
+local ease_inquart = ease.inquart
 local function handleBump(p,me,thing)
 	local soap = p.soaptable
 	if (p.powers[pw_super] or soap.isSolForm or p.powers[pw_invulnerability]) then return end
@@ -1956,7 +1957,7 @@ local function handleBump(p,me,thing)
 	
 	local max_speed = (skins[p.skin].normalspeed + soap._maxdash)
 	local speed_add = FixedMul(
-		ease.inquart(
+		ease_inquart(
 			FixedDiv(min(soap.accspeed, p.normalspeed), max_speed),
 			0,FU
 		),

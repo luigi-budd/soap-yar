@@ -352,16 +352,17 @@ rawset(_G,"Soap_CreateAfterimage", function(p,me)
 	and (p.followmobj and p.followmobj.valid)
 	and p.followmobj.outs ~= nil
 		local m_peel = p.followmobj
-		local sine = abs(sin(FixedAngle(leveltime*FU*10)))
-		local ghostalpha = AI_MINALPHA + (sine - AI_MINALPHA)
-		local aistyle = (soap.aiswap) and "Soap_AI1" or "Soap_AI2"
+		local ghostalpha = ghost.alpha
+		local aistyle = ghost.translation
 		local cvstyle = SOAP_CV.ai_style.value == 3
-		if m_peel.outs
+		
+		local peelmobjs = m_peel.outs
+		if peelmobjs
 			for i = -m_peel.max_outs,m_peel.max_outs
 				if i == 0 then continue end
 				if (i % 4) then continue end
 				
-				local peel = m_peel.outs[i]
+				local peel = peelmobjs[i]
 				if not (peel and peel.valid) then continue end
 				
 				local ghost2 = P_SpawnMobjFromMobj(peel, of[1],of[2],of[3], MT_SOAP_AFTERIMAGE)
@@ -647,6 +648,7 @@ rawset(_G,"Soap_ZCollide", function(mo1, mo2, extraheight)
 	return true
 end)
 
+local ease_linear = ease.linear
 rawset(_G,"Soap_DamageSfx", function(src, power, maxpow, damagetype, props)
 	props = $ or {}
 	local nosfxmobj = props.nosfx or false
@@ -677,7 +679,7 @@ rawset(_G,"Soap_DamageSfx", function(src, power, maxpow, damagetype, props)
 		vol = props.vol
 	end
 	
-	sfx = $ + ease.linear(
+	sfx = $ + ease_linear(
 		min(FU, FixedDiv(power, maxpow)),
 		0,
 		numsfx*FU
@@ -1517,13 +1519,14 @@ rawset(_G,"Soap_SquashMacro",function(p, props)
 end)
 
 rawset(_G, "Soap_TickSquashes",function(p,me,soap, donttick)
-	local squash_count = #soap.squash
+	local squashes = soap.squash
+	local squash_count = #squashes
 	local xscale = soap.spritexscale
 	local yscale = soap.spriteyscale
 	
 	if squash_count
 		for i = squash_count, 1, -1 --k,squash in ipairs(soap.squash)
-			local squash = soap.squash[i]
+			local squash = squashes[i]
 			
 			local has_any_tics = false
 			if (squash.x and squash.x.tics < squash.x.timetake)
@@ -1533,7 +1536,7 @@ rawset(_G, "Soap_TickSquashes",function(p,me,soap, donttick)
 			
 			if not has_any_tics
 			and not donttick
-				table.remove(soap.squash,i); continue
+				table.remove(squashes,i); continue
 			end
 			
 			if squash.x --and squash.x.tics ~= squash.x.timetake
@@ -3275,13 +3278,14 @@ local function winddivevfx(p,me,soap, angle,offangle,dist,frac)
 	dust.momy = $ + me.momy * 3/4
 	P_SetObjectMomZ(dust, FU)
 end
+local ease_outquart = ease.outquart
 local function VFX_DiveWhirl(p,me,soap, props)
 	if (soap.divewhirl)
 		local angle = R_PointToAngle2(0,0, me.momx,me.momy) + ANGLE_90
 		local frac = FixedDiv(soap.divewhirl*FU, TAKIS_WDIVEVFX*FU)
 		local offangle = FixedAngle(360 * FixedMul(frac, frac * 8/6))
 		
-		frac = ease.outquart($, 0, FU)
+		frac = ease_outquart($, 0, FU)
 		local dist = 60 * frac
 		winddivevfx(p,me,soap, angle,offangle,dist,frac)
 		if soap.sharktailfx
@@ -4091,6 +4095,7 @@ local function CheckHitbox(tempatk, p,me,soap, from, range,fakerange, power, max
 	return enemyhit
 end
 
+local ease_outquad = ease.outquad
 rawset(_G, "Soap_Combat", function(p)
 	local me = p.realmo
 	local soap = p.soaptable
@@ -4146,7 +4151,7 @@ rawset(_G, "Soap_Combat", function(p)
 		me.soap_noguarding = true
 		tempatk = 1
 		
-		local angle = ease.outquad(FU - FixedDiv(me.soap_sweeptics*FU, SWEEP_TICS*FU), 360 * 3 *FU, 0)
+		local angle = ease_outquad(FU - FixedDiv(me.soap_sweeptics*FU, SWEEP_TICS*FU), 360 * 3 *FU, 0)
 		soap.stasistic = 1
 		p.drawangle = me.soap_sweepangle + FixedAngle(angle)
 		me.soap_sweeptics = $ - 1

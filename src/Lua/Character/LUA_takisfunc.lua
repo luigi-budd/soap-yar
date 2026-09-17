@@ -8,6 +8,7 @@ end
 
 local Event_Char_NoAbility = Takis_Hook.events["Char_NoAbility"]
 
+local ease_outsine = ease.outsine
 rawset(_G,"Takis_DoClutch",function(p,riding)
 	local me = p.mo
 	local takis = p.soaptable
@@ -167,7 +168,7 @@ rawset(_G,"Takis_DoClutch",function(p,riding)
 	else
 		local speedcap = 50*FU
 		if ccombo >= 10
-			speedcap = $ + 3*((ccombo-9)*FU * 41/100)
+			speedcap = $ + 3*((ccombo - 9)*FU * 41/100)
 		end
 		speedcap = min($, 110*FU)
 		local capstart = speedcap - 12*FU
@@ -177,7 +178,7 @@ rawset(_G,"Takis_DoClutch",function(p,riding)
 		elseif takis.accspeed >= capstart
 			local range = speedcap - capstart
 			local speed = takis.accspeed - capstart
-			local frac = ease.outsine(clamp(0,FixedDiv(speed,range),FU), 0,FU)
+			local frac = ease_outsine(clamp(0,FixedDiv(speed,range),FU), 0,FU)
 			thrust = FixedMul($, frac)
 		end
 	end
