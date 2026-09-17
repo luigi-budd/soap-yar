@@ -1334,6 +1334,44 @@ Takis_Hook.addHook("Takis_Thinker",function(p)
 	and (me.soap_bumpangle ~= nil)
 		p.drawangle = me.soap_bumpangle
 	end
+	-- helmet provides better air control
+	if (soap.helmeteffect) and (me.state == S_PLAY_FALL)
+		local grav = P_GetMobjGravity(me)
+		if me.momz*soap.gravflip > 0
+			grav = $ * 3/5
+		end
+		me.momz = $ + grav
+		p.thrustfactor = 0
+		
+		local ford = p.cmd.forwardmove
+		local side = p.cmd.sidemove
+		if (ford ~= 0 or side ~= 0)
+			local wishangle = Soap_ControlDir(p)
+			local wishspeed = FixedMul(p.normalspeed * 3/5, me.scale)
+			local acceleration = FU/12
+			if (me.eflags & MFE_UNDERWATER)
+				acceleration = $ * 5/6
+			end
+			
+			local addspeed = wishspeed - FixedHypot(me.momx,me.momy)
+			if (addspeed >= 0)
+				local accelspeed = FixedMul(acceleration, wishspeed)
+				if accelspeed > addspeed then accelspeed = addspeed; end
+				
+				local momvec = Vec2.MobjMomToVec(me)
+				wishangle = Vec2.SphereToCartesian($, 0)
+				local x = momvec.x + FixedMul(accelspeed, wishangle.x)
+				local y = momvec.y + FixedMul(accelspeed, wishangle.y)
+				me.momx = x
+				me.momy = y
+			end
+		end
+		me.momx = FixedMul($, ORIG_FRICTION)
+		me.momy = FixedMul($, ORIG_FRICTION)
+	elseif (soap.helmeteffect)
+		p.thrustfactor = skins[p.skin].thrustfactor
+		soap.helmeteffect = false
+	end
 	
 	p.charflags = $ &~(SF_RUNONWATER|SF_NOSKID)|(soap.lunge.effect and SF_NOSKID or 0)
 	local noafterimages = true
@@ -1837,7 +1875,8 @@ Takis_Hook.addHook("MoveBlocked",function(me,thing,line, goingup)
 					lessbump = true
 					
 					me.state = S_PLAY_FALL
-					P_SetObjectMomZ(me, 15*FU)
+					P_SetObjectMomZ(me, 18*FU)
+					soap.helmeteffect = true
 				end
 				
 				local spr_scale = FU * 7/6

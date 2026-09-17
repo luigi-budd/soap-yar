@@ -3880,6 +3880,9 @@ rawset(_G, "Soap_Bump", function(me,thing,line, weak)
 			R_PointToDist2(0,0,me.momx,me.momy) * 3/4,
 			sin(line_ang - R_PointToAngle2(0,0,me.momx,me.momy))
 		))
+		if soap.in2D
+			speed = $ / 2
+		end
 		
 		--its ambiguous syntax to have the `func` definition on the same line
 		--as the call, so :shrug:
@@ -3905,6 +3908,9 @@ rawset(_G, "Soap_Bump", function(me,thing,line, weak)
 			20*FU, FixedSqrt(FixedMul(thing.scale,me.scale))
 		)
 		if soap.onGround then speed = FixedDiv($, me.friction) end
+		if soap.in2D
+			speed = $ / 2
+		end
 		
 		P_InstaThrust(me, ang, -speed)
 		p.rmomx = me.momx - p.cmomx
