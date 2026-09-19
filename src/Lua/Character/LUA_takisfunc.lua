@@ -471,6 +471,9 @@ rawset(_G,"Takis_HandleNoAbils", function(p)
 		
 		if not debugmode
 			na = $|NOABIL_ALL &~NOABIL_TAUNTS
+		elseif (p.charability == CA_NONE and p.charability2 == CA_NONE) -- lol
+			p.charability = skins[p.skin].ability
+			p.charability2 = skins[p.skin].ability2
 		end
 		if inze2
 			if ZE2.game_ended or ZE2.round_active == false
