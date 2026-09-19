@@ -311,13 +311,11 @@ hl.iterateHitlagged = function()
 			if not (mo.soap_stunned)
 				S_StopSoundByID(mo, sfx_kc38)
 				
-				local resetstate = mo.info.seestate
-				if resetstate == S_NULL
-					resetstate = mo.info.spawnstate
-				end
+				local resetstate = mo.info.spawnstate
 				if mo.info.endstunstate ~= nil
 					resetstate = mo.info.endstunstate
 				end
+				mo.flags2 = $ &~MF2_FRET
 				mo.state = resetstate
 				S_StopSoundByID(mo,sfx_s3k49)
 			end

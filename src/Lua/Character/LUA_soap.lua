@@ -3423,6 +3423,8 @@ local function try_damage_cases(me,thing, p,soap,DealDamage,damagetype)
 			return false
 		end
 		
+		if not DealDamage(thing, me,me, damage, damagetype) then return false; end
+		
 		local damage = 1
 		local power = 5*FU + FixedDiv(abs(me.momz),me.scale*3)
 		local hitlag_tics = 10 + ((power/FU) / 5)
@@ -3468,7 +3470,6 @@ local function try_damage_cases(me,thing, p,soap,DealDamage,damagetype)
 			end
 		end
 		
-		DealDamage(thing, me,me, damage, damagetype)
 		if (thing and thing.valid and thing.flags & MF_BOSS and (thing.health <= 0))
 			hitlag_tics = $ * 3
 			S_StartSound(me, sfx_sp_kco)
@@ -3499,6 +3500,8 @@ local function try_damage_cases(me,thing, p,soap,DealDamage,damagetype)
 	and (me.momz*soap.gravflip > 0)
 	and (me.sprite2 == SPR2_MLEE)
 	and (thing.type ~= MT_ROLLOUTROCK)
+		if not DealDamage(thing, me,me, nil, damagetype) then Soap_Bump(me, thing); return false; end
+		
 		soap.uppercut_spin = soap_baseuppercutturn
 		soap.canuppercut = true
 		
@@ -3507,9 +3510,6 @@ local function try_damage_cases(me,thing, p,soap,DealDamage,damagetype)
 		Soap_DamageSfx(thing, power, 35*FU, damagetype)
 		
 		local hitlag_tics = 6 + (power/FU / 5)
-		
-		DealDamage(thing, me,me, nil, damagetype)
-		
 		if (thing and thing.valid and thing.flags & MF_BOSS and (thing.health <= 0))
 			hitlag_tics = $ * 3
 			S_StartSound(me, sfx_sp_kco)
@@ -3551,6 +3551,7 @@ local function try_damage_cases(me,thing, p,soap,DealDamage,damagetype)
 	if (soap.rdashing and p.normalspeed >= skins[p.skin].normalspeed + soap._maxdash)
 	or (soap.airdashed and Soap_AirdashState(me))
 	and not (thing.type == MT_ROLLOUTROCK and me.tracer == thing)
+		if not DealDamage(thing, me,me, nil,damagetype) then Soap_Bump(me, thing); return false; end
 		
 		local power = FixedMul(10*FU + max(soap.accspeed - 20*FU,0), me.scale)
 		Soap_ImpactVFX(thing,me, nil,FixedDiv(power,60*FU),nil,nil,vfxdmgt)
@@ -3608,7 +3609,6 @@ local function try_damage_cases(me,thing, p,soap,DealDamage,damagetype)
 			})
 		end
 		
-		DealDamage(thing, me,me, nil,damagetype)
 		if (thing and thing.valid and thing.flags & MF_BOSS and (thing.health <= 0))
 			hitlag_tics = $ * 3
 			S_StartSound(me, sfx_sp_kco)
@@ -3638,12 +3638,12 @@ local function try_damage_cases(me,thing, p,soap,DealDamage,damagetype)
 	
 	-- just so you wont miss out on amps
 	if basicdamage
+	and DealDamage(thing, me,me, nil,damagetype)
 		Soap_ImpactVFX(thing,me, nil, FU/3, nil,nil,vfxdmgt)
 		Soap_DamageSfx(thing, FU/3, 2*FU, damagetype)
 		Soap_SpawnBumpSparks(me, thing, nil, true)
 		Soap_Hitlag.addHitlag(me, 3, false)
 		
-		DealDamage(thing, me,me, nil,damagetype)
 		if (thing and thing.valid and thing.flags & MF_BOSS and (thing.health <= 0))
 			S_StartSound(me, sfx_sp_kco)
 			soap.hud.painsurge = 6
@@ -3679,6 +3679,9 @@ local function try_pvp_collide(me,thing)
 	if (thing.type ~= MT_PLAYER)
 	or not (thing.player and thing.player.valid)
 		candamagemobj = Soap_CanDamageEnemy(p, thing)
+		if not P_PlayerCanDamage(p, thing)
+			candamagemobj = false
+		end
 	end
 	-- enemies get extra leeway for damaging
 	if not Soap_ZCollide(me,thing, candamagemobj) then return end

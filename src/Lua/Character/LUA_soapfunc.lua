@@ -3994,6 +3994,8 @@ end)
 rawset(_G, "Soap_Bump", function(me,thing,line, weak)
 	local p = me.player
 	local soap = p.soaptable
+	if me.soap_bumptic == leveltime then return end
+	me.soap_bumptic = leveltime
 
 	Soap_StartQuake(5*FU, 8, {me.x,me.y,me.z}, 512*me.scale)
 	S_StartSound(me, sfx_s3k49)
