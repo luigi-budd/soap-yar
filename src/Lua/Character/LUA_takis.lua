@@ -1394,7 +1394,7 @@ Takis_Hook.addHook("Takis_Thinker",function(p)
 					soap.sharktailfx = TAKIS_WDIVEVFX
 				end
 				
-				P_SetObjectMomZ(me, thrust, true)
+				Soap_ZLaunch(me, thrust, true)
 				S_StartSound(me, sfx_wdjump)
 				soap.divewhirl = TAKIS_WDIVEVFX
 				p.pflags = $|PF_STARTJUMP|PF_JUMPDOWN
@@ -1403,7 +1403,7 @@ Takis_Hook.addHook("Takis_Thinker",function(p)
 					me.momx = $ / 5
 					me.momy = $ / 5
 					if (me.momz*soap.gravflip < 17*me.scale)
-						P_SetObjectMomZ(me, 17*FU)
+						Soap_ZLaunch(me, 17*FU)
 					end
 					
 					p.pflags = $|PF_STARTJUMP|PF_JUMPDOWN
