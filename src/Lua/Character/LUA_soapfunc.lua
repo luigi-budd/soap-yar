@@ -125,14 +125,19 @@ rawset(_G,"Soap_ButtonStuff", function(p)
 	end
 	
 	if (soap.jumplockout)
-		if not (p.cmd.buttons & BT_JUMP)
-			if soap.jumplockout == 1
-				soap.jumplockout = 0
-			else
-				soap.jumplockout = 1
-			end
-		else
+		if (p.cmd.buttons & BT_JUMP)
 			soap.jump = 0
+			soap.jump_R = 0
+		else
+			soap.jumplockout = false
+		end
+	end
+	if (soap.uselockout)
+		if (p.cmd.buttons & BT_USE)
+			soap.use = 0
+			soap.use_R = 0
+		else
+			soap.uselockout = false
 		end
 	end
 	
@@ -352,16 +357,17 @@ rawset(_G,"Soap_CreateAfterimage", function(p,me)
 	and (p.followmobj and p.followmobj.valid)
 	and p.followmobj.outs ~= nil
 		local m_peel = p.followmobj
-		local sine = abs(sin(FixedAngle(leveltime*FU*10)))
-		local ghostalpha = AI_MINALPHA + (sine - AI_MINALPHA)
-		local aistyle = (soap.aiswap) and "Soap_AI1" or "Soap_AI2"
+		local ghostalpha = ghost.alpha
+		local aistyle = ghost.translation
 		local cvstyle = SOAP_CV.ai_style.value == 3
-		if m_peel.outs
+		
+		local peelmobjs = m_peel.outs
+		if peelmobjs
 			for i = -m_peel.max_outs,m_peel.max_outs
 				if i == 0 then continue end
 				if (i % 4) then continue end
 				
-				local peel = m_peel.outs[i]
+				local peel = peelmobjs[i]
 				if not (peel and peel.valid) then continue end
 				
 				local ghost2 = P_SpawnMobjFromMobj(peel, of[1],of[2],of[3], MT_SOAP_AFTERIMAGE)
@@ -647,6 +653,7 @@ rawset(_G,"Soap_ZCollide", function(mo1, mo2, extraheight)
 	return true
 end)
 
+local ease_linear = ease.linear
 rawset(_G,"Soap_DamageSfx", function(src, power, maxpow, damagetype, props)
 	props = $ or {}
 	local nosfxmobj = props.nosfx or false
@@ -677,7 +684,7 @@ rawset(_G,"Soap_DamageSfx", function(src, power, maxpow, damagetype, props)
 		vol = props.vol
 	end
 	
-	sfx = $ + ease.linear(
+	sfx = $ + ease_linear(
 		min(FU, FixedDiv(power, maxpow)),
 		0,
 		numsfx*FU
@@ -888,7 +895,7 @@ rawset(_G,"Soap_ImpactVFX",function(src,inf, distmul, scalemul, forcesplat, nosp
 		colorlist = damagecolors_elec
 	elseif (dmgt == DMG_FIRE)
 		if forcesplat or nosparklag then return end
-		local num = (28 * scalemul)/FU
+		local num = (12 * scalemul)/FU
 		
 		local range = FixedMul(20*src.scale, scalemul)
 		for i = 0,num
@@ -905,13 +912,63 @@ rawset(_G,"Soap_ImpactVFX",function(src,inf, distmul, scalemul, forcesplat, nosp
 			f.tics = $ + P_RandomRange(0, 5 + (20*scalemul)/FU)
 			
 			local ha,va = R_PointTo3DAngles(f.x,f.y,f.z, src.x,src.y,src.z)
-			P_3DThrust(f, ha,va, -Soap_RandomFixedRange(8*scalemul, 20*scalemul))
+			P_3DThrust(f, ha,va, -Soap_RandomFixedRange(15*scalemul, 20*scalemul))
+			
+			local progress = P_RandomFixed()
+			f.momx = $ + FixedMul(inf.momx, progress)
+			f.momy = $ + FixedMul(inf.momy, progress)
+			f.momz = $ + FixedMul(inf.momz, progress)
 			
 			local lag = (src.hitlag or 0)
 			f.tics = $ + lag
 			f.anim_duration = $ + lag
 		end
 		
+		num = (16 * scalemul) / FU
+		local flamestate = S_SOAP_NEWFLAME
+		for i = 0, num
+			local s = P_SpawnMobjFromMobj(src,
+				Soap_RandomFixedRange(-range,range),
+				Soap_RandomFixedRange(-range,range),
+				Soap_RandomFixedRange(0,range*2),
+				MT_SOAP_FREEZEGFX
+			)
+			s.state = flamestate
+			s.tracer = inf
+			s.nofxadjust = true
+			s.ninjadive = true
+			s.spritexscale = Soap_RandomFixedRange(scalemul/2, scalemul*3/2) * 3/4
+			s.spriteyscale = s.spritexscale
+			
+			s.renderflags = $|RF_FULLBRIGHT
+			s.blendmode = AST_ADD
+			s.alpha = FU / 2
+			
+			-- honestly im not sure how netsafe
+			-- it is to have one of these vectors
+			-- in a mobj
+			s.anchor = Vec3.New(
+				src.x,src.y,src.z
+			)
+			s.offset = Vec3.MobjPosToVec(s) - s.anchor
+			
+			s.fuse = P_RandomRange(12, 20 + (40*scalemul)/FU)
+			
+			s.offsetmom = Vec3.New(0,0,0)
+			s.offsetparentmom = Vec3.MobjMomToVec(inf)
+			s.offsetspeed = Soap_RandomFixedRange(5*scalemul, 25*scalemul)
+			s.movefactor = P_RandomRange(FU*7/8, FU*98/100)
+			s.angles = {
+				h = FixedAngle(360*P_RandomFixed()),
+				hc = Soap_RandomFixedRange(-18*scalemul, 18*scalemul),
+				v = FixedAngle(Soap_RandomFixedRange(-180*FU, 180*FU)),
+				vc = Soap_RandomFixedRange(-20*scalemul, 20*scalemul),
+			}
+			--s.fadewithfuse = true
+			--s.fadeat = P_RandomRange(6,10)
+			s.destscale = 0
+			s.scalespeed = FixedDiv(s.scale, s.fuse*FU)
+		end
 		colorlist = damagecolors_elec
 	end
 	
@@ -1517,13 +1574,14 @@ rawset(_G,"Soap_SquashMacro",function(p, props)
 end)
 
 rawset(_G, "Soap_TickSquashes",function(p,me,soap, donttick)
-	local squash_count = #soap.squash
+	local squashes = soap.squash
+	local squash_count = #squashes
 	local xscale = soap.spritexscale
 	local yscale = soap.spriteyscale
 	
 	if squash_count
 		for i = squash_count, 1, -1 --k,squash in ipairs(soap.squash)
-			local squash = soap.squash[i]
+			local squash = squashes[i]
 			
 			local has_any_tics = false
 			if (squash.x and squash.x.tics < squash.x.timetake)
@@ -1533,7 +1591,7 @@ rawset(_G, "Soap_TickSquashes",function(p,me,soap, donttick)
 			
 			if not has_any_tics
 			and not donttick
-				table.remove(soap.squash,i); continue
+				table.remove(squashes,i); continue
 			end
 			
 			if squash.x --and squash.x.tics ~= squash.x.timetake
@@ -2060,7 +2118,7 @@ rawset(_G,"Soap_HandleNoAbils", function(p)
 		na = $|SNOABIL_RDASH|SNOABIL_AIRDASH
 	end
 	
-	if not me.health
+	if (not me.health) or (soap.inPain)
 		na = $|SNOABIL_BOTHTAUNTS
 	end
 	
@@ -3344,13 +3402,14 @@ local function winddivevfx(p,me,soap, angle,offangle,dist,frac)
 	dust.momy = $ + me.momy * 3/4
 	P_SetObjectMomZ(dust, FU)
 end
+local ease_outquart = ease.outquart
 local function VFX_DiveWhirl(p,me,soap, props)
 	if (soap.divewhirl)
 		local angle = R_PointToAngle2(0,0, me.momx,me.momy) + ANGLE_90
 		local frac = FixedDiv(soap.divewhirl*FU, TAKIS_WDIVEVFX*FU)
 		local offangle = FixedAngle(360 * FixedMul(frac, frac * 8/6))
 		
-		frac = ease.outquart($, 0, FU)
+		frac = ease_outquart($, 0, FU)
 		local dist = 60 * frac
 		winddivevfx(p,me,soap, angle,offangle,dist,frac)
 		if soap.sharktailfx
@@ -3949,6 +4008,9 @@ rawset(_G, "Soap_Bump", function(me,thing,line, weak)
 			R_PointToDist2(0,0,me.momx,me.momy) * 3/4,
 			sin(line_ang - R_PointToAngle2(0,0,me.momx,me.momy))
 		))
+		if soap.in2D
+			speed = $ / 2
+		end
 		
 		--its ambiguous syntax to have the `func` definition on the same line
 		--as the call, so :shrug:
@@ -3974,6 +4036,9 @@ rawset(_G, "Soap_Bump", function(me,thing,line, weak)
 			20*FU, FixedSqrt(FixedMul(thing.scale,me.scale))
 		)
 		if soap.onGround then speed = FixedDiv($, me.friction) end
+		if soap.in2D
+			speed = $ / 2
+		end
 		
 		P_InstaThrust(me, ang, -speed)
 		p.rmomx = me.momx - p.cmomx
@@ -4154,6 +4219,7 @@ local function CheckHitbox(tempatk, p,me,soap, from, range,fakerange, power, max
 	return enemyhit
 end
 
+local ease_outquad = ease.outquad
 rawset(_G, "Soap_Combat", function(p)
 	local me = p.realmo
 	local soap = p.soaptable
@@ -4209,7 +4275,7 @@ rawset(_G, "Soap_Combat", function(p)
 		me.soap_noguarding = true
 		tempatk = 1
 		
-		local angle = ease.outquad(FU - FixedDiv(me.soap_sweeptics*FU, SWEEP_TICS*FU), 360 * 3 *FU, 0)
+		local angle = ease_outquad(FU - FixedDiv(me.soap_sweeptics*FU, SWEEP_TICS*FU), 360 * 3 *FU, 0)
 		soap.stasistic = 1
 		p.drawangle = me.soap_sweepangle + FixedAngle(angle)
 		me.soap_sweeptics = $ - 1

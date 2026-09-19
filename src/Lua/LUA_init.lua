@@ -82,8 +82,10 @@ rawset(_G, "Soap_InitTable", function(p)
 		weaponnext_R = 0,
 		weaponprev_R = 0,
 		
-		-- sum stupid bullshit for the taunt menu
-		jumplockout = 0,
+		--lockout variants
+		jumplockout = false,
+		uselockout = false,
+		
 		
 		--forwardmove/sidemove dupes for when stasis is active
 		forwardmove = 0,
@@ -351,6 +353,7 @@ rawset(_G, "Soap_InitTable", function(p)
 		dived = false,
 		divewhirl = 0, -- vfx (34 - 0)
 		sharktailfx = 0, -- similar to divewhirl
+		helmeteffect = false,
 		canceltime = 0,
 		lastbumper = 0, -- for nights clutches
 		nadotime = 0,

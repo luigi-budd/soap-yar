@@ -493,7 +493,11 @@ local function FreezeInHitlag(mo)
 		mo.offsetspeed = FixedMul($, mo.movefactor)
 		mo.offsetparentmom = mo.offsetparentmom * mo.movefactor
 		
-		if mo.fadeat and mo.tics < mo.fadeat
+		local fade = mo.tics
+		if mo.fadewithfuse
+			fade = mo.fuse
+		end
+		if mo.fadeat and fade < mo.fadeat
 			mo.alpha = $ - (FU/mo.fadeat)
 		end
 		if mo.shrinkat and mo.tics == mo.shrinkat
@@ -584,6 +588,8 @@ local amp_frac = (FU / amp_tics)
 local amp_longfrac = (FU / amp_longtics)
 local amp_drag = FU * 6/7
 local amp_dist = 1200 * FU
+local ease_inexpo = ease.inexpo
+local ease_inquad = ease.inquad
 addHook("MobjThinker",function(amp)
 	if amp.wait
 		amp.wait = $ - 1
@@ -594,25 +600,12 @@ addHook("MobjThinker",function(amp)
 	if not (me and me.valid) then P_RemoveMobj(amp); return end
 	local p = me.player
 
-	if (displayplayer and displayplayer.valid)
-		if (displayplayer ~= me.player)
-			local dp = displayplayer
-			local me = dp.realmo
-			local dist = min(
-				R_PointToDist(amp.x,amp.y),
-				R_PointToDist2(me.x,me.y, amp.x,amp.y)
-			)
-			local cap = FixedMul(amp_dist, amp.scale)
-			local alpha = FU
-			if dist < cap
-				alpha = FixedDiv(dist, cap)
-			end
-			amp.alpha = P_Lerp(FU/2, $, alpha)
-			amp.renderflags = $ &~RF_ALWAYSONTOP
-		else
-			amp.renderflags = $|RF_ALWAYSONTOP
-			amp.alpha = FU
-		end
+	if (displayplayer ~= p)
+		amp.alpha = P_Lerp(FU/2, $, 0)
+		amp.renderflags = $ &~RF_ALWAYSONTOP
+	else
+		amp.renderflags = $|RF_ALWAYSONTOP
+		amp.alpha = FU
 	end
 	
 	if me.hitlag or me.flags & MF_NOTHINK
@@ -651,8 +644,8 @@ addHook("MobjThinker",function(amp)
 	local mytics = (amp.extended and amp_longtics or amp_tics)
 	local myfrac = (amp.extended and amp_longfrac or amp_frac)
 	
-	local frac = ease.inquad(min(myfrac * amp.ticker, FU), 0,FU)
-	do
+	local frac = ease_inquad(min(myfrac * amp.ticker, FU), 0,FU)
+	if (p == displayplayer)
 		local ang = R_PointToAngle2(amp.startx,amp.starty, me.x,me.y)
 		local organg = ang
 		local asign = (AngleFixed(ang) > 180*FU and 1 or -1)
@@ -674,7 +667,7 @@ addHook("MobjThinker",function(amp)
 		
 		local start = Vec3.New(amp.startx, amp.starty, amp.startz)
 		local dest = Vec3.New(me.x, me.y, me.z + halfheight)
-		local ctrl1 = Vec3.New((start.x + dest.x) / 2, (start.y + dest.y) / 2, (start.z + dest.z) / 2)
+		local ctrl1 = Vec3.New((start.x/2) + (dest.x/2), (start.y/2) + (dest.y/2), (start.z/2) + (dest.z/2))
 		ctrl1.x = $ + P_ReturnThrustX(ang, sidedist)
 		ctrl1.y = $ + P_ReturnThrustY(ang, sidedist)
 		
@@ -716,14 +709,13 @@ addHook("MobjThinker",function(amp)
 		
 		local pos = QubicBezier(frac, start,ctrl1,ctrl2,dest)
 		P_MoveOrigin(amp, pos.x, pos.y, pos.z)
+		
+		if CV.rotations.value
+			amp.rollangle = $ + FixedAngle(ease_inexpo(frac, 0, 60*FU))
+		end
+		amp.spritexscale = ease_inexpo(frac, amp.startscale, me.scale / 20)
+		amp.spriteyscale = amp.spritexscale
 	end
-	
-	if CV.rotations.value
-		amp.rollangle = $ + FixedAngle(ease.inexpo(frac, 0, 60*FU))
-	end
-	amp.spritexscale = ease.inexpo(frac, amp.startscale, me.scale / 20)
-	amp.spriteyscale = amp.spritexscale
-	-- amp.alpha = FixedMul($, ease.inexpo(frac, FU * 3/4, 0))
 	
 	if amp.ticker == mytics + 1
 		if me.soap_lifetimeamps == nil then me.soap_lifetimeamps = 0 end

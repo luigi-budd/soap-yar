@@ -59,3 +59,6 @@ sfxinfo[sfx_tk_om2] = {
 	caption = "Shock",
 	flags = SF_X4AWAYSOUND
 }
+
+SafeFreeslot("sfx_tk_bnk")
+sfxinfo[sfx_tk_bnk].caption = "Bonk!"

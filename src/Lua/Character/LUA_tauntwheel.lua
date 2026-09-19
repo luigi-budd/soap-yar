@@ -151,6 +151,8 @@ local function cancelConds(p, nobuttons, checkspinonly)
 		p.cmd.buttons = $ &~(BT_JUMP|BT_SPIN)
 		soap.use = 0
 		soap.jump = 0
+		soap.jumplockout = true
+		soap.uselockout = true
 	end
 	
 	if me.soap_tauntforcecancel
@@ -1037,9 +1039,10 @@ COM_AddCommand("_soap_dotaunt",function(p, sig, selected)
 		return
 	end
 	
-	soap.jumplockout = 2
+	soap.jumplockout = true
 end)
 
+local fakespinlockout = false
 local gc2bt = {
 	[GC_FIRE]		= BT_ATTACK,
 	[GC_FIRENORMAL]	= BT_FIRENORMAL,
@@ -1197,6 +1200,14 @@ addHook("PlayerCmd",function(p,cmd)
 	end
 	gp_waskeydown = gamekeydown[gamepad_tb]
 	
+	if fakespinlockout
+		if (cmd.buttons & BT_SPIN)
+			cmd.buttons = $ &~BT_SPIN
+		else
+			fakespinlockout = false
+		end
+	end
+	
 	if not (taunt_cmd.active or taunt_cmd.closed) then return end
 	
 	-- EAT SHIT AND DIE FUCK YOU GAME
@@ -1261,6 +1272,7 @@ local function ClientTauntHandle(p)
 	if (taunt_cmd.buttons & BT_SPIN) or taunt_cmd.joy_spin
 	--or cancelConds(p, true)
 		StopMenu()
+		fakespinlockout = true
 	end
 	
 	-- negative angleturn is rightwards
@@ -1388,6 +1400,9 @@ end)
 
 -- its just easier to handle the hud here
 local wheel_inner = wheel_start + (wheel_radius - wheel_start)/2
+local wheel_farther = wheel_start + (wheel_radius - wheel_start) --* 5/4
+local fadewait = 0
+local curfade = 0
 addHook("HUD",function(v,p)
 	-- bruh
 	p = consoleplayer
@@ -1417,7 +1432,16 @@ addHook("HUD",function(v,p)
 		taunt_cmd.animation = $ - 1
 	end
 	
-	if not taunt.active then return end
+	if not taunt.active then fadewait = TR/2; curfade = 0; return end
+	
+	if fadewait
+		fadewait = $ - 1
+	elseif curfade < 24
+		curfade = $ + 1
+	end
+	if curfade
+		v.fadeScreen(0xFF00, curfade)
+	end
 	
 	v.drawScaled(160*FU,100*FU, FU/2, v.cachePatch("STAUNT_BG"), V_30TRANS)
 	local dist = R_PointToDist2(0,0, taunt.x,taunt.y)
@@ -1431,12 +1455,13 @@ addHook("HUD",function(v,p)
 			0
 		)
 		ang = ($ - ANGLE_90) + ANGLE_180 - FixedAngle(angstep / 2)
+		local selected = (dist >= wheel_start) and (taunt.pointing == i)
 		
 		if (TAUNTS[i + 1].drawer ~= nil)
 			TAUNTS[i + 1].drawer(v, i,
 				160*FU + P_ReturnThrustX(nil, ang, wheel_inner),
 				100*FU - P_ReturnThrustY(nil, ang, wheel_inner),
-				(dist >= wheel_start) and (taunt.pointing == i)
+				selected
 			)
 		else
 			v.drawScaled(
@@ -1445,6 +1470,13 @@ addHook("HUD",function(v,p)
 				FU/4,
 				v.cachePatch("MISSING"),
 				0
+			)
+		end
+		if not taunt_cmd.joystick
+			v.drawString(
+				160*FU + P_ReturnThrustX(nil, ang, wheel_farther),
+				100*FU - P_ReturnThrustY(nil, ang, wheel_farther) - 4*FU,
+				(i + 1), selected and V_YELLOWMAP or 0, "small-thin-fixed-center"
 			)
 		end
 	end

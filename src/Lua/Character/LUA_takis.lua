@@ -787,17 +787,7 @@ Takis_Hook.addHook("Takis_Thinker",function(p)
 	if (soap.c1)
 		
 		--dive
-		local divecheck = false
-		if (p.powers[pw_shield] & SH_NOSTACK == SH_FLAMEAURA)
-			-- You can dive even while youre grounded
-			-- with the ninja belt shield
-			divecheck = true
-		else
-			divecheck = not soap.onGround
-		end
-		
 		if soap.c1 == 1
-		and divecheck
 		and not (soap.dived)
 		and (soap.notCarried)
 		and me.state ~= S_PLAY_PAIN
@@ -1428,6 +1418,44 @@ Takis_Hook.addHook("Takis_Thinker",function(p)
 	and (me.soap_bumpangle ~= nil)
 		p.drawangle = me.soap_bumpangle
 	end
+	-- helmet provides better air control
+	if (soap.helmeteffect) and (me.state == S_PLAY_FALL)
+		local grav = P_GetMobjGravity(me)
+		if me.momz*soap.gravflip > 0
+			grav = $ * 3/5
+		end
+		me.momz = $ + grav
+		p.thrustfactor = 0
+		
+		local ford = p.cmd.forwardmove
+		local side = p.cmd.sidemove
+		if (ford ~= 0 or side ~= 0)
+			local wishangle = Soap_ControlDir(p)
+			local wishspeed = FixedMul(p.normalspeed * 3/5, me.scale)
+			local acceleration = FU/12
+			if (me.eflags & MFE_UNDERWATER)
+				acceleration = $ * 5/6
+			end
+			
+			local addspeed = wishspeed - FixedHypot(me.momx,me.momy)
+			if (addspeed >= 0)
+				local accelspeed = FixedMul(acceleration, wishspeed)
+				if accelspeed > addspeed then accelspeed = addspeed; end
+				
+				local momvec = Vec2.MobjMomToVec(me)
+				wishangle = Vec2.SphereToCartesian($, 0)
+				local x = momvec.x + FixedMul(accelspeed, wishangle.x)
+				local y = momvec.y + FixedMul(accelspeed, wishangle.y)
+				me.momx = x
+				me.momy = y
+			end
+		end
+		me.momx = FixedMul($, ORIG_FRICTION)
+		me.momy = FixedMul($, ORIG_FRICTION)
+	elseif (soap.helmeteffect)
+		p.thrustfactor = skins[p.skin].thrustfactor
+		soap.helmeteffect = false
+	end
 	
 	p.charflags = $ &~(SF_RUNONWATER|SF_NOSKID)|(soap.lunge.effect and SF_NOSKID or 0)
 	local noafterimages = true
@@ -1931,7 +1959,8 @@ Takis_Hook.addHook("MoveBlocked",function(me,thing,line, goingup)
 					lessbump = true
 					
 					me.state = S_PLAY_FALL
-					P_SetObjectMomZ(me, 15*FU)
+					P_SetObjectMomZ(me, 18*FU)
+					soap.helmeteffect = true
 				end
 				
 				local spr_scale = FU * 7/6
@@ -1951,6 +1980,8 @@ Takis_Hook.addHook("MoveBlocked",function(me,thing,line, goingup)
 				bonkeffect.drawonlyforplayer = p
 				bonkeffect.renderflags = $|RF_NOCOLORMAPS|RF_ALWAYSONTOP
 				P_SetObjectMomZ(bonkeffect, 4 * FU)
+				
+				S_StartSound(me, sfx_tk_bnk)
 			end
 		else
 			me.state = S_PLAY_WALK
@@ -2004,6 +2035,7 @@ Takis_Hook.addHook("MoveBlocked",function(me,thing,line, goingup)
 	end
 end)
 
+local ease_inquart = ease.inquart
 local function handleBump(p,me,thing)
 	local soap = p.soaptable
 	if (p.powers[pw_super] or soap.isSolForm or p.powers[pw_invulnerability]) then return end
@@ -2011,7 +2043,7 @@ local function handleBump(p,me,thing)
 	
 	local max_speed = (skins[p.skin].normalspeed + soap._maxdash)
 	local speed_add = FixedMul(
-		ease.inquart(
+		ease_inquart(
 			FixedDiv(min(soap.accspeed, p.normalspeed), max_speed),
 			0,FU
 		),
@@ -2205,7 +2237,7 @@ local function try_pvp_collide(me,thing)
 		and not (thing.player and thing.player.valid)
 		and not (thing == me.target or thing == me.tracer)
 	
-	if basicdamage
+	if basicdamage and not thinghit
 		Soap_ImpactVFX(thing,me, nil, FU/3, nil,nil, (shield == SH_ARMAGEDDON) and DMG_NUKE or damagetype)
 		Soap_DamageSfx(thing, FU/3, 2*FU, damagetype)
 		Soap_SpawnBumpSparks(me, thing, nil, true)

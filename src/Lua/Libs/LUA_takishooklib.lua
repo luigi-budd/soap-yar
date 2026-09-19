@@ -55,6 +55,15 @@ local typefor_mobj = function(this_mobj, ...)
 	end
 	return this_mobj.type == type
 end
+local typefor_skin = function(this_mobj, ...)
+	local arg = {...}
+	-- haha lol. dont be inappropriate.
+	local forskin = (#arg and arg[1] or nil)
+	if (forskin == nil)
+		return true
+	end
+	return (this_mobj.player and this_mobj.player.valid and this_mobj.player.skin == forskin)
+end
 
 local events = {}
 events["CanPlayerHurtPlayer"] = {handler = handler_snapany}
@@ -68,11 +77,10 @@ events["Soap_Thinker"] = {}
 events["Takis_Thinker"] = {}
 
 -- hooks for BOTH skins
-events["Char_OnMove"] = {}
--- this one really shouldve been 2 seperate hooks
-events["Char_NoAbility"] = {handler = handler_snapany}
-events["Char_VFX"] = {handler = handler_snapany}
-events["Char_OnDamage"] = {handler = handler_snaptrue}
+events["Char_OnMove"] = {typefor = typefor_skin}
+events["Char_NoAbility"] = {handler = handler_snapany, typefor = typefor_skin}
+events["Char_VFX"] = {handler = handler_snapany, typefor = typefor_skin}
+events["Char_OnDamage"] = {handler = handler_snaptrue, typefor = typefor_skin}
 events["Char_OnStunEnemy"] = {typefor = typefor_mobj}
 events["Char_StunnedThink"] = {typefor = typefor_mobj}
 
