@@ -2143,7 +2143,7 @@ local function try_pvp_collide(me,thing)
 		and not (thing.player and thing.player.valid)
 		and not (thing == me.target or thing == me.tracer)
 	
-	if basicdamage
+	if basicdamage and not thinghit
 		Soap_ImpactVFX(thing,me, nil, FU/3, nil,nil, (shield == SH_ARMAGEDDON) and DMG_NUKE or damagetype)
 		Soap_DamageSfx(thing, FU/3, 2*FU, damagetype)
 		Soap_SpawnBumpSparks(me, thing, nil, true)
