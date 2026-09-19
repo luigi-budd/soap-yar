@@ -679,53 +679,53 @@ rawset(_G,"Takis_HammerBlastHitbox",function(p)
 			P_KillMobj(found,me,me)
 			didit = true
 		elseif Soap_CanDamageEnemy(p, found,MF_ENEMY|MF_BOSS|MF_MONITOR|MF_SHOOTABLE)
-			
-			Soap_ImpactVFX(found, me, nil,nil, true, nil,vfxdamagetype)
-			Soap_SpawnBumpSparks(found, me, nil,false, found.scale * 3/2, true)
-			Soap_DamageSfx(found, abs(me.momz), 30*me.scale, damagetype)
-			local damage = 1
-			if abs(takis.last.momz) >= 60*me.scale
-				damage = 2
-				strong = true
-				S_StartSound(me,sfx_sp_dm4)
-				
-				local halftic = 8
-				local rad = FixedDiv(me.radius, me.scale)
-				local hei = FixedDiv(me.height, me.scale)
-				local extra = abs(FixedDiv(me.momz, 50*me.scale))
-				for i = 0, 32
-					local s = P_SpawnMobjFromMobj(thok,
-						Soap_RandomFixedRange(-rad, rad),
-						Soap_RandomFixedRange(-rad, rad),
-						Soap_RandomFixedRange(0, hei) + 256*FU,
-						MT_PARTICLE
-					)
-					s.state = S_SOAP_IMPACT_LINE2
-					if (takis.in2D)
-						s.angle = 0
-					else
-						s.angle = me.angle - ANGLE_90
+			if P_DamageMobj(found,me,me, damage)
+				Soap_ImpactVFX(found, me, nil,nil, true, nil,vfxdamagetype)
+				Soap_SpawnBumpSparks(found, me, nil,false, found.scale * 3/2, true)
+				Soap_DamageSfx(found, abs(me.momz), 30*me.scale, damagetype)
+				local damage = 1
+				if abs(takis.last.momz) >= 60*me.scale
+					damage = 2
+					strong = true
+					S_StartSound(me,sfx_sp_dm4)
+					
+					local halftic = 8
+					local rad = FixedDiv(me.radius, me.scale)
+					local hei = FixedDiv(me.height, me.scale)
+					local extra = abs(FixedDiv(me.momz, 50*me.scale))
+					for i = 0, 32
+						local s = P_SpawnMobjFromMobj(thok,
+							Soap_RandomFixedRange(-rad, rad),
+							Soap_RandomFixedRange(-rad, rad),
+							Soap_RandomFixedRange(0, hei) + 256*FU,
+							MT_PARTICLE
+						)
+						s.state = S_SOAP_IMPACT_LINE2
+						if (takis.in2D)
+							s.angle = 0
+						else
+							s.angle = me.angle - ANGLE_90
+						end
+						s.color = armacolors[P_RandomRange(1, #armacolors)]
+						s.rollangle = -ANGLE_90
+						s.renderflags = $|RF_ALWAYSONTOP
+						s.spriteyscale = $ * 3/2 + extra
+						s.flags = $|MF_NOCLIPTHING|MF_NOCLIP|MF_NOCLIPHEIGHT|MF_NOBLOCKMAP
+						s.takis_flingme = false
+						local offset = P_RandomRange(-4, 8)
+						s.tics = $ + halftic + offset
+						s.anim_duration = $ + halftic + offset
 					end
-					s.color = armacolors[P_RandomRange(1, #armacolors)]
-					s.rollangle = -ANGLE_90
-					s.renderflags = $|RF_ALWAYSONTOP
-					s.spriteyscale = $ * 3/2 + extra
-					s.flags = $|MF_NOCLIPTHING|MF_NOCLIP|MF_NOCLIPHEIGHT|MF_NOBLOCKMAP
-					s.takis_flingme = false
-					local offset = P_RandomRange(-4, 8)
-					s.tics = $ + halftic + offset
-					s.anim_duration = $ + halftic + offset
 				end
+				
+				if (found and found.valid and found.flags & MF_BOSS and (found.health <= 0))
+					S_StartSound(me, sfx_sp_kco)
+					takis.hud.painsurge = 6
+					strong = true
+				end
+				enemyhit = true
+				didit = true
 			end
-			
-			P_DamageMobj(found,me,me, damage)
-			if (found and found.valid and found.flags & MF_BOSS and (found.health <= 0))
-				S_StartSound(me, sfx_sp_kco)
-				takis.hud.painsurge = 6
-				strong = true
-			end
-			enemyhit = true
-			didit = true
 		--Most likely a spike thing
 		elseif ((found.info.mass == DMG_SPIKE)
 		and (found.flags & (MF_PAIN))
@@ -763,6 +763,9 @@ rawset(_G,"Takis_HammerBlastHitbox",function(p)
 				S_StartSound(sfx, sfx_pop)
 			end
 			P_KillMobj(found,me,me)
+			if (me.hitlag == nil) or me.hitlag < 2
+				Soap_Hitlag.addHitlag(me, 2, false)
+			end
 		elseif (found.flags & MF_SPRING)
 		and (found.info.painchance ~= 3)
 			Soap_ImpactVFX(found, me, nil,nil, true, true)
@@ -771,10 +774,10 @@ rawset(_G,"Takis_HammerBlastHitbox",function(p)
 			local p2 = found.player
 			
 			if Soap_CanHurtPlayer(p, p2)
+			and P_DamageMobj(found,me,me)
 				Soap_ImpactVFX(found, me, nil,nil, true, nil,vfxdamagetype)
 				Soap_SpawnBumpSparks(found, me, nil,false, found.scale * 3/2, true)
 				Soap_DamageSfx(found, abs(me.momz), 30*me.scale, damagetype)
-				P_DamageMobj(found,me,me)
 				
 				if not found.health
 					found.alreadykilledthis = true

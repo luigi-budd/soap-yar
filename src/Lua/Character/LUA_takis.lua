@@ -2044,6 +2044,9 @@ local function try_pvp_collide(me,thing)
 	if (thing.type ~= MT_PLAYER)
 	or not (thing.player and thing.player.valid)
 		candamagemobj = Soap_CanDamageEnemy(p, thing)
+		if not P_PlayerCanDamage(p, thing)
+			candamagemobj = false
+		end
 	end
 	-- enemies get extra leeway for damaging
 	if not Soap_ZCollide(me,thing, candamagemobj) then return end
@@ -2092,6 +2095,15 @@ local function try_pvp_collide(me,thing)
 	--hit by clutch
 	if (soap.afterimage)
 	and not (thing.type == MT_ROLLOUTROCK and me.tracer == thing)
+		local coulddamage = DealDamage(thing, me,me, nil, damagetype)
+		if not coulddamage
+		and not (me.hitlag)
+			Soap_Bump(me, thing, nil, false)
+			if soap.clutch.misfire
+				soap.clutch.misfire = CLUTCH_MISFIRE
+			end
+			return
+		end
 		
 		local power = FixedMul(10*FU + max(soap.accspeed - 20*FU,0), me.scale)
 		local hitlag_tics = 6
@@ -2121,7 +2133,6 @@ local function try_pvp_collide(me,thing)
 			end
 		end
 		Soap_ImpactVFX(thing,me, nil,FixedDiv(power,60*FU),nil,nil, (shield == SH_ARMAGEDDON) and DMG_NUKE or damagetype)
-		DealDamage(thing, me,me, nil, damagetype)
 		
 		if (thing and thing.valid and thing.type == MT_ROLLOUTROCK)
 			hitlag_tics = $ / 2
@@ -2144,16 +2155,17 @@ local function try_pvp_collide(me,thing)
 		and not (thing == me.target or thing == me.tracer)
 	
 	if basicdamage and not thinghit
-		Soap_ImpactVFX(thing,me, nil, FU/3, nil,nil, (shield == SH_ARMAGEDDON) and DMG_NUKE or damagetype)
-		Soap_DamageSfx(thing, FU/3, 2*FU, damagetype)
-		Soap_SpawnBumpSparks(me, thing, nil, true)
-		
-		DealDamage(thing, me,me, nil, damagetype)
-		if (thing and thing.valid and thing.flags & MF_BOSS and (thing.health <= 0))
-			S_StartSound(me, sfx_sp_kco)
-			soap.hud.painsurge = 6
+		if DealDamage(thing, me,me, nil, damagetype)
+			Soap_ImpactVFX(thing,me, nil, FU/3, nil,nil, (shield == SH_ARMAGEDDON) and DMG_NUKE or damagetype)
+			Soap_DamageSfx(thing, FU/3, 2*FU, damagetype)
+			Soap_SpawnBumpSparks(me, thing, nil, true)
+			
+			if (thing and thing.valid and thing.flags & MF_BOSS and (thing.health <= 0))
+				S_StartSound(me, sfx_sp_kco)
+				soap.hud.painsurge = 6
+			end
+			thinghit = true
 		end
-		thinghit = true
 	end
 	
 	if thinghit and (thing and thing.valid and thing.type == MT_ROLLOUTROCK)
