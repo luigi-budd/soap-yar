@@ -768,7 +768,7 @@ rawset(_G,"Soap_ImpactVFX",function(src,inf, distmul, scalemul, forcesplat, nosp
 		top_layer.vfx_delays[i] = 4 - i
 	end
 	top_layer.vfx_mom = {0,0,0}
-	top_layer.dispoffset = 200
+	top_layer.dispoffset = 400
 	local hitlag = (src.hitlag or 0)
 	if (dmgt == DMG_NUKE) then hitlag = $ + TR/2; end
 	if not nosparklag
@@ -914,10 +914,12 @@ rawset(_G,"Soap_ImpactVFX",function(src,inf, distmul, scalemul, forcesplat, nosp
 			local ha,va = R_PointTo3DAngles(f.x,f.y,f.z, src.x,src.y,src.z)
 			P_3DThrust(f, ha,va, -Soap_RandomFixedRange(15*scalemul, 20*scalemul))
 			
-			local progress = P_RandomFixed()
-			f.momx = $ + FixedMul(inf.momx, progress)
-			f.momy = $ + FixedMul(inf.momy, progress)
-			f.momz = $ + FixedMul(inf.momz, progress)
+			if (inf and inf.valid)
+				local progress = P_RandomFixed()
+				f.momx = $ + FixedMul(inf.momx, progress)
+				f.momy = $ + FixedMul(inf.momy, progress)
+				f.momz = $ + FixedMul(inf.momz, progress)
+			end
 			
 			local lag = (src.hitlag or 0)
 			f.tics = $ + lag
@@ -986,7 +988,7 @@ rawset(_G,"Soap_ImpactVFX",function(src,inf, distmul, scalemul, forcesplat, nosp
 			shck.renderflags = $|rflags|RF_ALWAYSONTOP|(P_RandomChance(FU/2) and RF_HORIZONTALFLIP or 0)
 			shck.color = top_layer.color
 			shck.colorized = top_layer.colorized
-			shck.dispoffset = 170
+			shck.dispoffset = 270
 			--shck.destscale = shck.scale * 2
 			--P_SetObjectMomZ(shck, -4*FU)
 		end

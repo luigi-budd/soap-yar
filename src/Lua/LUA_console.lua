@@ -120,15 +120,6 @@ CV.boomboxsfx = CV_RegisterVar({
 })
 CV.PossibleValues["soap_boomboxsfx"] = {values = boombox_pv, length = 3}
 
-local autoside_pv = {Horizontal = 0, Vertical = 1}
-CV.autoside = CV_RegisterVar({
-	name = "soap_autoindside",
-	defaultvalue = "Vertical",
-	flags = CV_SHOWMODIF,
-	PossibleValue = autoside_pv,
-})
-CV.PossibleValues["soap_autoindside"] = {values = autoside_pv, length = 2}
-
 -- cvars below here will need to be synched
 -- as of 2.2.15, because these all have a `can_change` field,
 -- we cant get the consvar_t directly from the CV_RegisterVar call
