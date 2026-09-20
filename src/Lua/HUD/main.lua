@@ -257,11 +257,7 @@ addHook("HUD",function(v,p, cam)
 			x = 120*FU
 		end
 		
-		if CV.autoside.value == 0
-			drawHorizontalAUTO(v,p, result, x,y,scale, align,sign)
-		else
-			drawVerticalAUTO(v,p, result, x,y,scale, align,sign)
-		end
+		drawVerticalAUTO(v,p, result, x,y,scale, align,sign)
 		
 		v.dointerp(false)
 		autoanim.ticker = $ + 1
