@@ -936,7 +936,7 @@ rawset(_G,"Soap_ImpactVFX",function(src,inf, distmul, scalemul, forcesplat, nosp
 				MT_SOAP_FREEZEGFX
 			)
 			s.state = flamestate
-			s.tracer = inf
+			s.tracer = inf or src
 			s.nofxadjust = true
 			s.ninjadive = true
 			s.spritexscale = Soap_RandomFixedRange(scalemul/2, scalemul*3/2) * 3/4
@@ -957,7 +957,7 @@ rawset(_G,"Soap_ImpactVFX",function(src,inf, distmul, scalemul, forcesplat, nosp
 			s.fuse = P_RandomRange(12, 20 + (40*scalemul)/FU)
 			
 			s.offsetmom = Vec3.New(0,0,0)
-			s.offsetparentmom = Vec3.MobjMomToVec(inf)
+			s.offsetparentmom = Vec3.MobjMomToVec(inf or src)
 			s.offsetspeed = Soap_RandomFixedRange(5*scalemul, 25*scalemul)
 			s.movefactor = P_RandomRange(FU*7/8, FU*98/100)
 			s.angles = {
