@@ -3413,6 +3413,8 @@ local function try_damage_cases(me,thing, p,soap,DealDamage,damagetype)
 	if (p.powers[pw_shield] & SH_NOSTACK == SH_ARMAGEDDON)
 		vfxdmgt = DMG_NUKE
 	end
+	local checkforundamage = true
+	if (p.powers[pw_super]) then checkforundamage = false; end
 	
 	--hit by pound
 	if ((soap.pounding)
@@ -3423,7 +3425,7 @@ local function try_damage_cases(me,thing, p,soap,DealDamage,damagetype)
 			return false
 		end
 		
-		if not DealDamage(thing, me,me, damage, damagetype) then return false; end
+		if DealDamage(thing, me,me, damage, damagetype) == false and checkforundamage then return false; end
 		
 		local damage = 1
 		local power = 5*FU + FixedDiv(abs(me.momz),me.scale*3)
@@ -3500,7 +3502,7 @@ local function try_damage_cases(me,thing, p,soap,DealDamage,damagetype)
 	and (me.momz*soap.gravflip > 0)
 	and (me.sprite2 == SPR2_MLEE)
 	and (thing.type ~= MT_ROLLOUTROCK)
-		if not DealDamage(thing, me,me, nil, damagetype) then Soap_Bump(me, thing); return false; end
+		if DealDamage(thing, me,me, nil, damagetype) == false and checkforundamage then Soap_Bump(me, thing); return false; end
 		
 		soap.uppercut_spin = soap_baseuppercutturn
 		soap.canuppercut = true
@@ -3551,7 +3553,7 @@ local function try_damage_cases(me,thing, p,soap,DealDamage,damagetype)
 	if (soap.rdashing and p.normalspeed >= skins[p.skin].normalspeed + soap._maxdash)
 	or (soap.airdashed and Soap_AirdashState(me))
 	and not (thing.type == MT_ROLLOUTROCK and me.tracer == thing)
-		if not DealDamage(thing, me,me, nil,damagetype) then Soap_Bump(me, thing); return false; end
+		if DealDamage(thing, me,me, nil,damagetype) == false and checkforundamage then Soap_Bump(me, thing); return false; end
 		
 		local power = FixedMul(10*FU + max(soap.accspeed - 20*FU,0), me.scale)
 		Soap_ImpactVFX(thing,me, nil,FixedDiv(power,60*FU),nil,nil,vfxdmgt)
@@ -3638,7 +3640,7 @@ local function try_damage_cases(me,thing, p,soap,DealDamage,damagetype)
 	
 	-- just so you wont miss out on amps
 	if basicdamage
-	and DealDamage(thing, me,me, nil,damagetype)
+	and not (DealDamage(thing, me,me, nil,damagetype) == false and checkforundamage)
 		Soap_ImpactVFX(thing,me, nil, FU/3, nil,nil,vfxdmgt)
 		Soap_DamageSfx(thing, FU/3, 2*FU, damagetype)
 		Soap_SpawnBumpSparks(me, thing, nil, true)
@@ -3679,7 +3681,7 @@ local function try_pvp_collide(me,thing)
 	if (thing.type ~= MT_PLAYER)
 	or not (thing.player and thing.player.valid)
 		candamagemobj = Soap_CanDamageEnemy(p, thing)
-		if not P_PlayerCanDamage(p, thing)
+		if not P_PlayerCanDamage(p, thing) and not p.powers[pw_super]
 			candamagemobj = false
 		end
 	end
