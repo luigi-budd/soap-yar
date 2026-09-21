@@ -2504,7 +2504,8 @@ end)
 Takis_Hook.addHook("PostThinkFrame",function(p)
 	local me = p.mo
 	local takis = p.soaptable
-	
+
+	if not (me and me.valid) then return end
 	if me.skin ~= TAKIS_SKIN then return end
 	if (me.flags & MF_NOTHINK) then return end
 	
