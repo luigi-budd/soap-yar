@@ -3120,7 +3120,8 @@ local function VFX_LandDust(p,me,soap, props)
 	and not soap.last.onground
 	and not props.was_pounding
 	and me.health
-	and not (p.powers[pw_carry] == CR_NIGHTSMODE)
+	and not (P_IsObjectInGoop(me) or me.eflags & MFE_GOOWATER)
+	and soap.notCarried
 		local momz = abs(FixedDiv(soap.last.momz, me.scale or 1))
 		
 		Soap_DustRing(me,
@@ -3291,7 +3292,7 @@ local function VFX_CeilingHit(p,me,soap, props)
 		end
 	end
 	
-	if P_IsObjectInGoop(me)
+	if (P_IsObjectInGoop(me) or me.eflags & MFE_GOOWATER) or not soap.notCarried
 		dobonk = false
 	end
 	
