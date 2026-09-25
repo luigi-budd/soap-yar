@@ -178,12 +178,12 @@ tauntinfo.think = function(p, me, soap, taunt)
 		me.frame = $|((me.sixseveeeen / 10) % 8)
 	end
 end
-tauntinfo.drawer = function(v,i, x,y, selected)
+tauntinfo.drawer = function(v,i, x,y, selected, scale)
 	SoapTaunt_WheelDrawer(v,i, x,y, {
 		skin = skins[consoleplayer.skin].name,
 		spr2 = SPR2_MSC8,
 		frame = 3, angle = 0
-	}, selected)
+	}, selected, scale)
 end
 tauntinfo.canceled = function(p,me,soap)
 	me.sixseveeeen = nil

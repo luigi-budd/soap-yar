@@ -42,12 +42,14 @@ local gpbuttonnames = {
 	[GPAD_DRIGHT] = "D-Pad Right",
 }
 
+local TAUNTSPERPAGE = 6
 local TAUNT_ANIM = TR
 local taunt_cmd = {
 	active = false,
 	closed = false, -- keeps ignoregameinputs on for a tic
 	x = 0,
 	y = 0,
+	page = 0,
 	pointing = -1,
 	buttons = 0,
 	joystick = false,
@@ -65,6 +67,7 @@ local function StartMenu()
 	taunt_cmd.active = true
 	taunt_cmd.x = 0
 	taunt_cmd.y = 0
+	taunt_cmd.page = 0
 	taunt_cmd.selected = -1
 	taunt_cmd.closed = false
 	input.ignoregameinputs = true
@@ -74,6 +77,7 @@ local function StopMenu()
 	taunt_cmd.active = false
 	taunt_cmd.x = 0
 	taunt_cmd.y = 0
+	taunt_cmd.page = 0
 	taunt_cmd.selected = -1
 	taunt_cmd.closed = true
 	input.ignoregameinputs = false
@@ -86,6 +90,8 @@ end
 local scroll_fact = 400
 local wheel_radius = 60*FU
 local wheel_start = 28*FU
+local wheel_spacing = wheel_radius * 14/5
+local wheel_mousecap = wheel_radius * 8/5
 
 rawset(_G, "SOAP_TAUNTS", {})
 rawset(_G, "SoapTaunt_AddTaunt", function(skin, info)
@@ -95,11 +101,11 @@ rawset(_G, "SoapTaunt_AddTaunt", function(skin, info)
 	SOAP_TAUNTS[skin][(#SOAP_TAUNTS[skin] + 1)] = info
 	print(("\x83SOAP\x80: Registered taunt '%s' for skin '%s' in slot %d"):format(info.name, skin, #SOAP_TAUNTS[skin]))
 end)
-rawset(_G, "SoapTaunt_WheelDrawer", function(v,i, x,y, props, selected)
+rawset(_G, "SoapTaunt_WheelDrawer", function(v,i, x,y, props, selected, basescale)
 	local scale = FixedMul(selected and (FU*3/5)/2 or (FU/4), skins[props.skin].highresscale)
 	local patch,flip = v.getSprite2Patch(props.skin, props.spr2, false, props.frame, props.angle, 0)
 	v.drawScaled(x, y + (patch.height * scale)/2,
-		scale, patch, (flip) and V_FLIP or 0,
+		FixedMul(scale,basescale), patch, (flip) and V_FLIP or 0,
 		v.getColormap(nil,nil, selected and "AllYellow" or "AllWhite")
 	)
 end)
@@ -294,6 +300,12 @@ addHook("KeyDown", function(key)
 		elseif CheckNoAbil(true)
 			TauntWarning()
 		end
+	/*
+	elseif kname == "right arrow"
+		taunt_cmd.page = $ + 1
+	elseif kname == "left arrow"
+		taunt_cmd.page = $ - 1
+	*/
 	elseif kname == "escape"
 	and taunt_cmd.active
 		StopMenu()
@@ -474,11 +486,11 @@ local function ClientTauntHandle(p)
 	taunt_cmd.y = $ + worky
 	local ang = R_PointToAngle2(0,0, taunt_cmd.x,taunt_cmd.y)
 	local dist = R_PointToDist2(0,0, taunt_cmd.x,taunt_cmd.y)
-	if (dist > wheel_radius)
-		taunt_cmd.x = P_ReturnThrustX(nil,ang, wheel_radius)
-		taunt_cmd.y = P_ReturnThrustY(nil,ang, wheel_radius)
-		dist = R_PointToDist2(0,0, taunt_cmd.x,taunt_cmd.y)
-	end
+	
+	if taunt_cmd.x < -(wheel_mousecap) then taunt_cmd.x = -(wheel_mousecap); end
+	if taunt_cmd.x > (wheel_mousecap) then taunt_cmd.x = (wheel_mousecap); end
+	if taunt_cmd.y < -(wheel_mousecap) then taunt_cmd.y = -(wheel_mousecap); end
+	if taunt_cmd.y > (wheel_mousecap) then taunt_cmd.y = (wheel_mousecap); end
 	
 	if taunt_cmd.joystick
 		taunt_cmd.x = $ / 4
@@ -509,17 +521,20 @@ local function ClientTauntHandle(p)
 	
 	local oldhover = taunt_cmd.pointing
 	local selected = -1
-	if (dist >= wheel_start)
-		local avail = #SOAP_TAUNTS[me.skin]
+	if (dist >= wheel_start and dist < wheel_radius)
+		local avail = min(#SOAP_TAUNTS[me.skin], TAUNTSPERPAGE)
+		avail = $ - ((TAUNTSPERPAGE - 1) * taunt_cmd.page)
+		
 		local angstep = FixedDiv(360*FU, avail*FU)
 		ang = AngleFixed(InvAngle($ - ANGLE_90))
 		selected = FixedTrunc(FixedDiv(ang, angstep)) / FU
-		taunt_cmd.pointing = selected
+		taunt_cmd.pointing = selected + (TAUNTSPERPAGE * taunt_cmd.page)
+		selected = $ + (TAUNTSPERPAGE * taunt_cmd.page)
 	else
 		taunt_cmd.pointing = -1
 	end
 	if (oldhover ~= taunt_cmd.pointing)
-	and (dist >= wheel_start)
+	and (dist >= wheel_start and dist < wheel_radius)
 		S_StartSound(nil,sfx_menu1,p)
 	end
 	
@@ -528,7 +543,10 @@ local function ClientTauntHandle(p)
 	or (taunt_cmd.joy_fire)
 	and (dist >= wheel_start)
 	or (numberkey > -1)
-		if numberkey > -1 then selected = numberkey; end
+		-- the command will handle any indicies out of range
+		if numberkey > -1
+			selected = numberkey + (TAUNTSPERPAGE * taunt_cmd.page)
+		end
 		COM_BufInsertText(consoleplayer, "_soap_dotaunt "..cmd_sig.." "..selected)
 		StopMenu()
 	end
@@ -592,6 +610,54 @@ local wheel_inner = wheel_start + (wheel_radius - wheel_start)/2
 local wheel_farther = wheel_start + (wheel_radius - wheel_start) --* 5/4
 local fadewait = 0
 local curfade = 0
+
+local function DrawSingleWheel(v,p, scale, xoffset, tauntstart, tauntend)
+	local soap = p.soaptable
+	local hud = soap.hud
+	local taunt = taunt_cmd
+	local x = 160*FU + xoffset
+	
+	v.drawScaled(x,100*FU, FixedMul(FU/2, scale), v.cachePatch("STAUNT_BG"), V_30TRANS)
+	local dist = R_PointToDist2(0,0, taunt.x,taunt.y)
+	local TAUNTS = SOAP_TAUNTS[skins[p.skin].name]
+	
+	local angstep = FixedDiv(360*FU, tauntend*FU)
+	local wheel_inner = FixedMul(wheel_inner, scale)
+	local wheel_farther = FixedMul(wheel_farther, scale)
+	for i = tauntstart, tauntstart + (tauntend - 1)
+		local ang = ANGLE_MAX - FixedAngle(angstep * i)
+		v.drawScaled(x,100*FU, FixedMul(FU/2, scale),
+			v.getSpritePatch(SPR_SOAP_GFX, 25, 0, ang),
+			0
+		)
+		ang = ($ - ANGLE_90) + ANGLE_180 - FixedAngle(angstep / 2)
+		local selected = (dist >= wheel_start) and (taunt.pointing == i)
+		
+		if (TAUNTS[i + 1].drawer ~= nil)
+			TAUNTS[i + 1].drawer(v, i,
+				x + P_ReturnThrustX(nil, ang, wheel_inner),
+				100*FU - P_ReturnThrustY(nil, ang, wheel_inner),
+				selected, scale
+			)
+		else
+			v.drawScaled(
+				x + P_ReturnThrustX(nil, ang, wheel_inner),
+				100*FU - P_ReturnThrustY(nil, ang, wheel_inner),
+				FixedMul(FU/4, scale),
+				v.cachePatch("MISSING"),
+				0
+			)
+		end
+		if not taunt_cmd.joystick
+			v.drawString(
+				x + P_ReturnThrustX(nil, ang, wheel_farther),
+				100*FU - P_ReturnThrustY(nil, ang, wheel_farther) - 4*FU,
+				(i + 1) - tauntstart, selected and V_YELLOWMAP or 0, "small-thin-fixed-center"
+			)
+		end
+	end
+end
+
 addHook("HUD",function(v,p)
 	-- bruh
 	p = consoleplayer
@@ -632,42 +698,17 @@ addHook("HUD",function(v,p)
 		v.fadeScreen(0xFF00, curfade)
 	end
 	
-	v.drawScaled(160*FU,100*FU, FU/2, v.cachePatch("STAUNT_BG"), V_30TRANS)
 	local dist = R_PointToDist2(0,0, taunt.x,taunt.y)
 	local TAUNTS = SOAP_TAUNTS[skins[p.skin].name]
-	local avail = #TAUNTS
-	local angstep = FixedDiv(360*FU, avail*FU)
-	for i = 0, avail - 1
-		local ang = ANGLE_MAX - FixedAngle(angstep * i)
-		v.drawScaled(160*FU,100*FU, FU/2,
-			v.getSpritePatch(SPR_SOAP_GFX, 25, 0, ang),
-			0
-		)
-		ang = ($ - ANGLE_90) + ANGLE_180 - FixedAngle(angstep / 2)
-		local selected = (dist >= wheel_start) and (taunt.pointing == i)
+	local work = #TAUNTS
+	local startwork = 0
+	local xoff = -(wheel_spacing * taunt.page)
+	while (work > 0)
+		DrawSingleWheel(v,p, (startwork/TAUNTSPERPAGE == taunt.page) and FU or FU * 4/5, xoff, startwork, min(TAUNTSPERPAGE, work))
 		
-		if (TAUNTS[i + 1].drawer ~= nil)
-			TAUNTS[i + 1].drawer(v, i,
-				160*FU + P_ReturnThrustX(nil, ang, wheel_inner),
-				100*FU - P_ReturnThrustY(nil, ang, wheel_inner),
-				selected
-			)
-		else
-			v.drawScaled(
-				160*FU + P_ReturnThrustX(nil, ang, wheel_inner),
-				100*FU - P_ReturnThrustY(nil, ang, wheel_inner),
-				FU/4,
-				v.cachePatch("MISSING"),
-				0
-			)
-		end
-		if not taunt_cmd.joystick
-			v.drawString(
-				160*FU + P_ReturnThrustX(nil, ang, wheel_farther),
-				100*FU - P_ReturnThrustY(nil, ang, wheel_farther) - 4*FU,
-				(i + 1), selected and V_YELLOWMAP or 0, "small-thin-fixed-center"
-			)
-		end
+		work = $ - TAUNTSPERPAGE
+		startwork = $ + TAUNTSPERPAGE
+		xoff = $ + wheel_spacing
 	end
 	
 	v.dointerp(1000)

@@ -92,13 +92,13 @@ tauntinfo.postthink = function(p, me, soap, taunt)
 	
 	p.drawangle = angle + ANGLE_180
 end
-tauntinfo.drawer = function(v,i, x,y, selected)
+tauntinfo.drawer = function(v,i, x,y, selected, scale)
 	local istakis = skins[consoleplayer.skin].name == TAKIS_SKIN
 	SoapTaunt_WheelDrawer(v,i, x,y, {
 		skin = skins[consoleplayer.skin].name,
 		spr2 = istakis and SPR2_WAIT or SPR2_APOS,
 		frame = istakis and D or A, angle = 1
-	}, selected)
+	}, selected, scale)
 end
 
 SoapTaunt_AddTaunt(SOAP_SKIN, tauntinfo)

@@ -24,12 +24,12 @@ tauntinfo.postthink = function(p, me, soap, taunt)
 	end
 	p.drawangle = angle + angoff
 end
-tauntinfo.drawer = function(v,i, x,y, selected)
+tauntinfo.drawer = function(v,i, x,y, selected, scale)
 	SoapTaunt_WheelDrawer(v,i, x,y, {
 		skin = skins[consoleplayer.skin].name,
 		spr2 = SPR2_FLEX,
 		frame = A, angle = 1
-	}, selected)
+	}, selected, scale)
 end
 
 SoapTaunt_AddTaunt(SOAP_SKIN, tauntinfo)

@@ -65,12 +65,12 @@ tauntinfo.postthink = function(p, me, soap, taunt)
 	if me.tempangle == nil then return end
 	p.drawangle = me.tempangle
 end
-tauntinfo.drawer = function(v,i, x,y, selected)
+tauntinfo.drawer = function(v,i, x,y, selected, scale)
 	SoapTaunt_WheelDrawer(v,i, x,y, {
 		skin = skins[consoleplayer.skin].name,
 		spr2 = SPR2_MSC4,
 		frame = A, angle = 2
-	}, selected)
+	}, selected, scale)
 end
 
 SoapTaunt_AddTaunt(SOAP_SKIN, tauntinfo)

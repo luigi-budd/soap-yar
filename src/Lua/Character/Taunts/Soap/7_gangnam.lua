@@ -99,12 +99,12 @@ tauntinfo.think = function(p, me, soap, taunt)
 		me.temptics = $ + 1
 	end
 end
-tauntinfo.drawer = function(v,i, x,y, selected)
+tauntinfo.drawer = function(v,i, x,y, selected, scale)
 	SoapTaunt_WheelDrawer(v,i, x,y, {
 		skin = skins[consoleplayer.skin].name,
 		spr2 = SPR2_CLNG,
 		frame = (skins[consoleplayer.skin].name == SOAP_SKIN) and C or A, angle = 0
-	}, selected)
+	}, selected, scale)
 end
 tauntinfo.canceled = function(p, me, soap, taunt)
 	S_StopSoundByID(me, sfx_sp_em3)

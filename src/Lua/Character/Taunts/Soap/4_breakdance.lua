@@ -30,12 +30,12 @@ tauntinfo.think = function(p, me, soap, taunt)
 		soap.noability = SNOABIL_ALL &~SNOABIL_BREAKDANCE
 	end
 end
-tauntinfo.drawer = function(v,i, x,y, selected)
+tauntinfo.drawer = function(v,i, x,y, selected, scale)
 	SoapTaunt_WheelDrawer(v,i, x,y, {
 		skin = skins[consoleplayer.skin].name,
 		spr2 = SPR2_BRDA,
 		frame = F, angle = 2
-	}, selected)
+	}, selected, scale)
 end
 
 SoapTaunt_AddTaunt(SOAP_SKIN, tauntinfo)

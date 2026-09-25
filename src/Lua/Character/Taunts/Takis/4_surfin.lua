@@ -45,12 +45,12 @@ tauntinfo.think = function(p, me, soap, taunt)
 		soap.breakdance = $ + 1
 	end
 end
-tauntinfo.drawer = function(v,i, x,y, selected)
+tauntinfo.drawer = function(v,i, x,y, selected, scale)
 	SoapTaunt_WheelDrawer(v,i, x,y, {
 		skin = skins[consoleplayer.skin].name,
 		spr2 = SPR2_BRDA,
 		frame = A, angle = 0
-	}, selected)
+	}, selected, scale)
 end
 
 SoapTaunt_AddTaunt(TAKIS_SKIN, tauntinfo)
