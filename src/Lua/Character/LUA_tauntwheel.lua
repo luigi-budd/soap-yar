@@ -642,7 +642,6 @@ local function ClientTauntHandle(p)
 	
 	if ((mousedown and not taunt_cmd.mousewasdown and (dist >= wheel_start)) or (numberkey > -1))
 	and not eatinput
-		print("doing taunt", eatinput)
 		-- the command will handle any indicies out of range
 		if numberkey > -1
 			selected = numberkey + (TAUNTSPERPAGE * taunt_cmd.page)
@@ -781,7 +780,7 @@ addHook("HUD",function(v,p)
 		v.draw(x, 140, v.cachePatch("STAUNT_CNTBG"), V_SNAPTOBOTTOM|V_30TRANS)
 		v.draw(x - 42, 139, v.cachePatch("STAUNT_ERR"), V_SNAPTOBOTTOM, v.getStringColormap(V_REDMAP))
 		v.drawString(x + 6, 140,
-			"Can't use taunts.", V_ALLOWLOWERCASE|V_SNAPTOBOTTOM|cmap,
+			"Can't use emotes.", V_ALLOWLOWERCASE|V_SNAPTOBOTTOM|cmap,
 			"thin-center"
 		)
 		
@@ -792,7 +791,7 @@ addHook("HUD",function(v,p)
 	
 	if fadewait
 		fadewait = $ - 1
-	elseif curfade < 3
+	elseif curfade < 6
 		curfade = $ + 1
 	end
 	if curfade
@@ -874,15 +873,6 @@ addHook("HUD",function(v,p)
 		end
 	end
 	
-	v.dointerp(2000)
-	v.drawScaled(
-		(160*FU) + taunt.x, --P_ReturnThrustX(nil,taunt.angle<<16, radius),
-		(100*FU) - taunt.y, --P_ReturnThrustY(nil,taunt.aim<<16, radius),
-		FU/4, v.cachePatch(taunt.selecting and (taunt_cmd.joystick and "STAUNT_GPOINT" or "ML_RBLX_POINT") or (taunt_cmd.joystick and "STAUNT_GCUR" or "ML_RBLX_CURS")),
-		0
-	)
-	v.dointerp(false)
-	
 	if taunt.pointing ~= -1
 		local taunt_t = TAUNTS[taunt.pointing + 1]
 		if taunt_t
@@ -893,9 +883,9 @@ addHook("HUD",function(v,p)
 		end
 	end
 	
-	v.drawString(160*FU, 100*FU - (wheel_radius + 10*FU),
-		"Pick a taunt!", V_ALLOWLOWERCASE,
-		"thin-fixed-center"
+	v.drawString(160*FU, 100*FU - (wheel_radius + 12*FU),
+		"Emotes", V_ALLOWLOWERCASE,
+		"fixed-center"
 	)
 	v.drawString(160*FU, 100*FU + (wheel_radius + 20*FU),
 		"[FIRE] - Select", V_ALLOWLOWERCASE,
@@ -905,4 +895,13 @@ addHook("HUD",function(v,p)
 		"[SPIN] - Cancel", V_ALLOWLOWERCASE,
 		"thin-fixed-center"
 	)
+
+	v.dointerp(2000)
+	v.drawScaled(
+		(160*FU) + taunt.x, --P_ReturnThrustX(nil,taunt.angle<<16, radius),
+		(100*FU) - taunt.y, --P_ReturnThrustY(nil,taunt.aim<<16, radius),
+		FU/4, v.cachePatch(taunt.selecting and (taunt_cmd.joystick and "STAUNT_GPOINT" or "ML_RBLX_POINT") or (taunt_cmd.joystick and "STAUNT_GCUR" or "ML_RBLX_CURS")),
+		0
+	)
+	v.dointerp(false)
 end,"game")
