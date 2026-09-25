@@ -44,17 +44,21 @@ local gpbuttonnames = {
 
 local TAUNTSPERPAGE = 6
 local TAUNT_ANIM = TR
+local TAUNT_PAGEANIM = TR / 5
 local taunt_cmd = {
 	active = false,
 	closed = false, -- keeps ignoregameinputs on for a tic
 	x = 0,
 	y = 0,
 	page = 0,
+	prevpage = 0,
+	pageanim = 0,
 	pointing = -1,
 	buttons = 0,
 	joystick = false,
 	joy_spin = false,
 	joy_fire = false,
+	mousewasdown = false,
 	
 	forward = 0,
 	side = 0,
@@ -68,8 +72,11 @@ local function StartMenu()
 	taunt_cmd.x = 0
 	taunt_cmd.y = 0
 	taunt_cmd.page = 0
+	taunt_cmd.prevpage = 0
+	taunt_cmd.pageanim = 0
 	taunt_cmd.selected = -1
 	taunt_cmd.closed = false
+	taunt_cmd.mousewasdown = false
 	input.ignoregameinputs = true
 end
 local function StopMenu()
@@ -78,8 +85,11 @@ local function StopMenu()
 	taunt_cmd.x = 0
 	taunt_cmd.y = 0
 	taunt_cmd.page = 0
+	taunt_cmd.prevpage = 0
+	taunt_cmd.pageanim = 0
 	taunt_cmd.selected = -1
 	taunt_cmd.closed = true
+	taunt_cmd.mousewasdown = false
 	input.ignoregameinputs = false
 end
 local function TauntWarning()
@@ -91,7 +101,10 @@ local scroll_fact = 400
 local wheel_radius = 60*FU
 local wheel_start = 28*FU
 local wheel_spacing = wheel_radius * 14/5
-local wheel_mousecap = wheel_radius * 8/5
+local wheel_mousecap = wheel_radius * 7/5
+local wheel_pagebut_wid = 8*FU
+local wheel_pagebut_hei = 10*FU
+local wheel_pagebut_center = wheel_mousecap - (wheel_pagebut_wid)
 
 rawset(_G, "SOAP_TAUNTS", {})
 rawset(_G, "SoapTaunt_AddTaunt", function(skin, info)
@@ -300,12 +313,6 @@ addHook("KeyDown", function(key)
 		elseif CheckNoAbil(true)
 			TauntWarning()
 		end
-	/*
-	elseif kname == "right arrow"
-		taunt_cmd.page = $ + 1
-	elseif kname == "left arrow"
-		taunt_cmd.page = $ - 1
-	*/
 	elseif kname == "escape"
 	and taunt_cmd.active
 		StopMenu()
@@ -374,6 +381,9 @@ end)
 local TICCMD_RECIEVED = 1
 local KEY_JOY1 = KEY_JOY1 or ((KEY_MOUSE1 or 256) + (MOUSEBUTTONS or 8))
 local gp_waskeydown = false
+local leftbumpertime = 0
+local rightbumpertime = 0
+local eatgpinputs = false
 addHook("PlayerCmd",function(p,cmd)
 	leftjoystick.x = input.joyAxis(JA_STRAFE)
 	leftjoystick.y = input.joyAxis(JA_MOVE)
@@ -395,10 +405,14 @@ addHook("PlayerCmd",function(p,cmd)
 			StopMenu()
 		elseif not (menuactive or p.spectator) and not CheckNoAbil(true)
 			StartMenu()
+			eatgpinputs = true
 			taunt_cmd.joystick = true
 		elseif CheckNoAbil(true)
 			TauntWarning()
 		end
+	end
+	if not gamekeydown[gamepad_tb]
+		eatgpinputs = false
 	end
 	gp_waskeydown = gamekeydown[gamepad_tb]
 	
@@ -410,7 +424,11 @@ addHook("PlayerCmd",function(p,cmd)
 		end
 	end
 	
-	if not (taunt_cmd.active or taunt_cmd.closed) then return end
+	if not (taunt_cmd.active or taunt_cmd.closed)
+		leftbumpertime = 0
+		rightbumpertime = 0
+		return
+	end
 	
 	-- EAT SHIT AND DIE FUCK YOU GAME
 	-- im gonna cry
@@ -430,6 +448,21 @@ addHook("PlayerCmd",function(p,cmd)
 		or ((fire2 > KEY_JOY1) and gamekeydown[fire2])
 		or (fireaxis > 0)
 			taunt_cmd.joy_fire = true
+		end
+		
+		-- im gonna assume this works cause my pro controller
+		-- doesnt send these buttons correctly
+		if not eatgpinputs
+			if gamekeydown[GPAD_LBUMPER]
+				leftbumpertime = $ + 1
+			else
+				leftbumpertime = 0
+			end
+			if gamekeydown[GPAD_RBUMPER]
+				rightbumpertime = $ + 1
+			else
+				rightbumpertime = 0
+			end
 		end
 	end
 	
@@ -476,6 +509,10 @@ local function ClientTauntHandle(p)
 		fakespinlockout = true
 	end
 	
+	local lastpointing = taunt_cmd.pointing
+	local lastselecting = taunt_cmd.selecting
+	taunt_cmd.selecting = false
+	
 	-- negative angleturn is rightwards
 	-- positive aiming is upwards
 	local workx = -(mouse.dx*8) * scroll_fact
@@ -491,6 +528,70 @@ local function ClientTauntHandle(p)
 	if taunt_cmd.x > (wheel_mousecap) then taunt_cmd.x = (wheel_mousecap); end
 	if taunt_cmd.y < -(wheel_mousecap) then taunt_cmd.y = -(wheel_mousecap); end
 	if taunt_cmd.y > (wheel_mousecap) then taunt_cmd.y = (wheel_mousecap); end
+	
+	local mousedown = (taunt_cmd.buttons & (BT_ATTACK)) or (mouse.buttons & MB_BUTTON1) or (taunt_cmd.joy_fire)
+	local eatinput = false
+	
+	-- page buttons
+	if taunt_cmd.pageanim < 0
+		taunt_cmd.pageanim = $ + 1
+	elseif taunt_cmd.pageanim > 0
+		taunt_cmd.pageanim = $ - 1
+	end
+	
+	local TAUNTS = SOAP_TAUNTS[me.skin]
+	local NUMTAUNTS = #TAUNTS
+	if abs(taunt_cmd.x) >= wheel_pagebut_center - wheel_pagebut_wid
+	and abs(taunt_cmd.y) <= wheel_pagebut_hei
+	and NUMTAUNTS > TAUNTSPERPAGE
+		local canscroll = true
+		local side = sign(taunt_cmd.x)
+		if side == -1 and taunt_cmd.page <= 0 then canscroll = false; end
+		if side == 1 and taunt_cmd.page >= (NUMTAUNTS - 1)/TAUNTSPERPAGE then canscroll = false; end
+		
+		if (not taunt_cmd.pageanim) and canscroll
+			taunt_cmd.selecting = true
+			
+			if mousedown and taunt_cmd.mousewasdown
+				taunt_cmd.prevpage = taunt_cmd.page
+				taunt_cmd.page = $ + sign(taunt_cmd.x)
+				taunt_cmd.pageanim = TAUNT_PAGEANIM * sign(taunt_cmd.x)
+				S_StartSound(nil,sfx_menu1,p)
+			end
+			-- maybe my logic is wrong, but we need to constantly
+			-- eat the input so that pressing the buttons wont close the menu
+			eatinput = true
+		end
+		
+		if (taunt_cmd.selecting and not lastselecting)
+		and (lastpointing == -1)
+			S_StartSound(nil,sfx_menu1,p)
+		end
+	end
+	-- gamepad support
+	if (NUMTAUNTS > TAUNTSPERPAGE)
+	and taunt_cmd.joystick
+		local change = 0
+		if leftbumpertime == 1
+			change = -1
+		end
+		if rightbumpertime == 1
+			change = 1
+		end
+		
+		if change ~= 0
+			taunt_cmd.prevpage = taunt_cmd.page
+			taunt_cmd.page = $ + change
+			taunt_cmd.pageanim = TAUNT_PAGEANIM * change
+			S_StartSound(nil,sfx_menu1,p)
+		end
+	end
+	
+	if taunt_cmd.page > (NUMTAUNTS - 1)/TAUNTSPERPAGE
+		taunt_cmd.prevpage = taunt_cmd.page
+		taunt_cmd.page = (NUMTAUNTS - 1)/TAUNTSPERPAGE
+		taunt_cmd.pageanim = -TAUNT_PAGEANIM
+	end
 	
 	if taunt_cmd.joystick
 		taunt_cmd.x = $ / 4
@@ -530,6 +631,7 @@ local function ClientTauntHandle(p)
 		selected = FixedTrunc(FixedDiv(ang, angstep)) / FU
 		taunt_cmd.pointing = selected + (TAUNTSPERPAGE * taunt_cmd.page)
 		selected = $ + (TAUNTSPERPAGE * taunt_cmd.page)
+		taunt_cmd.selecting = true
 	else
 		taunt_cmd.pointing = -1
 	end
@@ -538,11 +640,9 @@ local function ClientTauntHandle(p)
 		S_StartSound(nil,sfx_menu1,p)
 	end
 	
-	if (taunt_cmd.buttons & (BT_ATTACK))
-	or (mouse.buttons & MB_BUTTON1)
-	or (taunt_cmd.joy_fire)
-	and (dist >= wheel_start)
-	or (numberkey > -1)
+	if ((mousedown and not taunt_cmd.mousewasdown and (dist >= wheel_start)) or (numberkey > -1))
+	and not eatinput
+		print("doing taunt", eatinput)
 		-- the command will handle any indicies out of range
 		if numberkey > -1
 			selected = numberkey + (TAUNTSPERPAGE * taunt_cmd.page)
@@ -551,6 +651,7 @@ local function ClientTauntHandle(p)
 		StopMenu()
 	end
 	numberkey = -1
+	taunt_cmd.mousewasdown = mousedown
 end
 
 rawset(_G, "Soap_TauntWheelThink", function(p)
@@ -691,36 +792,98 @@ addHook("HUD",function(v,p)
 	
 	if fadewait
 		fadewait = $ - 1
-	elseif curfade < 24
+	elseif curfade < 3
 		curfade = $ + 1
 	end
 	if curfade
-		v.fadeScreen(0xFF00, curfade)
+		v.fadeScreen(0xFA00, curfade)
 	end
 	
 	local dist = R_PointToDist2(0,0, taunt.x,taunt.y)
 	local TAUNTS = SOAP_TAUNTS[skins[p.skin].name]
-	local work = #TAUNTS
+	local NUMTAUNTS = #TAUNTS
+	local work = NUMTAUNTS
 	local startwork = 0
-	local xoff = -(wheel_spacing * taunt.page)
+	
+	local xoff = 0
+	local thisscale = FU
+	local nextscale = FU / 2
+	local currentpage = taunt.page
+	local nextpage = -1
+	if taunt.pageanim
+		currentpage = taunt.prevpage
+		nextpage = taunt.page
+		
+		local animfrac = FU - FixedDiv(abs(taunt_cmd.pageanim)*FU, TAUNT_PAGEANIM*FU)
+		xoff = ease.inoutexpo(animfrac,
+			-(wheel_spacing * taunt.prevpage),
+			-(wheel_spacing * taunt.page)
+		)
+		thisscale = ease.inoutexpo(animfrac,
+			$, nextscale
+		)
+		nextscale = ease.inoutexpo(animfrac,
+			$, FU
+		)
+	else
+		xoff = -(wheel_spacing * taunt.page)
+	end
+	
 	while (work > 0)
-		DrawSingleWheel(v,p, (startwork/TAUNTSPERPAGE == taunt.page) and FU or FU * 4/5, xoff, startwork, min(TAUNTSPERPAGE, work))
+		local scale = 0
+		if (startwork/TAUNTSPERPAGE == currentpage)
+			scale = thisscale
+		elseif (taunt.pageanim and (startwork/TAUNTSPERPAGE == nextpage))
+			scale = nextscale
+		else
+			scale = nextscale
+		end
+		
+		if (taunt.pageanim)
+			v.dointerp(1000 + startwork)
+		end
+		DrawSingleWheel(v,p, scale, xoff, startwork, min(TAUNTSPERPAGE, work))
 		
 		work = $ - TAUNTSPERPAGE
 		startwork = $ + TAUNTSPERPAGE
 		xoff = $ + wheel_spacing
 	end
 	
-	v.dointerp(1000)
+	if NUMTAUNTS > TAUNTSPERPAGE and not taunt.pageanim
+		for i = -1, 1, 2
+			if i == -1 and taunt.page <= 0 then continue end
+			if i == 1 and taunt.page >= (NUMTAUNTS - 1)/TAUNTSPERPAGE then continue end
+			
+			local x = 160*FU + (wheel_pagebut_center*i)
+			v.drawScaled(x, 100*FU, FU, v.cachePatch("STAUNT_PBUT"), V_30TRANS)
+			v.drawString(
+				x + (i == -1 and FU or 0),
+				100*FU - 4*FU,
+				(i == -1) and "\28" or "\29",
+				-- this is a hacky way to determine this lol
+				(taunt.selecting and taunt.pointing == -1 and sign(taunt.x) == i) and V_YELLOWMAP or 0,
+				"fixed-center"
+			)
+			if taunt.joystick
+			v.drawString(x,
+				100*FU - 4*FU + wheel_pagebut_hei,
+				(i == -1) and "LB" or "RB", 0, "thin-fixed-center"
+			)
+			
+			end
+		end
+	end
+	
+	v.dointerp(2000)
 	v.drawScaled(
 		(160*FU) + taunt.x, --P_ReturnThrustX(nil,taunt.angle<<16, radius),
 		(100*FU) - taunt.y, --P_ReturnThrustY(nil,taunt.aim<<16, radius),
-		FU/4, v.cachePatch((dist >= wheel_start) and (taunt_cmd.joystick and "STAUNT_GPOINT" or "ML_RBLX_POINT") or (taunt_cmd.joystick and "STAUNT_GCUR" or "ML_RBLX_CURS")),
+		FU/4, v.cachePatch(taunt.selecting and (taunt_cmd.joystick and "STAUNT_GPOINT" or "ML_RBLX_POINT") or (taunt_cmd.joystick and "STAUNT_GCUR" or "ML_RBLX_CURS")),
 		0
 	)
 	v.dointerp(false)
 	
-	if (dist >= wheel_start)
+	if taunt.pointing ~= -1
 		local taunt_t = TAUNTS[taunt.pointing + 1]
 		if taunt_t
 			v.drawString(160*FU, 100*FU + (wheel_radius + 5*FU),
