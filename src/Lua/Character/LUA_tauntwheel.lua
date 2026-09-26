@@ -108,6 +108,7 @@ local wheel_pagebut_center = wheel_mousecap - (wheel_pagebut_wid)
 
 rawset(_G, "SOAP_TAUNTS", {})
 rawset(_G, "SoapTaunt_AddTaunt", function(skin, info)
+	if info == nil then return end
 	if SOAP_TAUNTS[skin] == nil
 		SOAP_TAUNTS[skin] = {}
 	end
@@ -204,6 +205,7 @@ local tauntstoadd = {
 	"Soap/5_sixseven.lua",
 	"Soap/6_punch.lua",
 	"Soap/7_gangnam.lua",
+	"Soap/8_armwrestle.lua",
 
 	"Takis/1_smug.lua",
 	"Takis/2_omg.lua",
@@ -558,15 +560,18 @@ local function ClientTauntHandle(p)
 				taunt_cmd.pageanim = TAUNT_PAGEANIM * sign(taunt_cmd.x)
 				S_StartSound(nil,sfx_menu1,p)
 			end
-			-- maybe my logic is wrong, but we need to constantly
-			-- eat the input so that pressing the buttons wont close the menu
-			eatinput = true
 		end
 		
 		if (taunt_cmd.selecting and not lastselecting)
 		and (lastpointing == -1)
 			S_StartSound(nil,sfx_menu1,p)
 		end
+		
+		-- maybe my logic is wrong, but we need to constantly
+		-- eat the input so that pressing the buttons wont close the menu
+		-- this is also being constantly set while youre in bounds
+		-- so the menu wont close when youre flipping between pages
+		eatinput = true
 	end
 	-- gamepad support
 	if (NUMTAUNTS > TAUNTSPERPAGE)
@@ -623,15 +628,15 @@ local function ClientTauntHandle(p)
 	local oldhover = taunt_cmd.pointing
 	local selected = -1
 	if (dist >= wheel_start and dist < wheel_radius)
-		local avail = min(#SOAP_TAUNTS[me.skin], TAUNTSPERPAGE)
-		avail = $ - ((TAUNTSPERPAGE - 1) * taunt_cmd.page)
-		
-		local angstep = FixedDiv(360*FU, avail*FU)
-		ang = AngleFixed(InvAngle($ - ANGLE_90))
-		selected = FixedTrunc(FixedDiv(ang, angstep)) / FU
-		taunt_cmd.pointing = selected + (TAUNTSPERPAGE * taunt_cmd.page)
-		selected = $ + (TAUNTSPERPAGE * taunt_cmd.page)
-		taunt_cmd.selecting = true
+		local avail = min(#SOAP_TAUNTS[me.skin] - ((TAUNTSPERPAGE) * taunt_cmd.page), TAUNTSPERPAGE)
+		if avail > 0
+			local angstep = FixedDiv(360*FU, avail*FU)
+			ang = AngleFixed(InvAngle($ - ANGLE_90))
+			selected = FixedTrunc(FixedDiv(ang, angstep)) / FU
+			taunt_cmd.pointing = selected + (TAUNTSPERPAGE * taunt_cmd.page)
+			selected = $ + (TAUNTSPERPAGE * taunt_cmd.page)
+			taunt_cmd.selecting = true
+		end
 	else
 		taunt_cmd.pointing = -1
 	end
@@ -835,11 +840,11 @@ addHook("HUD",function(v,p)
 		elseif (taunt.pageanim and (startwork/TAUNTSPERPAGE == nextpage))
 			scale = nextscale
 		else
-			scale = nextscale
+			scale = FU / 2
 		end
 		
 		if (taunt.pageanim)
-			v.dointerp(1000 + startwork)
+			v.dointerp(1000)
 		end
 		DrawSingleWheel(v,p, scale, xoff, startwork, min(TAUNTSPERPAGE, work))
 		
