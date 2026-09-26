@@ -163,3 +163,8 @@ sfxinfo[sfx_sp_rcg].caption = "Recharge"
 
 SafeFreeslot("sfx_sp_cnt")
 sfxinfo[sfx_sp_cnt].caption = "/"
+
+SafeFreeslot("sfx_sp_awr")
+sfxinfo[sfx_sp_awr].caption = "Ready..?"
+SafeFreeslot("sfx_sp_awg")
+sfxinfo[sfx_sp_awg].caption = "GO!"
