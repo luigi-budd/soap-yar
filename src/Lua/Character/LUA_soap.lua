@@ -105,7 +105,7 @@ local function playknockoutsfx(p,me,soap)
 	if R_PointToDist(me.x,me.y) >= 1024*FU * 4
 	and P_RandomChance(FU*3/4)
 	and (p ~= displayplayer)
-		sound = P_RandomRange(sfx_sp_ow2, sfx_sp_ow3)
+		sound = P_RandomRange(sfx_sp_ow2, sfx_sp_ow4)
 	end
 	if Soap_IsCompGamemode()
 		chance = P_RandomChance(FU/10)
