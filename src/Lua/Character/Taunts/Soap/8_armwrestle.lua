@@ -36,6 +36,8 @@ tauntinfo.run = function(p, me, soap, taunt)
 		partner = nil,
 		progress = 0, -- [0,100]
 		activity = 0,
+		inputlist = {},
+		lastjumptic = -1,
 	}
 	
 	soap.stasistic = max($, 2)
@@ -216,6 +218,7 @@ local function spawn_sweat_mobjs(p,me,soap)
 	return sweat
 end
 
+local increase = tofixed("1.33")
 local function WrestlePhase(p,me,soap,taunt,arms)
 	if not CheckPartner(p,me,soap,taunt,arms)
 		ResetTaunt(p)
@@ -247,7 +250,6 @@ local function WrestlePhase(p,me,soap,taunt,arms)
 	me.angle = me.tempangle + ANGLE_90
 	p.camerascale = P_Lerp(FU/2, $, FU * 3/2)
 	
-	local increase = FU * 5/2
 	if arms.activity
 		arms.activity = $ - 1
 	else
@@ -256,24 +258,51 @@ local function WrestlePhase(p,me,soap,taunt,arms)
 	if arms.lockout then arms.lockout = $ - 1; end
 	
 	if soap.jump == 1 and not arms.lockout
-		arms.progress = $ + increase
+		if arms.lastjumptic ~= -1
+			table.insert(arms.inputlist, leveltime - arms.lastjumptic)
+			if #arms.inputlist > 7
+				table.remove(arms.inputlist, 1)
+			end
+		end
+		
+		local average = FU
+		local work = 0
+		local counted = 0
+		for i = 1, #arms.inputlist
+			counted = $ + 1
+			work = $ + arms.inputlist[i]
+		end
+		for i = 1, #arms2.inputlist
+			counted = $ + 1
+			work = $ + arms2.inputlist[i]
+		end
+		if counted ~= 0
+			counted = $ * 3
+			average = FixedDiv(work*FU, counted*FU)
+		end
+		average = clamp(FU, $, 2*FU)
+		
+		local prog = FixedDiv(arms.progress, 100*FU)
+		arms.progress = $ + FixedMul(ease.outexpo(prog, increase * 3/2, increase), average)
 		arms.lockout = 1
 		
 		Soap_SquashMacro(p, {
 			ease_func = "inexpo",
 			ease_time = 3,
-			x = FU * 1/5,
-			y = FU/6,
+			x = FU/7,
+			y = FU/8,
 			singular = true
 		})
 		
 		if arms.progress < arms2.progress
-			local diff = (arms2.progress - arms.progress) / max(arms.activity, 1)
-			arms2.progress = max($ - diff, 0)
+			local diff = (arms2.progress - arms.progress) / 12
+			arms2.progress = max($ - min(diff, increase*3/2), 0)
 		end
 		local activ = 1 + (100*FU - arms.progress) / FU / 12
 		arms.activity = max($, max(activ, 3))
-		arms2.activity = $ + 2
+		arms2.activity = $ * 4/5
+		
+		arms.lastjumptic = leveltime
 	end
 	if (arms2.progress >= 70*FU)
 		if leveltime % 2 == 0
@@ -453,6 +482,9 @@ addHook("HUD",function(v,p, cam)
 			160 - v.stringWidth(mystr, 0, "thin")/2,
 			80, newstr, V_ALLOWLOWERCASE|alpha, "thin"
 		)
+		v.drawString(160, 90,
+			"Hold C1 to tap out", V_ALLOWLOWERCASE|V_GRAYMAP|alpha, "thin-center"
+		)
 		
 		readytime = $ - 1
 	end
@@ -520,6 +552,7 @@ addHook("HUD",function(v,p, cam)
 	if not (play and play.valid) then return end
 	local omo = play.mo
 	local arms2 = omo.soap_arms
+	if not arms2 then return end
 	local w2s = K_GetScreenCoords(v,p,cam, {
 			x = me.x/2 + omo.x/2,
 			y = me.y/2 + omo.y/2,
