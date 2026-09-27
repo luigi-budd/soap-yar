@@ -168,3 +168,5 @@ SafeFreeslot("sfx_sp_awr")
 sfxinfo[sfx_sp_awr].caption = "Ready..?"
 SafeFreeslot("sfx_sp_awg")
 sfxinfo[sfx_sp_awg].caption = "GO!"
+SafeFreeslot("sfx_sp_awb")
+sfxinfo[sfx_sp_awb].caption = "Arm wrestling started!"

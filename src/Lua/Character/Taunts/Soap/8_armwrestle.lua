@@ -4,6 +4,43 @@ end
 local function dust_noviewmobj(dust)
 	dust.dontdrawforviewmobj = me
 end
+local function sixseven_callback(spark, me)
+	spark.tics = (me.soap_supertemp) and TR or 10
+	spark.frame = A
+	spark.sprite = SPR_SOAP_GFX
+	spark.frame = 34|FF_PAPERSPRITE|FF_ADD
+	spark.momz = 0
+	spark.renderflags = $|RF_NOCOLORMAPS|RF_FULLBRIGHT|(P_RandomChance(FU/2) and RF_HORIZONTALFLIP or 0)
+	spark.type = MT_SOAP_WALLBUMP
+	local frac = FU
+	local speed = 14
+	spark.alpha = min(frac*8/6, FU)
+	if (me.soap_supertemp)
+		frac = FU
+		speed = 12
+		spark.sixseveneffect = true
+		if (me.soap_poundvfx)
+			spark.sixseveneffect = nil
+			spark.tics = 20
+			speed = 30
+			
+			spark.scale = FU * 5
+			spark.spritexscale = $ / 5
+			spark.fusesquish = 10
+			spark.xstretch = FU/6
+			spark.alpha = FU / 5
+		end
+	else
+		spark.fusesquish = 5
+		spark.scale = frac*2
+		spark.spritexscale = $ / 2
+		spark.movefactor = FU * 89/100
+	end
+	spark.fuse = spark.tics
+	P_ThrustEvenIn2D(spark, spark.angle - ANGLE_90, speed*frac)
+	spark.momx = $ + me.momx
+	spark.momy = $ + me.momy
+end
 local armacolors = {
 	SKINCOLOR_KETCHUP, SKINCOLOR_PEPPER, SKINCOLOR_CRIMSON, SKINCOLOR_GARNET, SKINCOLOR_VOLCANIC
 }
@@ -38,6 +75,7 @@ tauntinfo.run = function(p, me, soap, taunt)
 		activity = 0,
 		inputlist = {},
 		lastjumptic = -1,
+		viewmobj = nil
 	}
 	
 	soap.stasistic = max($, 2)
@@ -46,6 +84,7 @@ tauntinfo.run = function(p, me, soap, taunt)
 	me.momx,me.momy = p.cmomx,p.cmomy
 end
 
+local SETFOV = false
 local function ResetTaunt(p)
 	if not (p and p.valid) then return end
 	local me = p.mo
@@ -53,7 +92,6 @@ local function ResetTaunt(p)
 	local taunt = soap.taunt
 	if not (me and me.valid) then return end
 	
-	p.camerascale = FU
 	me.tempangle = nil
 	me.soap_arms = nil
 	if (not (P_PlayerInPain(p) or me.state == S_PLAY_PAIN)) and me.health
@@ -62,6 +100,7 @@ local function ResetTaunt(p)
 		Soap_ResetState(p)
 	end
 	soap.stasistic, taunt.tics = 0,0
+	SETFOV = false
 end
 
 local function SetPhase(p, arms, newstate, tics, nextstate)
@@ -138,11 +177,15 @@ local function SearchPhase(p,me,soap,taunt,arms)
 		return false
 	end
 	
-	local tics = 2*TR + TR/2
+	local tics = TR * 7/4
 	SetPhase(p, arms, PHASE_SETUP, tics, PHASE_WRESTLE)
 	SetPhase(closestplayer, cmo.soap_arms, PHASE_SETUP, tics, PHASE_WRESTLE)
 	S_StartSound(nil, sfx_sp_awr, p)
 	S_StartSound(nil, sfx_sp_awr, closestplayer)
+	for play in players.iterate
+		if play == p or play == closestplayer then continue end
+		S_StartSound(me, sfx_sp_awb, play)
+	end
 	return true
 end
 
@@ -165,6 +208,38 @@ local function CheckPartner(p,me,soap,taunt,arms)
 	return true
 end
 
+local function SetViewMobj(p,me,soap,taunt,arms)
+	local play = arms.partner
+	local omo = play.mo -- othermo
+	local arms2 = omo.soap_arms
+	
+	if arms.viewmobj == nil
+		local view = P_SpawnMobjFromMobj(me, 0,0,0, MT_RAY)
+		view.flags2 = $|MF2_DONTDRAW
+		view.tics = -1
+		view.fuse = -1
+		arms.viewmobj = view
+	end
+	local view = arms.viewmobj
+	local ang = me.tempangle + ANGLE_90
+	local dist = -280*me.scale
+	P_MoveOrigin(view, 
+		(me.x/2) + (omo.x/2) + P_ReturnThrustX(ang, dist),
+		(me.y/2) + (omo.y/2) + P_ReturnThrustY(ang, dist),
+		(me.z/2) + (omo.z/2) + 120*me.scale
+	)
+	local _,va = R_PointTo3DAngles(view.x,view.y,view.z, (me.x/2) + (omo.x/2), (me.y/2) + (omo.y/2), (me.z/2) + (omo.z/2))
+	view.angle = ang
+	
+	p.awayviewmobj = view
+	p.awayviewtics = 2
+	p.awayviewaiming = va + (ANG15/3)
+
+	if (p == displayplayer)
+		SETFOV = true
+	end
+end
+
 local function SetupPhase(p,me,soap,taunt,arms)
 	if not CheckPartner(p,me,soap,taunt,arms)
 		ResetTaunt(p)
@@ -182,7 +257,8 @@ local function SetupPhase(p,me,soap,taunt,arms)
 	
 	p.aiming = 0
 	me.angle = me.tempangle + ANGLE_90
-	p.camerascale = P_Lerp(FU/2, $, FU * 3/2)
+	
+	SetViewMobj(p,me,soap,taunt,arms)
 	
 	if arms.phasetics == 4
 		S_StartSound(nil, sfx_sp_awg, p)
@@ -248,7 +324,7 @@ local function WrestlePhase(p,me,soap,taunt,arms)
 	
 	p.aiming = 0
 	me.angle = me.tempangle + ANGLE_90
-	p.camerascale = P_Lerp(FU/2, $, FU * 3/2)
+	SetViewMobj(p,me,soap,taunt,arms)
 	
 	if arms.activity
 		arms.activity = $ - 1
@@ -303,6 +379,8 @@ local function WrestlePhase(p,me,soap,taunt,arms)
 		arms2.activity = $ * 4/5
 		
 		arms.lastjumptic = leveltime
+		
+		S_StartSoundAtVolume(me, sfx_s251, 255 / 2)
 	end
 	if (arms2.progress >= 70*FU)
 		if leveltime % 2 == 0
@@ -350,6 +428,7 @@ local function WrestlePhase(p,me,soap,taunt,arms)
 		local halftic = 10
 		Soap_DamageSfx(omo, FU*3/4,FU)
 		S_StartSound(omo,sfx_sp_dm4)
+		S_StartSound(omo,sfx_s3k9b)
 		S_StartSound(me,sfx_sp_kco)
 		
 		local work = FU * 3/4
@@ -384,6 +463,18 @@ local function WrestlePhase(p,me,soap,taunt,arms)
 			s.tics = $ + halftic + offset
 			s.anim_duration = $ + halftic + offset
 		end
+		omo.soap_supertemp = true
+		omo.soap_poundvfx = true
+		Soap_DustRing(omo,
+			MT_PARTICLE, 24,
+			{omo.x,omo.y,omo.z},
+			8*FU, 10*FU,
+			omo.scale / 10,
+			omo.scale * 6,
+			false, sixseven_callback
+		)
+		omo.soap_supertemp = nil
+		omo.soap_poundvfx = nil
 		
 		S_StartSound(me, sfx_sp_bsl)
 		me.state = S_PLAY_SOAP_PUNCH1
@@ -452,6 +543,13 @@ end
 tauntinfo.canceled = function(p,me,soap)
 	me.soap_arms = nil
 	me.spritexoffset = 0
+	SETFOV = false
+end
+tauntinfo.postthink = function(p)
+	if p == displayplayer and SETFOV
+		p.fovadd = 70*FU - (SOAP_CV.FindVar("fov").value)
+		SETFOV = false
+	end
 end
 tauntinfo.drawer = function(v,i, x,y, selected, scale)
 	SoapTaunt_WheelDrawer(v,i, x,y, {
@@ -461,12 +559,81 @@ tauntinfo.drawer = function(v,i, x,y, selected, scale)
 	}, selected, scale)
 end
 
+local function DrawWrestling(v,p,cam, me,soap,hud)
+	if not (me and me.valid) then return end
+	if not (me.soap_arms) then return end
+	if (me.soap_arms.phase ~= PHASE_WRESTLE) then return end
+	
+	local arms = me.soap_arms
+	local play = arms.partner
+	if not (play and play.valid) then return end
+	local omo = play.mo
+	local arms2 = omo.soap_arms
+	if not arms2 then return end
+	local w2s = K_GetScreenCoords(v,p,cam, {
+			x = me.x/2 + omo.x/2,
+			y = me.y/2 + omo.y/2,
+			z = me.z/2 + omo.z/2,
+		}, {anglecliponly = true}
+	)
+	local scale = FU
+	w2s.y = $ + 18*scale
+	
+	v.dointerp(true)
+	local leftpatch = v.cachePatch("SOAP_AR_LEFT")
+	local myprogress = FixedDiv(arms.progress, 100*FU)
+	v.drawCropped(w2s.x, w2s.y, scale,scale, leftpatch, 0, v.getColormap(TC_DEFAULT, p.skincolor),
+		0,0, leftpatch.width * myprogress, leftpatch.height * FU
+	)
+	
+	local rightpatch = v.cachePatch("SOAP_AR_RIGHT")
+	local theirprogress = max(FU - FixedDiv(arms2.progress, 100*FU), 0)
+	v.drawCropped(w2s.x + rightpatch.width*theirprogress, w2s.y, scale,scale, rightpatch, 0, v.getColormap(TC_DEFAULT, play.skincolor),
+		rightpatch.width*theirprogress,0, rightpatch.width*FU, rightpatch.height*FU
+	)
+	v.drawScaled(w2s.x, w2s.y, scale, v.cachePatch("SOAP_AR_BACK"), 0)
+	
+	v.drawString(w2s.x - 62*scale, w2s.y + 18*scale, "You", V_YELLOWMAP|V_ALLOWLOWERCASE, "thin-fixed")
+	v.drawString(w2s.x + 62*scale, w2s.y + 18*scale, play.name, V_ALLOWLOWERCASE, "thin-fixed-right")
+	if (play.soaptable.c1)
+		v.drawString(w2s.x + 62*scale, w2s.y + (18 + 8)*scale, "TAPPING OUT", V_REDMAP, "thin-fixed-right")
+	end
+
+	if soap.c1
+		local x,y = 160*FU, 80*FU
+		local rad = 15*FU
+		local maxsegs = 70
+		local timetic = FixedDiv(soap.c1*FU, (TR*3/2)*FU)
+		
+		local angtotal = 360 * timetic
+		local cmap = v.getColormap(TC_DEFAULT, SKINCOLOR_WHITE, "AllWhite")
+		local patch = v.cachePatch("TA_LIVESFILL_FILL")
+		for i = 0,maxsegs
+			if timetic == 0 then break end
+			
+			local angmath = FixedMul(FixedDiv(angtotal, maxsegs*FU), i*FU) - 90*FU
+			local angle = FixedAngle(angmath)
+			v.drawScaled(
+				x + FixedMul(rad, cos(angle)),
+				y + FixedMul(rad, sin(angle)),
+				FU/6, patch, 0, cmap
+			)
+		end
+		
+		v.drawString(x, y + rad + 2*FU, "Tapping out...", V_ALLOWLOWERCASE, "thin-fixed-center")
+	end
+	
+	v.dointerp(false)
+end
+
 addHook("HUD",function(v,p, cam)
 	local soap = p.soaptable
 	if not soap then return end
 	if not (skins[p.skin].name == SOAP_SKIN or skins[p.skin].name == TAKIS_SKIN) then return end
 	local hud = soap.hud
 	local me = p.realmo
+	
+	DrawWrestling(v,p,cam, me,soap,hud)
 	
 	if readytime > 0
 		local alpha = 0
@@ -479,8 +646,8 @@ addHook("HUD",function(v,p, cam)
 			alpha = (10 - readytime) << V_ALPHASHIFT
 		end
 		v.drawString(
-			160 - v.stringWidth(mystr, 0, "thin")/2,
-			80, newstr, V_ALLOWLOWERCASE|alpha, "thin"
+			160 - v.stringWidth(mystr, 0, "normal")/2,
+			80, newstr, V_ALLOWLOWERCASE|alpha, "left"
 		)
 		v.drawString(160, 90,
 			"Hold C1 to tap out", V_ALLOWLOWERCASE|V_GRAYMAP|alpha, "thin-center"
@@ -518,70 +685,6 @@ addHook("HUD",function(v,p, cam)
 		gotime = $ - 1
 		v.dointerp(false)
 	end
-	
-	if not (me and me.valid) then return end
-	if not (me.soap_arms) then return end
-	if (me.soap_arms.phase ~= PHASE_WRESTLE) then return end
-	
-	if soap.c1
-		local x,y = 160*FU, 80*FU
-		local rad = 15*FU
-		local maxsegs = 70
-		local timetic = FixedDiv(soap.c1*FU, (TR*3/2)*FU)
-		
-		local angtotal = 360 * timetic
-		local cmap = v.getColormap(TC_DEFAULT, SKINCOLOR_WHITE, "AllWhite")
-		local patch = v.cachePatch("TA_LIVESFILL_FILL")
-		for i = 0,maxsegs
-			if timetic == 0 then break end
-			
-			local angmath = FixedMul(FixedDiv(angtotal, maxsegs*FU), i*FU) - 90*FU
-			local angle = FixedAngle(angmath)
-			v.drawScaled(
-				x + FixedMul(rad, cos(angle)),
-				y + FixedMul(rad, sin(angle)),
-				FU/6, patch, 0, cmap
-			)
-		end
-		
-		v.drawString(x, y + rad + 2*FU, "Tapping out...", V_ALLOWLOWERCASE, "thin-fixed-center")
-	end
-	
-	local arms = me.soap_arms
-	local play = arms.partner
-	if not (play and play.valid) then return end
-	local omo = play.mo
-	local arms2 = omo.soap_arms
-	if not arms2 then return end
-	local w2s = K_GetScreenCoords(v,p,cam, {
-			x = me.x/2 + omo.x/2,
-			y = me.y/2 + omo.y/2,
-			z = me.z/2 + omo.z/2,
-		}, {anglecliponly = true}
-	)
-	local scale = FU
-	w2s.y = $ + 18*scale
-	
-	v.dointerp(true)
-	local leftpatch = v.cachePatch("SOAP_AR_LEFT")
-	local myprogress = FixedDiv(arms.progress, 100*FU)
-	v.drawCropped(w2s.x, w2s.y, scale,scale, leftpatch, 0, v.getColormap(TC_DEFAULT, p.skincolor),
-		0,0, leftpatch.width * myprogress, leftpatch.height * FU
-	)
-	
-	local rightpatch = v.cachePatch("SOAP_AR_RIGHT")
-	local theirprogress = max(FU - FixedDiv(arms2.progress, 100*FU), 0)
-	v.drawCropped(w2s.x + rightpatch.width*theirprogress, w2s.y, scale,scale, rightpatch, 0, v.getColormap(TC_DEFAULT, play.skincolor),
-		rightpatch.width*theirprogress,0, rightpatch.width*FU, rightpatch.height*FU
-	)
-	v.drawScaled(w2s.x, w2s.y, scale, v.cachePatch("SOAP_AR_BACK"), 0)
-	
-	v.drawString(w2s.x - 62*scale, w2s.y + 18*scale, "You", V_YELLOWMAP|V_ALLOWLOWERCASE, "thin-fixed")
-	v.drawString(w2s.x + 62*scale, w2s.y + 18*scale, play.name, V_YELLOWMAP|V_ALLOWLOWERCASE, "thin-fixed-right")
-	if (play.soaptable.c1)
-		v.drawString(w2s.x + 62*scale, w2s.y + (18 + 8)*scale, "TAPPING OUT", V_REDMAP, "thin-fixed-right")
-	end
-	v.dointerp(false)
 end,"game")
 
 SoapTaunt_AddTaunt(SOAP_SKIN, tauntinfo)
