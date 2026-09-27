@@ -629,7 +629,7 @@ end
 addHook("HUD",function(v,p, cam)
 	local soap = p.soaptable
 	if not soap then return end
-	if not (skins[p.skin].name == SOAP_SKIN or skins[p.skin].name == TAKIS_SKIN) then return end
+	-- if not (skins[p.skin].name == SOAP_SKIN or skins[p.skin].name == TAKIS_SKIN) then return end
 	local hud = soap.hud
 	local me = p.realmo
 	
