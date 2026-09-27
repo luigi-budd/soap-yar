@@ -164,15 +164,21 @@ local function CheckPartner(p,me,soap,taunt,arms)
 end
 
 local function SetupPhase(p,me,soap,taunt,arms)
-	local play = arms.partner
-	local omo = play.mo -- othermo
-	local arms2 = omo.soap_arms
-	
 	if not CheckPartner(p,me,soap,taunt,arms)
 		ResetTaunt(p)
 		return
 	end
 	
+	local play = arms.partner
+	local omo = play.mo -- othermo
+	local arms2 = omo.soap_arms
+	
+	if me.state ~= S_PLAY_SOAP_FLEX
+		me.state = S_PLAY_SOAP_FLEX
+		me.tics = -1
+	end
+	
+	p.aiming = 0
 	me.angle = me.tempangle + ANGLE_90
 	p.camerascale = P_Lerp(FU/2, $, FU * 3/2)
 	
@@ -211,14 +217,19 @@ local function spawn_sweat_mobjs(p,me,soap)
 end
 
 local function WrestlePhase(p,me,soap,taunt,arms)
-	local play = arms.partner
-	local omo = play.mo -- othermo
-	local arms2 = omo.soap_arms
-	
 	if not CheckPartner(p,me,soap,taunt,arms)
 		ResetTaunt(p)
 		ResetTaunt(play)
 		return
+	end
+	
+	local play = arms.partner
+	local omo = play.mo -- othermo
+	local arms2 = omo.soap_arms
+	
+	if me.state ~= S_PLAY_SOAP_FLEX
+		me.state = S_PLAY_SOAP_FLEX
+		me.tics = -1
 	end
 	
 	local dist = GetMoveDistance(me, omo)
@@ -232,6 +243,7 @@ local function WrestlePhase(p,me,soap,taunt,arms)
 		return
 	end
 	
+	p.aiming = 0
 	me.angle = me.tempangle + ANGLE_90
 	p.camerascale = P_Lerp(FU/2, $, FU * 3/2)
 	
@@ -239,17 +251,29 @@ local function WrestlePhase(p,me,soap,taunt,arms)
 	if arms.activity
 		arms.activity = $ - 1
 	else
-		arms.progress = max($ - increase/2, 0)
+		arms.progress = max($ - increase/3, 0)
 	end
+	if arms.lockout then arms.lockout = $ - 1; end
 	
-	if soap.jump == 1
+	if soap.jump == 1 and not arms.lockout
 		arms.progress = $ + increase
-		arms.activity = 3
+		arms.lockout = 1
+		
+		Soap_SquashMacro(p, {
+			ease_func = "inexpo",
+			ease_time = 3,
+			x = FU * 1/5,
+			y = FU/6,
+			singular = true
+		})
 		
 		if arms.progress < arms2.progress
-			local diff = (arms2.progress - arms.progress) / 12
+			local diff = (arms2.progress - arms.progress) / arms.activity
 			arms2.progress = max($ - diff, 0)
 		end
+		local activ = 1 + (100*FU - arms.progress) / FU / 12
+		arms.activity = max($, max(activ, 3))
+		arms2.activity = $ + 2
 	end
 	if (arms2.progress >= 70*FU)
 		if leveltime % 2 == 0
@@ -268,13 +292,27 @@ local function WrestlePhase(p,me,soap,taunt,arms)
 		me.spritexoffset = 0
 	end
 	
-	-- printf("%s: %.2f%%", p.name, arms.progress)
+	-- tap out
+	if (soap.c1)
+		if soap.c1 == TR * 3/2
+			arms2.progress = 110*FU
+		end
+		
+		if not S_SoundPlaying(me, sfx_sp_dtn)
+			S_StartSound(me,sfx_sp_dtn, p)
+		end
+	else
+		S_StopSoundByID(me, sfx_sp_dtn)
+	end
 	
 	if arms.progress >= 100*FU
 		local tempangle = me.tempangle
 		ResetTaunt(p)
 		ResetTaunt(play)
 		-- arms is no longer safe to access
+		
+		S_StopSoundByID(me, sfx_sp_dtn)
+		S_StopSoundByID(omo, sfx_sp_dtn)
 		
 		soap.stasistic = TR
 		play.soaptable.stasistic = TR
@@ -453,8 +491,33 @@ addHook("HUD",function(v,p, cam)
 	if not (me.soap_arms) then return end
 	if (me.soap_arms.phase ~= PHASE_WRESTLE) then return end
 	
+	if soap.c1
+		local x,y = 160*FU, 80*FU
+		local rad = 15*FU
+		local maxsegs = 70
+		local timetic = FixedDiv(soap.c1*FU, (TR*3/2)*FU)
+		
+		local angtotal = 360 * timetic
+		local cmap = v.getColormap(TC_DEFAULT, SKINCOLOR_WHITE, "AllWhite")
+		local patch = v.cachePatch("TA_LIVESFILL_FILL")
+		for i = 0,maxsegs
+			if timetic == 0 then break end
+			
+			local angmath = FixedMul(FixedDiv(angtotal, maxsegs*FU), i*FU) - 90*FU
+			local angle = FixedAngle(angmath)
+			v.drawScaled(
+				x + FixedMul(rad, cos(angle)),
+				y + FixedMul(rad, sin(angle)),
+				FU/6, patch, 0, cmap
+			)
+		end
+		
+		v.drawString(x, y + rad + 2*FU, "Tapping out...", V_ALLOWLOWERCASE, "thin-fixed-center")
+	end
+	
 	local arms = me.soap_arms
 	local play = arms.partner
+	if not (play and play.valid) then return end
 	local omo = play.mo
 	local arms2 = omo.soap_arms
 	local w2s = K_GetScreenCoords(v,p,cam, {
@@ -482,6 +545,9 @@ addHook("HUD",function(v,p, cam)
 	
 	v.drawString(w2s.x - 62*scale, w2s.y + 18*scale, "You", V_YELLOWMAP|V_ALLOWLOWERCASE, "thin-fixed")
 	v.drawString(w2s.x + 62*scale, w2s.y + 18*scale, play.name, V_YELLOWMAP|V_ALLOWLOWERCASE, "thin-fixed-right")
+	if (play.soaptable.c1)
+		v.drawString(w2s.x + 62*scale, w2s.y + (18 + 8)*scale, "TAPPING OUT", V_REDMAP, "thin-fixed-right")
+	end
 	v.dointerp(false)
 end,"game")
 
