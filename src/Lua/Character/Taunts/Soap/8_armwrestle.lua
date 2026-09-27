@@ -537,7 +537,7 @@ addHook("HUD",function(v,p, cam)
 	)
 	
 	local rightpatch = v.cachePatch("SOAP_AR_RIGHT")
-	local theirprogress = FU - FixedDiv(arms2.progress, 100*FU)
+	local theirprogress = max(FU - FixedDiv(arms2.progress, 100*FU), 0)
 	v.drawCropped(w2s.x + rightpatch.width*theirprogress, w2s.y, scale,scale, rightpatch, 0, v.getColormap(TC_DEFAULT, play.skincolor),
 		rightpatch.width*theirprogress,0, rightpatch.width*FU, rightpatch.height*FU
 	)
