@@ -55,6 +55,13 @@ local gotime = 0
 local MAXREADYTIME = TR * 3/2
 local readytime = 0
 
+local SETFOV = false
+
+local winnertext = {
+	tics = 0,
+	name = "",
+}
+
 local tauntinfo = {}
 
 tauntinfo.name = "Arm Wrestle"
@@ -84,7 +91,6 @@ tauntinfo.run = function(p, me, soap, taunt)
 	me.momx,me.momy = p.cmomx,p.cmomy
 end
 
-local SETFOV = false
 local function ResetTaunt(p)
 	if not (p and p.valid) then return end
 	local me = p.mo
@@ -177,6 +183,18 @@ local function SearchPhase(p,me,soap,taunt,arms)
 		return false
 	end
 	
+	local top_layer = P_SpawnMobjFromMobj(me, 0,0,0, MT_PARTICLE)
+	S_StartSound(me, sfx_sp_bsm)
+	P_SetOrigin(top_layer, (me.x/2) + (cmo.x/2), (me.y/2) + (cmo.y/2), (me.z/2) + (cmo.z/2) + me.height / 2)
+	top_layer.state = S_SOAP_HITM_RSPRK
+	top_layer.fuse = top_layer.tics
+	top_layer.spritexscale = FU * 3/4
+	top_layer.spriteyscale = top_layer.spritexscale
+	top_layer.renderflags = $|RF_ALWAYSONTOP
+	top_layer.dispoffset = 200
+	top_layer.colorized = true
+	top_layer.color = me.color
+	
 	local tics = TR * 7/4
 	SetPhase(p, arms, PHASE_SETUP, tics, PHASE_WRESTLE)
 	SetPhase(closestplayer, cmo.soap_arms, PHASE_SETUP, tics, PHASE_WRESTLE)
@@ -255,6 +273,7 @@ local function SetupPhase(p,me,soap,taunt,arms)
 		me.tics = -1
 	end
 	
+	me.tempangle = R_PointToAngle2(me.x,me.y, omo.x,omo.y)
 	p.aiming = 0
 	me.angle = me.tempangle + ANGLE_90
 	
@@ -311,6 +330,7 @@ local function WrestlePhase(p,me,soap,taunt,arms)
 		me.tics = -1
 	end
 	
+	me.tempangle = R_PointToAngle2(me.x,me.y, omo.x,omo.y)
 	local dist = GetMoveDistance(me, omo)
 	if not P_TryMove(omo,
 		me.x + P_ReturnThrustX(me.tempangle, dist),
