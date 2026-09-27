@@ -268,7 +268,7 @@ local function WrestlePhase(p,me,soap,taunt,arms)
 		})
 		
 		if arms.progress < arms2.progress
-			local diff = (arms2.progress - arms.progress) / arms.activity
+			local diff = (arms2.progress - arms.progress) / max(arms.activity, 1)
 			arms2.progress = max($ - diff, 0)
 		end
 		local activ = 1 + (100*FU - arms.progress) / FU / 12
