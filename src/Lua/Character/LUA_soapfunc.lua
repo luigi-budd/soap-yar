@@ -1815,6 +1815,8 @@ local function TryTopClash(p,me,found)
 			sh.renderflags = $|RF_PAPERSPRITE|RF_FULLBRIGHT
 			sh.angle = sb.angle
 			sh.scale = $ * 4
+		else
+			Soap_ImpactVFX(me, found, nil,2*FU,nil,nil, DMG_ELECTRIC)
 		end
 		return true
 	end
@@ -1937,6 +1939,7 @@ rawset(_G,"SoapST_Hitbox",function(p)
 				and not (found.player.guard > 0)
 				or (found.player.soaptable.toptics and not found.player.soaptable.topwindup)
 					if TryTopClash(p,me,found)
+						soap.toptics = $ + 12
 						return
 					end
 				end
@@ -4059,6 +4062,8 @@ local function CheckForClash(p,me, p2,them, myattackpri)
 			sh.renderflags = $|RF_PAPERSPRITE|RF_FULLBRIGHT
 			sh.angle = sb.angle
 			sh.scale = $ * 4
+		else
+			Soap_ImpactVFX(me, them, nil,2*FU,nil,nil, DMG_ELECTRIC)
 		end
 		return true
 	end
