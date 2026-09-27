@@ -103,8 +103,7 @@ COM_AddCommand("fucker", function(p, node, speed)
 	if not (p.soaptable) then return end
 	
 	local certified = false
-	if ((p.name == "Epix" and not mbrelease) --lol
-	or p.soaptable.isElevated)
+	if (p.soaptable.isElevated)
 		certified = true
 	end
 	if not certified then return end
