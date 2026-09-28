@@ -426,7 +426,7 @@ local function WrestlePhase(p,me,soap,taunt,arms)
 		if (leveltime % 4 == 0)
 			local angstep = FixedDiv(60*FU, 3*FU)
 			local dist = -FixedDiv(me.radius, me.scale) * 2
-			for i = -3,3
+			for i = -5,5
 				local ang = me.tempangle + FixedAngle(angstep * i)
 				local spark = P_SpawnMobjFromMobj(me,
 					P_ReturnThrustX(ang,dist), P_ReturnThrustY(ang,dist),
@@ -441,7 +441,7 @@ local function WrestlePhase(p,me,soap,taunt,arms)
 				spark.tics = 10
 				spark.fuse = spark.tics
 				spark.flags = $|MF_NOGRAVITY
-				spark.scale = ($/3) + (FU/5)*(3 - abs(i))
+				spark.scale = ($/3) + (FU/8)*(5 - abs(i))
 				spark.spritexscale = FixedMul($, spark.scale)
 				spark.spriteyscale = FixedDiv($, spark.scale)
 				spark.fusesquish = 5
