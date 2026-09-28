@@ -407,23 +407,7 @@ local function WrestlePhase(p,me,soap,taunt,arms)
 		
 		S_StartSoundAtVolume(me, sfx_s251, 255 / 2)
 	end
-	if (arms2.progress - arms.progress >= 40*FU)
-		if leveltime % 2 == 0
-			spawn_sweat_mobjs(p,me,soap)
-		end
-		if not S_SoundPlaying(me, sfx_pudpud)
-			S_StartSound(me, sfx_pudpud)
-		end
-		local scale = skins[p.skin].highresscale
-		if edit_custombuild
-			scale = FU
-		end
-		me.spritexoffset = FixedDiv(FU, scale) * (leveltime % 2 and 1 or -1)
-		myframe = D
-	else
-		S_StopSoundByID(me, sfx_pudpud)
-		me.spritexoffset = 0
-	end
+	
 	if (arms.progress >= 80*FU and arms.progress > arms2.progress)
 		if (leveltime % 4 == 0)
 			local angstep = FixedDiv(60*FU, 3*FU)
@@ -455,7 +439,25 @@ local function WrestlePhase(p,me,soap,taunt,arms)
 		end
 		myframe = C
 	end
-	
+	if (arms2.progress - arms.progress >= 20*FU)
+	or ((arms2.progress >= 80*FU and arms2.progress > arms.progress))
+		if leveltime % 2 == 0
+			spawn_sweat_mobjs(p,me,soap)
+		end
+		if not S_SoundPlaying(me, sfx_pudpud)
+			S_StartSound(me, sfx_pudpud)
+		end
+		local scale = skins[p.skin].highresscale
+		if edit_custombuild
+			scale = FU
+		end
+		me.spritexoffset = FixedDiv(FU, scale) * (leveltime % 2 and 1 or -1)
+		myframe = D
+	else
+		S_StopSoundByID(me, sfx_pudpud)
+		me.spritexoffset = 0
+	end
+		
 	-- tap out
 	if (soap.c1)
 		if soap.c1 == TR * 3/2
