@@ -728,10 +728,12 @@ Takis_Hook.addHook("PreThinkFrame",function(p)
 		end
 	end
 	
-	if (me.skin ~= SOAP_SKIN) then return end
+	-- INTENTIONALLY outside of the skin guard
 	--ticked back here so any changes will be instant
 	--(also out of the way of hitlag)
 	Soap_HUDTicker(p,me,soap)
+	
+	if (me.skin ~= SOAP_SKIN) then return end
 	
 	if soap.fakeskidtime
 	and not (p.charflags & SF_NOSKID)

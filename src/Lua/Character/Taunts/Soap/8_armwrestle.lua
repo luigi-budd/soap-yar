@@ -86,7 +86,9 @@ tauntinfo.run = function(p, me, soap, taunt)
 	}
 	
 	soap.stasistic = max($, 2)
-	taunt.tics = 2
+	if (me.skin == SOAP_SKIN or me.skin == TAKIS_SKIN)
+		taunt.tics = 2
+	end
 	
 	me.momx,me.momy = p.cmomx,p.cmomy
 end
@@ -98,6 +100,7 @@ local function ResetTaunt(p)
 	local taunt = soap.taunt
 	if not (me and me.valid) then return end
 	
+	me.soap_arm_winstate = nil
 	me.tempangle = nil
 	me.soap_arms = nil
 	if (not (P_PlayerInPain(p) or me.state == S_PLAY_PAIN)) and me.health
@@ -220,9 +223,6 @@ local function CheckPartner(p,me,soap,taunt,arms)
 	end
 	local arms2 = omo.soap_arms
 	if not (arms2 and arms2.partner == p)
-		return false
-	end
-	if not (omo.skin == SOAP_SKIN or omo.skin == TAKIS_SKIN)
 		return false
 	end
 	return true
@@ -474,6 +474,8 @@ local function WrestlePhase(p,me,soap,taunt,arms)
 	end
 	
 	if arms.progress >= 100*FU
+		local replacestate = me.soap_arm_winstate
+		
 		arms.viewmobj.tics = TR * 3/2
 		arms.viewmobj.fuse = arms.viewmobj.tics
 		p.awayviewtics = arms.viewmobj.tics
@@ -564,6 +566,8 @@ local function WrestlePhase(p,me,soap,taunt,arms)
 				end_v = 0,
 				time = ease_time
 			}, "Takis_Clutch", true)
+		elseif (replacestate)
+			me.state = replacestate
 		end
 		
 		omo.state = S_PLAY_DEAD
@@ -599,7 +603,9 @@ tauntinfo.think = function(p, me, soap, taunt)
 	end
 	
 	soap.stasistic = max($, 2)
-	taunt.tics = 2
+	if (me.skin == SOAP_SKIN or me.skin == TAKIS_SKIN)
+		taunt.tics = 2
+	end
 	
 	p.drawangle = me.tempangle
 	soap.noability = SNOABIL_ALL
@@ -628,10 +634,10 @@ tauntinfo.think = function(p, me, soap, taunt)
 	elseif arms.phase == PHASE_WRESTLE
 		WrestlePhase(p,me,soap,taunt,arms)
 	end
-end
-tauntinfo.postthink = function(p, me, soap, taunt)
-	if me.tempangle == nil then return end
-	p.drawangle = me.tempangle
+	if not (me.skin == SOAP_SKIN or me.skin == TAKIS_SKIN)
+		Soap_TickSquashes(p,me,soap, me.hitlag)
+		me.soap_overridesquash = true
+	end
 end
 tauntinfo.canceled = function(p,me,soap)
 	me.soap_arms = nil
@@ -656,12 +662,14 @@ tauntinfo.postthink = function(p)
 		p.fovadd = 70*FU - (SOAP_CV.FindVar("fov").value) - gofov
 		SETFOV = false
 	end
+	if p.mo.tempangle == nil then return end
+	p.drawangle = p.mo.tempangle
 end
 tauntinfo.drawer = function(v,i, x,y, selected, scale)
 	SoapTaunt_WheelDrawer(v,i, x,y, {
 		skin = skins[consoleplayer.skin].name,
-		spr2 = SPR2_MSC4,
-		frame = A, angle = 2
+		spr2 = SPR2_ARMW,
+		frame = B, angle = 0
 	}, selected, scale)
 end
 
@@ -791,6 +799,74 @@ addHook("HUD",function(v,p, cam)
 		gotime = $ - 1
 		v.dointerp(false)
 	end
+
+	if hud.painsurge
+	and not (me.skin == SOAP_SKIN or me.skin == TAKIS_SKIN)
+		local frame = (7 - hud.painsurge)
+		local patch = v.cachePatch("SOAP_PS_"..frame)
+		local wid = (v.width() / v.dupx()) + 1
+		local hei = (v.height() / v.dupy()) + 1
+		local p_w = patch.width
+		local p_h = patch.height
+		v.drawStretched(0,0,
+			FixedDiv(wid * FU, p_w * FU),
+			FixedDiv(hei * FU, p_h * FU),
+			patch,
+			V_SNAPTOTOP|V_SNAPTOLEFT,
+			v.getColormap(TC_DEFAULT,
+				G_GametypeHasTeams() and
+				(p.ctfteam == 1 and skincolor_redteam or skincolor_blueteam) or p.skincolor
+			)
+		)
+	end
 end,"game")
+
+/*
+	HOW TO HOOK ONTO THIS TAUNT:
+	
+	If you have an established taunt system, you
+	can simply call SoapArmWrestle_Init when the taunt
+	is first ran, then SoapArmWrestle_Think while the
+	taunt is active.
+	
+	Otherwise, you can simply call SoapArmWrestle_Init,
+	then SoapArmWrestle_Think, and Soap will handle the rest.
+	
+	Make sure your character has a SPR2_ARMW sprite set with
+	four frames. You can find what each frame is for in
+	Lua/Character/SoapInclude/player.lua::"S_PLAY_SOAP_ARMWRESTLE"
+	You can also set what state the player will go to when they
+	win a match with mo.soap_arm_winstate
+	
+	NOTE: Do not run SoapArmWrestle_Think when player.mo.soap_arms
+	is nil. This will error.
+	
+	EXAMPLE:
+		
+		local candotaunt = (p.cmd.buttons & BT_CUSTOM3) 
+		if (candotaunt) then
+			SoapArmWrestle_Init(player)
+			mo.soap_arm_winstate = S_PLAY_GASP
+		end
+		if (player.mo.soap_arms ~= nil) then
+			SoapArmWrestle_Think(p)
+		end
+*/
+rawset(_G, "SoapArmWrestle_Init", function(p)
+	local me = p.realmo
+	local soap = p.soaptable
+	tauntinfo.run(p,me,soap, soap.taunt)
+end)
+
+rawset(_G, "SoapArmWrestle_Think", function(p)
+	local me = p.realmo
+	local soap = p.soaptable
+	if not me.soap_arms then return end
+	tauntinfo.think(p,me,soap, soap.taunt)
+	tauntinfo.postthink(p,me,soap, soap.taunt)
+end)
+rawset(_G, "ARMSPHASE_SEARCH", PHASE_SEARCH)
+rawset(_G, "ARMSPHASE_SETUP", PHASE_SETUP)
+rawset(_G, "ARMSPHASE_WRESTLE", PHASE_WRESTLE)
 
 SoapTaunt_AddTaunt(SOAP_SKIN, tauntinfo)

@@ -93,6 +93,7 @@ rawset(_G, "Soap_InitTable", function(p)
 		angleturn = 0,
 		aiming = 0,
 		
+		-- im 90% sure this applies for every skin
 		stasistic = 0,
 		allowjump = false, -- &~PF_JUMPSTASIS
 		

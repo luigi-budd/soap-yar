@@ -179,6 +179,7 @@ addHook("PostThinkFrame",function()
 		
 		if not (me.skin == SOAP_SKIN
 		or (me.skin == TAKIS_SKIN and not mbrelease))
+		and not me.soap_overridesquash
 			if soap.last.squash_head
 			or (soap.spritexscale ~= FU
 			or soap.spriteyscale ~= FU)
@@ -190,6 +191,7 @@ addHook("PostThinkFrame",function()
 				soap.last.squash_head = 0
 			end
 		end
+		me.soap_overridesquash = nil
 		
 		soap.last.anim.state = me.state
 		soap.last.anim.sprite = me.sprite
