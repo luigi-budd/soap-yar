@@ -236,8 +236,8 @@ local function SetViewMobj(p,me,soap,taunt,arms)
 	if arms.viewmobj == nil
 		local view = P_SpawnMobjFromMobj(me, 0,0,0, MT_RAY)
 		view.flags2 = $|MF2_DONTDRAW
-		view.tics = -1
-		view.fuse = -1
+		view.tics = 2
+		view.fuse = 2
 		arms.viewmobj = view
 	end
 	local view = arms.viewmobj
@@ -250,6 +250,8 @@ local function SetViewMobj(p,me,soap,taunt,arms)
 	)
 	local _,va = R_PointTo3DAngles(view.x,view.y,view.z, (me.x/2) + (omo.x/2), (me.y/2) + (omo.y/2), (me.z/2) + (omo.z/2))
 	view.angle = ang
+	view.tics = 2
+	view.fuse = view.tics
 	
 	p.awayviewmobj = view
 	p.awayviewtics = 2
@@ -470,6 +472,10 @@ local function WrestlePhase(p,me,soap,taunt,arms)
 	end
 	
 	if arms.progress >= 100*FU
+		arms.viewmobj.tics = TR * 3/2
+		arms.viewmobj.fuse = arms.viewmobj.tics
+		p.awayviewtics = arms.viewmobj.tics
+		
 		local tempangle = me.tempangle
 		ResetTaunt(p)
 		ResetTaunt(play)
