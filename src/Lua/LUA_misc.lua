@@ -50,6 +50,12 @@ end,MT_SOAP_SPEEDLINE)
 
 addHook("MobjThinker",function(bump)
 	if not (bump and bump.valid) then return end
+	local me = bump.target
+	if (me and me.valid)
+		if me.hitlag
+			return true
+		end
+	end
 	
 	-- this is just much better
 	local nofadein = false
@@ -107,13 +113,6 @@ addHook("MobjThinker",function(bump)
 	end
 	
 	if bump.nothink then return end -- ...?
-	
-	local me = bump.target
-	if (me and me.valid)
-		if me.hitlag
-			return true
-		end
-	end
 	
 	if bump.startfuse ~= nil
 	and bump.fuse == bump.startfuse * 3/8
