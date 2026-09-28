@@ -277,7 +277,8 @@ local function SetupPhase(p,me,soap,taunt,arms)
 	
 	me.tempangle = R_PointToAngle2(me.x,me.y, omo.x,omo.y)
 	p.aiming = 0
-	me.angle = me.tempangle + ANGLE_90
+	me.angle = me.tempangle
+	p.cmd.angleturn = me.angle >> 16
 	me.frame = ($ &~FF_FRAMEMASK)|B
 	
 	SetViewMobj(p,me,soap,taunt,arms)
@@ -344,7 +345,8 @@ local function WrestlePhase(p,me,soap,taunt,arms)
 	end
 	
 	p.aiming = 0
-	me.angle = me.tempangle + ANGLE_90
+	me.angle = me.tempangle
+	p.cmd.angleturn = me.angle >> 16
 	SetViewMobj(p,me,soap,taunt,arms)
 	
 	local myframe = B
@@ -475,6 +477,9 @@ local function WrestlePhase(p,me,soap,taunt,arms)
 		arms.viewmobj.tics = TR * 3/2
 		arms.viewmobj.fuse = arms.viewmobj.tics
 		p.awayviewtics = arms.viewmobj.tics
+		arms2.viewmobj.tics = TR * 3/2
+		arms2.viewmobj.fuse = arms2.viewmobj.tics
+		play.awayviewtics = arms2.viewmobj.tics
 		
 		local tempangle = me.tempangle
 		ResetTaunt(p)
