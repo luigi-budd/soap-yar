@@ -1815,6 +1815,8 @@ local function TryTopClash(p,me,found)
 			sh.renderflags = $|RF_PAPERSPRITE|RF_FULLBRIGHT
 			sh.angle = sb.angle
 			sh.scale = $ * 4
+		else
+			Soap_ImpactVFX(me, found, nil,2*FU,nil,nil, DMG_ELECTRIC)
 		end
 		return true
 	end
@@ -1937,6 +1939,7 @@ rawset(_G,"SoapST_Hitbox",function(p)
 				and not (found.player.guard > 0)
 				or (found.player.soaptable.toptics and not found.player.soaptable.topwindup)
 					if TryTopClash(p,me,found)
+						soap.toptics = $ + 12
 						return
 					end
 				end
@@ -1989,6 +1992,7 @@ rawset(_G,"Soap_HandleNoAbils", function(p)
 		na = $|SNOABIL_AIRDASH
 	end
 	
+	local countdown = false
 	local hiding = false
 	if (gametyperules & (GTR_STARTCOUNTDOWN|GTR_FRIENDLY) == GTR_STARTCOUNTDOWN)
 		if leveltime <= cv_hidetime.value*TR
@@ -1997,6 +2001,8 @@ rawset(_G,"Soap_HandleNoAbils", function(p)
 				if not (p.pflags & PF_TAGIT)
 					hiding = false
 				end
+			elseif (gametyperules & GTR_RACE)
+				countdown = true
 			end
 		else
 			if (gametyperules & GTR_HIDEFROZEN)
@@ -2120,7 +2126,7 @@ rawset(_G,"Soap_HandleNoAbils", function(p)
 		na = $|SNOABIL_RDASH|SNOABIL_AIRDASH
 	end
 	
-	if (not me.health) or (soap.inPain)
+	if (not me.health) or (soap.inPain) or countdown
 		na = $|SNOABIL_BOTHTAUNTS
 	end
 	
@@ -4125,6 +4131,8 @@ local function CheckForClash(p,me, p2,them, myattackpri)
 			sh.renderflags = $|RF_PAPERSPRITE|RF_FULLBRIGHT
 			sh.angle = sb.angle
 			sh.scale = $ * 4
+		else
+			Soap_ImpactVFX(me, them, nil,2*FU,nil,nil, DMG_ELECTRIC)
 		end
 		return true
 	end

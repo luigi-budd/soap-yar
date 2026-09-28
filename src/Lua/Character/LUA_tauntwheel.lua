@@ -42,17 +42,23 @@ local gpbuttonnames = {
 	[GPAD_DRIGHT] = "D-Pad Right",
 }
 
+local TAUNTSPERPAGE = 6
 local TAUNT_ANIM = TR
+local TAUNT_PAGEANIM = TR / 5
 local taunt_cmd = {
 	active = false,
 	closed = false, -- keeps ignoregameinputs on for a tic
 	x = 0,
 	y = 0,
+	page = 0,
+	prevpage = 0,
+	pageanim = 0,
 	pointing = -1,
 	buttons = 0,
 	joystick = false,
 	joy_spin = false,
 	joy_fire = false,
+	mousewasdown = false,
 	
 	forward = 0,
 	side = 0,
@@ -60,37 +66,17 @@ local taunt_cmd = {
 	animation = 0,
 }
 
-local function CheckTauntAvail(p, checkactive)
-	if gamestate ~= GS_LEVEL then return false; end
-	if not (p and p.valid) then return false; end
-	if p.spectator then return false; end
-	local soap = p.soaptable
-	if not soap then return false; end
-	local taunt = soap.taunt
-	if not (skins[p.skin].name == SOAP_SKIN or skins[p.skin].name == TAKIS_SKIN) then return false; end
-	local me = p.realmo
-	if not (me and me.valid) then return false; end
-	
-	local noabil_taunt = (skins[p.skin].name == TAKIS_SKIN) and NOABIL_TAUNTS or SNOABIL_TAUNTS
-	if (p.panim == PA_IDLE or p.panim == PA_RUN or soap.accspeed <= 5*FU)
-	and (P_IsObjectOnGround(me))
-	and not ((taunt.active or taunt.tics) and checkactive)
-	and me.health
-	and (soap.notCarried)
-	and not (soap.noability & noabil_taunt == noabil_taunt and checkactive)
-	and (SOAP_TAUNTS[me.skin] ~= nil and #SOAP_TAUNTS[me.skin])
-		return true
-	end
-	return false
-end
-
 local function StartMenu()
 	if taunt_cmd.active then return end
 	taunt_cmd.active = true
 	taunt_cmd.x = 0
 	taunt_cmd.y = 0
+	taunt_cmd.page = 0
+	taunt_cmd.prevpage = 0
+	taunt_cmd.pageanim = 0
 	taunt_cmd.selected = -1
 	taunt_cmd.closed = false
+	taunt_cmd.mousewasdown = false
 	input.ignoregameinputs = true
 end
 local function StopMenu()
@@ -98,8 +84,12 @@ local function StopMenu()
 	taunt_cmd.active = false
 	taunt_cmd.x = 0
 	taunt_cmd.y = 0
+	taunt_cmd.page = 0
+	taunt_cmd.prevpage = 0
+	taunt_cmd.pageanim = 0
 	taunt_cmd.selected = -1
 	taunt_cmd.closed = true
+	taunt_cmd.mousewasdown = false
 	input.ignoregameinputs = false
 end
 local function TauntWarning()
@@ -110,23 +100,30 @@ end
 local scroll_fact = 400
 local wheel_radius = 60*FU
 local wheel_start = 28*FU
+local wheel_spacing = wheel_radius * 14/5
+local wheel_mousecap = wheel_radius * 7/5
+local wheel_pagebut_wid = 8*FU
+local wheel_pagebut_hei = 10*FU
+local wheel_pagebut_center = wheel_mousecap - (wheel_pagebut_wid)
 
-local function dust_type(me)
-	return (me.eflags & (MFE_UNDERWATER|MFE_TOUCHWATER)) and P_RandomRange(MT_SMALLBUBBLE,MT_MEDIUMBUBBLE) or MT_SOAP_DUST
-end
-local function dust_noviewmobj(dust)
-	dust.dontdrawforviewmobj = me
-end
-local function chardrawer(v,i, x,y, props, selected)
+rawset(_G, "SOAP_TAUNTS", {})
+rawset(_G, "SoapTaunt_AddTaunt", function(skin, info)
+	if info == nil then return end
+	if SOAP_TAUNTS[skin] == nil
+		SOAP_TAUNTS[skin] = {}
+	end
+	SOAP_TAUNTS[skin][(#SOAP_TAUNTS[skin] + 1)] = info
+	print(("\x83SOAP\x80: Registered taunt '%s' for skin '%s' in slot %d"):format(info.name, skin, #SOAP_TAUNTS[skin]))
+end)
+rawset(_G, "SoapTaunt_WheelDrawer", function(v,i, x,y, props, selected, basescale)
 	local scale = FixedMul(selected and (FU*3/5)/2 or (FU/4), skins[props.skin].highresscale)
 	local patch,flip = v.getSprite2Patch(props.skin, props.spr2, false, props.frame, props.angle, 0)
 	v.drawScaled(x, y + (patch.height * scale)/2,
-		scale, patch, (flip) and V_FLIP or 0,
+		FixedMul(scale,basescale), patch, (flip) and V_FLIP or 0,
 		v.getColormap(nil,nil, selected and "AllYellow" or "AllWhite")
 	)
-end
-
-local function cancelConds(p, nobuttons, checkspinonly)
+end)
+rawset(_G, "SoapTaunt_CancelWhen", function(p, nobuttons, checkspinonly)
 	local me = p.realmo
 	local soap = p.soaptable
 	
@@ -167,846 +164,60 @@ local function cancelConds(p, nobuttons, checkspinonly)
 	end
 	
 	return cancel
-end
-
-local sixseven_callback = function(spark)
-	spark.tics = 25
-	spark.fuse = 25
-	spark.type = MT_SOAP_WALLBUMP
-	spark.sixseveneffect = true
-	spark.frame = A
-	spark.sprite = SPR_SOAP_GFX
-	spark.frame = 34|FF_PAPERSPRITE|FF_ADD
-	spark.momz = 0
-	spark.renderflags = $|RF_NOCOLORMAPS|RF_FULLBRIGHT|(P_RandomChance(FU/2) and RF_HORIZONTALFLIP or 0)
-	P_ThrustEvenIn2D(spark, spark.angle - ANGLE_90, 8*FU)
-end
-local function ooomagawd_callback(spark, me)
-	spark.tics = (me.soap_supertemp) and TR or 10
-	spark.frame = A
-	spark.sprite = SPR_SOAP_GFX
-	spark.frame = 34|FF_PAPERSPRITE|FF_ADD
-	spark.momz = 0
-	spark.renderflags = $|RF_NOCOLORMAPS|RF_FULLBRIGHT|(P_RandomChance(FU/2) and RF_HORIZONTALFLIP or 0)
-	spark.type = MT_SOAP_WALLBUMP
-	local frac = 0
-	local speed = 14
-	spark.alpha = min(frac*8/6, FU)
-	if (me.soap_supertemp)
-		frac = FU
-		speed = 12
-		spark.sixseveneffect = true
-		if (me.soap_poundvfx)
-			spark.sixseveneffect = nil
-			spark.tics = 20
-			speed = 30
-			
-			spark.scale = FU * 5
-			spark.spritexscale = $ / 5
-			spark.fusesquish = 10
-			spark.xstretch = FU/6
-			spark.alpha = FU / 5
-		end
-	else
-		spark.fusesquish = 5
-		spark.scale = frac*2
-		spark.spritexscale = $ / 2
-		spark.movefactor = FU * 89/100
+end)
+rawset(_G, "SoapTaunt_TauntIsAvail", function(p, nobuttons, checkspinonly)
+	if gamestate ~= GS_LEVEL then return false; end
+	if not (p and p.valid) then return false; end
+	if p.spectator then return false; end
+	local soap = p.soaptable
+	if not soap then return false; end
+	local taunt = soap.taunt
+	if not (skins[p.skin].name == SOAP_SKIN or skins[p.skin].name == TAKIS_SKIN) then return false; end
+	local me = p.realmo
+	if not (me and me.valid) then return false; end
+	
+	local noabil_taunt = (skins[p.skin].name == TAKIS_SKIN) and NOABIL_TAUNTS or SNOABIL_TAUNTS
+	if (p.panim == PA_IDLE or p.panim == PA_RUN or soap.accspeed <= 5*FU)
+	and (P_IsObjectOnGround(me))
+	and not ((taunt.active or taunt.tics) and checkactive)
+	and me.health
+	and (soap.notCarried)
+	and not (soap.noability & noabil_taunt == noabil_taunt and checkactive)
+	and (SOAP_TAUNTS[me.skin] ~= nil and #SOAP_TAUNTS[me.skin])
+		return true
 	end
-	spark.fuse = spark.tics
-	P_ThrustEvenIn2D(spark, spark.angle - ANGLE_90, speed*frac)
-	spark.momx = $ + me.momx
-	spark.momy = $ + me.momy
-end
+	return false
+end)
+rawset(_G, "SoapTaunt_Warning",function(p)
+	if p ~= consoleplayer then return end
+	TauntWarning()
+end)
+local CheckTauntAvail = SoapTaunt_TauntIsAvail
 
-rawset(_G, "SOAP_TAUNTS", {})
-SOAP_TAUNTS[SOAP_SKIN] = {
-	[1] = {
-		name = "Flex",
-		
-		run = function(p, me, soap, taunt)
-			S_StartSound(me, (me.skin == TAKIS_SKIN) and sfx_tk_whp or sfx_flex)
-			me.state = S_PLAY_SOAP_FLEX
-			soap.stasistic = TR
-			if (me.skin == TAKIS_SKIN)
-				soap.stasistic = $ / 2
-				me.tics = $ / 2
-			end
-			taunt.tics = soap.stasistic
-			
-			me.momx,me.momy = p.cmomx,p.cmomy
-		end,
-		postthink = function(p, me, soap, taunt)
-			local angle = (p.cmd.angleturn << 16)
-			if soap.in2D then angle = ANGLE_90 end
-			
-			local angoff = ANGLE_90
-			if (me.skin == TAKIS_SKIN)
-				angoff = ANGLE_180
-			end
-			p.drawangle = angle + angoff
-		end,
-		drawer = function(v,i, x,y, selected)
-			chardrawer(v,i, x,y, {
-				skin = skins[consoleplayer.skin].name,
-				spr2 = SPR2_FLEX,
-				frame = A, angle = 1
-			}, selected)
-		end,
-		-- canceled = function(p, me, soap, taunt)
-		-- optional function that runs when the tuant is forcibly
-		-- canceled, such as switching skins or dying
-	},
-	[2] = {
-		name = "Laugh",
-		
-		run = function(p, me, soap, taunt)
-			if me.skin == SOAP_SKIN
-				S_StartSound(me,sfx_hahaha)
-				me.state = S_PLAY_SOAP_LAUGH
-				soap.stasistic = TR
-			else
-				local sound = sfx_tk_omg
-				me.state = S_PLAY_SOAP_LAUGH
-				me.sprite2 = SPR2_WAIT
-				me.frame = ($ &~FF_FRAMEMASK)|D
-				soap.stasistic = TR / 2
-				me.tics = soap.stasistic
-				
-				if P_RandomChance(FU / 20)
-					sound = sfx_tk_om2
-					Soap_SquashMacro(p, {ease_func = "inoutback", ease_time = TR, strength = 2*FU, squish = -FU, back = 2*FU})
-					me.soap_supertemp = true
-					me.soap_poundvfx = true
-					Soap_DustRing(me,
-						MT_PARTICLE, 24,
-						{me.x,me.y,me.z},
-						8*FU, 10*FU,
-						me.scale / 10,
-						me.scale * 6,
-						false, ooomagawd_callback
-					)
-					me.soap_supertemp = nil
-					me.soap_poundvfx = nil
-					
-					for play in players.iterate
-						if not (play.realmo and play.realmo.valid) then continue end
-						if R_PointToDist2(play.realmo.x,play.realmo.y, me.x,me.y) > 4096*me.scale then continue end
-						
-						if Soap_IsLocalPlayer(play)
-							Soap_StartQuake(6*FU, TR/2)
-						end
-						P_FlashPal(play, PAL_INVERT, 4)
-					end
-				elseif Soap_IsLocalPlayer(p)
-					Soap_StartQuake(FU, TR/6)
-				end
-				S_StartSound(me,sound)
-			end
-			taunt.tics = soap.stasistic
-			
-			me.momx,me.momy = p.cmomx,p.cmomy
-		end,
-		postthink = function(p, me, soap, taunt)
-			local angle = (p.cmd.angleturn << 16)
-			if soap.in2D then angle = ANGLE_90 end
-			
-			p.drawangle = angle + ANGLE_180
-		end,
-		drawer = function(v,i, x,y, selected)
-			local istakis = skins[consoleplayer.skin].name == TAKIS_SKIN
-			chardrawer(v,i, x,y, {
-				skin = skins[consoleplayer.skin].name,
-				spr2 = istakis and SPR2_WAIT or SPR2_APOS,
-				frame = istakis and D or A, angle = 1
-			}, selected)
-		end,
-	},
-	[3] = {
-		name = "Death",
-		cancelable = true,
-		
-		run = function(p, me, soap, taunt)
-			me.state = S_PLAY_DEAD
-			me.sprite2 = SPR2_MSC4
-			me.tics = -1
-			
-			me.tempangle = p.drawangle
-			S_StartSound(me,sfx_altdi1,p)
-			S_StartSound(me,sfx_sp_smk,p)
-			S_StartSound(me,sfx_s3k5d)
-			Soap_DustRing(me,
-				dust_type(me),
-				P_RandomRange(8,14),
-				{me.x,me.y,me.z},
-				16*me.scale,
-				me.scale*5,
-				me.scale,
-				me.scale/2,
-				false, dust_noviewmobj
-			)
-			Soap_StartQuake(10*FU, 10, {me.x,me.y,me.z}, 256*me.scale)
-			
-			soap.stasistic = max($, 2)
-			taunt.tics = 2
-			
-			me.momx,me.momy = p.cmomx,p.cmomy
-		end,
-		think = function(p, me, soap, taunt)
-			if cancelConds(p)
-			or me.tempangle == nil
-			or (P_PlayerInPain(p) or me.state == S_PLAY_PAIN)
-				me.tempangle = nil
-				if not (P_PlayerInPain(p) or me.state == S_PLAY_PAIN)
-					me.state = S_PLAY_WALK
-					P_MovePlayer(p)
-					Soap_ResetState(p)
-				end
-				soap.stasistic, taunt.tics = 0,0
-			else
-				soap.stasistic = max($, 2)
-				taunt.tics = 2
-				
-				p.drawangle = me.tempangle
-				soap.noability = SNOABIL_ALL
-				
-				if me.state ~= S_PLAY_DEAD
-					me.state = S_PLAY_DEAD
-					me.tics = -1
-				elseif me.sprite2 ~= SPR2_MSC4
-					me.frame = $ &~FF_FRAMEMASK
-					me.sprite2 = SPR2_MSC4
-				end
-			end
-		end,
-		postthink = function(p, me, soap, taunt)
-			if me.tempangle == nil then return end
-			p.drawangle = me.tempangle
-		end,
-		drawer = function(v,i, x,y, selected)
-			chardrawer(v,i, x,y, {
-				skin = skins[consoleplayer.skin].name,
-				spr2 = SPR2_MSC4,
-				frame = A, angle = 2
-			}, selected)
-		end,
-	},
-	[4] = {
-		name = "Breakdance",
-		cancelable = true,
-		
-		run = function(p, me, soap, taunt)
-			soap.stasistic = max($, 2)
-			taunt.tics = 2
-			
-			me.momx,me.momy = p.cmomx,p.cmomy
-		end,
-		think = function(p, me, soap, taunt)
-			if cancelConds(p)
-				if not (P_PlayerInPain(p) or me.state == S_PLAY_PAIN)
-					me.state = S_PLAY_WALK
-					P_MovePlayer(p)
-					Soap_ResetState(p)
-				end
-				soap.stasistic, taunt.tics = 0,0
-			else
-				soap.stasistic = max($, 2)
-				taunt.tics = 2
-				
-				soap.noability = SNOABIL_ALL &~SNOABIL_BREAKDANCE
-			end
-		end,
-		drawer = function(v,i, x,y, selected)
-			chardrawer(v,i, x,y, {
-				skin = skins[consoleplayer.skin].name,
-				spr2 = SPR2_BRDA,
-				frame = F, angle = 2
-			}, selected)
-		end,
-	},
-	[5] = {
-		name = "Six-Seven",
-		cancelable = true,
-		
-		run = function(p, me, soap, taunt)
-			soap.stasistic = max($, 2)
-			taunt.tics = 2
-			me.sixseveeeen = 0
-			me.sixsev_adjust = 0
-			me.sixsev_super = 0
-			
-			me.momx,me.momy = p.cmomx,p.cmomy
-			me.state = S_PLAY_SOAP_SIXSEV
-		end,
-		think = function(p, me, soap, taunt)
-			if cancelConds(p,nil, true)
-			or (P_PlayerInPain(p) or me.state == S_PLAY_PAIN)
-				if not (P_PlayerInPain(p) or me.state == S_PLAY_PAIN)
-					me.state = S_PLAY_WALK
-					P_MovePlayer(p)
-					Soap_ResetState(p)
-				end
-				soap.stasistic, taunt.tics = 0,0
-				me.sixseveeeen = nil
-				me.sixsev_adjust = nil
-				me.sixsev_super = nil
-				
-				me.colorized = false
-			else
-				soap.stasistic = max($, 2)
-				taunt.tics = 2
-				
-				soap.noability = SNOABIL_ALL
-				if me.state ~= S_PLAY_SOAP_SIXSEV
-				and not (soap.inPain or me.health <= 0)
-					me.state = S_PLAY_SOAP_SIXSEV
-				end
-				
-				if soap.jump == 1
-					me.sixsev_adjust = min($ + 10, 20)
-				end
-				me.sixseveeeen = $ + 1 + me.sixsev_adjust
-				me.sixsev_adjust = max($ - 1, 0)
-				
-				if me.sixsev_adjust > 10
-					P_SpawnGhostMobj(me)
-					me.sixsev_super = $ + 1
-					
-					if (me.sixsev_super == TR)
-					or (me.sixsev_super == 3*TR)
-					or (me.sixsev_super == 6*TR)
-						S_StartSoundAtVolume(me,sfx_s3ka2,192)
-					end
-					if (me.sixsev_super == 3*TR)
-						S_StartSound(me,sfx_cdfm40)
-						S_StartSound(me,sfx_sp_em2)
-					elseif (me.sixsev_super == 6*TR)
-						S_StartSoundAtVolume(me,sfx_s3k9c,192)
-					end
-				else
-					me.sixsev_super = clamp(0, $ - 2, TR)
-				end
-				if me.sixsev_super >= TR
-					if (leveltime % 4 == 0)
-						Soap_DustRing(me,
-							dust_type(me),
-							P_RandomRange(6, 10),
-							{me.x,me.y,me.z},
-							16*me.scale + (me.sixsev_super - TR) * 783,
-							me.scale*7,
-							me.scale,
-							me.scale/2,
-							false, dust_noviewmobj
-						)
-						if me.sixsev_super >= 3*TR
-							Soap_DustRing(me,
-								MT_PARTICLE, 16,
-								{me.x,me.y,me.z},
-								8*FU, 8*FU,
-								me.scale / 10,
-								me.scale * 4,
-								false, sixseven_callback
-							)
-						end
-					end
-					
-					local range = 20*FU
-					local z = P_SpawnMobjFromMobj(me,
-						Soap_RandomFixedRange(-range, range),
-						Soap_RandomFixedRange(-range, range),
-						Soap_RandomFixedRange(0, 30*FU),
-						MT_WATERZAP
-					)
-					z.renderflags = $|RF_NOCOLORMAPS|RF_FULLBRIGHT
-					if me.sixsev_super >= 3*TR
-						local range = 4*me.scale
-						local g = P_SpawnGhostMobj(me)
-						g.colorized = true
-						g.blendmode = AST_ADD
-						g.destscale = 0
-						g.dispoffset = -600
-						P_SetObjectMomZ(g, 12*FU)
-						
-						P_SetOrigin(g,
-							g.x + Soap_RandomFixedRange(-range, range),
-							g.y + Soap_RandomFixedRange(-range, range),
-							g.z + Soap_RandomFixedRange(-range, range)
-						)
-					end
-					if me.sixsev_super >= 6*TR
-						Soap_StartQuake(FU + (me.sixsev_super - 6*TR) * 2400, 2,
-							{me.x,me.y,me.z}, 256*FU
-						)
-						me.colorized = (leveltime % 2 == 0)
-					else
-						me.colorized = false
-					end
-				else
-					me.colorized = false
-				end
-				
-				me.frame = $ &~FF_FRAMEMASK
-				me.frame = $|((me.sixseveeeen / 10) % 8)
-			end
-		end,
-		drawer = function(v,i, x,y, selected)
-			chardrawer(v,i, x,y, {
-				skin = skins[consoleplayer.skin].name,
-				spr2 = SPR2_MSC8,
-				frame = 3, angle = 0
-			}, selected)
-		end,
-		canceled = function(p,me,soap)
-			me.sixseveeeen = nil
-			me.sixsev_adjust = nil
-			me.sixsev_super = nil
-			
-			me.colorized = false
-		end
-	},
-	[6] = {
-		name = "Punch",
-		
-		run = function(p, me, soap, taunt)
-			if (CV.tauntinterference.value == 0)
-			and Soap_IsCompGamemode()
-				CONS_Printf(p, "Can't use this taunt in this gamemode!")
-				S_StartSound(nil, sfx_shldls, p)
-				return
-			end
-			
-			me.state = S_PLAY_SOAP_PREPUNCH
-			
-			me.tempangle = me.angle
-			me.punchwindup = 20
-			S_StartSound(me,sfx_kc63)
-			Soap_DustRing(me,
-				dust_type(me),
-				P_RandomRange(8,14),
-				{me.x,me.y,me.z},
-				16*me.scale,
-				me.scale*5,
-				me.scale,
-				me.scale/2,
-				false, dust_noviewmobj
-			)
-			
-			soap.stasistic = max($, 2)
-			taunt.tics = 34
-			
-			me.momx,me.momy = p.cmomx,p.cmomy
-			soap.accspeed = 0
-		end,
-		think = function(p, me, soap, taunt)
-			if cancelConds(p, true)
-			or me.tempangle == nil
-				me.tempangle = nil
-				if not (P_PlayerInPain(p) or me.state == S_PLAY_PAIN)
-					me.state = S_PLAY_WALK
-					P_MovePlayer(p)
-					Soap_ResetState(p)
-				end
-				soap.stasistic, taunt.tics = 0,0
-				return
-			end
-			soap.stasistic = max($, 2)
-			
-			p.drawangle = me.tempangle
-			soap.noability = SNOABIL_ALL
-			
-			if me.punchwindup
-				me.punchwindup = $ - 1
-				if me.punchwindup == 0
-					me.state = S_PLAY_SOAP_PUNCH1
-					
-					local dist = 35*FU
-					local ang = me.tempangle
-					local thok = P_SpawnMobjFromMobj(me,
-						P_ReturnThrustX(nil,ang,dist),
-						P_ReturnThrustY(nil,ang,dist),
-						0,
-						MT_THOK
-					)
-					P_SetOrigin(thok, thok.x,thok.y,thok.z)
-					thok.radius = 35*me.scale
-					thok.height = 70*me.scale
-					thok.scale = me.scale
-					thok.fuse = 2
-					thok.flags2 = $|MF2_DONTDRAW
-					thok.angle = ang
-					
-					S_StartSound(me, sfx_sp_bsl)
-					local fakerange = 128*FU
-					local range = thok.radius*3/2
-					local enemyhit = false
-					searchBlockmap("objects", function(ref, found)
-						if found == me then return end
-						if R_PointToDist2(found.x, found.y, thok.x, thok.y) > range + found.radius
-							return
-						end
-						if not Soap_ZCollide(found,thok) then return end
-						if not (found.health) then return end
-						if not P_CheckSight(thok,found) then return end
-						local topheight = found.z + found.height
-						local botheight = me.floorz
-						if soap.gravflip == -1
-							topheight = found.z
-							botheight = me.ceilingz
-						end
-						if (topheight < botheight) then return end
-						
-						if (found.type == MT_TNTBARREL)
-							Soap_ImpactVFX(found, me, nil,nil, true)
-							Soap_SpawnBumpSparks(found, me, nil,false, found.scale * 3/2, true)
-							Soap_DamageSfx(found, FU, 2*FU)
-							
-							S_StartSound(found, found.info.attacksound)
-							P_3DThrust(found, ang, ANG20, 25 * me.scale)
-							found.flags = $|MF_MISSILE|MF_NOBLOCKMAP
-							found.state = found.info.missilestate
-							
-							enemyhit = true
-						elseif Soap_CanDamageEnemy(p, found,MF_ENEMY|MF_BOSS|MF_MONITOR|MF_SHOOTABLE)
-							Soap_ImpactVFX(found, me, nil,nil, true)
-							Soap_SpawnBumpSparks(found, me, nil,false, found.scale * 3/2, true)
-							Soap_DamageSfx(found, 25*FU, 30*me.scale)
-							P_DamageMobj(found,me,me, damage)
-							Soap_Hitlag.addHitlag(found, 12, true)
-							Soap_Hitlag.addHitlag(me, 12, false)
-							Soap_StartQuake(10*FU, 12, {me.x, me.y, me.z}, 512*me.scale)
-							
-							enemyhit = true
-						elseif (found.player and found.player.valid)
-						and not (found.player.powers[pw_flashing] or found.player.powers[pw_invulnerability])
-							local p2 = found.player
-							
-							Soap_SpawnBumpSparks(found, me, nil,false, found.scale * 3/2, true)
-							Soap_DamageSfx(found, 25*FU, 30*me.scale)
-							
-							-- kou parries lol
-							if (found.skin == "kou")
-							and (p2.kou and p2.kou.parrytimer)
-								me.soap_tumble = true
-								me.soap_tumble_oldmomz = me.momz
-								
-								P_ResetPlayer(p)
-								me.state = S_PLAY_PAIN
-								me.tempangle = nil
-								p.drawangle = ang + ANGLE_180
-								
-								if P_IsObjectOnGround(me)
-									me.z = $ + P_MobjFlip(me)
-								end
-								local speed = (soap.taunt.tics) and 30*me.scale or 12*me.scale
-								P_Thrust(me, ang, -speed*2)
-								P_SetObjectMomZ(me, 30*me.scale, true)
-								p.powers[pw_flashing] = flashingtics
-								
-								-- kou vfx
-								P_FlashPal(p, PAL_INVERT, 4)
-								P_FlashPal(p2, PAL_INVERT, 4)
-								local kou = p2.kou
-								kou.punchlagactive = 18
-								
-								if not (found.state == S_PLAY_KOU_DROP)
-									found.state = S_PLAY_KOU_DROP
-								end
-								
-								local circ = P_SpawnMobjFromMobj(found, 0, 0, 1, MT_KOUCIRCLE)
-								circ.tics = 15
-								circ.scale = found.scale + found.scale
-								circ.destscale = found.scale * 30
-								circ.scalespeed = found.scale * 3
-								P_Telekinesis(found.player, 45*found.scale, 640*found.scale)
-								local kicker = P_SpawnMobjFromMobj(found, 0,0,0, MT_KOU_MISSILEPARTICLE)
-								kicker.destscale = $*8
-								kicker.scalespeed = found.scale/2
-								kicker.color = p2.skincolor
-								kicker.blendmode = AST_ADD
-								kicker.fuse = 6
-								local sounds = {sfx_kodrp1, sfx_kodrp2}
-								S_StartSound(found, sounds[P_RandomRange(1, #sounds)])
-								
-								Soap_Hitlag.addHitlag(found, 12, false)
-								Soap_Hitlag.addHitlag(me, 12, true)
-								Soap_StartQuake(10*FU, 12, {me.x, me.y, me.z}, 512*me.scale)
-								Soap_ImpactVFX(me, found, nil,2*FU,nil,nil, DMG_ELECTRIC)
-								Soap_DamageSfx(me, 25*FU, 30*me.scale, DMG_ELECTRIC)
-								
-								return true
-							end
-							Soap_ImpactVFX(found, me, nil,nil, true)
-							
-							if CV.tauntinterference.value
-								found.soap_tumble = true
-								found.soap_tumble_oldmomz = found.momz
-								
-								P_ResetPlayer(p2)
-								found.state = S_PLAY_PAIN
-								p2.drawangle = ang + ANGLE_180
-								
-								if P_IsObjectOnGround(found)
-									found.z = $ + P_MobjFlip(found)
-								end
-								local speed = (p2.soaptable.taunt.tics) and 30*me.scale or 12*me.scale
-								P_Thrust(found, ang, speed)
-								P_SetObjectMomZ(found, 30*me.scale, true)
-								p2.powers[pw_flashing] = flashingtics
-								
-								-- lolllll
-								if (gametype == GT_ZE2 or (ZE2 and ZE2.isGametype()))
-								and (p2.xSlinger and p2.xSlinger.team == 2)
-									P_DamageMobj(found, me,me, 100)
-								end
-							else --lol
-								P_DoPlayerPain(p2, me,me)
-								found.momx = 0
-								found.momy = 0
-							end
-							
-							Soap_Hitlag.addHitlag(found, 12, true)
-							Soap_Hitlag.addHitlag(me, 12, false)
-							Soap_StartQuake(10*FU, 12, {me.x, me.y, me.z}, 512*me.scale)
-							
-							enemyhit = true
-						--Most likely a spike thing
-						elseif (found.info.mass == DMG_SPIKE)
-						and (found.flags & (MF_PAIN))
-						or (found.type == MT_SPIKE or found.type == MT_WALLSPIKE)
-						and (found.takis_flingme ~= false)
-							-- probably a cactus in acz
-							if found.flags & MF_SCENERY
-							and not (found.type == MT_SPIKE or found.type == MT_WALLSPIKE)
-								local speed = 15*found.scale
-								local range = 15*FU
-								for i = 0,P_RandomRange(15,20)
-									local poof = P_SpawnMobjFromMobj(found,
-										Soap_RandomFixedRange(-range, range),
-										Soap_RandomFixedRange(-range, range),
-										FixedDiv(found.height,found.scale)/2 + Soap_RandomFixedRange(-range, range),
-										MT_SOAP_DUST
-									)
-									local hang,vang = R_PointTo3DAngles(
-										poof.x,poof.y,poof.z,
-										found.x,found.y,found.z + found.height/2
-									)
-									P_3DThrust(poof, hang,vang, speed)
-									
-									poof.spritexscale = $ + Soap_RandomFixedRange(0,2*FU)/3
-									poof.spriteyscale = poof.spritexscale
-								end
-								
-								P_SpawnMobjFromMobj(found,0,0,0,MT_THOK).state = S_XPLD1
-								local sfx = P_SpawnGhostMobj(found)
-								sfx.flags2 = $|MF2_DONTDRAW
-								sfx.fuse = TR
-								sfx.tics = TR
-								S_StartSound(sfx, sfx_pop)
-							end
-							P_KillMobj(found,me,me)
-						end
-					end, 
-					thok,
-					thok.x - fakerange, thok.x + fakerange,
-					thok.y - fakerange, thok.y + fakerange)
-				end
-			end
-			
-		end,
-		postthink = function(p, me, soap, taunt)
-			if me.tempangle == nil then return end
-			p.drawangle = me.tempangle --+ FixedAngle(36*FU * me.punchwindup)
-		end,
-		drawer = function(v,i, x,y, selected)
-			chardrawer(v,i, x,y, {
-				skin = skins[consoleplayer.skin].name,
-				spr2 = SPR2_MSC6,
-				frame = A, angle = 1
-			}, selected)
-		end,
-	},
-	[7] = {
-		name = "Gangnam Style",
-		cancelable = true,
-		
-		run = function(p, me, soap, taunt)
-			me.state = S_PLAY_SOAP_GANGNAM
-			
-			soap.stasistic = max($, 2)
-			taunt.tics = 2
-			if Soap_IsLocalPlayer(p)
-			and CV.boomboxsfx.value
-				S_FadeMusic(0, MUSICRATE/4, p)
-			end
-			
-			me.momx,me.momy = p.cmomx,p.cmomy
-			me.temptics = 0
-		end,
-		think = function(p, me, soap, taunt)
-			if cancelConds(p)
-			or (P_PlayerInPain(p) or me.state == S_PLAY_PAIN)
-				me.temptics = nil
-				me.extravalue1 = 0
-				if not (P_PlayerInPain(p) or me.state == S_PLAY_PAIN)
-					me.state = S_PLAY_WALK
-					P_MovePlayer(p)
-					Soap_ResetState(p)
-				end
-				if Soap_IsLocalPlayer(p)
-					S_FadeMusic(100, MUSICRATE/4, p)
-				end
-				local sound = (me.skin == TAKIS_SKIN) and sfx_sp_em4 or sfx_sp_em3
-				S_StopSoundByID(me, sound)
-				soap.stasistic, taunt.tics = 0,0
-			else
-				soap.stasistic = max($, 2)
-				taunt.tics = 2
-				
-				soap.noability = SNOABIL_ALL
-				
-				if me.state ~= S_PLAY_SOAP_GANGNAM
-					me.state = S_PLAY_SOAP_GANGNAM
-				end
-				
-				local dontplay = false
-				local vol = 255
-				-- off
-				if CV.boomboxsfx.value == 0
-					dontplay = true
-				-- mineonly
-				elseif (CV.boomboxsfx.value == 2)
-				and (displayplayer and displayplayer.valid)
-					dontplay = (p ~= displayplayer)
-				-- on
-				elseif (displayplayer and displayplayer.valid)
-					local imtaunting = displayplayer.soaptable.taunt.num == 7 and (skins[displayplayer.skin].name == SOAP_SKIN)
-					-- if everyones taunt audio is on for us,
-					-- make other taunt volumes a little quieter
-					-- if we're also using the same taunt
-					if imtaunting and (displayplayer ~= p)
-						vol = 255 / 6
-					end
-				end
-				
-				local sound = (me.skin == TAKIS_SKIN) and sfx_sp_em4 or sfx_sp_em3
-				if not S_SoundPlaying(me, sound)
-				and not dontplay
-					S_StartSoundAtVolume(me, sound, vol)
-				elseif dontplay
-					S_StopSoundByID(me, sound)
-				end
-				
-				if (me.skin == TAKIS_SKIN)
-				and (me.temptics % (4*3) == 0)
-					local vfx = P_SpawnMobjFromMobj(me, 0,0, FixedDiv(me.height,me.scale)/2, MT_SOAP_WALLBUMP)
-					vfx.color = ColorOpposite(me.color)
-					vfx.blendmode = AST_ADD
-					vfx.renderflags = $|RF_FULLBRIGHT|(me.extravalue1 % 2 and RF_HORIZONTALFLIP or 0)
-					vfx.dispoffset = -200
-					vfx.flags = $|MF_NOGRAVITY
-					vfx.fuse = 12
-					vfx.tics = -1
-					vfx.sprite = SPR_SOAP_GFX
-					vfx.frame = 40
-					vfx.scale = $ / 2
-					--vfx.destscale = me.scale * 3/2
-					--vfx.scalespeed = FixedDiv(vfx.destscale - vfx.scale, vfx.fuse*FU)
-					vfx.sixseveneffect = true
-					vfx.dontdrawforviewmobj = me
-					
-					me.extravalue1 = $ + 1
-				end
-				me.temptics = $ + 1
-			end
-		end,
-		drawer = function(v,i, x,y, selected)
-			chardrawer(v,i, x,y, {
-				skin = skins[consoleplayer.skin].name,
-				spr2 = SPR2_CLNG,
-				frame = (skins[consoleplayer.skin].name == SOAP_SKIN) and C or A, angle = 0
-			}, selected)
-		end,
-		canceled = function(p, me, soap, taunt)
-			S_StopSoundByID(me, sfx_sp_em3)
-			S_StopSoundByID(me, sfx_sp_em4)
-			if Soap_IsLocalPlayer(p)
-				S_FadeMusic(100, MUSICRATE/4, p)
-			end
-		end
-	},
+local function addtaunt(path)
+	dofile("Character/Taunts/"..path)
+end
+local tauntstoadd = {
+	"Soap/1_flex.lua",
+	"Soap/2_laugh.lua",
+	"Soap/3_death.lua",
+	"Soap/4_breakdance.lua",
+	"Soap/5_sixseven.lua",
+	"Soap/6_punch.lua",
+	"Soap/7_gangnam.lua",
+	"Soap/8_armwrestle.lua",
+
+	"Takis/1_smug.lua",
+	"Takis/2_omg.lua",
+	"Takis/3_death.lua",
+	"Takis/4_surfin.lua",
+	"Takis/5_sixseven.lua",
+	"Takis/6_caramell.lua",
+	"Takis/7_armwrestle.lua",
 }
-SOAP_TAUNTS[TAKIS_SKIN] = {
-	[1] = {
-		name = "Smugness",
-		run = SOAP_TAUNTS[SOAP_SKIN][1].run,
-		think = SOAP_TAUNTS[SOAP_SKIN][1].think,
-		drawer = SOAP_TAUNTS[SOAP_SKIN][1].drawer,
-	},
-	[2] = {
-		name = "Oooomagawd",
-		run = SOAP_TAUNTS[SOAP_SKIN][2].run,
-		think = SOAP_TAUNTS[SOAP_SKIN][2].think,
-		drawer = SOAP_TAUNTS[SOAP_SKIN][2].drawer,
-	},
-	[3] = SOAP_TAUNTS[SOAP_SKIN][3],
-	[4] = {
-		name = "Surfin' Bird",
-		cancelable = true,
-		
-		run = function(p,me,soap, taunt)
-			soap.stasistic = max($, 2)
-			taunt.tics = 2
-			
-			me.momx,me.momy = p.cmomx,p.cmomy
-			me.state = S_PLAY_SOAP_BREAKDANCE
-			
-			soap.breakdance = 0
-		end,
-		think = function(p,me,soap, taunt)
-			if cancelConds(p)
-				if not (P_PlayerInPain(p) or me.state == S_PLAY_PAIN)
-					me.state = S_PLAY_WALK
-					P_MovePlayer(p)
-					Soap_ResetState(p)
-				end
-				soap.stasistic, taunt.tics = 0,0
-				return
-			end
-			
-			soap.stasistic = max($, 2)
-			taunt.tics = 2
-			if me.state ~= S_PLAY_SOAP_BREAKDANCE
-				me.state = S_PLAY_SOAP_BREAKDANCE
-			end
-			
-			--init
-			local timer = soap.breakdance % skins[p.skin].sprites[SPR2_BRDA].numframes
-			me.frame = ($ &~FF_FRAMEMASK)|(timer)
-			
-			p.drawangle = (p.cmd.angleturn << 16) + ANGLE_180
-			local incre_frame = (leveltime & 3) == 0
-			if incre_frame
-				soap.breakdance = $ + 1
-			end
-		end,
-		drawer = function(v,i, x,y, selected)
-			chardrawer(v,i, x,y, {
-				skin = skins[consoleplayer.skin].name,
-				spr2 = SPR2_BRDA,
-				frame = A, angle = 0
-			}, selected)
-		end,
-	},
-	[5] = SOAP_TAUNTS[SOAP_SKIN][5],
-	[6] = {
-		name = "Caramelldansen",
-		cancelable = true,
-		run = SOAP_TAUNTS[SOAP_SKIN][7].run,
-		think = SOAP_TAUNTS[SOAP_SKIN][7].think,
-		drawer = SOAP_TAUNTS[SOAP_SKIN][7].drawer,
-		canceled = SOAP_TAUNTS[SOAP_SKIN][7].canceled,
-	},
-}
+for _, name in ipairs(tauntstoadd)
+	addtaunt(name)
+end
 
 local cmd_sig = "iAmLua"..P_RandomFixed()
 addHook("NetVars",function(n) cmd_sig = n($); end)
@@ -1024,9 +235,10 @@ COM_AddCommand("_soap_dotaunt",function(p, sig, selected)
 	local taunt_t = SOAP_TAUNTS[me.skin][selected + 1]
 	if not taunt_t then return end
 	
-	if (taunt.active or taunt.tics) and prevnum == selected + 1
-	and taunt_t.cancelable
-		me.soap_tauntforcecancel = true
+	if (taunt.active or taunt.tics)
+		if taunt_t.cancelable and prevnum == selected + 1
+			me.soap_tauntforcecancel = true
+		end	
 		return
 	end
 	
@@ -1172,6 +384,9 @@ end)
 local TICCMD_RECIEVED = 1
 local KEY_JOY1 = KEY_JOY1 or ((KEY_MOUSE1 or 256) + (MOUSEBUTTONS or 8))
 local gp_waskeydown = false
+local leftbumpertime = 0
+local rightbumpertime = 0
+local eatgpinputs = false
 addHook("PlayerCmd",function(p,cmd)
 	leftjoystick.x = input.joyAxis(JA_STRAFE)
 	leftjoystick.y = input.joyAxis(JA_MOVE)
@@ -1193,10 +408,14 @@ addHook("PlayerCmd",function(p,cmd)
 			StopMenu()
 		elseif not (menuactive or p.spectator) and not CheckNoAbil(true)
 			StartMenu()
+			eatgpinputs = true
 			taunt_cmd.joystick = true
 		elseif CheckNoAbil(true)
 			TauntWarning()
 		end
+	end
+	if not gamekeydown[gamepad_tb]
+		eatgpinputs = false
 	end
 	gp_waskeydown = gamekeydown[gamepad_tb]
 	
@@ -1208,7 +427,11 @@ addHook("PlayerCmd",function(p,cmd)
 		end
 	end
 	
-	if not (taunt_cmd.active or taunt_cmd.closed) then return end
+	if not (taunt_cmd.active or taunt_cmd.closed)
+		leftbumpertime = 0
+		rightbumpertime = 0
+		return
+	end
 	
 	-- EAT SHIT AND DIE FUCK YOU GAME
 	-- im gonna cry
@@ -1228,6 +451,21 @@ addHook("PlayerCmd",function(p,cmd)
 		or ((fire2 > KEY_JOY1) and gamekeydown[fire2])
 		or (fireaxis > 0)
 			taunt_cmd.joy_fire = true
+		end
+		
+		-- im gonna assume this works cause my pro controller
+		-- doesnt send these buttons correctly
+		if not eatgpinputs
+			if gamekeydown[GPAD_LBUMPER]
+				leftbumpertime = $ + 1
+			else
+				leftbumpertime = 0
+			end
+			if gamekeydown[GPAD_RBUMPER]
+				rightbumpertime = $ + 1
+			else
+				rightbumpertime = 0
+			end
 		end
 	end
 	
@@ -1270,10 +508,13 @@ local function ClientTauntHandle(p)
 	end
 	
 	if (taunt_cmd.buttons & BT_SPIN) or taunt_cmd.joy_spin
-	--or cancelConds(p, true)
 		StopMenu()
 		fakespinlockout = true
 	end
+	
+	local lastpointing = taunt_cmd.pointing
+	local lastselecting = taunt_cmd.selecting
+	taunt_cmd.selecting = false
 	
 	-- negative angleturn is rightwards
 	-- positive aiming is upwards
@@ -1285,10 +526,77 @@ local function ClientTauntHandle(p)
 	taunt_cmd.y = $ + worky
 	local ang = R_PointToAngle2(0,0, taunt_cmd.x,taunt_cmd.y)
 	local dist = R_PointToDist2(0,0, taunt_cmd.x,taunt_cmd.y)
-	if (dist > wheel_radius)
-		taunt_cmd.x = P_ReturnThrustX(nil,ang, wheel_radius)
-		taunt_cmd.y = P_ReturnThrustY(nil,ang, wheel_radius)
-		dist = R_PointToDist2(0,0, taunt_cmd.x,taunt_cmd.y)
+	
+	if taunt_cmd.x < -(wheel_mousecap) then taunt_cmd.x = -(wheel_mousecap); end
+	if taunt_cmd.x > (wheel_mousecap) then taunt_cmd.x = (wheel_mousecap); end
+	if taunt_cmd.y < -(wheel_mousecap) then taunt_cmd.y = -(wheel_mousecap); end
+	if taunt_cmd.y > (wheel_mousecap) then taunt_cmd.y = (wheel_mousecap); end
+	
+	local mousedown = (taunt_cmd.buttons & (BT_ATTACK)) or (mouse.buttons & MB_BUTTON1) or (taunt_cmd.joy_fire)
+	local eatinput = false
+	
+	-- page buttons
+	if taunt_cmd.pageanim < 0
+		taunt_cmd.pageanim = $ + 1
+	elseif taunt_cmd.pageanim > 0
+		taunt_cmd.pageanim = $ - 1
+	end
+	
+	local TAUNTS = SOAP_TAUNTS[me.skin]
+	local NUMTAUNTS = #TAUNTS
+	if abs(taunt_cmd.x) >= wheel_pagebut_center - wheel_pagebut_wid
+	and abs(taunt_cmd.y) <= wheel_pagebut_hei
+	and NUMTAUNTS > TAUNTSPERPAGE
+		local canscroll = true
+		local side = sign(taunt_cmd.x)
+		if side == -1 and taunt_cmd.page <= 0 then canscroll = false; end
+		if side == 1 and taunt_cmd.page >= (NUMTAUNTS - 1)/TAUNTSPERPAGE then canscroll = false; end
+		
+		if (not taunt_cmd.pageanim) and canscroll
+			taunt_cmd.selecting = true
+			
+			if mousedown and taunt_cmd.mousewasdown
+				taunt_cmd.prevpage = taunt_cmd.page
+				taunt_cmd.page = $ + sign(taunt_cmd.x)
+				taunt_cmd.pageanim = TAUNT_PAGEANIM * sign(taunt_cmd.x)
+				S_StartSound(nil,sfx_menu1,p)
+			end
+		end
+		
+		if (taunt_cmd.selecting and not lastselecting)
+		and (lastpointing == -1)
+			S_StartSound(nil,sfx_menu1,p)
+		end
+		
+		-- maybe my logic is wrong, but we need to constantly
+		-- eat the input so that pressing the buttons wont close the menu
+		-- this is also being constantly set while youre in bounds
+		-- so the menu wont close when youre flipping between pages
+		eatinput = true
+	end
+	-- gamepad support
+	if (NUMTAUNTS > TAUNTSPERPAGE)
+	and taunt_cmd.joystick
+		local change = 0
+		if leftbumpertime == 1
+			change = -1
+		end
+		if rightbumpertime == 1
+			change = 1
+		end
+		
+		if change ~= 0
+			taunt_cmd.prevpage = taunt_cmd.page
+			taunt_cmd.page = $ + change
+			taunt_cmd.pageanim = TAUNT_PAGEANIM * change
+			S_StartSound(nil,sfx_menu1,p)
+		end
+	end
+	
+	if taunt_cmd.page > (NUMTAUNTS - 1)/TAUNTSPERPAGE
+		taunt_cmd.prevpage = taunt_cmd.page
+		taunt_cmd.page = (NUMTAUNTS - 1)/TAUNTSPERPAGE
+		taunt_cmd.pageanim = -TAUNT_PAGEANIM
 	end
 	
 	if taunt_cmd.joystick
@@ -1320,30 +628,35 @@ local function ClientTauntHandle(p)
 	
 	local oldhover = taunt_cmd.pointing
 	local selected = -1
-	if (dist >= wheel_start)
-		local avail = #SOAP_TAUNTS[me.skin]
-		local angstep = FixedDiv(360*FU, avail*FU)
-		ang = AngleFixed(InvAngle($ - ANGLE_90))
-		selected = FixedTrunc(FixedDiv(ang, angstep)) / FU
-		taunt_cmd.pointing = selected
+	if (dist >= wheel_start and dist < wheel_radius)
+		local avail = min(#SOAP_TAUNTS[me.skin] - ((TAUNTSPERPAGE) * taunt_cmd.page), TAUNTSPERPAGE)
+		if avail > 0
+			local angstep = FixedDiv(360*FU, avail*FU)
+			ang = AngleFixed(InvAngle($ - ANGLE_90))
+			selected = FixedTrunc(FixedDiv(ang, angstep)) / FU
+			taunt_cmd.pointing = selected + (TAUNTSPERPAGE * taunt_cmd.page)
+			selected = $ + (TAUNTSPERPAGE * taunt_cmd.page)
+			taunt_cmd.selecting = true
+		end
 	else
 		taunt_cmd.pointing = -1
 	end
 	if (oldhover ~= taunt_cmd.pointing)
-	and (dist >= wheel_start)
+	and (dist >= wheel_start and dist < wheel_radius)
 		S_StartSound(nil,sfx_menu1,p)
 	end
 	
-	if (taunt_cmd.buttons & (BT_ATTACK))
-	or (mouse.buttons & MB_BUTTON1)
-	or (taunt_cmd.joy_fire)
-	and (dist >= wheel_start)
-	or (numberkey > -1)
-		if numberkey > -1 then selected = numberkey; end
+	if ((mousedown and not taunt_cmd.mousewasdown and (dist >= wheel_start)) or (numberkey > -1))
+	and not eatinput
+		-- the command will handle any indicies out of range
+		if numberkey > -1
+			selected = numberkey + (TAUNTSPERPAGE * taunt_cmd.page)
+		end
 		COM_BufInsertText(consoleplayer, "_soap_dotaunt "..cmd_sig.." "..selected)
 		StopMenu()
 	end
 	numberkey = -1
+	taunt_cmd.mousewasdown = mousedown
 end
 
 rawset(_G, "Soap_TauntWheelThink", function(p)
@@ -1403,6 +716,54 @@ local wheel_inner = wheel_start + (wheel_radius - wheel_start)/2
 local wheel_farther = wheel_start + (wheel_radius - wheel_start) --* 5/4
 local fadewait = 0
 local curfade = 0
+
+local function DrawSingleWheel(v,p, scale, xoffset, tauntstart, tauntend)
+	local soap = p.soaptable
+	local hud = soap.hud
+	local taunt = taunt_cmd
+	local x = 160*FU + xoffset
+	
+	v.drawScaled(x,100*FU, FixedMul(FU/2, scale), v.cachePatch("STAUNT_BG"), V_30TRANS)
+	local dist = R_PointToDist2(0,0, taunt.x,taunt.y)
+	local TAUNTS = SOAP_TAUNTS[skins[p.skin].name]
+	
+	local angstep = FixedDiv(360*FU, tauntend*FU)
+	local wheel_inner = FixedMul(wheel_inner, scale)
+	local wheel_farther = FixedMul(wheel_farther, scale)
+	for i = tauntstart, tauntstart + (tauntend - 1)
+		local ang = ANGLE_MAX - FixedAngle(angstep * i)
+		v.drawScaled(x,100*FU, FixedMul(FU/2, scale),
+			v.getSpritePatch(SPR_SOAP_GFX, 25, 0, ang),
+			0
+		)
+		ang = ($ - ANGLE_90) + ANGLE_180 - FixedAngle(angstep / 2)
+		local selected = (dist >= wheel_start) and (taunt.pointing == i)
+		
+		if (TAUNTS[i + 1].drawer ~= nil)
+			TAUNTS[i + 1].drawer(v, i,
+				x + P_ReturnThrustX(nil, ang, wheel_inner),
+				100*FU - P_ReturnThrustY(nil, ang, wheel_inner),
+				selected, scale
+			)
+		else
+			v.drawScaled(
+				x + P_ReturnThrustX(nil, ang, wheel_inner),
+				100*FU - P_ReturnThrustY(nil, ang, wheel_inner),
+				FixedMul(FU/4, scale),
+				v.cachePatch("MISSING"),
+				0
+			)
+		end
+		if not taunt_cmd.joystick
+			v.drawString(
+				x + P_ReturnThrustX(nil, ang, wheel_farther),
+				100*FU - P_ReturnThrustY(nil, ang, wheel_farther) - 4*FU,
+				(i + 1) - tauntstart, selected and V_YELLOWMAP or 0, "small-thin-fixed-center"
+			)
+		end
+	end
+end
+
 addHook("HUD",function(v,p)
 	-- bruh
 	p = consoleplayer
@@ -1425,7 +786,7 @@ addHook("HUD",function(v,p)
 		v.draw(x, 140, v.cachePatch("STAUNT_CNTBG"), V_SNAPTOBOTTOM|V_30TRANS)
 		v.draw(x - 42, 139, v.cachePatch("STAUNT_ERR"), V_SNAPTOBOTTOM, v.getStringColormap(V_REDMAP))
 		v.drawString(x + 6, 140,
-			"Can't use taunts.", V_ALLOWLOWERCASE|V_SNAPTOBOTTOM|cmap,
+			"Can't use emotes.", V_ALLOWLOWERCASE|V_SNAPTOBOTTOM|cmap,
 			"thin-center"
 		)
 		
@@ -1436,61 +797,89 @@ addHook("HUD",function(v,p)
 	
 	if fadewait
 		fadewait = $ - 1
-	elseif curfade < 24
+	elseif curfade < 6
 		curfade = $ + 1
 	end
 	if curfade
-		v.fadeScreen(0xFF00, curfade)
+		v.fadeScreen(0xFA00, curfade)
 	end
 	
-	v.drawScaled(160*FU,100*FU, FU/2, v.cachePatch("STAUNT_BG"), V_30TRANS)
 	local dist = R_PointToDist2(0,0, taunt.x,taunt.y)
 	local TAUNTS = SOAP_TAUNTS[skins[p.skin].name]
-	local avail = #TAUNTS
-	local angstep = FixedDiv(360*FU, avail*FU)
-	for i = 0, avail - 1
-		local ang = ANGLE_MAX - FixedAngle(angstep * i)
-		v.drawScaled(160*FU,100*FU, FU/2,
-			v.getSpritePatch(SPR_SOAP_GFX, 25, 0, ang),
-			0
-		)
-		ang = ($ - ANGLE_90) + ANGLE_180 - FixedAngle(angstep / 2)
-		local selected = (dist >= wheel_start) and (taunt.pointing == i)
+	local NUMTAUNTS = #TAUNTS
+	local work = NUMTAUNTS
+	local startwork = 0
+	
+	local xoff = 0
+	local thisscale = FU
+	local nextscale = FU / 2
+	local currentpage = taunt.page
+	local nextpage = -1
+	if taunt.pageanim
+		currentpage = taunt.prevpage
+		nextpage = taunt.page
 		
-		if (TAUNTS[i + 1].drawer ~= nil)
-			TAUNTS[i + 1].drawer(v, i,
-				160*FU + P_ReturnThrustX(nil, ang, wheel_inner),
-				100*FU - P_ReturnThrustY(nil, ang, wheel_inner),
-				selected
-			)
+		local animfrac = FU - FixedDiv(abs(taunt_cmd.pageanim)*FU, TAUNT_PAGEANIM*FU)
+		xoff = ease.inoutexpo(animfrac,
+			-(wheel_spacing * taunt.prevpage),
+			-(wheel_spacing * taunt.page)
+		)
+		thisscale = ease.inoutexpo(animfrac,
+			$, nextscale
+		)
+		nextscale = ease.inoutexpo(animfrac,
+			$, FU
+		)
+	else
+		xoff = -(wheel_spacing * taunt.page)
+	end
+	
+	while (work > 0)
+		local scale = 0
+		if (startwork/TAUNTSPERPAGE == currentpage)
+			scale = thisscale
+		elseif (taunt.pageanim and (startwork/TAUNTSPERPAGE == nextpage))
+			scale = nextscale
 		else
-			v.drawScaled(
-				160*FU + P_ReturnThrustX(nil, ang, wheel_inner),
-				100*FU - P_ReturnThrustY(nil, ang, wheel_inner),
-				FU/4,
-				v.cachePatch("MISSING"),
-				0
-			)
+			scale = FU / 2
 		end
-		if not taunt_cmd.joystick
+		
+		if (taunt.pageanim)
+			v.dointerp(1000)
+		end
+		DrawSingleWheel(v,p, scale, xoff, startwork, min(TAUNTSPERPAGE, work))
+		
+		work = $ - TAUNTSPERPAGE
+		startwork = $ + TAUNTSPERPAGE
+		xoff = $ + wheel_spacing
+	end
+	
+	if NUMTAUNTS > TAUNTSPERPAGE and not taunt.pageanim
+		for i = -1, 1, 2
+			if i == -1 and taunt.page <= 0 then continue end
+			if i == 1 and taunt.page >= (NUMTAUNTS - 1)/TAUNTSPERPAGE then continue end
+			
+			local x = 160*FU + (wheel_pagebut_center*i)
+			v.drawScaled(x, 100*FU, FU, v.cachePatch("STAUNT_PBUT"), V_30TRANS)
 			v.drawString(
-				160*FU + P_ReturnThrustX(nil, ang, wheel_farther),
-				100*FU - P_ReturnThrustY(nil, ang, wheel_farther) - 4*FU,
-				(i + 1), selected and V_YELLOWMAP or 0, "small-thin-fixed-center"
+				x + (i == -1 and FU or 0),
+				100*FU - 4*FU,
+				(i == -1) and "\28" or "\29",
+				-- this is a hacky way to determine this lol
+				(taunt.selecting and taunt.pointing == -1 and sign(taunt.x) == i) and V_YELLOWMAP or 0,
+				"fixed-center"
 			)
+			if taunt.joystick
+			v.drawString(x,
+				100*FU - 4*FU + wheel_pagebut_hei,
+				(i == -1) and "LB" or "RB", 0, "thin-fixed-center"
+			)
+			
+			end
 		end
 	end
 	
-	v.dointerp(1000)
-	v.drawScaled(
-		(160*FU) + taunt.x, --P_ReturnThrustX(nil,taunt.angle<<16, radius),
-		(100*FU) - taunt.y, --P_ReturnThrustY(nil,taunt.aim<<16, radius),
-		FU/4, v.cachePatch((dist >= wheel_start) and (taunt_cmd.joystick and "STAUNT_GPOINT" or "ML_RBLX_POINT") or (taunt_cmd.joystick and "STAUNT_GCUR" or "ML_RBLX_CURS")),
-		0
-	)
-	v.dointerp(false)
-	
-	if (dist >= wheel_start)
+	if taunt.pointing ~= -1
 		local taunt_t = TAUNTS[taunt.pointing + 1]
 		if taunt_t
 			v.drawString(160*FU, 100*FU + (wheel_radius + 5*FU),
@@ -1500,9 +889,9 @@ addHook("HUD",function(v,p)
 		end
 	end
 	
-	v.drawString(160*FU, 100*FU - (wheel_radius + 10*FU),
-		"Pick a taunt!", V_ALLOWLOWERCASE,
-		"thin-fixed-center"
+	v.drawString(160*FU, 100*FU - (wheel_radius + 12*FU),
+		"Emotes", V_ALLOWLOWERCASE,
+		"fixed-center"
 	)
 	v.drawString(160*FU, 100*FU + (wheel_radius + 20*FU),
 		"[FIRE] - Select", V_ALLOWLOWERCASE,
@@ -1512,4 +901,13 @@ addHook("HUD",function(v,p)
 		"[SPIN] - Cancel", V_ALLOWLOWERCASE,
 		"thin-fixed-center"
 	)
+
+	v.dointerp(2000)
+	v.drawScaled(
+		(160*FU) + taunt.x, --P_ReturnThrustX(nil,taunt.angle<<16, radius),
+		(100*FU) - taunt.y, --P_ReturnThrustY(nil,taunt.aim<<16, radius),
+		FU/4, v.cachePatch(taunt.selecting and (taunt_cmd.joystick and "STAUNT_GPOINT" or "ML_RBLX_POINT") or (taunt_cmd.joystick and "STAUNT_GCUR" or "ML_RBLX_CURS")),
+		0
+	)
+	v.dointerp(false)
 end,"game")

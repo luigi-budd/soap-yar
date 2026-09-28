@@ -367,7 +367,7 @@ local kb_popup_id = MenuLib.addMenu({
 			"thin-center"
 		)
 		v.drawString(x,y+8,
-			"Taunt Key",
+			"Emote Key",
 			V_YELLOWMAP|V_ALLOWLOWERCASE,
 			"thin-center"
 		)
@@ -442,7 +442,7 @@ local gp_popup_id = MenuLib.addMenu({
 		local scale = FU
 		
 		v.drawString(x + menu.width/2, y + 2,
-			"Rebind Taunt Key", V_ALLOWLOWERCASE|V_YELLOWMAP,
+			"Rebind Emote Key", V_ALLOWLOWERCASE|V_YELLOWMAP,
 			"thin-center"
 		)
 		
@@ -514,7 +514,7 @@ ML.addMenu({
 			cv_type = "custom", tooltip = {"Adjusts the intensity of screenshake."}
 		})
 		SOAP_MENUS.buttontoggle(v, cx,cy+26, menu.width - 4, {
-			cv_name = "soap_tauntkey", name = "Taunt Key",
+			cv_name = "soap_tauntkey", name = "Emote Key",
 			cv_type = "customfunc", func = function(x,y,wd)
 				local right = (x + wd) - 4
 				local hover = false
@@ -529,7 +529,7 @@ ML.addMenu({
 					firsthover = hover
 					local c = 0
 					if hover
-						menu_tooltip = {"Change which button opens the Taunt Menu.", "Gamepad only."}
+						menu_tooltip = {"Change which button opens the Emote Menu.", "Gamepad only."}
 						c = (ML.client.mouseHeld > 0) and 4 or 2
 						ML.client.canPressSomething = true
 						if (ML.client.mouseHeld == -1)
@@ -550,7 +550,7 @@ ML.addMenu({
 					hover = ML.mouseInZone(right-w, y, w,10) and not (#ML.client.popups) and not firsthover
 					local c = 0
 					if hover
-						menu_tooltip = {"Change which key opens the Taunt Menu.", "Keyboard only."}
+						menu_tooltip = {"Change which key opens the Emote Menu.", "Keyboard only."}
 						c = (ML.client.mouseHeld > 0) and 4 or 2
 						ML.client.canPressSomething = true
 						if (ML.client.mouseHeld == -1)
@@ -591,8 +591,8 @@ ML.addMenu({
 			cv_type = "custom", tooltip = {"Changes the behavior of Soap's R-Dash."}
 		})
 		SOAP_MENUS.buttontoggle(v, cx,cy+52, menu.width - 4, {
-			cv_name = "soap_boomboxsfx", name = "Taunt Audio",
-			cv_type = "custom", tooltip = {"Adjusts the audio from Soap's boomboxes and taunts."}
+			cv_name = "soap_boomboxsfx", name = "Emote Audio",
+			cv_type = "custom", tooltip = {"Adjusts the audio from Soap's boomboxes and emotes."}
 		})
 		SOAP_MENUS.buttontoggle(v, cx,cy+65, menu.width - 4, {
 			cv_name = "soap_spriterot", name = "Sprite Rotation",
@@ -614,8 +614,8 @@ ML.addMenu({
 			cv_type = "slider", adminonly = true
 		})
 		SOAP_MENUS.buttontoggle(v, cx,cy+26, menu.width - 4, {
-			cv_name = "soap_tauntinterference", name = "Taunt Interference",
-			cv_type = "boolean", tooltip = {"Toggles whether taunts can interfere with other players."}
+			cv_name = "soap_tauntinterference", name = "Emote Interference",
+			cv_type = "boolean", tooltip = {"Toggles whether emotes can interfere with other players."}
 		})
 		
 		local workx = props.corner_x + (menu.width - 1)

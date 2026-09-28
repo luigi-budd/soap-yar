@@ -1,0 +1,1 @@
+SoapTaunt_AddTaunt(TAKIS_SKIN, SOAP_TAUNTS[SOAP_SKIN][5])

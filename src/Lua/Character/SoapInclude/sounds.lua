@@ -45,6 +45,11 @@ sfxinfo[sfx_sp_ow3] = {
 	flags = SF_X4AWAYSOUND|SF_X2AWAYSOUND,
 	caption = "\x85".."Ahhh!\x80"
 }
+SafeFreeslot("sfx_sp_ow4")
+sfxinfo[sfx_sp_ow4] = {
+	flags = SF_X4AWAYSOUND|SF_X2AWAYSOUND,
+	caption = "\x85".."AAAAHHHH!\x80"
+}
 
 SafeFreeslot("sfx_sp_pry")
 sfxinfo[sfx_sp_pry].caption = "Parry"
@@ -165,3 +170,10 @@ SafeFreeslot("sfx_brndmg")
 sfxinfo[sfx_brndmg].caption = "/"
 SafeFreeslot("sfx_sp_cnt")
 sfxinfo[sfx_sp_cnt].caption = "/"
+
+SafeFreeslot("sfx_sp_awr")
+sfxinfo[sfx_sp_awr].caption = "Ready..?"
+SafeFreeslot("sfx_sp_awg")
+sfxinfo[sfx_sp_awg].caption = "GO!"
+SafeFreeslot("sfx_sp_awb")
+sfxinfo[sfx_sp_awb].caption = "Arm wrestling started!"

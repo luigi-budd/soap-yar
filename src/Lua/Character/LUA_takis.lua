@@ -187,7 +187,7 @@ local function playknockoutsfx(p,me,soap)
 	if R_PointToDist(me.x,me.y) >= 1024*FU * 4
 	and P_RandomChance(FU*3/4)
 	and (p ~= displayplayer)
-		sound = P_RandomRange(sfx_sp_ow2, sfx_sp_ow3)
+		sound = P_RandomRange(sfx_sp_ow2, sfx_sp_ow4)
 	end
 	if Soap_IsCompGamemode()
 		chance = P_RandomChance(FU/10)
@@ -539,10 +539,6 @@ Takis_Hook.addHook("PreThinkFrame",function(p)
 	local me = p.realmo
 	if (me.skin ~= TAKIS_SKIN) then return end
 	local takis = p.soaptable
-	
-	--ticked back here so any changes will be instant
-	--(also out of the way of hitlag)
-	Soap_HUDTicker(p,me,soap)
 	
 	if (p.powers[pw_carry] == CR_NIGHTSMODE)
 	and takis.use == 1
