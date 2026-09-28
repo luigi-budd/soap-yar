@@ -68,7 +68,7 @@ tauntinfo.name = "Arm Wrestle"
 tauntinfo.cancelable = false
 
 tauntinfo.run = function(p, me, soap, taunt)
-	me.state = S_PLAY_SOAP_FLEX
+	me.state = S_PLAY_SOAP_ARMWRESTLE
 	me.tics = -1
 	
 	me.tempangle = p.drawangle
@@ -127,6 +127,8 @@ local function GetMoveDistance(me, omo)
 end
 
 local function SearchPhase(p,me,soap,taunt,arms)
+	me.frame = ($ &~FF_FRAMEMASK)|A
+	
 	local candidates = {}
 	local counted = 0
 	for play in players.iterate
@@ -256,6 +258,9 @@ local function SetViewMobj(p,me,soap,taunt,arms)
 	if (p == displayplayer)
 		SETFOV = true
 	end
+	if (p == consoleplayer)
+		camera.chase = true
+	end
 end
 
 local function SetupPhase(p,me,soap,taunt,arms)
@@ -268,22 +273,21 @@ local function SetupPhase(p,me,soap,taunt,arms)
 	local omo = play.mo -- othermo
 	local arms2 = omo.soap_arms
 	
-	if me.state ~= S_PLAY_SOAP_FLEX
-		me.state = S_PLAY_SOAP_FLEX
-		me.tics = -1
-	end
-	
 	me.tempangle = R_PointToAngle2(me.x,me.y, omo.x,omo.y)
 	p.aiming = 0
 	me.angle = me.tempangle + ANGLE_90
+	me.frame = ($ &~FF_FRAMEMASK)|B
 	
 	SetViewMobj(p,me,soap,taunt,arms)
 	
-	if arms.phasetics == 4
-		S_StartSound(nil, sfx_sp_awg, p)
+	if arms.phasetics == 6
 		if p == displayplayer
 			gotime = MAXGOTIME
 		end
+	elseif arms.phasetics == 4
+		S_StartSound(nil, sfx_sp_awg, p)
+	elseif arms.phasetics == 1
+		soap.hud.painsurge = 6
 	end
 end
 
@@ -325,11 +329,6 @@ local function WrestlePhase(p,me,soap,taunt,arms)
 	local omo = play.mo -- othermo
 	local arms2 = omo.soap_arms
 	
-	if me.state ~= S_PLAY_SOAP_FLEX
-		me.state = S_PLAY_SOAP_FLEX
-		me.tics = -1
-	end
-	
 	me.tempangle = R_PointToAngle2(me.x,me.y, omo.x,omo.y)
 	local dist = GetMoveDistance(me, omo)
 	if not P_TryMove(omo,
@@ -345,6 +344,8 @@ local function WrestlePhase(p,me,soap,taunt,arms)
 	p.aiming = 0
 	me.angle = me.tempangle + ANGLE_90
 	SetViewMobj(p,me,soap,taunt,arms)
+	
+	local myframe = B
 	
 	if arms.activity
 		arms.activity = $ - 1
@@ -383,10 +384,10 @@ local function WrestlePhase(p,me,soap,taunt,arms)
 		arms.lockout = 1
 		
 		Soap_SquashMacro(p, {
-			ease_func = "inexpo",
-			ease_time = 3,
-			x = FU/7,
-			y = FU/8,
+			ease_func = "insine",
+			ease_time = 2,
+			x = FU/13,
+			y = FU/15,
 			singular = true
 		})
 		
@@ -402,7 +403,7 @@ local function WrestlePhase(p,me,soap,taunt,arms)
 		
 		S_StartSoundAtVolume(me, sfx_s251, 255 / 2)
 	end
-	if (arms2.progress >= 70*FU)
+	if (arms2.progress - arms.progress >= 40*FU)
 		if leveltime % 2 == 0
 			spawn_sweat_mobjs(p,me,soap)
 		end
@@ -414,9 +415,41 @@ local function WrestlePhase(p,me,soap,taunt,arms)
 			scale = FU
 		end
 		me.spritexoffset = FixedDiv(FU, scale) * (leveltime % 2 and 1 or -1)
+		myframe = D
 	else
 		S_StopSoundByID(me, sfx_pudpud)
 		me.spritexoffset = 0
+	end
+	if (arms.progress >= 80*FU and arms.progress > arms2.progress)
+		if (leveltime % 4 == 0)
+			local angstep = FixedDiv(60*FU, 3*FU)
+			local dist = -FixedDiv(me.radius, me.scale) * 2
+			for i = -3,3
+				local ang = me.tempangle + FixedAngle(angstep * i)
+				local spark = P_SpawnMobjFromMobj(me,
+					P_ReturnThrustX(ang,dist), P_ReturnThrustY(ang,dist),
+					0, MT_SOAP_WALLBUMP
+				)
+				spark.frame = A
+				spark.sprite = SPR_SOAP_GFX
+				spark.frame = 34|FF_PAPERSPRITE|FF_ADD
+				spark.momz = 0
+				spark.angle = ang + ANGLE_90
+				spark.renderflags = $|RF_NOCOLORMAPS|RF_FULLBRIGHT|(P_RandomChance(FU/2) and RF_HORIZONTALFLIP or 0)
+				spark.tics = 10
+				spark.fuse = spark.tics
+				spark.flags = $|MF_NOGRAVITY
+				spark.scale = ($/3) + (FU/5)*(3 - abs(i))
+				spark.spritexscale = FixedMul($, spark.scale)
+				spark.spriteyscale = FixedDiv($, spark.scale)
+				spark.fusesquish = 5
+				spark.xstretch = FU/6
+				spark.alpha = FU / 2
+				
+				P_Thrust(spark, ang, -5*me.scale)
+			end
+		end
+		myframe = C
 	end
 	
 	-- tap out
@@ -430,6 +463,10 @@ local function WrestlePhase(p,me,soap,taunt,arms)
 		end
 	else
 		S_StopSoundByID(me, sfx_sp_dtn)
+	end
+	
+	if (me.state == S_PLAY_SOAP_ARMWRESTLE)
+		me.frame = ($ &~FF_FRAMEMASK)|myframe
 	end
 	
 	if arms.progress >= 100*FU
@@ -497,7 +534,26 @@ local function WrestlePhase(p,me,soap,taunt,arms)
 		omo.soap_poundvfx = nil
 		
 		S_StartSound(me, sfx_sp_bsl)
-		me.state = S_PLAY_SOAP_PUNCH1
+		if (me.skin == SOAP_SKIN)
+			me.state = S_PLAY_SOAP_PUNCH1
+		elseif (me.skin == TAKIS_SKIN)
+			me.state = S_PLAY_TAKIS_TORNADO
+			soap.bashspin = 18
+			local ease_time = 5
+			local ease_func = "insine"
+			local strength = (FU * 3/4)
+			Soap_AddSquash(p, {
+				ease_func = ease_func,
+				start_v = strength,
+				end_v = 0,
+				time = ease_time
+			}, {
+				ease_func = ease_func,
+				start_v = -strength*3/4,
+				end_v = 0,
+				time = ease_time
+			}, "Takis_Clutch", true)
+		end
 		
 		omo.state = S_PLAY_DEAD
 		omo.frame = A|($ &~FF_FRAMEMASK)
@@ -544,6 +600,12 @@ tauntinfo.think = function(p, me, soap, taunt)
 		end
 	end
 	
+	if me.state ~= S_PLAY_SOAP_ARMWRESTLE
+	and (me.soap_arms)
+		me.state = S_PLAY_SOAP_ARMWRESTLE
+		me.tics = -1
+	end
+	
 	if arms.phase == PHASE_SEARCH
 		local result = SearchPhase(p,me,soap,taunt,arms)
 		if result == false -- failed
@@ -565,9 +627,22 @@ tauntinfo.canceled = function(p,me,soap)
 	me.spritexoffset = 0
 	SETFOV = false
 end
+-- mango
+local mingotime = MAXGOTIME - 6
 tauntinfo.postthink = function(p)
 	if p == displayplayer and SETFOV
-		p.fovadd = 70*FU - (SOAP_CV.FindVar("fov").value)
+		local gofov = 0
+		if gotime < mingotime
+			local tick = mingotime - gotime
+			if tick <= 6
+				gofov = ease.inquint(
+					(FU/6) * tick,
+					gotime * FU / 6, 0
+				)
+			end
+		end
+		
+		p.fovadd = 70*FU - (SOAP_CV.FindVar("fov").value) - gofov
 		SETFOV = false
 	end
 end
@@ -659,7 +734,7 @@ addHook("HUD",function(v,p, cam)
 		local alpha = 0
 		local mystr = "Ready..?"
 		local strlen = 8
-		local ticker = (MAXREADYTIME - readytime) * 4/5
+		local ticker = (MAXREADYTIME - readytime) / 2
 		local newstr = string.sub(mystr, 1, min(ticker, strlen))
 		
 		if readytime < 10
@@ -679,20 +754,20 @@ addHook("HUD",function(v,p, cam)
 		v.dointerp(true)
 		local scale = FU
 		local alpha = 0
-		if gotime >= MAXGOTIME - 4
+		if gotime >= MAXGOTIME - 6
 			local tick = (MAXGOTIME - gotime)
-			local frac = (FU/4) * tick
+			local frac = (FU/6) * tick
 			scale = ease.inexpo(
 				frac,
-				0, FU * 3/2
+				0, FU * 2
 			)
 			alpha = ((9 * (FU - frac)) / FU) << V_ALPHASHIFT
 		else
-			local tick = (MAXGOTIME - 4) - gotime
-			if tick <= 5
-				scale = ease.insine(
-					(FU/5) * tick,
-					FU * 3/2, FU
+			local tick = (MAXGOTIME - 6) - gotime
+			if tick <= 3
+				scale = ease.inoutsine(
+					(FU/3) * tick,
+					FU * 2, FU
 				)
 			end
 			

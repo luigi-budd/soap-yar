@@ -5,13 +5,14 @@ SafeFreeslot("SPR2_OOF_")
 SafeFreeslot("SPR2_SLID")
 SafeFreeslot("SPR2_JSKI") -- :ajlooking:
 SafeFreeslot("SPR2_NFL2") -- ugh also
+SafeFreeslot("SPR2_ARMW")
 
 spr2defaults[SPR2_APOS] = SPR2_STND
 spr2defaults[SPR2_FLEX] = SPR2_STND
 spr2defaults[SPR2_BRDA] = SPR2_ROLL
 spr2defaults[SPR2_OOF_] = SPR2_PAIN
 spr2defaults[SPR2_SLID] = SPR2_ROLL
-
+spr2defaults[SPR2_ARMW] = SPR2_WAIT
 
 SafeFreeslot("S_PLAY_SOAP_FLEX")
 states[S_PLAY_SOAP_FLEX] = {
@@ -148,6 +149,20 @@ states[S_PLAY_SOAP_GANGNAM] = {
 	frame = SPR2_CLNG|FF_ANIMATE,
 	tics = 3,
 	nextstate = S_PLAY_SOAP_GANGNAM,
+}
+
+SafeFreeslot("S_PLAY_SOAP_ARMWRESTLE")
+states[S_PLAY_SOAP_ARMWRESTLE] = {
+	sprite = SPR_PLAY,
+	/*
+		A - search phase
+		B - base
+		C - advantage
+		D - losing
+	*/
+	frame = SPR2_ARMW,
+	tics = -1,
+	nextstate = S_PLAY_SOAP_ARMWRESTLE,
 }
 
 -- super color from supercolorsrevamp

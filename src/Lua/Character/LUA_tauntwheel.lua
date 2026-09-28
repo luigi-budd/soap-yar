@@ -213,6 +213,7 @@ local tauntstoadd = {
 	"Takis/4_surfin.lua",
 	"Takis/5_sixseven.lua",
 	"Takis/6_caramell.lua",
+	"Takis/7_armwrestle.lua",
 }
 for _, name in ipairs(tauntstoadd)
 	addtaunt(name)
