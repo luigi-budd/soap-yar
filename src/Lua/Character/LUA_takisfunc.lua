@@ -385,6 +385,7 @@ rawset(_G,"Takis_HandleNoAbils", function(p)
 		na = $|NOABIL_HAMMER
 	end
 	
+	local countdown = false
 	local hiding = false
 	if (gametyperules & (GTR_STARTCOUNTDOWN|GTR_FRIENDLY) == GTR_STARTCOUNTDOWN)
 		if leveltime <= cv_hidetime.value*TR
@@ -401,12 +402,21 @@ rawset(_G,"Takis_HandleNoAbils", function(p)
 			end
 		end
 	end
+	-- mmmmm
+	if (gametyperules & GTR_RACE)
+	and (leveltime < 4*TR)
+		countdown = true
+		hiding = true
+	end
 	
 	if (p.exiting)
 	or (p.inkart)
 	or (p.boat)
-	or hiding or ((gametyperules & GTR_RACE) and p.realtime == 0)
-		na = $|NOABIL_ALL &~(NOABIL_CLUTCH|NOABIL_TAUNTS)
+	or hiding
+		na = $|NOABIL_ALL
+		if p.exiting and (gametyperules & GTR_RACE == 0)
+			na = $ &~(NOABIL_CLUTCH|NOABIL_TAUNTS)
+		end
 		if (p.inkart or p.boat)
 			na = $|NOABIL_ALL
 		end
@@ -510,7 +520,7 @@ rawset(_G,"Takis_HandleNoAbils", function(p)
 		na = $|NOABIL_CLUTCH|NOABIL_HAMMER|NOABIL_SLIDE
 	end
 	
-	if (not me.health) or (soap.inPain)
+	if (not me.health) or (soap.inPain) or countdown
 		na = $|NOABIL_TAUNTS
 	end
 	

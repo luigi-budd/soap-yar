@@ -2001,8 +2001,6 @@ rawset(_G,"Soap_HandleNoAbils", function(p)
 				if not (p.pflags & PF_TAGIT)
 					hiding = false
 				end
-			elseif (gametyperules & GTR_RACE)
-				countdown = true
 			end
 		else
 			if (gametyperules & GTR_HIDEFROZEN)
@@ -2011,15 +2009,21 @@ rawset(_G,"Soap_HandleNoAbils", function(p)
 			end
 		end
 	end
+	-- mmmmm
+	if (gametyperules & GTR_RACE)
+	and (leveltime < 4*TR)
+		countdown = true
+		hiding = true
+	end
 	
 	if (p.exiting)
 	or (p.inkart)
 	or (p.boat)
-	or hiding or ((gametyperules & GTR_RACE) and p.realtime == 0)
+	or hiding
 	or soap.toptics
 		na = $|SNOABIL_ALL
 		if (p.exiting)
-		or (hiding or ((gametyperules & GTR_RACE) and p.realtime == 0))
+		or (hiding)
 			na = $ &~SNOABIL_BOTHTAUNTS
 		end
 	end
