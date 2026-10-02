@@ -86,7 +86,6 @@ rawset(_G, "Soap_InitTable", function(p)
 		jumplockout = false,
 		uselockout = false,
 		
-		
 		--forwardmove/sidemove dupes for when stasis is active
 		forwardmove = 0,
 		sidemove = 0,

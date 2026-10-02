@@ -187,7 +187,7 @@ local function playknockoutsfx(p,me,soap)
 	if R_PointToDist(me.x,me.y) >= 1024*FU * 4
 	and P_RandomChance(FU*3/4)
 	and (p ~= displayplayer)
-		sound = P_RandomRange(sfx_sp_ow2, sfx_sp_ow4)
+		sound = P_RandomRange(sfx_sp_ow2, sfx_sp_ow5)
 	end
 	if Soap_IsCompGamemode()
 		chance = P_RandomChance(FU/10)
@@ -556,6 +556,7 @@ Takis_Hook.addHook("Takis_Thinker",function(p)
 	local clutch = soap.clutch
 	local hammer = soap.hammer
 	local washammering = hammer.down
+	local wasafterimaging = soap.afterimage
 	soap.afterimage = false
 	p.powers[pw_strong] = $ &~(STR_SPIKE)
 	if (me.soap_supervfx)
@@ -565,11 +566,31 @@ Takis_Hook.addHook("Takis_Thinker",function(p)
 	--TODO: move this skid block somewhere else?
 	if (p.skidtime)
 	and (me.state == S_PLAY_SKID)
-		--nothing to do here yet
+		if soap.skidframe == -1
+			if wasafterimaging
+				soap.skidframe = B
+			else
+				soap.skidframe = A
+			end
+		end
+		me.frame = ($ &~FF_FRAMEMASK)|soap.skidframe
+		
+		if soap.skidframe == B
+		and (leveltime % 4 == 0)
+			local sp = P_SpawnMobjFromMobj(me,0,0,0,MT_SOAP_SPARK)
+			sp.color = SKINCOLOR_ORANGE
+			sp.adjust_angle = p.drawangle + FixedAngle(Soap_RandomFixedRange(-60*FU, 60*FU))
+			sp.angle = sp.adjust_angle
+			sp.target = me
+			
+			sp.spritexscale = FU / 2
+			sp.spriteyscale = FU / 2
+		end
 	else
+		soap.skidframe = -1
 		S_StopSoundByID(me,skins[TAKIS_SKIN].soundsid[SKSSKID])
 	end
-		
+	
 	--momentum speedslop msv6
 	do
 		local topspeed = p.normalspeed
@@ -2138,8 +2159,14 @@ local function try_pvp_collide(me,thing)
 			candamagemobj = false
 		end
 	end
+	
 	-- enemies get extra leeway for damaging
-	if not Soap_ZCollide(me,thing, candamagemobj) then return end
+	local testmobj = me
+	if (p.powers[pw_carry] == CR_ROLLOUT)
+		testmobj = me.tracer
+	end
+	if not Soap_ZCollide(testmobj,thing, candamagemobj) then return end
+	
 	if (thing.player and thing.player.valid)
 		candamagemobj = Soap_CanHurtPlayer(p, thing.player)
 		if candamagemobj
@@ -2272,6 +2299,16 @@ end
 
 addHook("MobjMoveCollide",try_pvp_collide,MT_PLAYER)
 addHook("MobjCollide",try_pvp_collide,MT_PLAYER)
+
+addHook("MobjMoveCollide",function(rock,thing)
+	if not (rock.tracer and rock.tracer.valid and rock.tracer.player) then return end
+	local me = rock.tracer
+	if not (me.skin == TAKIS_SKIN) then return end
+	if (me == thing) then return end
+	
+	return try_pvp_collide(me,thing)
+end,MT_ROLLOUTROCK)
+-- addHook("MobjCollide",try_pvp_collide,MT_PLAYER)
 
 --various effects
 local function get_inf_speed(me,inf,sor)

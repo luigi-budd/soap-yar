@@ -446,6 +446,10 @@ hl.addHitlag = function(
 		else
 			mo.damageinhitlag = true
 		end
+		if (mo.player.powers[pw_carry] ~= CR_NONE)
+		and (mo.tracer and mo.tracer.valid)
+			hl.addHitlag(mo.tracer, tics, fromdamage)
+		end
 	end
 	
 	local hitlagged = hl.hitlagged
