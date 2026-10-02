@@ -414,8 +414,11 @@ rawset(_G,"Takis_HandleNoAbils", function(p)
 	or (p.boat)
 	or hiding
 		na = $|NOABIL_ALL
-		if p.exiting and (gametyperules & GTR_RACE == 0)
-			na = $ &~(NOABIL_CLUTCH|NOABIL_TAUNTS)
+		if p.exiting
+			na = $ &~NOABIL_TAUNTS
+			if (gametyperules & GTR_RACE == 0)
+				na = $ &~NOABIL_CLUTCH
+			end
 		end
 		if (p.inkart or p.boat)
 			na = $|NOABIL_ALL
