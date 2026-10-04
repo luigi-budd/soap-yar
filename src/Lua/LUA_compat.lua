@@ -321,8 +321,8 @@ local function SetCompat()
 				"Hefty and reliable!",
 			};
 			items = {
-				"auto_ring",
-				"scatter_ring",
+				"red_ring",
+				"bounce_ring",
 			};
 		})
 		ZE2.AddSurvivor(TAKIS_SKIN, {
