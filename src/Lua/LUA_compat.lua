@@ -322,7 +322,7 @@ local function SetCompat()
 			};
 			items = {
 				"red_ring",
-				"bounce_ring",
+				"splash_ring",
 			};
 		})
 		ZE2.AddSurvivor(TAKIS_SKIN, {
