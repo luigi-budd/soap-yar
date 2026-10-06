@@ -1,5 +1,3 @@
--- [[ Item properties ]] --
-
 sfxinfo[SafeFreeslot("sfx_zm_fl")] = {
 	caption = "Fire",
 }
@@ -21,6 +19,7 @@ end
 local armacolors = {
 	SKINCOLOR_KETCHUP, SKINCOLOR_PEPPER, SKINCOLOR_CRIMSON, SKINCOLOR_GARNET, SKINCOLOR_VOLCANIC
 }
+local ZEROVEC = Vec3.New(0,0,0)
 
 local fire_radius = 185*FU
 local fire_time = TR * 12/10
@@ -80,8 +79,6 @@ local function sixseven_callback(spark, me)
 	spark.fuse = spark.tics
 end
 
--- [[ The item itself ]] --
-
 SafeFreeslot("S_MOLOTOV", "S_MOLOTOV_DEATH")
 SafeFreeslot("MT_SOAPZE2_MOLOTOVHELPER")
 mobjinfo[MT_SOAPZE2_MOLOTOVHELPER] = {
@@ -115,6 +112,10 @@ states[S_MOLOTOV] = {
 		if leveltime % 2 == 0
 			local range = 10*mo.scale
 			local scalemul = mo.scale
+			local anchorPos = Vec3.New(
+				mo.x,mo.y,mo.z
+			)
+			
 			local s = P_SpawnMobjFromMobj(mo,
 				Soap_RandomFixedRange(-range,range),
 				Soap_RandomFixedRange(-range,range),
@@ -132,17 +133,12 @@ states[S_MOLOTOV] = {
 			s.blendmode = AST_ADD
 			s.alpha = FU * 3/4
 			
-			-- honestly im not sure how netsafe
-			-- it is to have one of these vectors
-			-- in a mobj
-			s.anchor = Vec3.New(
-				mo.x,mo.y,mo.z
-			)
-			s.offset = Vec3.MobjPosToVec(s) - s.anchor
+			s.anchor = anchorPos
+			s.offset = Vec3.Sub(Vec3.MobjPosToVec(s), s.anchor)
 			
-			s.fuse = P_RandomRange(12, 20 + (40*scalemul)/FU)
+			s.fuse = P_RandomRange(12, 24)
 			
-			s.offsetmom = Vec3.New(0,0,0)
+			s.offsetmom = ZEROVEC
 			s.offsetparentmom = Vec3.MobjMomToVec(mo)
 			s.offsetspeed = Soap_RandomFixedRange(5*scalemul, 25*scalemul)
 			s.movefactor = P_RandomRange(FU*7/8, FU*98/100)
@@ -178,7 +174,14 @@ states[S_MOLOTOV] = {
 }
 
 states[S_MOLOTOV_DEATH] = {SPR_NULL, A, 1, function(mo) -- Explode within a radius setted by explode_radius local
-	mo.height = 80 * mo.scale
+	-- these are both a bit of hacky hacks,
+	-- but the height is set here so the function i copy-pasted
+	-- from ze2 can work without much editing lol
+	-- we set forcedamage here as a workaround for xslinger, making sure
+	-- the blast damage will do 30 instead of the item's config damage
+	mo.height = 1200 * mo.scale
+	mo.forcedamage = 30
+	
 	searchBlockmap("objects", function(mo, foundmobj)
 		local dist = R_PointToDist2(mo.x, mo.y, foundmobj.x, foundmobj.y)
 		if (dist > fire_radius) then return end
@@ -189,7 +192,7 @@ states[S_MOLOTOV_DEATH] = {SPR_NULL, A, 1, function(mo) -- Explode within a radi
 		if foundmobj.player
 			S_StartSound(foundmobj, sfx_zm_fs, foundmobj.player)
 		end
-		--Soap_DamageSfx(foundmobj, FU/4, FU, DMG_FIRE)
+		
 		Soap_ImpactVFX(foundmobj, mo, FU*3/2, FU / 2, false, false, DMG_FIRE)
 		P_DamageMobj(foundmobj, mo, mo.target, 30, DMG_FIRE)
 	end, mo,
@@ -213,6 +216,13 @@ states[S_MOLOTOV_DEATH] = {SPR_NULL, A, 1, function(mo) -- Explode within a radi
 	local range = 30 * scalemul
 	local flamestate = S_SOAP_NEWFLAME
 	local origin = helper
+	local anchorVec = Vec3.New(
+		origin.x,origin.y,origin.z
+	)
+	-- we should be fine passing this to each vfx mobj,
+	-- since the vector library makes a new vector for each operation
+	-- rather than modifying the source vector
+	local originMom = Vec3.MobjMomToVec(origin)
 	for i = 0, 12
 		local s = P_SpawnMobjFromMobj(mo,
 			Soap_RandomFixedRange(-range,range),
@@ -231,20 +241,18 @@ states[S_MOLOTOV_DEATH] = {SPR_NULL, A, 1, function(mo) -- Explode within a radi
 		s.blendmode = AST_ADD
 		s.alpha = FU * 3/4
 		
-		-- honestly im not sure how netsafe
-		-- it is to have one of these vectors
-		-- in a mobj
-		s.anchor = Vec3.New(
-			origin.x,origin.y,origin.z
-		)
-		s.offset = Vec3.MobjPosToVec(s) - s.anchor
+		s.anchor = anchorVec
+		-- make this vector manually instead of using the vector
+		-- metamethods for some extra performance
+		local myPos = Vec3.New(s.x, s.y, s.z)
+		s.offset = Vec3.Sub(myPos, s.anchor)
 		
-		s.fuse = P_RandomRange(12, 20 + (40*scalemul)/FU)
+		s.fuse = P_RandomRange(32, 64)
 		
-		s.offsetmom = Vec3.New(0,0,0)
-		s.offsetparentmom = Vec3.MobjMomToVec(origin)
+		s.offsetmom = ZEROVEC
+		s.offsetparentmom = originMom
 		s.offsetspeed = Soap_RandomFixedRange(5*scalemul, 25*scalemul)
-		s.movefactor = P_RandomRange(FU*7/8, FU*98/100)
+		s.movefactor = P_RandomRange(FU*89/100, FU)
 		s.angles = {
 			h = FixedAngle(360*P_RandomFixed()),
 			hc = Soap_RandomFixedRange(-18*scalemul, 18*scalemul),
@@ -303,6 +311,50 @@ local function Helper_FireSearch(m, found)
 	found:give_effect("burning", burning_info, TR*3/2, false)
 	found.flameringtarget = m.target -- seems like a hacky fix but alright!
 end
+
+local FLAME_MOVEFACT = FU * 97/100
+local function flamevfx(m)
+	local dist = FixedMul(fire_radius, P_RandomFixed())
+	local ang = FixedAngle(360 * P_RandomFixed())
+	local s = P_SpawnMobjFromMobj(m,
+		P_ReturnThrustX(ang,dist),
+		P_ReturnThrustY(ang,dist),
+		32 * P_RandomFixed(), MT_SOAP_WALLBUMP
+	)
+	s.state = S_SOAP_NEWFLAME
+	s.blendmode = AST_SUBTRACT
+	s.scale = FixedMul($, Soap_RandomFixedRange(FU * 3/2, 3*FU + FU/4))
+	s.spritexscale = $ / 7
+	s.flags = $|MF_NOGRAVITY
+	
+	s.fuse = P_RandomRange(7, 10)
+	s.nothink = true
+	s.fusesquish = s.fuse
+	s.xstretch = FU / 7
+	
+	s.movefactor = FLAME_MOVEFACT
+	P_Thrust(s, ang, Soap_RandomFixedRange(2*FU, 5*FU))
+	
+	-- flame spots
+	s = P_SpawnMobjFromMobj(m,
+		P_ReturnThrustX(ang,dist),
+		P_ReturnThrustY(ang,dist),
+		2*FU, MT_SOAP_WALLBUMP
+	)
+	s.state = S_INVISIBLE
+	s.sprite = SPR_SOAP_GFX
+	s.frame = 37|FF_ADD|FF_FULLBRIGHT
+	s.fuse = 10
+	s.color = armacolors[P_RandomRange(1,#armacolors)]
+	s.renderflags = $|RF_FLOORSPRITE|RF_NOCOLORMAPS
+	s.flags = $|MF_NOGRAVITY
+	s.spritexscale = FixedMul($, Soap_RandomFixedRange(2*FU, 8*FU))
+	s.spriteyscale = s.spritexscale
+	s.fusefade = 8
+	s.destscale = 0
+	s.scalespeed = FixedDiv(s.scale, s.fuse*FU)
+	s.xstretch = FU/10
+end
 addHook("MobjThinker", function(m)
 	if not (m and m.valid) then return end
 	
@@ -311,59 +363,11 @@ addHook("MobjThinker", function(m)
 		m.x - fire_radius, m.x + fire_radius,
 		m.y - fire_radius, m.y + fire_radius
 	)
-	/*
-	for i = 1, 20
-		local a = FixedAngle(FixedDiv(360*FU,20*FU) * i)
-		P_SpawnMobjFromMobj(m,
-			P_ReturnThrustX(a, fire_radius),
-			P_ReturnThrustY(a, fire_radius),
-			0, MT_THOK
-		)
-	end
-	*/
 	
 	-- flames
-	for i = 1,3
-		local dist = FixedMul(fire_radius, P_RandomFixed())
-		local ang = FixedAngle(360 * P_RandomFixed())
-		local s = P_SpawnMobjFromMobj(m,
-			P_ReturnThrustX(ang,dist),
-			P_ReturnThrustY(ang,dist),
-			32 * P_RandomFixed(), MT_SOAP_WALLBUMP
-		)
-		s.state = S_SOAP_NEWFLAME
-		s.blendmode = AST_SUBTRACT
-		s.scale = FixedMul($, Soap_RandomFixedRange(FU * 3/2, 3*FU + FU/4))
-		s.spritexscale = $ / 7
-		s.flags = $|MF_NOGRAVITY
-		
-		s.fuse = P_RandomRange(7, 10)
-		s.nothink = true
-		s.fusesquish = s.fuse
-		s.xstretch = FU / 8
-		
-		s.movefactor = FU * 97/100
-		P_Thrust(s, ang, Soap_RandomFixedRange(2*FU, 5*FU))
-		
-		s = P_SpawnMobjFromMobj(m,
-			P_ReturnThrustX(ang,dist),
-			P_ReturnThrustY(ang,dist),
-			2*FU, MT_SOAP_WALLBUMP
-		)
-		s.state = S_INVISIBLE
-		s.sprite = SPR_SOAP_GFX
-		s.frame = 37|FF_ADD|FF_FULLBRIGHT
-		s.fuse = 10
-		s.color = armacolors[P_RandomRange(1,#armacolors)]
-		s.renderflags = $|RF_FLOORSPRITE|RF_NOSPLATBILLBOARD|RF_NOCOLORMAPS
-		s.flags = $|MF_NOGRAVITY
-		s.spritexscale = FixedMul($, Soap_RandomFixedRange(2*FU, 5*FU))
-		s.spriteyscale = s.spritexscale
-		s.fusefade = 3
-		P_SetObjectMomZ(s, P_RandomFixed())
-		P_Thrust(s, ang, -2*P_RandomFixed())
-		s.movefactor = FU * 95/100
-	end
+	flamevfx(m)
+	flamevfx(m)
+	flamevfx(m)
 	
 	if leveltime % 4 == 0
 		m.rim_fuse = P_RandomRange(6,10)
@@ -379,11 +383,9 @@ addHook("MobjThinker", function(m)
 	end
 end,MT_SOAPZE2_MOLOTOVHELPER)
 
--- Register it
-
-local xsmissile_molotov =
-xSlinger.registerMissile("MOLOTOV", {
-	speed = 62*FRACUNIT,
+-- missile definition
+local xsmissile_molotov = xSlinger.registerMissile("MOLOTOV", {
+	speed = 62*FU,
 	displayname = "Molotov Cocktail",
 	state = S_MOLOTOV,
 	deathstate = S_MOLOTOV_DEATH,
@@ -431,13 +433,12 @@ xSlinger.registerMissile("MOLOTOV", {
 xSlinger.registerItem("molotov", {
 	-- HUD
 	displayname = "Molotov Cocktail";
-	icon = "MOLOTOVIND",
+	icon = "MOLOTOVIND";
 	background_color = SKINCOLOR_APPLE,
-	animation_time = TICRATE / 2;
+	animation_time = TR / 2;
 
 	-- Missile properties
-	
-	dropstate = S_MOLOTOV,
+	dropstate = S_MOLOTOV;
 	hold_object = {
 		state = S_MOLOTOV;
 		pos = {  -- at this pos, the object is at the right of your body
@@ -453,8 +454,8 @@ xSlinger.registerItem("molotov", {
 	};
 	
 	color = SKINCOLOR_GREEN;
-	missile = "MOLOTOV",
-    firerate = 13 * TICRATE + TR/2;
+	missile = "MOLOTOV";
+    firerate = 1; --13*TR + TR/2;
 	damage = 10;
 	droppable = false;
 
@@ -462,5 +463,5 @@ xSlinger.registerItem("molotov", {
 	usefunc = function(self, me)
 		S_StartSound(me,sfx_kc5b)
 		S_StartSound(me,sfx_s3k51)
-	end,
+	end;
 })

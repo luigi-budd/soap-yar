@@ -470,7 +470,7 @@ local function FreezeInHitlag(mo)
 	if eat then return end
 	
 	if mo.ninjadive
-		local mypos = mo.anchor + mo.offset
+		local mypos = Vec3.Add(mo.anchor, mo.offset)
 		mypos:ToMobjPos(mo, true, false)
 		
 		local mul = FU
@@ -488,9 +488,14 @@ local function FreezeInHitlag(mo)
 		mo.offset = $ + mo.offsetmom
 		mo.offset = $ + mo.offsetparentmom
 		
-		mo.offsetmom = (Vec3.SphereToCartesian(mo.angles.h, mo.angles.v) * mo.offsetspeed)
+		--mo.offsetmom = (Vec3.SphereToCartesian(mo.angles.h, mo.angles.v) * mo.offsetspeed)
+		mo.offsetmom = Vec3.Mul(
+			Vec3.SphereToCartesian(mo.angles.h, mo.angles.v),
+			mo.offsetspeed
+		)
 		mo.offsetspeed = FixedMul($, mo.movefactor)
-		mo.offsetparentmom = mo.offsetparentmom * mo.movefactor
+		--mo.offsetparentmom = mo.offsetparentmom * mo.movefactor
+		mo.offsetparentmom = Vec3.Mul($, mo.movefactor)
 		
 		local fade = mo.tics
 		if mo.fadewithfuse
