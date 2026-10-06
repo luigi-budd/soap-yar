@@ -332,10 +332,12 @@ local function SetCompat()
 				"On the lighter side.",
 			};
 			items = {
-				"accel_ring",
-				"flame_ring"
+				"bounce_ring",
+				"molotov"
 			};
 		})
+		
+		dofile("Compat/ZE2_molotov.lua")
 		
 		compat.ze2config = true
 		printf("Added ZE2 stuff.")

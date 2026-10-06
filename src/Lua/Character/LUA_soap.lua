@@ -3416,7 +3416,7 @@ local function try_damage_cases(me,thing, p,soap,DealDamage,damagetype)
 		vfxdmgt = DMG_NUKE
 	end
 	local checkforundamage = true
-	if (p.powers[pw_super]) then checkforundamage = false; end
+	if (p.powers[pw_super] or p.powers[pw_invulnerability]) then checkforundamage = false; end
 	
 	--hit by pound
 	if ((soap.pounding)

@@ -2056,6 +2056,9 @@ local function try_pvp_collide(me,thing)
 		damagetype = DMG_ELECTRIC
 	end
 	
+	local checkforundamage = true
+	if (p.powers[pw_super] or p.powers[pw_invulnerability]) then checkforundamage = false; end
+	
 	--if the thing we're killing ISNT a player, then theyre probably an enemy
 	local candamagemobj = false
 	if (thing.type ~= MT_PLAYER)
@@ -2121,6 +2124,7 @@ local function try_pvp_collide(me,thing)
 		local coulddamage = DealDamage(thing, me,me, nil, damagetype)
 		if not coulddamage
 		and not (me.hitlag)
+		and checkforundamage
 			Soap_Bump(me, thing, nil, false)
 			if soap.clutch.misfire
 				soap.clutch.misfire = CLUTCH_MISFIRE
@@ -2178,17 +2182,16 @@ local function try_pvp_collide(me,thing)
 		and not (thing == me.target or thing == me.tracer)
 	
 	if basicdamage and not thinghit
-		if DealDamage(thing, me,me, nil, damagetype)
-			Soap_ImpactVFX(thing,me, nil, FU/3, nil,nil, (shield == SH_ARMAGEDDON) and DMG_NUKE or damagetype)
-			Soap_DamageSfx(thing, FU/3, 2*FU, damagetype)
-			Soap_SpawnBumpSparks(me, thing, nil, true)
-			
-			if (thing and thing.valid and thing.flags & MF_BOSS and (thing.health <= 0))
-				S_StartSound(me, sfx_sp_kco)
-				soap.hud.painsurge = 6
-			end
-			thinghit = true
+	and not (DealDamage(thing, me,me, nil,damagetype) == false and checkforundamage)
+		Soap_ImpactVFX(thing,me, nil, FU/3, nil,nil, (shield == SH_ARMAGEDDON) and DMG_NUKE or damagetype)
+		Soap_DamageSfx(thing, FU/3, 2*FU, damagetype)
+		Soap_SpawnBumpSparks(me, thing, nil, true)
+		
+		if (thing and thing.valid and thing.flags & MF_BOSS and (thing.health <= 0))
+			S_StartSound(me, sfx_sp_kco)
+			soap.hud.painsurge = 6
 		end
+		thinghit = true
 	end
 	
 	if thinghit and (thing and thing.valid and thing.type == MT_ROLLOUTROCK)
