@@ -22,7 +22,7 @@ local armacolors = {
 local ZEROVEC = Vec3.New(0,0,0)
 
 local fire_radius = 185*FU
-local fire_time = TR * 12/10
+local fire_time = 2*TR
 
 local cv_friendlyfire = SOAP_CV.FindVar("friendlyfire")
 local function FriendlyFire()
@@ -175,7 +175,7 @@ states[S_MOLOTOV] = {
 
 states[S_MOLOTOV_DEATH] = {SPR_NULL, A, 1, function(mo) -- Explode within a radius setted by explode_radius local
 	-- these are both a bit of hacky hacks,
-	-- but the height is set here so the function i copy-pasted
+	-- the height is set here so the function i copy-pasted
 	-- from ze2 can work without much editing lol
 	-- we set forcedamage here as a workaround for xslinger, making sure
 	-- the blast damage will do 30 instead of the item's config damage
@@ -185,7 +185,8 @@ states[S_MOLOTOV_DEATH] = {SPR_NULL, A, 1, function(mo) -- Explode within a radi
 	searchBlockmap("objects", function(mo, foundmobj)
 		local dist = R_PointToDist2(mo.x, mo.y, foundmobj.x, foundmobj.y)
 		if (dist > fire_radius) then return end
-		if not (foundmobj.health and foundmobj.player) then return end
+		if not (foundmobj.health) then return end
+		if not (foundmobj.flags & MF_SHOOTABLE) then return end
 		if not ZE2.ZCollide(mo, foundmobj) then return end
 		if foundmobj.team == mo.team and not FriendlyFire() then return end
 		
@@ -207,7 +208,7 @@ states[S_MOLOTOV_DEATH] = {SPR_NULL, A, 1, function(mo) -- Explode within a radi
 	helper.team = mo.team
 	local sfx = P_SpawnGhostMobj(helper)
 	sfx.flags2 = $|MF2_DONTDRAW
-	sfx.fuse = 2*TR
+	sfx.fuse = fire_time * 2
 	sfx.tics = sfx.fuse
 	S_StartSound(sfx, sfx_zm_fl)
 	
@@ -455,7 +456,7 @@ xSlinger.registerItem("molotov", {
 	
 	color = SKINCOLOR_GREEN;
 	missile = "MOLOTOV";
-    firerate = 1; --13*TR + TR/2;
+    firerate = 14*TR;
 	damage = 10;
 	droppable = false;
 
