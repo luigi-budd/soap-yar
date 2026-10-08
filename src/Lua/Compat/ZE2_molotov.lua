@@ -418,17 +418,21 @@ local function bottlesound(mo)
 end
 
 -- just code from ze2s bounce ring Lol!
+local TOOSLOW = FU/10
 local bounce_tick = function(self, pmo, mo)
-	local prevmomz = mo.bouncering_prevmomz or 0
 	local floorhit = (mo.z <= mo.floorz)
 	local ceilinghit = (mo.z + mo.height == mo.ceilingz)
 	local bounced = mo.extravalue2 > 0
-	
+	local prevmomz = mo.bouncering_prevmomz or 0
 	local newprevmomz = FixedDiv(abs(max(6*FU,prevmomz)), 5*FU/4)
-	if floorhit and bounced then -- explode
-		xSlinger.KillMissile(mo)
+	
+	if (floorhit and bounced) -- explode
+	-- or (mo.momx <= TOOSLOW and mo.momy <= TOOSLOW and mo.momz <= TOOSLOW and not ceilinghit) -- FAILSAFE
+		P_KillMobj(mo)
 		return
-	elseif floorhit or ceilinghit then -- bounce
+	end
+	
+	if (floorhit or ceilinghit) then -- bounce
 		Soap_SpawnBumpSparks(mo, nil, line, false, FU / 2, true)
 		bottlesound(mo)
 		
