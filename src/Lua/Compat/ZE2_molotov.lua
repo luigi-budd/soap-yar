@@ -361,7 +361,7 @@ addHook("MobjThinker", function(m)
 	-- flames
 	--local micros = getTimeMicros()
 	flamevfx(m, VFX_FLAME|VFX_CIRCLE)
-	if m.playcount <= 10
+	if m.playcount <= 14
 		flamevfx(m, VFX_FLAME|VFX_CIRCLE)
 		flamevfx(m, VFX_CIRCLE)
 	end
@@ -369,12 +369,12 @@ addHook("MobjThinker", function(m)
 	if leveltime % 4 == 0
 		local rim_fuse = P_RandomRange(6,10)
 		local rim_alpha = FU*3/4 + P_RandomFixed()/4
-		local angstep = FixedDiv(360*FU, 24*FU)
+		local angstep = FixedDiv(360*FU, 12*FU)
 		local dist = fire_radius - 32*FU
 		local speed = 12*FU
 		
 		local movefact = FU * 89/100
-		for i = 1,24
+		for i = 1,12
 			local ang = FixedAngle(angstep * i)
 			local spark = P_SpawnMobjFromMobj(m,
 				P_ReturnThrustX(ang, dist),
@@ -398,7 +398,7 @@ addHook("MobjThinker", function(m)
 			
 			spark.fusesquish = 5
 			spark.scale = $ / 2
-			spark.spritexscale = $ * 2
+			spark.spritexscale = $ * 4
 			spark.movefactor = movefact
 			spark.fuse = spark.tics
 		end
@@ -407,6 +407,44 @@ addHook("MobjThinker", function(m)
 end,MT_SOAPZE2_MOLOTOVHELPER)
 
 -- missile definition
+local function bottlesound(mo)
+	local sound = sfx_zm_h0
+	if mo.extravalue2
+		sound = P_RandomRange(sfx_zm_h1, sfx_zm_h4)
+	end
+	mo.extravalue2 = $ + 1
+	mo.rollangle = $ + ANGLE_45
+	S_StartSound(mo, sound)
+end
+
+-- just code from ze2s bounce ring Lol!
+local bounce_tick = function(self, pmo, mo)
+	local prevmomz = mo.bouncering_prevmomz or 0
+	local floorhit = (mo.z <= mo.floorz)
+	local ceilinghit = (mo.z + mo.height == mo.ceilingz)
+	local bounced = mo.extravalue2 > 0
+	
+	local newprevmomz = FixedDiv(abs(max(6*FU,prevmomz)), 5*FU/4)
+	if floorhit and bounced then -- explode
+		xSlinger.KillMissile(mo)
+		return
+	elseif floorhit or ceilinghit then -- bounce
+		Soap_SpawnBumpSparks(mo, nil, line, false, FU / 2, true)
+		bottlesound(mo)
+		
+		local sign = (ceilinghit) and -1 or 1
+		P_SetObjectMomZ(mo, newprevmomz * sign, true)
+		
+		if floorhit
+			mo.momx = $ / 2
+			mo.momy = $ / 2
+		end
+	end
+	
+	mo.bouncering_prevmomz = mo.momz
+end
+
+
 local xsmissile_molotov = xSlinger.registerMissile("MOLOTOV", {
 	speed = 62*FU,
 	displayname = "Molotov Cocktail",
@@ -418,7 +456,10 @@ local xsmissile_molotov = xSlinger.registerMissile("MOLOTOV", {
 	height = 40*FU,
 	antiknockback = true,
 	delflags = MF_NOGRAVITY|MF_NOBLOCKMAP,
+	safeground = true, -- hack
 	
+	tick = bounce_tick,
+	subtick = bounce_tick,
 	blocked = function(self, me, mo, line)
 		if not line then return end
 		Soap_SpawnBumpSparks(mo, nil, line, false, FU / 2)
@@ -441,14 +482,7 @@ local xsmissile_molotov = xSlinger.registerMissile("MOLOTOV", {
 			-speed
 		)
 		
-		local sound = sfx_zm_h0
-		if mo.extravalue2
-			sound = P_RandomRange(sfx_zm_h1, sfx_zm_h4)
-		end
-		mo.extravalue2 = $ + 1
-		mo.rollangle = $ + ANGLE_45
-		S_StartSound(mo, sound)
-		
+		bottlesound(mo)
 		return true
 	end
 })
