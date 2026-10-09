@@ -2220,6 +2220,22 @@ end,MT_ROLLOUTROCK)
 -- addHook("MobjCollide",try_pvp_collide,MT_PLAYER)
 
 --various effects
+local function GetMaceSpeed(mace)
+	local center = mace.hprev
+	if not (center and center.valid) then return 0; end
+	
+	local last = nil
+	repeat
+		last = center
+		center = center.hprev
+	until (center == nil)
+	center = last
+	
+	local dist = (mace.info.speed) and mace.info.speed or mobjinfo[MT_SMALLMACECHAIN].speed
+	dist = (center.scale == FU) and dist or FixedMul($, center.scale)
+	return dist
+end
+
 local function get_inf_speed(me,inf,sor)
 	local default = 0
 	if (inf.flags & MF_MISSILE)
@@ -2241,7 +2257,8 @@ local function get_inf_speed(me,inf,sor)
 			default = 45*inf.scale
 		end
 	elseif inf.type == MT_SMALLMACE or inf.type == MT_BIGMACE
-		default = R_PointTo3DDist(inf.last_x,inf.last_y,inf.last_z, inf.x,inf.y,inf.z)
+		default = GetMaceSpeed(inf)
+		--default = R_PointTo3DDist(inf.last_x,inf.last_y,inf.last_z, inf.x,inf.y,inf.z)
 	elseif inf.type == MT_TNTBARREL or inf.type == MT_PROXIMITYTNT
 		default = 70 * inf.scale
 	end

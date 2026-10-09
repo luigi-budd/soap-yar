@@ -530,28 +530,6 @@ addHook("MobjThinker",function(mo)
 	mo.momx,mo.momy,mo.momz = FixedMul($1,dust_mul),FixedMul($2,dust_mul),FixedMul($3,dust_mul)
 end,MT_SOAP_DUST)
 
-local maces = {}
-addHook("PostThinkFrame",do
-	for k,mobj in ipairs(maces)
-		if not (mobj and mobj.valid)
-			table.remove(maces,k)
-		end
-	end
-	for k,mace in ipairs(maces)
-		if not (mace and mace.valid) then continue end
-		mace.last_x = mace.x
-		mace.last_y = mace.y
-		mace.last_z = mace.z
-	end
-end)
-addHook("NetVars",function(n) maces = n($); end)
-
-local function macethinker(mace)
-	table.insert(maces,mace)
-end
-addHook("MobjSpawn",macethinker,MT_SMALLMACE)
-addHook("MobjSpawn",macethinker,MT_BIGMACE)
-
 addHook("MobjThinker",function(rock)
 	if not (rock and rock.valid) then return end
 	if rock.soap_flingcooldown == nil
