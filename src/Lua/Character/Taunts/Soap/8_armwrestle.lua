@@ -644,6 +644,7 @@ end
 tauntinfo.canceled = function(p,me,soap)
 	me.soap_arms = nil
 	me.spritexoffset = 0
+	p.fovadd = 0
 	SETFOV = false
 end
 -- mango
