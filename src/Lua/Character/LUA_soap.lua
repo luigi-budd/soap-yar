@@ -3679,6 +3679,7 @@ local function try_pvp_collide(me,thing)
 	if not soap then return end
 	if me.skin ~= SOAP_SKIN then return end
 	if (soap.damagedealtthistic > SOAP_MAXDAMAGETICS) then return end
+	if soap.inPain or P_PlayerInPain(p) then return end
 	
 	local DealDamage = (soap.doSuperBuffs or p.powers[pw_invulnerability]) and P_KillMobj or P_DamageMobj
 	
