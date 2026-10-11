@@ -470,7 +470,7 @@ local function FreezeInHitlag(mo)
 	if eat then return end
 	
 	if mo.ninjadive
-		local mypos = mo.anchor + mo.offset
+		local mypos = Vec3.Add(mo.anchor, mo.offset)
 		mypos:ToMobjPos(mo, true, false)
 		
 		local mul = FU
@@ -488,9 +488,14 @@ local function FreezeInHitlag(mo)
 		mo.offset = $ + mo.offsetmom
 		mo.offset = $ + mo.offsetparentmom
 		
-		mo.offsetmom = (Vec3.SphereToCartesian(mo.angles.h, mo.angles.v) * mo.offsetspeed)
+		--mo.offsetmom = (Vec3.SphereToCartesian(mo.angles.h, mo.angles.v) * mo.offsetspeed)
+		mo.offsetmom = Vec3.Mul(
+			Vec3.SphereToCartesian(mo.angles.h, mo.angles.v),
+			mo.offsetspeed
+		)
 		mo.offsetspeed = FixedMul($, mo.movefactor)
-		mo.offsetparentmom = mo.offsetparentmom * mo.movefactor
+		--mo.offsetparentmom = mo.offsetparentmom * mo.movefactor
+		mo.offsetparentmom = Vec3.Mul($, mo.movefactor)
 		
 		local fade = mo.tics
 		if mo.fadewithfuse
@@ -528,28 +533,6 @@ addHook("MobjThinker",function(mo)
 	end
 	mo.momx,mo.momy,mo.momz = FixedMul($1,dust_mul),FixedMul($2,dust_mul),FixedMul($3,dust_mul)
 end,MT_SOAP_DUST)
-
-local maces = {}
-addHook("PostThinkFrame",do
-	for k,mobj in ipairs(maces)
-		if not (mobj and mobj.valid)
-			table.remove(maces,k)
-		end
-	end
-	for k,mace in ipairs(maces)
-		if not (mace and mace.valid) then continue end
-		mace.last_x = mace.x
-		mace.last_y = mace.y
-		mace.last_z = mace.z
-	end
-end)
-addHook("NetVars",function(n) maces = n($); end)
-
-local function macethinker(mace)
-	table.insert(maces,mace)
-end
-addHook("MobjSpawn",macethinker,MT_SMALLMACE)
-addHook("MobjSpawn",macethinker,MT_BIGMACE)
 
 addHook("MobjThinker",function(rock)
 	if not (rock and rock.valid) then return end

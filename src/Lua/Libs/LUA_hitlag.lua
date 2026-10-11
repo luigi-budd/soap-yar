@@ -131,6 +131,8 @@ hl.iterateHitlagged = function()
 		else
 			mo.flags = $ &~MF_NOTHINK --mo.hldata_st_lastflags or lastflags
 			mo.spritexoffset = 0
+			mo.spriteyoffset = 0
+			mo.renderflags = $ &~RF_ALWAYSONTOP
 			mo.hitlagfromdmg = false
 			mo.translation = mo.hldata_hl_lasttransl and mo.hldata_hl_lasttransl.tr or nil
 			mo.hldata_hl_lastflags = nil
@@ -141,6 +143,8 @@ hl.iterateHitlagged = function()
 				local p = mo.player
 				if (p.followmobj and p.followmobj.valid)
 					p.followmobj.spritexoffset = 0
+					p.followmobj.spriteyoffset = 0
+					p.followmobj.renderflags = $ &~RF_ALWAYSONTOP
 					p.followmobj.translation = nil
 				end
 				p.pflags = $|v[11] &~PF_STARTJUMP
@@ -359,31 +363,50 @@ hl.iterateHitlaggedPostThink = function()
 		local mo = v[1]
 		if not (mo and mo.valid) then hl.removeFromHitlagged(k); continue end
 		
+		-- hitlag jitters / jittering
 		if mo.hitlag
+		and mo.hitlagfromdmg
+			local angle = FixedAngle(leveltime*FU * (8 + (mo.hitlag/2)))
+			local offset = (mo.hitlag)*5*FU --*((leveltime & 1) and 1 or -1)
 			
-			if mo.hitlagfromdmg
-				local offset = (mo.hitlag)*2*FU*((leveltime & 1) and 1 or -1)
-				/*
-				if mo.skin and mo.sprite == SPR_PLAY
-				and skins[mo.skin].flags & SF_HIRES
-					offset = FixedDiv($, skins[mo.skin].highresscale)
-				end
-				*/
-				if (mo.spritexscale ~= FU)
-					offset = FixedDiv($, mo.spritexscale)
-				end
-				
-				mo.spritexoffset = offset
-				mo.translation = hl.hitlagTranslation
+			/*
+			if mo.skin and mo.sprite == SPR_PLAY
+			and skins[mo.skin].flags & SF_HIRES
+				offset = FixedDiv($, skins[mo.skin].highresscale)
+			end
+			*/
+			local xoffset = FixedMul(offset, cos(angle))
+			local yoffset = FixedMul(offset, sin(angle))
+			xoffset = $ + Soap_RandomFixedRange(-mo.hitlag*FU, mo.hitlag*FU)
+			yoffset = $ + Soap_RandomFixedRange(-mo.hitlag*FU/2, mo.hitlag*FU/2)
+			
+			if (mo.spritexscale ~= FU)
+				xoffset = FixedDiv($, mo.spritexscale)
+			end
+			if (mo.spriteyscale ~= FU)
+				yoffset = FixedDiv($, mo.spriteyscale)
 			end
 			
+			mo.spritexoffset = xoffset
+			mo.spriteyoffset = yoffset
+			mo.translation = hl.hitlagTranslation
+			
+			if (mo.player and mo.player.valid)
+			and (displayplayer and displayplayer.valid)
+			and (mo.player == displayplayer)
+				mo.renderflags = $|RF_ALWAYSONTOP
+			else
+				mo.renderflags = $ &~RF_ALWAYSONTOP
+			end
 		end
 		if (mo.player and mo.player.valid)
 			local p = mo.player
 			p.pflags = $|(mo.hitlag and v[4]|PF_FULLSTASIS|PF_JUMPSTASIS or 0)|v[11]
 			if (p.followmobj and p.followmobj.valid)
 				p.followmobj.spritexoffset = mo.spritexoffset
+				p.followmobj.spriteyoffset = mo.spriteyoffset
 				p.followmobj.translation = mo.translation
+				p.followmobj.renderflags = ($ &~RF_ALWAYSONTOP)|(mo.renderflags & RF_ALWAYSONTOP)
 			end
 			
 			p.drawangle = v[3]

@@ -183,17 +183,21 @@ local function playknockoutsfx(p,me,soap)
 	soap.kotic = leveltime
 	
 	local chance = true
-	local sound = P_RandomChance(FU/50) and sfx_sp_em1 or P_RandomRange(sfx_sp_ow0,sfx_sp_ow1)
+	local closesound = P_RandomChance(FU/50) and sfx_sp_em1 or P_RandomRange(sfx_sp_ow0,sfx_sp_ow1)
+	local farsound = P_RandomRange(sfx_sp_ow2, sfx_sp_ow5)
+	local sound = closesound
+	
 	if R_PointToDist(me.x,me.y) >= 1024*FU * 4
 	and P_RandomChance(FU*3/4)
 	and (p ~= displayplayer)
-		sound = P_RandomRange(sfx_sp_ow2, sfx_sp_ow5)
+		sound = farsound
 	end
 	if Soap_IsCompGamemode()
 		chance = P_RandomChance(FU/10)
 		S_StartSoundAtVolume(me, sfx_s3k61, 255 * 3/4)
 	end
 	if not chance then return end
+	
 	S_StartSound(me,sound)
 end
 local function doknockback(p,me,soap)
@@ -2133,6 +2137,7 @@ local function try_pvp_collide(me,thing)
 	if not soap then return end
 	if me.skin ~= TAKIS_SKIN then return end
 	if (soap.damagedealtthistic > SOAP_MAXDAMAGETICS) then return end
+	if soap.inPain or P_PlayerInPain(p) then return end
 	
 	local DealDamage = (p.powers[pw_super] or soap.isSolForm or p.powers[pw_invulnerability]) and P_KillMobj or P_DamageMobj
 	local damagetype
@@ -2149,6 +2154,9 @@ local function try_pvp_collide(me,thing)
 	if (shield == SH_ARMAGEDDON)
 		damagetype = DMG_ELECTRIC
 	end
+	
+	local checkforundamage = true
+	if (p.powers[pw_super] or p.powers[pw_invulnerability]) then checkforundamage = false; end
 	
 	--if the thing we're killing ISNT a player, then theyre probably an enemy
 	local candamagemobj = false
@@ -2215,6 +2223,7 @@ local function try_pvp_collide(me,thing)
 		local coulddamage = DealDamage(thing, me,me, nil, damagetype)
 		if not coulddamage
 		and not (me.hitlag)
+		and checkforundamage
 			Soap_Bump(me, thing, nil, false)
 			if soap.clutch.misfire
 				soap.clutch.misfire = CLUTCH_MISFIRE
@@ -2272,17 +2281,16 @@ local function try_pvp_collide(me,thing)
 		and not (thing == me.target or thing == me.tracer)
 	
 	if basicdamage and not thinghit
-		if DealDamage(thing, me,me, nil, damagetype)
-			Soap_ImpactVFX(thing,me, nil, FU/3, nil,nil, (shield == SH_ARMAGEDDON) and DMG_NUKE or damagetype)
-			Soap_DamageSfx(thing, FU/3, 2*FU, damagetype)
-			Soap_SpawnBumpSparks(me, thing, nil, true)
-			
-			if (thing and thing.valid and thing.flags & MF_BOSS and (thing.health <= 0))
-				S_StartSound(me, sfx_sp_kco)
-				soap.hud.painsurge = 6
-			end
-			thinghit = true
+	and not (DealDamage(thing, me,me, nil,damagetype) == false and checkforundamage)
+		Soap_ImpactVFX(thing,me, nil, FU/3, nil,nil, (shield == SH_ARMAGEDDON) and DMG_NUKE or damagetype)
+		Soap_DamageSfx(thing, FU/3, 2*FU, damagetype)
+		Soap_SpawnBumpSparks(me, thing, nil, true)
+		
+		if (thing and thing.valid and thing.flags & MF_BOSS and (thing.health <= 0))
+			S_StartSound(me, sfx_sp_kco)
+			soap.hud.painsurge = 6
 		end
+		thinghit = true
 	end
 	
 	if thinghit and (thing and thing.valid and thing.type == MT_ROLLOUTROCK)
@@ -2311,6 +2319,22 @@ end,MT_ROLLOUTROCK)
 -- addHook("MobjCollide",try_pvp_collide,MT_PLAYER)
 
 --various effects
+local function GetMaceSpeed(mace)
+	local center = mace.hprev
+	if not (center and center.valid) then return 0; end
+	
+	local last = nil
+	repeat
+		last = center
+		center = center.hprev
+	until (center == nil)
+	center = last
+	
+	local dist = (mace.info.speed) and mace.info.speed or mobjinfo[MT_SMALLMACECHAIN].speed
+	dist = (center.scale == FU) and dist or FixedMul($, center.scale)
+	return dist
+end
+
 local function get_inf_speed(me,inf,sor)
 	local default = 0
 	if (inf.flags & MF_MISSILE)
@@ -2332,7 +2356,8 @@ local function get_inf_speed(me,inf,sor)
 			default = 45*inf.scale
 		end
 	elseif inf.type == MT_SMALLMACE or inf.type == MT_BIGMACE
-		default = R_PointTo3DDist(inf.last_x,inf.last_y,inf.last_z, inf.x,inf.y,inf.z)
+		default = GetMaceSpeed(inf)
+		--default = R_PointTo3DDist(inf.last_x,inf.last_y,inf.last_z, inf.x,inf.y,inf.z)
 	elseif inf.type == MT_TNTBARREL or inf.type == MT_PROXIMITYTNT
 		default = 70 * inf.scale
 	end

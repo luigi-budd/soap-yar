@@ -43,6 +43,11 @@ Takis_Hook.addHook("CanFlingThing",function(mo, p)
 	return false
 end, MT_FANG)
 
+-- bruh...
+Takis_Hook.addHook("CanFlingThing",function(mo, p)
+	if not mo.reactiontime then return false; end
+end, MT_EGGMOBILE4)
+
 Takis_Hook.addHook("Char_OnStunEnemy",function(mo)
 	P_KillMobj(mo)
 	return true
