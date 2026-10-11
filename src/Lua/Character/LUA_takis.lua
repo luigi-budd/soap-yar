@@ -183,17 +183,21 @@ local function playknockoutsfx(p,me,soap)
 	soap.kotic = leveltime
 	
 	local chance = true
-	local sound = P_RandomChance(FU/50) and sfx_sp_em1 or P_RandomRange(sfx_sp_ow0,sfx_sp_ow1)
+	local closesound = P_RandomChance(FU/50) and sfx_sp_em1 or P_RandomRange(sfx_sp_ow0,sfx_sp_ow1)
+	local farsound = P_RandomRange(sfx_sp_ow2, sfx_sp_ow5)
+	local sound = closesound
+	
 	if R_PointToDist(me.x,me.y) >= 1024*FU * 4
 	and P_RandomChance(FU*3/4)
 	and (p ~= displayplayer)
-		sound = P_RandomRange(sfx_sp_ow2, sfx_sp_ow5)
+		sound = farsound
 	end
 	if Soap_IsCompGamemode()
 		chance = P_RandomChance(FU/10)
 		S_StartSoundAtVolume(me, sfx_s3k61, 255 * 3/4)
 	end
 	if not chance then return end
+	
 	S_StartSound(me,sound)
 end
 local function doknockback(p,me,soap)
