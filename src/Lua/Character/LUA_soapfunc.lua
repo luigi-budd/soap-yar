@@ -2192,12 +2192,12 @@ rawset(_G,"Soap_DeathThinker",function(p,me,soap)
 			me.momy = FixedMul($, soap_airfric)
 		end
 		if (me.z + me.momz + me.height >= me.ceilingz)
-			me.momz = -$
+			me.momz = -($ * 11/10)
 			if Soap_IsLocalPlayer(p)
 				Soap_StartQuake(abs(me.momz)*2, TR/4)
 			end
 			S_StartSound(me, sfx_s3k5d)
-			Soap_Hitlag.addHitlag(me, 10 + (FixedDiv(abs(me.momz),me.scale)/FU / 6), true)
+			Soap_Hitlag.addHitlag(me, 16 + (FixedDiv(abs(me.momz),me.scale)/FU / 6), true)
 		end
 		if (me.momz*soap.gravflip <= -5 * me.scale)
 		and Soap_IsCompGamemode()
@@ -2246,10 +2246,10 @@ rawset(_G,"Soap_DeathThinker",function(p,me,soap)
 		if (soap.onGround)
 		and me.health
 			if abs(me.momz) >= 30*me.scale -- ouch
-				me.momz = -($ * 4/10)
+				me.momz = -($ * 7/10)
 				me.momx = FixedMul($, soap_airfric)
 				me.momy = FixedMul($, soap_airfric)
-				Soap_Hitlag.addHitlag(me, 14 + (FixedDiv(abs(me.momz),me.scale)/FU / 6), true)
+				Soap_Hitlag.addHitlag(me, 17 + (FixedDiv(abs(me.momz),me.scale)/FU / 5), true)
 				Soap_DustRing(me,
 					MT_PARTICLE, 14,
 					{me.x,me.y,me.z},
