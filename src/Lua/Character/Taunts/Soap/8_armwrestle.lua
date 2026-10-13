@@ -225,6 +225,9 @@ local function CheckPartner(p,me,soap,taunt,arms)
 	if not (arms2 and arms2.partner == p)
 		return false
 	end
+	if not (omo.state == S_PLAY_SOAP_ARMWRESTLE)
+		return false
+	end
 	return true
 end
 
@@ -276,6 +279,17 @@ local function SetupPhase(p,me,soap,taunt,arms)
 	local arms2 = omo.soap_arms
 	
 	me.tempangle = R_PointToAngle2(me.x,me.y, omo.x,omo.y)
+	local dist = GetMoveDistance(me, omo)
+	if not P_TryMove(omo,
+		me.x + P_ReturnThrustX(me.tempangle, dist),
+		me.y + P_ReturnThrustY(me.tempangle, dist),
+		false
+	) then
+		ResetTaunt(p)
+		ResetTaunt(play)
+		return
+	end
+	
 	p.aiming = 0
 	me.angle = me.tempangle
 	p.cmd.angleturn = me.angle >> 16
@@ -572,10 +586,7 @@ local function WrestlePhase(p,me,soap,taunt,arms)
 			me.state = replacestate
 		end
 		
-		omo.state = S_PLAY_DEAD
-		omo.frame = A|($ &~FF_FRAMEMASK)
-		omo.sprite2 = SPR2_MSC2
-		omo.tics = -1
+		omo.state = S_PLAY_SOAP_KNOCKOUTDOLL
 		omo.soap_inf = me
 		
 		omo.z = $ + P_MobjFlip(omo)*FU
@@ -868,6 +879,16 @@ rawset(_G, "SoapArmWrestle_Think", function(p)
 	tauntinfo.think(p,me,soap, soap.taunt)
 	tauntinfo.postthink(p,me,soap, soap.taunt)
 end)
+
+rawset(_G, "SoapArmWrestle_Remove", function(p)
+	local me = p.realmo
+	local soap = p.soaptable
+	me.soap_arms = nil
+	me.soap_arm_winstate = nil
+	me.tempangle = nil
+	tauntinfo.canceled(p,me,soap)
+end)
+
 rawset(_G, "ARMSPHASE_SEARCH", PHASE_SEARCH)
 rawset(_G, "ARMSPHASE_SETUP", PHASE_SETUP)
 rawset(_G, "ARMSPHASE_WRESTLE", PHASE_WRESTLE)

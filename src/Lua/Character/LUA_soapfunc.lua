@@ -1378,7 +1378,7 @@ rawset(_G, "Soap_WindLines", function(me,rmomz,color,forceang,forceside)
 			mocolor = armacolors[P_RandomRange(1, #armacolors)]
 		end
 		-- what is this bullshit
-		if (me.sprite2 == SPR2_MSC2)
+		if (me.state == S_PLAY_SOAP_KNOCKOUTDOLL)
 			if (me.soap_inf and me.soap_inf.valid)
 			and me.soap_inf.color ~= SKINCOLOR_NONE
 				mocolor = me.soap_inf.color
@@ -2116,7 +2116,7 @@ rawset(_G,"Soap_HandleNoAbils", function(p)
 	if (soap.isTransforming)
 	or (me.punchtarget and me.punchtarget.valid)
 	or (me.punchsource and me.punchsource.valid)
-	or (me.soap_kickme or me.sprite2 == SPR2_MSC2 or me.state == S_PLAY_SOAP_KNOCKOUT)
+	or (me.soap_kickme or me.state == S_PLAY_SOAP_KNOCKOUTDOLL or me.state == S_PLAY_SOAP_KNOCKOUT)
 	or (p.kart or p.inkart)
 		na = $|SNOABIL_ALL
 	end
@@ -2159,7 +2159,7 @@ local sixseven_callback = function(spark)
 	P_ThrustEvenIn2D(spark, spark.angle - ANGLE_90, 12*FU)
 end
 rawset(_G,"Soap_DeathThinker",function(p,me,soap)
-	if me.sprite2 == SPR2_MSC2
+	if me.state == S_PLAY_SOAP_KNOCKOUTDOLL
 		local sweat = P_SpawnMobjFromMobj(me,
 			P_RandomRange(-20,20)*FU,
 			P_RandomRange(-20,20)*FU,
@@ -2411,12 +2411,9 @@ rawset(_G,"Soap_DeathThinker",function(p,me,soap)
 	and not (soap.deathtype == DMG_DEATHPIT or P_CheckDeathPitCollide(me) or P_CheckPredictedPitCollide(p, me, me.z + me.momz))
 	and not (me.hitlag)
 	--and (me.soap_deadtimer <= TR/3)
-		if me.sprite2 ~= SPR2_MSC2
+		if me.state ~= S_PLAY_SOAP_KNOCKOUTDOLL
 		and not (soap.onGround and me.soap_deadtimer > 3)
-			me.state = S_PLAY_DEAD
-			me.frame = A|($ &~FF_FRAMEMASK)
-			me.sprite2 = SPR2_MSC2
-			me.tics = -1
+			me.state = S_PLAY_SOAP_KNOCKOUTDOLL
 			me.soap_landondeath = true
 			if me.soap_deadtimer < 3
 				S_StartSound(me,sfx_sp_ow0)
@@ -4174,7 +4171,7 @@ rawset(_G, "Soap_Combat", function(p)
 	if not (soap.noability & SNOABIL_COMBAT) then return end
 	
 	local tempatk = 0
-	local noabil = (me.sprite2 == SPR2_MSC2 or me.state == S_PLAY_SOAP_KNOCKOUT)
+	local noabil = (me.state == S_PLAY_SOAP_KNOCKOUTDOLL or me.state == S_PLAY_SOAP_KNOCKOUT)
 	
 	--c2 specials
 	if (soap.c2)

@@ -6,7 +6,7 @@
 	SPR2_MSC* list
 	- MSC0: pound ball
 	- MSC1: spinning top
-	- MSC2: battlemod knockout
+	- (DEPRECATED, replaced by S_PLAY_SOAP_KNOCKOUTDOLL) MSC2: battlemod knockout
 	- MSC3: death pit shoes
 	- MSC4: death taunt
 	- MSC5: r-dash ram
@@ -119,10 +119,7 @@ local function playknockoutsfx(p,me,soap)
 	S_StartSound(me,sound)
 end
 local function doknockback(p,me,soap)
-	me.state = S_PLAY_DEAD
-	me.frame = A|($ &~FF_FRAMEMASK)
-	me.sprite2 = SPR2_MSC2
-	me.tics = -1
+	me.state = S_PLAY_SOAP_KNOCKOUTDOLL
 end
 local function handle_knockback(p,me,soap)
 	P_Thrust(me, me.soap_damagevar.ang, me.soap_damagevar.speed)
@@ -135,10 +132,7 @@ local function handle_knockback(p,me,soap)
 		playknockoutsfx(p,me,soap)
 		
 		P_MovePlayer(p)
-		me.state = S_PLAY_DEAD
-		me.frame = A|($ &~FF_FRAMEMASK)
-		me.sprite2 = SPR2_MSC2
-		me.tics = -1
+		me.state = S_PLAY_SOAP_KNOCKOUTDOLL
 		
 		local s = P_SpawnMobjFromMobj(me,
 			0,0,FixedDiv(me.height,me.scale) / 2, MT_SOAP_WALLBUMP
@@ -3290,7 +3284,7 @@ Takis_Hook.addHook("MoveBlocked",function(me,thing,line, goingup)
 	if goingup then return end
 	
 	if not (me.health)
-	or (me.sprite2 == SPR2_MSC2)
+	or (me.state == S_PLAY_SOAP_KNOCKOUTDOLL)
 	and not (p.spectator or p.playerstate == PST_REBORN)
 		Soap_Bump(me,thing,line)
 		return

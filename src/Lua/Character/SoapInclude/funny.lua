@@ -521,19 +521,11 @@ addHook("PostThinkFrame",do
 			end
 		end
 		
-		if me.skin == SOAP_SKIN
-		or (me.skin == TAKIS_SKIN)
-			me.state = S_PLAY_DEAD
-			me.frame = A|($ &~FF_FRAMEMASK)
-			me.sprite2 = SPR2_MSC2
-			me.tics = -1
-			if (me.skin == SOAP_SKIN)
-				me.rollangle = 0
-			end
-			p.drawangle = me.angle
-		else
-			me.state = S_PLAY_PAIN
+		me.state = S_PLAY_SOAP_KNOCKOUTDOLL
+		if (me.skin == SOAP_SKIN)
+			me.rollangle = 0
 		end
+		p.drawangle = me.angle
 		me.soap_tumble_oldmomz = me.momz
 	end
 end)
