@@ -338,6 +338,7 @@ local function SetCompat()
 		})
 		
 		dofile("Compat/ZE2_molotov.lua")
+		dofile("Compat/ZE2_finger.lua")
 		
 		compat.ze2config = true
 		printf("Added ZE2 stuff.")

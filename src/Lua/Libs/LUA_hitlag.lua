@@ -564,9 +564,11 @@ addHook("ShouldDamage",function(me,_,_,_,dmg)
 		if me.damageinhitlag ~= true
 		and not (dmg & DMG_DEATHMASK)
 			return false
+		/*
 		else
 			me.hitlag = 0
 			return true
+		*/
 		end
 	end
 end,MT_PLAYER)
