@@ -623,77 +623,75 @@ addHook("MobjThinker",function(amp)
 	local myfrac = (amp.extended and amp_longfrac or amp_frac)
 	
 	local frac = ease_inquad(min(myfrac * amp.ticker, FU), 0,FU)
-	if (p == displayplayer)
-		local ang = R_PointToAngle2(amp.startx,amp.starty, me.x,me.y)
-		local organg = ang
-		local asign = (AngleFixed(ang) > 180*FU and 1 or -1)
-		ang = $ + ANGLE_90*asign
-		if amp.lerpang == nil
-			amp.lerpang = ang
-		else
-			amp.lerpang = P_Lerp(FU/2, $, ang)
-			ang = amp.lerpang
-		end
-		
-		local dist = R_PointToDist2(amp.startx,amp.starty, me.x,me.y)
-		dist = max(128 * me.scale, $*3/2)
-		
-		local thirddist = dist/3
-		local sidedist = 150*FU + thirddist + amp.extradist_ctrl1
-		local bouncedist = 128*FU + thirddist + amp.extradist_ctrl2
-		local halfheight = me.height/2
-		
-		local start = Vec3.New(amp.startx, amp.starty, amp.startz)
-		local dest = Vec3.New(me.x, me.y, me.z + halfheight)
-		local ctrl1 = Vec3.New((start.x/2) + (dest.x/2), (start.y/2) + (dest.y/2), (start.z/2) + (dest.z/2))
-		ctrl1.x = $ + P_ReturnThrustX(ang, sidedist)
-		ctrl1.y = $ + P_ReturnThrustY(ang, sidedist)
-		
-		ctrl1.z = $ + amp.zoff
-		ctrl1.z = $ + (dest.z - start.z)
-		
-		local ctrl2 = Vec3.New(me.x, me.y, me.z - halfheight)
-		ctrl2.x = $ + P_ReturnThrustX(organg, bouncedist)
-		ctrl2.y = $ + P_ReturnThrustY(organg, bouncedist)
-		ctrl2.z = $ + dist / 8
-		
-		/*
-		for i = 0,64
-			local frac = FixedDiv(i*FU, 64*FU)
-			local pos = QubicBezier(frac, start,ctrl1,ctrl2,dest)
-			local t = P_SpawnMobj(pos.x,pos.y,pos.z, MT_THOK)
-			t.scale = $ / 6
-			t.blendmode = AST_ADD
-			t.fuse = -1
-			t.tics = 2
-			t.renderflags = $|RF_ALWAYSONTOP
-		end
-		local t = P_SpawnMobj(ctrl1.x, ctrl1.y, ctrl1.z, MT_THOK)
-		t.scale = $ / 2
-		t.blendmode = AST_ADD
-		t.fuse = -1
-		t.tics = 2
-		t.color = SKINCOLOR_RED
-		t.renderflags = $|RF_ALWAYSONTOP
-		
-		local t = P_SpawnMobj(ctrl2.x, ctrl2.y, ctrl2.z, MT_THOK)
-		t.scale = $ / 2
-		t.blendmode = AST_ADD
-		t.fuse = -1
-		t.tics = 2
-		t.color = SKINCOLOR_RED
-		t.renderflags = $|RF_ALWAYSONTOP
-		*/
-		
-		local pos = QubicBezier(frac, start,ctrl1,ctrl2,dest)
-		P_MoveOrigin(amp, pos.x, pos.y, pos.z)
-		
-		if CV.rotations.value
-			amp.rollangle = $ + FixedAngle(ease_inexpo(frac, 0, 60*FU))
-		end
-		amp.spritexscale = ease_inexpo(frac, amp.startscale, me.scale / 20)
-		amp.spriteyscale = amp.spritexscale
+	local ang = R_PointToAngle2(amp.startx,amp.starty, me.x,me.y)
+	local organg = ang
+	local asign = (AngleFixed(ang) > 180*FU and 1 or -1)
+	ang = $ + ANGLE_90*asign
+	if amp.lerpang == nil
+		amp.lerpang = ang
+	else
+		amp.lerpang = P_Lerp(FU/2, $, ang)
+		ang = amp.lerpang
 	end
+	
+	local dist = R_PointToDist2(amp.startx,amp.starty, me.x,me.y)
+	dist = max(128 * me.scale, $*3/2)
+	
+	local thirddist = dist/3
+	local sidedist = 150*FU + thirddist + amp.extradist_ctrl1
+	local bouncedist = 128*FU + thirddist + amp.extradist_ctrl2
+	local halfheight = me.height/2
+	
+	local start = Vec3.New(amp.startx, amp.starty, amp.startz)
+	local dest = Vec3.New(me.x, me.y, me.z + halfheight)
+	local ctrl1 = Vec3.New((start.x/2) + (dest.x/2), (start.y/2) + (dest.y/2), (start.z/2) + (dest.z/2))
+	ctrl1.x = $ + P_ReturnThrustX(ang, sidedist)
+	ctrl1.y = $ + P_ReturnThrustY(ang, sidedist)
+	
+	ctrl1.z = $ + amp.zoff
+	ctrl1.z = $ + (dest.z - start.z)
+	
+	local ctrl2 = Vec3.New(me.x, me.y, me.z - halfheight)
+	ctrl2.x = $ + P_ReturnThrustX(organg, bouncedist)
+	ctrl2.y = $ + P_ReturnThrustY(organg, bouncedist)
+	ctrl2.z = $ + dist / 8
+	
+	/*
+	for i = 0,64
+		local frac = FixedDiv(i*FU, 64*FU)
+		local pos = QubicBezier(frac, start,ctrl1,ctrl2,dest)
+		local t = P_SpawnMobj(pos.x,pos.y,pos.z, MT_THOK)
+		t.scale = $ / 6
+		t.blendmode = AST_ADD
+		t.fuse = -1
+		t.tics = 2
+		t.renderflags = $|RF_ALWAYSONTOP
+	end
+	local t = P_SpawnMobj(ctrl1.x, ctrl1.y, ctrl1.z, MT_THOK)
+	t.scale = $ / 2
+	t.blendmode = AST_ADD
+	t.fuse = -1
+	t.tics = 2
+	t.color = SKINCOLOR_RED
+	t.renderflags = $|RF_ALWAYSONTOP
+	
+	local t = P_SpawnMobj(ctrl2.x, ctrl2.y, ctrl2.z, MT_THOK)
+	t.scale = $ / 2
+	t.blendmode = AST_ADD
+	t.fuse = -1
+	t.tics = 2
+	t.color = SKINCOLOR_RED
+	t.renderflags = $|RF_ALWAYSONTOP
+	*/
+	
+	local pos = QubicBezier(frac, start,ctrl1,ctrl2,dest)
+	P_MoveOrigin(amp, pos.x, pos.y, pos.z)
+	
+	if CV.rotations.value
+		amp.rollangle = $ + FixedAngle(ease_inexpo(frac, 0, 60*FU))
+	end
+	amp.spritexscale = ease_inexpo(frac, amp.startscale, me.scale / 20)
+	amp.spriteyscale = amp.spritexscale
 	
 	if amp.ticker == mytics + 1
 		if me.soap_lifetimeamps == nil then me.soap_lifetimeamps = 0 end

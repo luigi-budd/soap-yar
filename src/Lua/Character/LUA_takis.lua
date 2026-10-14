@@ -186,9 +186,10 @@ local function playknockoutsfx(p,me,soap)
 	local closesound = P_RandomChance(FU/50) and sfx_sp_em1 or P_RandomRange(sfx_sp_ow0,sfx_sp_ow1)
 	local farsound = P_RandomRange(sfx_sp_ow2, sfx_sp_ow5)
 	local sound = closesound
+	local farchance = P_RandomChance(FU*3/4)
 	
 	if R_PointToDist(me.x,me.y) >= 1024*FU * 4
-	and P_RandomChance(FU*3/4)
+	and farchance
 	and (p ~= displayplayer)
 		sound = farsound
 	end

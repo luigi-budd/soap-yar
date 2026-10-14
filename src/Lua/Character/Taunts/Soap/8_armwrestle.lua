@@ -82,6 +82,7 @@ tauntinfo.run = function(p, me, soap, taunt)
 		activity = 0,
 		inputlist = {},
 		lastjumptic = -1,
+		twitch = 0,
 		viewmobj = nil
 	}
 	
@@ -418,10 +419,12 @@ local function WrestlePhase(p,me,soap,taunt,arms)
 		arms2.activity = $ * 4/5
 		
 		arms.lastjumptic = leveltime
+		arms.twitch = 4
 		
 		S_StartSoundAtVolume(me, sfx_s251, 255 / 2)
 	end
 	
+	-- advantage
 	if (arms.progress >= 80*FU and arms.progress > arms2.progress)
 		if (leveltime % 4 == 0)
 			local angstep = FixedDiv(60*FU, 3*FU)
@@ -453,6 +456,8 @@ local function WrestlePhase(p,me,soap,taunt,arms)
 		end
 		myframe = C
 	end
+	
+	-- losing
 	if (arms2.progress - arms.progress >= 20*FU)
 	or ((arms2.progress >= 80*FU and arms2.progress > arms.progress))
 		if leveltime % 2 == 0
@@ -471,7 +476,16 @@ local function WrestlePhase(p,me,soap,taunt,arms)
 		S_StopSoundByID(me, sfx_pudpud)
 		me.spritexoffset = 0
 	end
-		
+	
+	if arms.twitch
+		if (myframe == B or myframe == C)
+			myframe = C
+		elseif myframe == D
+			myframe = B
+		end
+		arms.twitch = $ - 1
+	end
+	
 	-- tap out
 	if (soap.c1)
 		if soap.c1 == TR * 3/2

@@ -169,6 +169,10 @@ states[S_PLAY_SOAP_ARMWRESTLE] = {
 		B - base
 		C - advantage
 		D - losing
+		
+		pressing space will temporarily switch
+		the player to the advantage sprite,
+		or base sprite (if theyre losing)
 	*/
 	frame = SPR2_ARMW,
 	tics = -1,
