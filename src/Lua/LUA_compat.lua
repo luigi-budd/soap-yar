@@ -178,7 +178,7 @@ local function SetCompat()
 				
 				if me.soap_noguarding
 				or (soap.toptics)
-				or (me.sprite2 == SPR2_MSC2 or me.state == S_PLAY_SOAP_KNOCKOUT)
+				or (me.state == S_PLAY_SOAP_KNOCKOUTDOLL or me.state == S_PLAY_SOAP_KNOCKOUT)
 					p.canguard = false
 					me.soap_noguarding = false
 				end
@@ -338,6 +338,7 @@ local function SetCompat()
 		})
 		
 		dofile("Compat/ZE2_molotov.lua")
+		dofile("Compat/ZE2_finger.lua")
 		
 		compat.ze2config = true
 		printf("Added ZE2 stuff.")
@@ -433,6 +434,8 @@ local function SetCompat()
 	
 	if MHN and not compat.manhunt
 		SOAP_COMPGTOVERRIDE[GT_MANHUNT] = false
+		local last_airdrag = TAKIS_AIRDRAGCAP
+		local last_airfrac = TAKIS_AIRDRAGFRAC
 		
 		Takis_Hook.addHook("Char_NoAbility", function(p, na)
 			if gametype ~= GT_MANHUNT then return na; end
@@ -479,9 +482,6 @@ local function SetCompat()
 			end
 		end)
 		
-local last_airdrag = TAKIS_AIRDRAGCAP
-local last_airfrac = TAKIS_AIRDRAGFRAC
-
 		compat.manhunt = true
 		printf("Added Manhunt stuff.")
 	end

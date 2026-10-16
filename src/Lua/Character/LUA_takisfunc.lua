@@ -509,7 +509,7 @@ rawset(_G,"Takis_HandleNoAbils", function(p)
 	and (me.state <= S_PLAY_SUPER_TRANS6)
 	or (me.punchtarget and me.punchtarget.valid)
 	or (me.punchsource and me.punchsource.valid)
-	or (me.soap_kickme or me.sprite2 == SPR2_MSC2 or me.state == S_PLAY_SOAP_KNOCKOUT)
+	or (me.soap_kickme or me.state == S_PLAY_SOAP_KNOCKOUTDOLL or me.state == S_PLAY_SOAP_KNOCKOUT)
 	or (p.kart or p.inkart)
 		na = $|NOABIL_ALL
 	end
@@ -750,7 +750,7 @@ rawset(_G,"Takis_HammerBlastHitbox",function(p)
 			found.alreadykilledthis = true
 			
 			-- probably a cactus in acz
-			if found.flags & MF_SCENERY
+			if (found.flags & MF_SCENERY or found.deathstate == S_NULL)
 			and not (found.type == MT_SPIKE or found.type == MT_WALLSPIKE)
 				local speed = 15*found.scale
 				local range = 15*FU

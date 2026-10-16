@@ -6,6 +6,7 @@ SafeFreeslot("SPR2_SLID")
 SafeFreeslot("SPR2_JSKI") -- :ajlooking:
 SafeFreeslot("SPR2_NFL2") -- ugh also
 SafeFreeslot("SPR2_ARMW")
+SafeFreeslot("SPR2_SKNC")
 
 spr2defaults[SPR2_APOS] = SPR2_STND
 spr2defaults[SPR2_FLEX] = SPR2_STND
@@ -13,6 +14,7 @@ spr2defaults[SPR2_BRDA] = SPR2_ROLL
 spr2defaults[SPR2_OOF_] = SPR2_PAIN
 spr2defaults[SPR2_SLID] = SPR2_ROLL
 spr2defaults[SPR2_ARMW] = SPR2_WAIT
+spr2defaults[SPR2_SKNC] = SPR2_PAIN
 
 SafeFreeslot("S_PLAY_SOAP_FLEX")
 states[S_PLAY_SOAP_FLEX] = {
@@ -52,6 +54,14 @@ states[S_PLAY_SOAP_KNOCKOUT] = {
 	sprite = SPR_PLAY,
 	frame = A|SPR2_OOF_,
 	tics = -1,
+}
+
+SafeFreeslot("S_PLAY_SOAP_KNOCKOUTDOLL")
+states[S_PLAY_SOAP_KNOCKOUTDOLL] = {
+	sprite = SPR_PLAY,
+	frame = SPR2_SKNC,
+	tics = 2,
+	nextstate = S_PLAY_SOAP_KNOCKOUTDOLL,
 }
 
 SafeFreeslot("S_PLAY_SOAP_SLIP")
@@ -159,6 +169,10 @@ states[S_PLAY_SOAP_ARMWRESTLE] = {
 		B - base
 		C - advantage
 		D - losing
+		
+		pressing space will temporarily switch
+		the player to the advantage sprite,
+		or base sprite (if theyre losing)
 	*/
 	frame = SPR2_ARMW,
 	tics = -1,

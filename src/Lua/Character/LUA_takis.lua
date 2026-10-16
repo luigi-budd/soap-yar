@@ -186,9 +186,10 @@ local function playknockoutsfx(p,me,soap)
 	local closesound = P_RandomChance(FU/50) and sfx_sp_em1 or P_RandomRange(sfx_sp_ow0,sfx_sp_ow1)
 	local farsound = P_RandomRange(sfx_sp_ow2, sfx_sp_ow5)
 	local sound = closesound
+	local farchance = P_RandomChance(FU*3/4)
 	
 	if R_PointToDist(me.x,me.y) >= 1024*FU * 4
-	and P_RandomChance(FU*3/4)
+	and farchance
 	and (p ~= displayplayer)
 		sound = farsound
 	end
@@ -201,10 +202,7 @@ local function playknockoutsfx(p,me,soap)
 	S_StartSound(me,sound)
 end
 local function doknockback(p,me,soap)
-	me.state = S_PLAY_DEAD
-	me.frame = A|($ &~FF_FRAMEMASK)
-	me.sprite2 = SPR2_MSC2
-	me.tics = -1
+	me.state = S_PLAY_SOAP_KNOCKOUTDOLL
 end
 local function handle_knockback(p,me,soap)
 	P_Thrust(me, me.soap_damagevar.ang, me.soap_damagevar.speed)
@@ -217,10 +215,7 @@ local function handle_knockback(p,me,soap)
 		playknockoutsfx(p,me,soap)
 		
 		P_MovePlayer(p)
-		me.state = S_PLAY_DEAD
-		me.frame = A|($ &~FF_FRAMEMASK)
-		me.sprite2 = SPR2_MSC2
-		me.tics = -1
+		me.state = S_PLAY_SOAP_KNOCKOUTDOLL
 		
 		local s = P_SpawnMobjFromMobj(me,
 			0,0,FixedDiv(me.height,me.scale) / 2, MT_SOAP_WALLBUMP
@@ -1726,10 +1721,7 @@ Takis_Hook.addHook("Takis_Thinker",function(p)
 			S_StartSound(me,sfx_sp_dm0)
 			soap.hud.painsurge = 6
 			
-			me.state = S_PLAY_DEAD
-			me.frame = A|($ &~FF_FRAMEMASK)
-			me.sprite2 = SPR2_MSC2
-			me.tics = -1
+			me.state = S_PLAY_SOAP_KNOCKOUTDOLL
 		end
 	else
 		soap.paintime = 0
@@ -1943,7 +1935,7 @@ Takis_Hook.addHook("MoveBlocked",function(me,thing,line, goingup)
 	if me.soap_tumble then return end
 	
 	if not (me.health)
-	or (me.sprite2 == SPR2_MSC2)
+	or (me.state == S_PLAY_SOAP_KNOCKOUTDOLL)
 	and not (p.spectator or p.playerstate == PST_REBORN)
 		Soap_Bump(me,thing,line)
 		return

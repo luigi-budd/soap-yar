@@ -194,7 +194,7 @@ tauntinfo.think = function(p, me, soap, taunt)
 						
 						-- lolllll
 						if (gametype == GT_ZE2 or (ZE2 and ZE2.isGametype()))
-						and (p2.xSlinger and p2.xSlinger.team == 2)
+						and (found.team ~= me.team)
 							P_DamageMobj(found, me,me, 100)
 						end
 					else --lol
