@@ -434,6 +434,8 @@ local function SetCompat()
 	
 	if MHN and not compat.manhunt
 		SOAP_COMPGTOVERRIDE[GT_MANHUNT] = false
+		local last_airdrag = TAKIS_AIRDRAGCAP
+		local last_airfrac = TAKIS_AIRDRAGFRAC
 		
 		Takis_Hook.addHook("Char_NoAbility", function(p, na)
 			if gametype ~= GT_MANHUNT then return na; end
@@ -480,9 +482,6 @@ local function SetCompat()
 			end
 		end)
 		
-local last_airdrag = TAKIS_AIRDRAGCAP
-local last_airfrac = TAKIS_AIRDRAGFRAC
-
 		compat.manhunt = true
 		printf("Added Manhunt stuff.")
 	end

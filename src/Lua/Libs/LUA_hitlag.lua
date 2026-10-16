@@ -520,7 +520,7 @@ hl.stunEnemy = function(mo,tics, allowhitlag)
 				if stunned_hook.typefor ~= nil
 					if stunned_hook.typefor(mo, events[i].typedef) == false then continue end
 				end
-				local res = Takis_Hook.tryRunHook("Char_StunnedThink", events[i], mo,tics)
+				local res = Takis_Hook.tryRunHook("Char_OnStunEnemy", events[i], mo,tics)
 				if res then return end
 				if not (mo and mo.valid) then return end
 			end

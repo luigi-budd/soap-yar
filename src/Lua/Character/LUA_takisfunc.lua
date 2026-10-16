@@ -750,7 +750,7 @@ rawset(_G,"Takis_HammerBlastHitbox",function(p)
 			found.alreadykilledthis = true
 			
 			-- probably a cactus in acz
-			if found.flags & MF_SCENERY
+			if (found.flags & MF_SCENERY or found.deathstate == S_NULL)
 			and not (found.type == MT_SPIKE or found.type == MT_WALLSPIKE)
 				local speed = 15*found.scale
 				local range = 15*FU

@@ -53,6 +53,74 @@ Takis_Hook.addHook("Char_OnStunEnemy",function(mo)
 	return true
 end, MT_BUGGLE)
 
+-- fix arid canyon turtles
+-- P_SnapperLegPlace
+Takis_Hook.addHook("Char_StunnedThink", function(mo)
+	local seg = mo.tracer
+	local a = mo.angle
+	local c = cos(a)
+	local s = sin(a)
+	local woffset = mo.extravalue1
+	local side = mo.extravalue2
+	
+	mo.reactiontime = mo.info.reactiontime
+	
+	-- head
+	local rad = mo.radius
+	local necklen = (32*(mo.info.reactiontime - mo.reactiontime)) / mo.info.reactiontime
+	P_MoveOrigin(seg,
+		mo.x + FixedMul(rad, c) + necklen*c,
+		mo.y + FixedMul(rad, s) + necklen*s,
+		mo.z + ((mo.eflags & MFE_VERTICALFLIP) and (((mo.height*2)/3) - seg.height) or (mo.height/3))
+	)
+	seg.angle = a
+	
+	-- legs
+	seg = seg.tracer
+	while (seg)
+		local o1 = seg.extravalue1
+		local o2 = seg.extravalue2
+		local alt = seg.cusval
+		
+		/*
+		if (alt)
+			o2 = $ + woffset
+		else
+			o2 = $ - woffset
+		end
+		*/
+		
+		--if (alt ~= side)
+			local x = c*o2 + s*o1
+			local y = s*o2 + c*o1
+			P_MoveOrigin(seg,
+				mo.x + x, mo.y + y,
+				mo.z + ((mo.eflags & MFE_VERTICALFLIP) and (mo.height - seg.height) or 0)
+			)
+		--end
+		
+		seg.angle = R_PointToAngle2(mo.x,mo.y, seg.x,seg.y)
+		seg = seg.tracer
+	end
+end, MT_GSNAPPER)
+
+function A_KillSegments(mo, var1,var2)
+	local seg = mo.tracer
+	local fuse = (var1) and var1 or TR/2
+	while (seg)
+		local kseg = seg
+		seg = seg.tracer
+		
+		kseg.flags = $|MF_NOBLOCKMAP|MF_BOUNCE &~MF_NOGRAVITY
+		kseg.flags2 = 0
+		kseg.fuse = fuse
+		P_Thrust(kseg, R_PointToAngle2(mo.x,mo.y, kseg.x,kseg.y), 3*mo.scale)
+		kseg.momz = 3*mo.scale
+		Soap_Hitlag.addHitlag(kseg, 16, true)
+	end
+end
+mobjinfo[MT_GSNAPPER].endstunstate = S_GSNAPPER_STND
+
 SafeFreeslot("S_ROSY_DEAD")
 states[S_ROSY_DEAD] = {
 	sprite = SPR_PLAY,
@@ -113,7 +181,7 @@ local MOBJ_LIST = {
 			MT_METALSONIC_BATTLE,
 			MT_BLASTEXECUTOR,
 			--dont feel like making the legs NOT be dereferenced
-			MT_GSNAPPER,
+			-- MT_GSNAPPER,
 			MT_DRAGONMINE,
 			--just kills you
 			MT_BUGGLE,
