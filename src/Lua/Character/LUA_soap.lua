@@ -40,6 +40,7 @@ local P_IsObjectOnGround = P_IsObjectOnGround
 
 local Event_CharOnMove = Takis_Hook.events["Char_OnMove"]
 local Event_CharOnDamage = Takis_Hook.events["Char_OnDamage"]
+local Event_CharOnDeath = Takis_Hook.events["Char_OnDeath"]
 
 --max speed increase
 rawset(_G,"SOAP_MAXDASH", 21*FU)
@@ -4103,6 +4104,16 @@ addHook("MobjDeath", function(me,inf,sor,dmgt)
 	end
 	if P_InSpaceSector(me)
 		soap.deathtype = DMG_SPACEDROWN
+	end
+	
+	if (Event_CharOnDeath.numhooks)
+		local events = Event_CharOnDeath.events
+		for i = 1, Event_CharOnDeath.numhooks
+			local short = Takis_Hook.tryRunHook("Char_OnDeath", events[i], me,inf,sor,dmgt)
+			
+			-- does not short out the calling MobjDamage
+			if short == true then return; end
+		end
 	end
 	
 	if (sor and sor.valid)

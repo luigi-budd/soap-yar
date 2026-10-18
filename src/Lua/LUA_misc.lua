@@ -71,6 +71,9 @@ addHook("MobjThinker",function(bump)
 	if (bump.movefactor ~= FU)
 		bump.momx = FixedMul($, bump.movefactor)
 		bump.momy = FixedMul($, bump.movefactor)
+		if bump.movefactoraffectsz
+			bump.momz = FixedMul($, bump.movefactor)
+		end
 	end
 	if (bump.alphafadein ~= nil) and bump.alpha < FU and not nofadein
 		bump.alpha = clamp(0, $ + bump.alphafadein, FU)
@@ -83,6 +86,24 @@ addHook("MobjThinker",function(bump)
 	end
 	if (bump.anglechange)
 		bump.angle = $ + bump.anglechange
+	end
+	if (bump.fusescale ~= nil)
+		local s = bump.fusescale
+		if bump.fuse < s.fuseunder
+			local frac = FU/s.fuseunder
+			local scalefrac = ease[s.func](FU - (frac*bump.fuse), s.startscale, s.destscale)
+			P_SetScale(bump, scalefrac, false)
+		end
+	end
+	if (bump.followthis and bump.followthis.valid)
+		local me = bump.followthis
+		P_MoveOrigin(bump, me.x,me.y,me.z)
+		if (P_MobjFlip(me) == -1)
+			bump.z = me.z + me.height - bump.height
+			bump.eflags = $|MFE_VERTICALFLIP
+		else
+			bump.eflags = $ &~MFE_VERTICALFLIP
+		end
 	end
 	
 	-- lol
@@ -511,7 +532,7 @@ local function FreezeInHitlag(mo)
 	
 	if not (mo.nofxadjust)
 		P_MoveOrigin(mo, me.x,me.y,me.z)
-		if (soap.gravflip == -1)
+		if (P_MobjFlip(me) == -1)
 			mo.z = me.z + me.height - mo.height
 			mo.eflags = $|MFE_VERTICALFLIP
 		else

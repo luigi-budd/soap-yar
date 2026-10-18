@@ -36,7 +36,7 @@ states[S_ZTHEFINGER_DEATH] = {SPR_NULL, A, 1, nil, 0, 0, S_NULL}
 
 -- missile definition
 local xsmissile_finger = xSlinger.registerMissile("THEFINGER", {
-	speed = 300*FU,
+	speed = 1000*FU,
 	displayname = "The Finger",
 	state = S_ZTHEFINGER,
 	deathstate = S_ZTHEFINGER_DEATH,
@@ -76,7 +76,7 @@ xSlinger.registerItem("the_finger", {
 	reload_time = TR / 2,
 	droppable = true;
 
-	velocity_precision = 5;
+	velocity_precision = 8;
 
 	--knockback = 220*FRACUNIT; -- fixed_t
 	--knockback_time = 7;
@@ -133,4 +133,3 @@ xSlinger.registerItem("the_finger", {
 		Soap_ImpactVFX(mo, inf, nil, FU/7 + power/2)
 	end;
 })
-ZE2.Shop.listItem("molotov", 320)

@@ -89,7 +89,7 @@ hl.iterateHitlagged = function()
 				local p = mo.player
 				p.pflags = $|v[4]|PF_FULLSTASIS|PF_JUMPSTASIS
 				p.powers[pw_nocontrol] = 1
-				if mo.damageinhitlag ~= true
+				if not mo.damageinhitlag
 					p.powers[pw_flashing] = max($,flashingtics)
 				end
 				
@@ -463,6 +463,7 @@ hl.addHitlag = function(
 		mo.soap_stunned = 0
 	end
 	
+	mo.damageinhitlag = nil
 	if (mo.player and mo.player.valid)
 		if not allowdamage
 			mo.player.powers[pw_flashing] = max($,flashingtics)
@@ -561,14 +562,12 @@ addHook("PostThinkFrame",hl.iterateHitlaggedPostThink)
 
 addHook("ShouldDamage",function(me,_,_,_,dmg)
 	if me.hitlag
-		if me.damageinhitlag ~= true
-		and not (dmg & DMG_DEATHMASK)
-			return false
-		/*
-		else
-			me.hitlag = 0
-			return true
-		*/
+		if not me.damageinhitlag
+			if not (dmg & DMG_DEATHMASK)
+				return false
+			else
+				me.hitlag = 0
+			end
 		end
 	end
 end,MT_PLAYER)

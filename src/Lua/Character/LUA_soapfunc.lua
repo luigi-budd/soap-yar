@@ -3452,7 +3452,7 @@ rawset(_G,"Soap_VFX",function(p,me,soap, props)
 	if (Event_Char_VFX.numhooks)
 		local events = Event_Char_VFX.events
 		for i = 1, Event_Char_VFX.numhooks
-			local new_noabil = Takis_Hook.tryRunHook("Char_VFX", events[i], p, props)
+			local fxtable = Takis_Hook.tryRunHook("Char_VFX", events[i], p, props)
 			if fxtable == nil then continue end
 			
 			-- this looks bad but this should be

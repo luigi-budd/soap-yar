@@ -81,6 +81,7 @@ events["Char_OnMove"] = {typefor = typefor_skin}
 events["Char_NoAbility"] = {handler = handler_snapany, typefor = typefor_skin}
 events["Char_VFX"] = {handler = handler_snapany, typefor = typefor_skin}
 events["Char_OnDamage"] = {handler = handler_snaptrue, typefor = typefor_skin}
+events["Char_OnDeath"] = {handler = handler_snaptrue, typefor = typefor_skin}
 events["Char_OnStunEnemy"] = {typefor = typefor_mobj}
 events["Char_StunnedThink"] = {typefor = typefor_mobj}
 

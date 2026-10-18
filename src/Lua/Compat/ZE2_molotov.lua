@@ -53,6 +53,7 @@ states[S_MOLOTOV] = {
 	action = function(mo)
 		if not mo.isMissile then return end
 		
+		mo.shadowscale = FU
 		mo.spritexscale = FU * 3/2
 		mo.spriteyscale = mo.spritexscale
 		

@@ -199,6 +199,12 @@ addHook("PostThinkFrame",function()
 		soap.last.anim.frame = me.frame
 		soap.last.anim.angle = p.drawangle
 		
+		soap.last.cmd.forwardmove = p.cmd.forwardmove
+		soap.last.cmd.sidemove = p.cmd.sidemove
+		soap.last.cmd.angleturn = p.cmd.angleturn
+		soap.last.cmd.aiming = p.cmd.aiming
+		soap.last.cmd.buttons = p.cmd.buttons
+		
 		/*
 		if (me.skin == SOAP_SKIN or me.skin == TAKIS_SKIN)
 		and (soap.taunt.active)
