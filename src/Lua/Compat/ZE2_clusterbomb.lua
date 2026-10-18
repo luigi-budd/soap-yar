@@ -154,12 +154,13 @@ local function exploderadius(mo, exradius)
 					w.momz = $ + foundmobj.momz
 					w.drawonlyforplayer = play
 				end
+				
+				foundmobj:give_effect("energy_drink", {
+					normalspeed_multiplier = 10*FRACUNIT/7,
+					damage_multiplier = 2*FRACUNIT,
+					knockback_multiplier = 5*FRACUNIT,
+				}, TR*3/2, true)
 			end
-			foundmobj:give_effect("energy_drink", {
-				normalspeed_multiplier = 10*FRACUNIT/7,
-				damage_multiplier = 2*FRACUNIT,
-				knockback_multiplier = 5*FRACUNIT,
-			}, 2*TICRATE, true)
 		else -- enemy
 			P_DamageMobj(foundmobj, mo, mo.target, mo.forcedamage)
 		end
@@ -283,7 +284,7 @@ end
 local WARN_TICS_FIRST = 6
 local WARN_TICS = 3
 local xsmissile_cluster = xSlinger.registerMissile("CLUSTERBOMB", {
-	speed = 35*FU,
+	speed = 55*FU,
 	displayname = "Clusterbomb",
 	state = S_CLUSTERBOMB,
 	deathsound = sfx_none,
@@ -454,7 +455,7 @@ xSlinger.registerItem("clusterbomb", {
 	shakewait = 0;
 	shakeforce = FU;
 	shakeanim = 0;
-	firelockout = false;
+	charging = false;
 	
 	sounds = {};
 	holdfunc = function(self, me)
@@ -464,8 +465,12 @@ xSlinger.registerItem("clusterbomb", {
 		local hand = xS:hand()
 		local skin = me.skin
 		
-		if soap.fire
-		and not hand:get("firerate_left",skin) and not hand:get("firelockout", skin)
+		if soap.fire == 1
+		and not hand:get("firerate_left",skin)
+			hand:set("charging", true, skin)
+		end
+		
+		if hand:get("charging") and soap.fire
 			local prevcharge = hand:get("chargetime", skin)
 			if prevcharge < CHARGE_TIME
 				hand:change("chargetime", 1, skin)
@@ -589,7 +594,7 @@ xSlinger.registerItem("clusterbomb", {
 			else
 				xS.viewmobj.colorized = false
 			end
-		elseif soap.fire_R and not hand:get("firerate_left",skin)
+		elseif hand:get("charging") and not soap.fire
 			local missile_info = {
 				source = me;
 				type = hand.missile;
@@ -636,12 +641,8 @@ xSlinger.registerItem("clusterbomb", {
 			hand:set("firerate_left", hand:get("firerate",skin), skin)
 			hand:set("shakeforce", FU, skin)
 			hand:set("shakeanim", 0, skin)
-			hand:set("firelockout", true, skin)
+			hand:set("charging", false, skin)
 			soap.fire_R = 0
-		end
-		
-		if not soap.fire
-			hand:set("firelockout", false, skin)
 		end
 	end;
 	usefunc = function(self, me)
@@ -651,3 +652,47 @@ xSlinger.registerItem("clusterbomb", {
 	end;
 })
 ZE2.Shop.listItem("clusterbomb", 125)
+
+addHook("HUD",function(v,p,cam)
+	local inze2 = (gametype == GT_ZE2 or (ZE2 and ZE2.isGametype()))
+	if not inze2 then return end
+	-- if cam.chase then return end
+	if not p["xSlinger[]"] then
+		return
+	end
+	
+	local xS = p.xSlinger
+	if not xS:inv_get() then
+		return
+	end
+	
+	local me = p.realmo
+	if not (me and me.valid) then return end
+	local skin = me.skin
+	local hand = xS:hand()
+	local selection = xS.slot
+	local iteminfo = xS:slot_get(selection)
+	if not iteminfo then return end
+	if iteminfo.id ~= "clusterbomb" then return end
+	if not hand:get("charging",skin) then return end
+
+	local x,y = 160*FU, 100*FU
+	local rad = 10*FU
+	local maxsegs = 40
+	local timetic = FixedDiv(hand:get("chargetime",skin)*FU, CHARGE_TIME*FU)
+	
+	local angtotal = 360 * timetic
+	local cmap = v.getColormap(TC_DEFAULT, SKINCOLOR_MASTER)
+	local patch = v.cachePatch("TA_LIVESFILL_FILL")
+	for i = 0,maxsegs
+		if timetic == 0 then break end
+		
+		local angmath = FixedMul(FixedDiv(angtotal, maxsegs*FU), i*FU) - 90*FU
+		local angle = FixedAngle(angmath)
+		v.drawScaled(
+			x + FixedMul(rad, cos(angle)),
+			y + FixedMul(rad, sin(angle)),
+			FU/8, patch, V_ADD, cmap
+		)
+	end
+end,"game")
