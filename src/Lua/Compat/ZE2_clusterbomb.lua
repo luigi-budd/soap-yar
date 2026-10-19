@@ -116,6 +116,8 @@ local function exploderadius(mo, exradius)
 		if not (foundmobj.flags & MF_SHOOTABLE) then return end
 		local dist = R_PointTo3DDist(mo.x, mo.y, mo.z, foundmobj.x, foundmobj.y, foundmobj.z)
 		if (dist > exradius + foundmobj.radius) then return end
+		-- bro!
+		if (foundmobj.player and foundmobj.player.spectator) then return end
 		
 		-- teammate
 		if foundmobj.team == mo.team and not FriendlyFire()

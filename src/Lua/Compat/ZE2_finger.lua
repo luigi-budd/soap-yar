@@ -133,4 +133,4 @@ xSlinger.registerItem("the_finger", {
 		Soap_ImpactVFX(mo, inf, nil, FU/7 + power/2)
 	end;
 })
-ZE2.Shop.listItem("the_finger", 9999)
+--ZE2.Shop.listItem("the_finger", 9999)
