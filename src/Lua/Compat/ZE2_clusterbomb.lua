@@ -165,7 +165,7 @@ local function exploderadius(mo, exradius)
 			P_DamageMobj(foundmobj, mo, mo.target, mo.forcedamage)
 			foundmobj:give_effect("volt_electric", {
 				normalspeed_multiplier = FU*3/5,
-				knockback_multiplier = 3*FU,
+				knockback_multiplier = FU*3/2,
 				actionspd_multiplier = FU/2,
 				damage_multiplier = 2*FU,
 			}, TR*3/2, true)
@@ -622,8 +622,8 @@ xSlinger.registerItem("clusterbomb", {
 				missile.explosions = 1
 				missile.realdamage = 42
 				missile.damageinc = missile.realdamage / 2
-				missile.explosionradius = 180*FU
-				missile.radiusinc = 45*FU
+				missile.explosionradius = 190*FU
+				missile.radiusinc = 48*FU
 				missile.shadowscale = FU
 				missile.blinking = 0
 				missile.sizeblink = 0

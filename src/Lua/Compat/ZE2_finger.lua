@@ -71,7 +71,7 @@ xSlinger.registerItem("the_finger", {
 	color = SKINCOLOR_WHITE;
 	missile = "THEFINGER";
 	firerate = (TR/5) + 2;
-	damage = 52;
+	damage = 262;
 	ammo = 3;
 	reload_time = TR / 2,
 	droppable = true;
@@ -133,3 +133,4 @@ xSlinger.registerItem("the_finger", {
 		Soap_ImpactVFX(mo, inf, nil, FU/7 + power/2)
 	end;
 })
+ZE2.Shop.listItem("the_finger", 9999)
