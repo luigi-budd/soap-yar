@@ -156,10 +156,10 @@ local function exploderadius(mo, exradius)
 				end
 				
 				foundmobj:give_effect("energy_drink", {
-					normalspeed_multiplier = 10*FRACUNIT/7,
+					normalspeed_multiplier = 8*FRACUNIT/7,
 					damage_multiplier = 2*FRACUNIT,
 					knockback_multiplier = 5*FRACUNIT,
-				}, TR*3/2, true)
+				}, 2*TR + 10, true)
 			end
 		else -- enemy
 			P_DamageMobj(foundmobj, mo, mo.target, mo.forcedamage)
