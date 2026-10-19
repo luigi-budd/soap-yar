@@ -163,6 +163,15 @@ local function exploderadius(mo, exradius)
 			end
 		else -- enemy
 			P_DamageMobj(foundmobj, mo, mo.target, mo.forcedamage)
+			foundmobj:give_effect("volt_electric", {
+				normalspeed_multiplier = FU*3/5,
+				knockback_multiplier = 3*FU,
+				actionspd_multiplier = FU/2,
+				damage_multiplier = 2*FU,
+			}, TR*3/2, true)
+			if foundmobj.player and foundmobj.player.valid
+				S_StartSound(nil, sfx_sp_de1, foundmobj.player)
+			end
 		end
 	end, mo,
 		mo.x - exradius, mo.x + exradius,
@@ -444,8 +453,8 @@ xSlinger.registerItem("clusterbomb", {
 	count = 4;
 	maxcount = 12;
 
-	knockback = 30*FRACUNIT;
-	knockback_time = 7;
+	knockback = 60*FRACUNIT;
+	knockback_time = 12;
 
 	autouse = false;
 	semiautouse = true;
@@ -613,8 +622,8 @@ xSlinger.registerItem("clusterbomb", {
 				missile.explosions = 1
 				missile.realdamage = 42
 				missile.damageinc = missile.realdamage / 2
-				missile.explosionradius = 160*FU
-				missile.radiusinc = 35*FU
+				missile.explosionradius = 180*FU
+				missile.radiusinc = 45*FU
 				missile.shadowscale = FU
 				missile.blinking = 0
 				missile.sizeblink = 0
