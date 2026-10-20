@@ -405,6 +405,7 @@ local function SetCompat()
 		
 		xSlinger.registered_items["splash_ring"].skin_override = {
 			[SOAP_SKIN] = {
+				maxammo = 7,
 				ammo = 7,
 				reload_time = TR * 38/10,
 			}
@@ -415,6 +416,10 @@ local function SetCompat()
 		dofile("Compat/ZE2_clusterbomb.lua")
 		table.insert(ZE2.RandomItemPool, "molotov")
 		table.insert(ZE2.RandomItemPool, "clusterbomb")
+		
+		mobjinfo[MT_TNTBARREL].forcedamage = 500
+		mobjinfo[MT_TNTBARREL].relativeknockback = true
+		mobjinfo[MT_TNTBARREL].forceknockback = 120*FRACUNIT
 		
 		compat.ze2config = true
 		printnotice("Added ZE2 stuff.")
