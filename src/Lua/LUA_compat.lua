@@ -411,6 +411,17 @@ local function SetCompat()
 			}
 		}
 		
+		xSlinger.registered_items["bounce_ring"].skin_override = {
+			[TAKIS_SKIN] = {
+				knockback = 12*FU;
+				knockback_time = TR;
+				damage = 10;
+				ammo = 26;
+				maxammo = 26;
+				firerate = 6;
+				fuse = 3*TR;
+			}
+		}
 		dofile("Compat/ZE2_molotov.lua")
 		dofile("Compat/ZE2_finger.lua")
 		dofile("Compat/ZE2_clusterbomb.lua")
