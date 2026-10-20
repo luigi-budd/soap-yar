@@ -161,16 +161,16 @@ local function exploderadius(mo, exradius)
 					normalspeed_multiplier = 8*FRACUNIT/7,
 					damage_multiplier = 2*FRACUNIT,
 					knockback_multiplier = 5*FRACUNIT,
-				}, 2*TR + 10, true)
+				}, 2*TR + 14, true)
 			end
 		else -- enemy
 			P_DamageMobj(foundmobj, mo, mo.target, mo.forcedamage)
 			foundmobj:give_effect("volt_electric", {
-				normalspeed_multiplier = FU*3/5,
-				knockback_multiplier = FU*3/2,
+				normalspeed_multiplier = FU*2/5,
+				knockback_multiplier = FU*18/10,
 				actionspd_multiplier = FU/2,
 				damage_multiplier = 2*FU,
-			}, TR*3/2, true)
+			}, 2*TR, true)
 			if foundmobj.player and foundmobj.player.valid
 				S_StartSound(nil, sfx_sp_de1, foundmobj.player)
 			end
@@ -624,8 +624,8 @@ xSlinger.registerItem("clusterbomb", {
 				missile.explosions = 1
 				missile.realdamage = 42
 				missile.damageinc = missile.realdamage / 2
-				missile.explosionradius = 190*FU
-				missile.radiusinc = 48*FU
+				missile.explosionradius = 205*FU
+				missile.radiusinc = 52*FU
 				missile.shadowscale = FU
 				missile.blinking = 0
 				missile.sizeblink = 0
@@ -686,15 +686,18 @@ addHook("HUD",function(v,p,cam)
 	if not iteminfo then return end
 	if iteminfo.id ~= "clusterbomb" then return end
 	if not hand:get("charging",skin) then return end
-
-	local x,y = 160*FU, 100*FU
-	local rad = 10*FU
-	local maxsegs = 40
-	local timetic = FixedDiv(hand:get("chargetime",skin)*FU, CHARGE_TIME*FU)
 	
-	local angtotal = 360 * timetic
+	-- first layer
+	local x,y = 160*FU, 100*FU
+	local rad = 5*FU
+	local maxsegs = 50
+	local realtimetic = FixedDiv(hand:get("chargetime",skin)*FU, (CHARGE_TIME/2)*FU)
+	local timetic = clamp(0, realtimetic, FU)
+	
 	local cmap = v.getColormap(TC_DEFAULT, SKINCOLOR_MASTER)
 	local patch = v.cachePatch("TA_LIVESFILL_FILL")
+	
+	local angtotal = 360 * timetic
 	for i = 0,maxsegs
 		if timetic == 0 then break end
 		
@@ -703,7 +706,24 @@ addHook("HUD",function(v,p,cam)
 		v.drawScaled(
 			x + FixedMul(rad, cos(angle)),
 			y + FixedMul(rad, sin(angle)),
-			FU/8, patch, V_ADD, cmap
+			FU/12, patch, V_ADD, cmap
+		)
+	end
+	
+	-- second layer
+	rad = $ + FU*3/2
+	timetic = clamp(0, realtimetic - FU, FU)
+	cmap = v.getColormap(TC_DEFAULT, SKINCOLOR_JADE)
+	local angtotal = 360 * timetic
+	for i = 0,maxsegs
+		if timetic == 0 then break end
+		
+		local angmath = FixedMul(FixedDiv(angtotal, maxsegs*FU), i*FU) - 90*FU
+		local angle = FixedAngle(angmath)
+		v.drawScaled(
+			x + FixedMul(rad, cos(angle)),
+			y + FixedMul(rad, sin(angle)),
+			FU/15, patch, V_ADD, cmap
 		)
 	end
 end,"game")
