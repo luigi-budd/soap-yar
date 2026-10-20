@@ -286,14 +286,14 @@ local function Helper_FireSearch(m, found)
 	if (dist > fire_radius + found.radius) then return end
 	if not ZE2.ZCollide(m, found) then return end
 	
-	local foundeffect = found:search_effect("burning")
+	local foundeffect = xSlinger.search_effect(found, "burning")
 	if #foundeffect then return end
 	
 	if found.player
 		S_StartSound(found, sfx_zm_fs, found.player)
 	end
 	-- Soap_ImpactVFX(found, m, FU*3/2, FU / 2, false, false, DMG_FIRE)
-	found:give_effect("burning", burning_info, fire_time, false)
+	xSlinger.give_effect(found, "burning", burning_info, fire_time, false)
 	found.flameringtarget = m.target -- seems like a hacky fix but alright!
 end
 

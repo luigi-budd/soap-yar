@@ -157,7 +157,7 @@ local function exploderadius(mo, exradius)
 					w.drawonlyforplayer = play
 				end
 				
-				foundmobj:give_effect("energy_drink", {
+				xSlinger.give_effect(foundmobj, "energy_drink", {
 					normalspeed_multiplier = 8*FRACUNIT/7,
 					damage_multiplier = 2*FRACUNIT,
 					knockback_multiplier = 5*FRACUNIT,
@@ -165,7 +165,7 @@ local function exploderadius(mo, exradius)
 			end
 		else -- enemy
 			P_DamageMobj(foundmobj, mo, mo.target, mo.forcedamage)
-			foundmobj:give_effect("volt_electric", {
+			xSlinger.give_effect(foundmobj, "volt_electric", {
 				normalspeed_multiplier = FU*2/5,
 				knockback_multiplier = FU*18/10,
 				actionspd_multiplier = FU/2,
