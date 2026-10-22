@@ -432,6 +432,23 @@ local function SetCompat()
 		mobjinfo[MT_TNTBARREL].relativeknockback = true
 		mobjinfo[MT_TNTBARREL].forceknockback = 120*FRACUNIT
 		
+		rawset(_G, "SoapZ_Effect", {})
+		if xSlinger.give_effect
+			SoapZ_Effect.Give = function(mo, id, info, tics, additive)
+				return xSlinger.give_effect(mo, id, info, tics, additive)
+			end
+			SoapZ_Effect.Find = function(mo, id)
+				return xSlinger.search_effect(mo, id)
+			end
+		else
+			SoapZ_Effect.Give = function(mo, id, info, tics, additive)
+				return mo:give_effect(mo, id, info, tics, additive)
+			end
+			SoapZ_Effect.Find = function(mo, id)
+				return mo:search_effect(id)
+			end
+		end
+		
 		compat.ze2config = true
 		printnotice("Added ZE2 stuff.")
 	end

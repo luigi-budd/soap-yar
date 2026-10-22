@@ -157,7 +157,7 @@ local function exploderadius(mo, exradius)
 					w.drawonlyforplayer = play
 				end
 				
-				xSlinger.give_effect(foundmobj, "energy_drink", {
+				SoapZ_Effect.Give(foundmobj, "energy_drink", {
 					normalspeed_multiplier = 8*FRACUNIT/7,
 					damage_multiplier = 2*FRACUNIT,
 					knockback_multiplier = 5*FRACUNIT,
@@ -165,7 +165,7 @@ local function exploderadius(mo, exradius)
 			end
 		else -- enemy
 			P_DamageMobj(foundmobj, mo, mo.target, mo.forcedamage)
-			xSlinger.give_effect(foundmobj, "volt_electric", {
+			SoapZ_Effect.Give(foundmobj, "volt_electric", {
 				normalspeed_multiplier = FU*2/5,
 				knockback_multiplier = FU*18/10,
 				actionspd_multiplier = FU/2,
@@ -630,52 +630,56 @@ xSlinger.registerItem("clusterbomb", {
 				xS.viewmobj.colorized = false
 			end
 		elseif hand:get("charging") and not soap.fire
-			local missile_info = {
-				source = me;
-				type = hand.missile;
-				angle = me.angle;
-				aiming = p.aiming;
-				allow_aim = true;
-				iteminfo = hand;
-				flags2 = hand.flags2;
-			}
-			local missile = xSlinger.SpawnMissile(missile_info)
-			if (missile and missile.valid)
-				missile.chargetime = hand:get("chargetime", skin)
-				missile.airdrag = MISSILE_AIRDRAG
-				missile.gravmul = MISSILE_GRAVMUL
-				missile.fakefuse = WARN_TICS_FIRST
-				missile.timesexploded = 0
-				missile.explosions = 1
-				missile.realdamage = 42
-				missile.damageinc = missile.realdamage / 2
-				missile.explosionradius = 205*FU
-				missile.radiusinc = 52*FU
-				missile.shadowscale = FU
-				missile.blinking = 0
-				missile.sizeblink = 0
-				missile.lifetime = 0
-				if missile.chargetime >= CHARGE_TIME
-					missile.explosions = $ + 2
-				elseif missile.chargetime >= CHARGE_TIME/2
-					missile.explosions = $ + 1
+			local chargetime = hand:get("chargetime", skin)
+			if chargetime >= 3
+				local missile_info = {
+					source = me;
+					type = hand.missile;
+					angle = me.angle;
+					aiming = p.aiming;
+					allow_aim = true;
+					iteminfo = hand;
+					flags2 = hand.flags2;
+				}
+				local missile = xSlinger.SpawnMissile(missile_info)
+				if (missile and missile.valid)
+					missile.chargetime = chargetime
+					missile.airdrag = MISSILE_AIRDRAG
+					missile.gravmul = MISSILE_GRAVMUL
+					missile.fakefuse = WARN_TICS_FIRST
+					missile.timesexploded = 0
+					missile.explosions = 1
+					missile.realdamage = 42
+					missile.damageinc = missile.realdamage / 2
+					missile.explosionradius = 205*FU
+					missile.radiusinc = 52*FU
+					missile.shadowscale = FU
+					missile.blinking = 0
+					missile.sizeblink = 0
+					missile.lifetime = 0
+					if missile.chargetime >= CHARGE_TIME
+						missile.explosions = $ + 2
+					elseif missile.chargetime >= CHARGE_TIME/2
+						missile.explosions = $ + 1
+					end
+					S_StartSound(me,sfx_kc5b)
+					S_StartSound(me,sfx_s3k51)
+					
+					local count = hand:change("count", -1, skin)
+					if not count then
+						xS:hand_clear()
+					end
 				end
-				S_StartSound(me,sfx_kc5b)
-				S_StartSound(me,sfx_s3k51)
-				
-				local count = hand:change("count", -1, skin)
-				if not count then
-					xS:hand_clear()
-				end
+				xS.viewmobj_animation = hand:get("animation_time", skin)
+				xS.viewmobj.rollangle = 0
+				xS.viewmobj.spritexoffset = 0
+				xS.viewmobj.colorized = false
+				hand:set("firerate_left", hand:get("firerate",skin), skin)
 			end
-			xS.viewmobj_animation = hand:get("animation_time", skin)
-			xS.viewmobj.rollangle = 0
-			xS.viewmobj.spritexoffset = 0
-			xS.viewmobj.colorized = false
+			
 			hand:set("chargetime", 0, skin)
 			hand:set("chargeincwait", 0, skin)
 			hand:set("shakewait", 0, skin)
-			hand:set("firerate_left", hand:get("firerate",skin), skin)
 			hand:set("shakeforce", FU, skin)
 			hand:set("shakeanim", 0, skin)
 			hand:set("charging", false, skin)
@@ -730,6 +734,7 @@ addHook("HUD",function(v,p,cam)
 	end
 	*/
 	
+	-- TODO: make the circle fills baked with pixel composer
 	local rad = 5*FU
 	local maxsegs = 60
 	local realtimetic = FixedDiv(hand:get("chargetime",skin)*FU, (CHARGE_TIME/2)*FU)
