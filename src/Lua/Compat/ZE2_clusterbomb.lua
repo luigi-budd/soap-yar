@@ -294,8 +294,20 @@ end
 -- clustergal
 local WARN_TICS_FIRST = 6
 local WARN_TICS = 3
+local MISSILE_AIRDRAG = FU * 97/100
+local MISSILE_GRAVMUL = FU
+local function MISSILE_PhysThink(mo)
+	mo.momx = FixedMul($, mo.airdrag)
+	mo.momy = FixedMul($, mo.airdrag)
+	--print("MISSILE_PhysThink")
+	--print(mo.crosshair)
+	mo.momz = $ - (FixedMul(mo.scale, mo.gravmul) * P_MobjFlip(mo))
+	mo.momz = FixedMul($, mo.airdrag)
+	--print(mo.lifetime, mo.momx, mo.momy, mo.momz, "")
+	mo.lifetime = $ + 1
+end
 local xsmissile_cluster = xSlinger.registerMissile("CLUSTERBOMB", {
-	speed = 55*FU,
+	speed = 65*FU,
 	displayname = "Clusterbomb",
 	state = S_CLUSTERBOMB,
 	deathsound = sfx_none,
@@ -341,10 +353,7 @@ local xsmissile_cluster = xSlinger.registerMissile("CLUSTERBOMB", {
 		
 		local doblink = false
 		if not P_IsObjectOnGround(mo)
-			mo.momx = FixedMul($, mo.airdrag)
-			mo.momy = FixedMul($, mo.airdrag)
-			mo.momz = $ - (FixedMul(mo.scale, mo.gravmul) * P_MobjFlip(mo))
-			mo.momz = FixedMul($, mo.airdrag)
+			MISSILE_PhysThink(mo)
 		else
 			if mo.fakefuse
 				if not mo.setfuse
@@ -365,7 +374,7 @@ local xsmissile_cluster = xSlinger.registerMissile("CLUSTERBOMB", {
 				
 				P_StartQuake(20*FU, 8, {mo.x,mo.y,mo.z}, mo.explosionradius*3/2)
 				exploderadius(mo, mo.explosionradius)
-				P_Thrust(mo, mo.angle + FixedAngle(Soap_RandomFixedRange(-8*FU,8*FU)), 12*mo.scale)
+				P_Thrust(mo, mo.angle + FixedAngle(Soap_RandomFixedRange(-8*FU,8*FU)), 18*mo.scale)
 				P_SetObjectMomZ(mo, 8*FU)
 				
 				mo.realdamage = $ + mo.damageinc
@@ -397,7 +406,7 @@ local xsmissile_cluster = xSlinger.registerMissile("CLUSTERBOMB", {
 		mo.bouncering_prevmomz = mo.momz
 	end,
 	blocked = function(self, me, mo, line)
-		if not line then return end
+		if not line then return true; end
 		Soap_SpawnBumpSparks(mo, nil, line, false, FU / 2)
 		
 		local line_ang = R_PointToAngle2(
@@ -419,6 +428,7 @@ local xsmissile_cluster = xSlinger.registerMissile("CLUSTERBOMB", {
 		return true
 	end
 })
+--local xsmissile_cluster_guide = ZE2.registerCrosshairGuide(xsmissile_cluster.id)
 
 local CHARGE_TIME = 2*TR
 local CHARGE_MOVECHANGE = 7
@@ -452,11 +462,11 @@ xSlinger.registerItem("clusterbomb", {
 	firerate = 4*TR;
 	damage = 0;
 	droppable = true;
-	count = 4;
+	count = 6;
 	maxcount = 12;
 
 	knockback = 60*FRACUNIT;
-	knockback_time = 12;
+	knockback_time = TR;
 
 	autouse = false;
 	semiautouse = true;
@@ -475,6 +485,20 @@ xSlinger.registerItem("clusterbomb", {
 		local xS = p.xSlinger
 		local hand = xS:hand()
 		local skin = me.skin
+		
+		/*
+		ZE2.drawCrosshairGuide(me, xsmissile_cluster_guide.id, FU/8, 
+			function(pmo, missile) -- thinker
+				MISSILE_PhysThink(missile)
+			end,
+			function(pmo, missile) -- init
+				missile.airdrag = MISSILE_AIRDRAG
+				missile.gravmul = MISSILE_GRAVMUL
+				missile.crosshair = true
+				missile.lifetime = 0
+			end
+		)
+		*/
 		
 		if soap.fire == 1
 		and not hand:get("firerate_left",skin)
@@ -610,6 +634,7 @@ xSlinger.registerItem("clusterbomb", {
 				source = me;
 				type = hand.missile;
 				angle = me.angle;
+				aiming = p.aiming;
 				allow_aim = true;
 				iteminfo = hand;
 				flags2 = hand.flags2;
@@ -617,8 +642,8 @@ xSlinger.registerItem("clusterbomb", {
 			local missile = xSlinger.SpawnMissile(missile_info)
 			if (missile and missile.valid)
 				missile.chargetime = hand:get("chargetime", skin)
-				missile.airdrag = FU * 97/100
-				missile.gravmul = FU
+				missile.airdrag = MISSILE_AIRDRAG
+				missile.gravmul = MISSILE_GRAVMUL
 				missile.fakefuse = WARN_TICS_FIRST
 				missile.timesexploded = 0
 				missile.explosions = 1
@@ -629,6 +654,7 @@ xSlinger.registerItem("clusterbomb", {
 				missile.shadowscale = FU
 				missile.blinking = 0
 				missile.sizeblink = 0
+				missile.lifetime = 0
 				if missile.chargetime >= CHARGE_TIME
 					missile.explosions = $ + 2
 				elseif missile.chargetime >= CHARGE_TIME/2
@@ -662,9 +688,13 @@ xSlinger.registerItem("clusterbomb", {
 		return true
 	end;
 })
-ZE2.Shop.listItem("clusterbomb", 125)
+ZE2.Shop.listItem("clusterbomb", 98)
 
+local blinktime = 0
+local oldtimetic = 0
 addHook("HUD",function(v,p,cam)
+	if blinktime then blinktime = $ - 1; end
+	
 	local inze2 = (gametype == GT_ZE2 or (ZE2 and ZE2.isGametype()))
 	if not inze2 then return end
 	-- if cam.chase then return end
@@ -683,19 +713,40 @@ addHook("HUD",function(v,p,cam)
 	local hand = xS:hand()
 	local selection = xS.slot
 	local iteminfo = xS:slot_get(selection)
-	if not iteminfo then return end
-	if iteminfo.id ~= "clusterbomb" then return end
-	if not hand:get("charging",skin) then return end
+	if not iteminfo then oldtimetic=0; return end
+	if iteminfo.id ~= "clusterbomb" then oldtimetic=0; return end
+	if not hand:get("charging",skin) then oldtimetic=0; return end
 	
 	-- first layer
 	local x,y = 160*FU, 100*FU
+	/*
+	if (me.crossguide and me.crossguide.valid)
+		local crs = me.crossguide
+		local r = K_GetScreenCoords(v,p,cam, {x = crs.x, y = crs.y, z = crs.z+32*FU}, {anglecliponly = true})
+		if r.onscreen
+			x = r.x
+			y = r.y
+		end
+	end
+	*/
+	
 	local rad = 5*FU
-	local maxsegs = 50
+	local maxsegs = 60
 	local realtimetic = FixedDiv(hand:get("chargetime",skin)*FU, (CHARGE_TIME/2)*FU)
+	if (realtimetic >= FU and oldtimetic < FU)
+	or (realtimetic >= 2*FU and oldtimetic < 2*FU)
+		blinktime = (realtimetic >= 2*FU) and 10 or 5
+	end
+	oldtimetic = realtimetic
 	local timetic = clamp(0, realtimetic, FU)
 	
 	local cmap = v.getColormap(TC_DEFAULT, SKINCOLOR_MASTER)
 	local patch = v.cachePatch("TA_LIVESFILL_FILL")
+	
+	if blinktime
+		local alpha = ((10 - blinktime)<<V_ALPHASHIFT)
+		v.drawScaled(x,y, FU*5/10, patch, V_ADD|alpha, v.getColormap(TC_DEFAULT, SKINCOLOR_WHITE, "AllWhite"))
+	end
 	
 	local angtotal = 360 * timetic
 	for i = 0,maxsegs
@@ -706,12 +757,12 @@ addHook("HUD",function(v,p,cam)
 		v.drawScaled(
 			x + FixedMul(rad, cos(angle)),
 			y + FixedMul(rad, sin(angle)),
-			FU/12, patch, V_ADD, cmap
+			FU/12, patch, V_ADD|(realtimetic > FU and V_70TRANS or 0), cmap
 		)
 	end
 	
 	-- second layer
-	rad = $ + FU*3/2
+	rad = $ + FU
 	timetic = clamp(0, realtimetic - FU, FU)
 	cmap = v.getColormap(TC_DEFAULT, SKINCOLOR_JADE)
 	local angtotal = 360 * timetic
@@ -723,7 +774,7 @@ addHook("HUD",function(v,p,cam)
 		v.drawScaled(
 			x + FixedMul(rad, cos(angle)),
 			y + FixedMul(rad, sin(angle)),
-			FU/15, patch, V_ADD, cmap
+			FU/18, patch, V_ADD|(timetic >= FU and V_60TRANS or V_10TRANS), cmap
 		)
 	end
 end,"game")

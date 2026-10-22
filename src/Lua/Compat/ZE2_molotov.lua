@@ -272,7 +272,7 @@ states[S_MOLOTOV_DEATH] = {SPR_NULL, A, 1, function(mo) -- Explode within a radi
 end, 0, 0, S_NULL}
 
 local burning_info = {
-	normalspeed_multiplier = FU/4,
+	normalspeed_multiplier = FU*3/10,
 	actionspd_multiplier = 3*FU/2,
 	damage_multiplier = FU/2,
 }
@@ -527,4 +527,4 @@ xSlinger.registerItem("molotov", {
 		S_StartSound(me,sfx_s3k51)
 	end;
 })
-ZE2.Shop.listItem("molotov", 320)
+ZE2.Shop.listItem("molotov", 625)
