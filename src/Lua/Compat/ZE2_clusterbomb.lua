@@ -696,6 +696,7 @@ ZE2.Shop.listItem("clusterbomb", 98)
 
 local blinktime = 0
 local oldtimetic = 0
+local HALF_CHARGE = CHARGE_TIME/2
 addHook("HUD",function(v,p,cam)
 	if blinktime then blinktime = $ - 1; end
 	
@@ -721,8 +722,8 @@ addHook("HUD",function(v,p,cam)
 	if iteminfo.id ~= "clusterbomb" then oldtimetic=0; return end
 	if not hand:get("charging",skin) then oldtimetic=0; return end
 	
-	-- first layer
 	local x,y = 160*FU, 100*FU
+	local scale = FU/2
 	/*
 	if (me.crossguide and me.crossguide.valid)
 		local crs = me.crossguide
@@ -734,52 +735,27 @@ addHook("HUD",function(v,p,cam)
 	end
 	*/
 	
-	-- TODO: make the circle fills baked with pixel composer
-	local rad = 5*FU
-	local maxsegs = 60
-	local realtimetic = FixedDiv(hand:get("chargetime",skin)*FU, (CHARGE_TIME/2)*FU)
-	if (realtimetic >= FU and oldtimetic < FU)
-	or (realtimetic >= 2*FU and oldtimetic < 2*FU)
-		blinktime = (realtimetic >= 2*FU) and 10 or 5
+	local charge = hand:get("chargetime",skin)
+	if (charge >= HALF_CHARGE and oldtimetic < HALF_CHARGE)
+	or (charge >= CHARGE_TIME and oldtimetic < CHARGE_TIME)
+		blinktime = (charge >= CHARGE_TIME) and 10 or 5
 	end
-	oldtimetic = realtimetic
-	local timetic = clamp(0, realtimetic, FU)
-	
-	local cmap = v.getColormap(TC_DEFAULT, SKINCOLOR_MASTER)
-	local patch = v.cachePatch("TA_LIVESFILL_FILL")
+	oldtimetic = charge
 	
 	if blinktime
 		local alpha = ((10 - blinktime)<<V_ALPHASHIFT)
-		v.drawScaled(x,y, FU*5/10, patch, V_ADD|alpha, v.getColormap(TC_DEFAULT, SKINCOLOR_WHITE, "AllWhite"))
+		v.drawScaled(x,y,scale, v.cachePatch("SZ_CBB"), V_ADD|alpha)
 	end
 	
-	local angtotal = 360 * timetic
-	for i = 0,maxsegs
-		if timetic == 0 then break end
-		
-		local angmath = FixedMul(FixedDiv(angtotal, maxsegs*FU), i*FU) - 90*FU
-		local angle = FixedAngle(angmath)
-		v.drawScaled(
-			x + FixedMul(rad, cos(angle)),
-			y + FixedMul(rad, sin(angle)),
-			FU/12, patch, V_ADD|(realtimetic > FU and V_70TRANS or 0), cmap
-		)
+	local firstcharge = min(charge, HALF_CHARGE)
+	local secondcharge = max(charge - HALF_CHARGE, 0)
+	
+	if charge ~= CHARGE_TIME
+		v.drawScaled(x,y,scale, v.cachePatch("SZ_CBFR_"..charge), V_REVERSESUBTRACT)
 	end
 	
-	-- second layer
-	rad = $ + FU
-	timetic = clamp(0, realtimetic - FU, FU)
-	cmap = v.getColormap(TC_DEFAULT, SKINCOLOR_JADE)
-	local angtotal = 360 * timetic
-	for i = 0,maxsegs
-		if timetic == 0 then break end
-		
-		local angmath = FixedMul(FixedDiv(angtotal, maxsegs*FU), i*FU) - 90*FU
-		local angle = FixedAngle(angmath)
-		v.drawScaled(
-			x + FixedMul(rad, cos(angle)),
-			y + FixedMul(rad, sin(angle)),
-			FU/18, patch, V_ADD|(timetic >= FU and V_60TRANS or V_10TRANS), cmap
-		)
+	v.drawScaled(x,y,scale, v.cachePatch("SZ_CBFI_"..firstcharge), V_ADD|(charge > firstcharge and V_50TRANS or 0))
+	if secondcharge > 0
+		v.drawScaled(x,y,scale, v.cachePatch("SZ_CBFO_"..secondcharge), V_ADD|(charge == CHARGE_TIME and V_60TRANS or V_20TRANS))
 	end
 end,"game")

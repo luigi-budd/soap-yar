@@ -536,6 +536,7 @@ CMDConstructor("editmobj", {prefix = SOAP_DEVPREFIX, func = function(p,...)
 	if not #args
 	or (#args < 4)
 		prn(p, "\x82"..SOAP_DEVPREFIX.."editmobj <node> <type> <value> <index1> [<index2> ...]\x80: Edits \"name\" in \"node's\" mobj.")
+		prn(p, '\x82\<node> accepts "@self" to refer to yourself.')
 		prn(p, "\x82\Availiable types:")
 		for prefix,_ in pairs(valid_types)
 			prn(p, "\t\x83"..prefix)
@@ -543,7 +544,12 @@ CMDConstructor("editmobj", {prefix = SOAP_DEVPREFIX, func = function(p,...)
 		return
 	end
 	
-	local p2 = GetPlayer(p,args[1])
+	local p2
+	if (p2 == "@self")
+		p2 = p
+	else
+		p2 = GetPlayer(p,args[1])
+	end
 	if not p2 then return end
 	table.remove(args, 1)
 	
@@ -657,6 +663,7 @@ CMDConstructor("editplayer", {prefix = SOAP_DEVPREFIX, func = function(p,...)
 	if not #args
 	or (#args < 4)
 		prn(p, "\x82"..SOAP_DEVPREFIX.."editplayer <node> <type> <value> <index1> [<index2> ...]\x80: Edits \"name\" in \"node's\" player struct.")
+		prn(p, '\x82\<node> accepts "@self" to refer to yourself.')
 		prn(p, "\x82\Availiable types:")
 		for prefix,_ in pairs(valid_types)
 			prn(p, "\t\x83"..prefix)
@@ -664,7 +671,12 @@ CMDConstructor("editplayer", {prefix = SOAP_DEVPREFIX, func = function(p,...)
 		return
 	end
 	
-	local p2 = GetPlayer(p,args[1])
+	local p2
+	if (p2 == "@self")
+		p2 = p
+	else
+		p2 = GetPlayer(p,args[1])
+	end
 	if not p2 then return end
 	table.remove(args, 1)
 	
@@ -811,6 +823,7 @@ CMDConstructor("editpowers", {prefix = SOAP_DEVPREFIX, func = function(p,...)
 	if not #args
 	or (#args < 4)
 		prn(p, "\x82"..SOAP_DEVPREFIX.."editpowers <node> <power> <type> <value>\x80: Edits \"power\" in \"node's\" player.powers array.")
+		prn(p, '\x82\<node> accepts "@self" to refer to yourself.')
 		prn(p, "\x82\Availiable types:")
 		for prefix,_ in pairs(valid_types)
 			prn(p, "\t\x83"..prefix)
@@ -818,7 +831,12 @@ CMDConstructor("editpowers", {prefix = SOAP_DEVPREFIX, func = function(p,...)
 		return
 	end
 	
-	local p2 = GetPlayer(p,args[1])
+	local p2
+	if (p2 == "@self")
+		p2 = p
+	else
+		p2 = GetPlayer(p,args[1])
+	end
 	if not p2 then return end
 	table.remove(args, 1)
 	
