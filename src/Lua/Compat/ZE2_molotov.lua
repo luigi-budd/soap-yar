@@ -527,4 +527,4 @@ xSlinger.registerItem("molotov", {
 		S_StartSound(me,sfx_s3k51)
 	end;
 })
-ZE2.Shop.listItem("molotov", 625)
+ZE2.Shop.listItem("molotov", 645)
