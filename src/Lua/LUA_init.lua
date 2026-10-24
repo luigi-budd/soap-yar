@@ -276,6 +276,13 @@ rawset(_G, "Soap_InitTable", function(p)
 				frame = A,
 				angle = p.drawangle,
 			},
+			cmd = {
+				forwardmove = 0,
+				sidemove = 0,
+				buttons = 0,
+				angleturn = 0,
+				aiming = 0,
+			},
 			
 			x = (p.realmo and p.realmo.valid) and p.realmo.x or 0,
 			y = (p.realmo and p.realmo.valid) and p.realmo.y or 0,

@@ -336,6 +336,7 @@ end
 
 SafeFreeslot("S_SOAP_HITM_ESW")
 SafeFreeslot("S_SOAP_HITM_ES")
+SafeFreeslot("S_SOAP_HITM_ESE")
 states[S_SOAP_HITM_ESW] = {
 	-- spark wait
 	sprite = SPR_NULL,
@@ -353,6 +354,19 @@ states[S_SOAP_HITM_ES] = {
 	var1 = (6 - 1),
 	var2 = 1,
 	tics = 6,
+	nextstate = S_SOAP_HITM_ESE
+}
+states[S_SOAP_HITM_ESE] = {
+	sprite = SPR_NULL,
+	frame = A,
+	action = function(mo)
+		if mo.repeats
+			mo.repeats = $ - 1
+			mo.state = S_SOAP_HITM_ES
+		else
+			mo.state = S_NULL
+		end
+	end,
 }
 
 SafeFreeslot("MT_SOAP_AMP")

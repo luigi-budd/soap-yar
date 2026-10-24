@@ -27,8 +27,11 @@ end
 local function dust_noviewmobj(dust)
 	dust.dontdrawforviewmobj = me
 end
+local armacolors = {
+	SKINCOLOR_KETCHUP, SKINCOLOR_PEPPER, SKINCOLOR_CRIMSON, SKINCOLOR_GARNET, SKINCOLOR_VOLCANIC
+}
 
-local function printf(...)
+local function printnotice(...)
 	
 	local texts = {...}
 	for k,v in ipairs(texts)
@@ -40,10 +43,6 @@ local function printf(...)
 	Tprtable("compat",compat)
 	*/
 end
-
-local last_airdrag = TAKIS_AIRDRAGCAP
-local last_airfrac = TAKIS_AIRDRAGFRAC
-local last_airstate = 1
 
 local function SetCompat()
 	if TakisKart_Karters
@@ -70,7 +69,7 @@ local function SetCompat()
 			}
 		end
 		compat.takiskart = true
-		printf("Added TakisKart stuff.")
+		printnotice("Added TakisKart stuff.")
 	end
 	
 	if (CBW_Battle and CBW_Battle.SkinVars)
@@ -236,7 +235,7 @@ local function SetCompat()
 		end)
 		
 		compat.battlemod = true
-		printf("Added BattleMod stuff.")
+		printnotice("Added BattleMod stuff.")
 	end
 	
 	if (PTSR
@@ -299,7 +298,7 @@ local function SetCompat()
 		addHook("MobjCollide",parry,MT_PLAYER)
 		
 		compat.ptsrhook = true
-		printf("Added PTSR stuff.")
+		printnotice("Added PTSR stuff.")
 	end
 	
 	if mrceCharacterPhysics
@@ -309,39 +308,153 @@ local function SetCompat()
 		)
 		
 		compat.mrce = true
-		printf("Added MRCE stuff.")
+		printnotice("Added MRCE stuff.")
 	end
 	
 	if ZE2 and (ZE2.AddSurvivor ~= nil)
 	and not compat.ze2config
 		ZE2.AddSurvivor(SOAP_SKIN, {
-            weight = 7,
+            weight = 9,
 			description = {
-				"Kick some zombie ass!",
-				"Hefty and reliable!",
+				"Hefty, but slow.",
+				"Slow down zombies with a strong \x82Splash Ring\x80!"
 			};
 			items = {
 				"red_ring",
 				"splash_ring",
 			};
+			health_penalty = 18;
 		})
 		ZE2.AddSurvivor(TAKIS_SKIN, {
             weight = 1,
 			description = {
-				"Ready to blast!",
-				"On the lighter side.",
+				"Super weak and risky, but can dish out a beating.",
+				"Equipped with a \x82Molotov\x80 that slows down zombies in an area.",
 			};
 			items = {
 				"bounce_ring",
 				"molotov"
 			};
+			health_penalty = 20;
 		})
 		
+		Takis_Hook.addHook("Char_VFX",function(p)
+			local me = p.mo
+			if not (me and me.valid) then return end
+			local inze2 = (gametype == GT_ZE2 or (ZE2 and ZE2.isGametype()))
+			if not inze2 then return end
+			local game = ZE2.Game
+			local settings = ZE2.getGametypeSettings()
+			
+			local shortcircuit = {}
+			
+			if settings.fall_damage
+			and p.ze2.fall_height ~= nil -- lol
+				-- no landing effect when fall damage is coming up
+				if ((me.soap_oldfalldist or 0) > ZE2.MIN_FALL_DISTANCE)
+					shortcircuit.landdust = true
+				end
+				me.soap_oldfalldist = (p.ze2.fall_height - me.z)
+			end
+			
+			if game.state == ZE2.GS_PREGAME
+				shortcircuit.landdust = true
+				shortcircuit.squish = true
+			end
+			
+			return shortcircuit
+		end)
+		Takis_Hook.addHook("Char_OnDeath",function(me, _,_, dmgt)
+			local inze2 = (gametype == GT_ZE2 or (ZE2 and ZE2.isGametype()))
+			if not inze2 then return end
+			if not (dmgt == 6) then return end -- fall damage
+			local p = me.player
+			local soap = p.soaptable
+			
+			local rad = FixedDiv(me.radius, me.scale)
+			local hei = FixedDiv(me.height, me.scale)
+			local extra = abs(FixedDiv(me.momz, 50*me.scale))
+			for i = 0, 22
+				local s = P_SpawnMobjFromMobj(me,
+					Soap_RandomFixedRange(-rad, rad),
+					Soap_RandomFixedRange(-rad, rad),
+					Soap_RandomFixedRange(0, hei) + 226*FU,
+					MT_PARTICLE
+				)
+				s.state = S_SOAP_IMPACT_LINE2
+				if (soap.in2D)
+					s.angle = 0
+				else
+					s.angle = me.angle - ANGLE_90
+				end
+				s.color = armacolors[P_RandomRange(1, #armacolors)]
+				s.rollangle = -ANGLE_90
+				s.renderflags = $|RF_ALWAYSONTOP
+				s.spriteyscale = $ * 13/10 + extra
+				s.flags = $|MF_NOCLIPTHING|MF_NOCLIP|MF_NOCLIPHEIGHT|MF_NOBLOCKMAP
+				s.takis_flingme = false
+				local offset = P_RandomRange(-4, 8)
+				s.tics = $ + offset
+				s.anim_duration = $ + offset
+			end
+			
+			me.state = S_PLAY_PAIN
+			Soap_Hitlag.addHitlag(me, 14, true)
+			for k,v in ipairs(soap.squash)
+				table.remove(soap.squash, k)
+			end
+		end)
+		
+		xSlinger.registered_items["splash_ring"].skin_override = {
+			[SOAP_SKIN] = {
+				maxammo = 7,
+				ammo = 7,
+				reload_time = TR * 38/10,
+				damage = 90,
+			}
+		}
+		
+		xSlinger.registered_items["bounce_ring"].skin_override = {
+			[TAKIS_SKIN] = {
+				knockback = 15*FU;
+				knockback_time = TR*18/10;
+				damage = 19;
+				ammo = 28;
+				maxammo = 28;
+				firerate = 7;
+				fuse = 2*TR;
+				reload_time = 3*TR + TR/2;
+			}
+		}
 		dofile("Compat/ZE2_molotov.lua")
 		dofile("Compat/ZE2_finger.lua")
+		dofile("Compat/ZE2_clusterbomb.lua")
+		table.insert(ZE2.RandomItemPool, "molotov")
+		table.insert(ZE2.RandomItemPool, "clusterbomb")
+		
+		mobjinfo[MT_TNTBARREL].forcedamage = 500
+		mobjinfo[MT_TNTBARREL].relativeknockback = true
+		mobjinfo[MT_TNTBARREL].forceknockback = 120*FRACUNIT
+		
+		rawset(_G, "SoapZ_Effect", {})
+		if xSlinger.give_effect
+			SoapZ_Effect.Give = function(mo, id, info, tics, additive)
+				return xSlinger.give_effect(mo, id, info, tics, additive)
+			end
+			SoapZ_Effect.Find = function(mo, id)
+				return xSlinger.search_effect(mo, id)
+			end
+		else
+			SoapZ_Effect.Give = function(mo, id, info, tics, additive)
+				return mo:give_effect(mo, id, info, tics, additive)
+			end
+			SoapZ_Effect.Find = function(mo, id)
+				return mo:search_effect(id)
+			end
+		end
 		
 		compat.ze2config = true
-		printf("Added ZE2 stuff.")
+		printnotice("Added ZE2 stuff.")
 	end
 	/*
 	if solchars
@@ -354,7 +467,7 @@ local function SetCompat()
 		solchars[SOAP_SKIN] = {color, 2}
 		
 		compat.solform = true
-		printf("Added Sol forms.")
+		printnotice("Added Sol forms.")
 	end
 	*/
 	if MM and MM.showdownSprites
@@ -387,7 +500,7 @@ local function SetCompat()
 		end)
 		
 		compat.mmportraits = true
-		printf("Added EPIC!MM stuff.")
+		printnotice("Added EPIC!MM stuff.")
 	end
 	if (skins["orbit"] ~= nil) and Orbit
 	and not compat.orbitcompat
@@ -410,7 +523,7 @@ local function SetCompat()
 		end)
 		
 		compat.orbitcompat = true
-		printf("Added Orbit stuff.")
+		printnotice("Added Orbit stuff.")
 	end
 	
 	if RSR
@@ -429,7 +542,7 @@ local function SetCompat()
 		Takis_Hook.addHook("Takis_Thinker",thinker)
 		
 		compat.rsr = true
-		printf("Added RSR stuff.")
+		printnotice("Added RSR stuff.")
 	end
 	
 	if MHN and not compat.manhunt
@@ -483,7 +596,7 @@ local function SetCompat()
 		end)
 		
 		compat.manhunt = true
-		printf("Added Manhunt stuff.")
+		printnotice("Added Manhunt stuff.")
 	end
 end
 SetCompat()
@@ -492,9 +605,9 @@ addHook("AddonLoaded",SetCompat)
 addHook("MapChange",SetCompat)
 
 COM_AddCommand("soap_compatinfo",function(p)
-	CONS_Printf(p, "Current Soap compatibles added:")
+	CONS_printnotice(p, "Current Soap compatibles added:")
 	for k,v in pairs(compat)
 		local name = compat_names[k]
-		CONS_Printf(p,"\t\x82"..name.."\x80 : " .. (v and "\x83".."Added" or "\x86Not added"))
+		CONS_printnotice(p,"\t\x82"..name.."\x80 : " .. (v and "\x83".."Added" or "\x86Not added"))
 	end
 end)

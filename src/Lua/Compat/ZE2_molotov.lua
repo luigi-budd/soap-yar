@@ -53,6 +53,7 @@ states[S_MOLOTOV] = {
 	action = function(mo)
 		if not mo.isMissile then return end
 		
+		mo.shadowscale = FU
 		mo.spritexscale = FU * 3/2
 		mo.spriteyscale = mo.spritexscale
 		
@@ -271,9 +272,9 @@ states[S_MOLOTOV_DEATH] = {SPR_NULL, A, 1, function(mo) -- Explode within a radi
 end, 0, 0, S_NULL}
 
 local burning_info = {
-	normalspeed_multiplier = FU/4,
+	normalspeed_multiplier = FU*3/10,
 	actionspd_multiplier = 3*FU/2,
-	damage_multiplier = FU/2,
+	out_damage_multiplier = FU/2,
 }
 local function Helper_FireSearch(m, found)
 	if not (found and found.valid) then return end
@@ -285,14 +286,14 @@ local function Helper_FireSearch(m, found)
 	if (dist > fire_radius + found.radius) then return end
 	if not ZE2.ZCollide(m, found) then return end
 	
-	local foundeffect = found:search_effect("burning")
+	local foundeffect = SoapZ_Effect.Find(found, "burning")
 	if #foundeffect then return end
 	
 	if found.player
 		S_StartSound(found, sfx_zm_fs, found.player)
 	end
 	-- Soap_ImpactVFX(found, m, FU*3/2, FU / 2, false, false, DMG_FIRE)
-	found:give_effect("burning", burning_info, fire_time, false)
+	SoapZ_Effect.Give(found, "burning", burning_info, fire_time, false)
 	found.flameringtarget = m.target -- seems like a hacky fix but alright!
 end
 
@@ -516,14 +517,20 @@ xSlinger.registerItem("molotov", {
 	
 	color = SKINCOLOR_GREEN;
 	missile = "MOLOTOV";
-    firerate = 15*TR;
+    firerate = 28*TR;
 	damage = 30;
 	droppable = true;
 
+	skin_override = {
+		[TAKIS_SKIN] = {
+			firerate = 16*TR;
+		}
+	};
+	
 	sounds = {};
 	usefunc = function(self, me)
 		S_StartSound(me,sfx_kc5b)
 		S_StartSound(me,sfx_s3k51)
 	end;
 })
-ZE2.Shop.listItem("molotov", 320)
+ZE2.Shop.listItem("molotov", 600)
