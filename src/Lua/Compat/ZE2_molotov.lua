@@ -525,7 +525,7 @@ xSlinger.registerItem("molotov", {
 		[TAKIS_SKIN] = {
 			firerate = 16*TR;
 		}
-	}l
+	};
 	
 	sounds = {};
 	usefunc = function(self, me)
