@@ -274,7 +274,7 @@ end, 0, 0, S_NULL}
 local burning_info = {
 	normalspeed_multiplier = FU*3/10,
 	actionspd_multiplier = 3*FU/2,
-	damage_multiplier = FU/2,
+	out_damage_multiplier = FU/2,
 }
 local function Helper_FireSearch(m, found)
 	if not (found and found.valid) then return end

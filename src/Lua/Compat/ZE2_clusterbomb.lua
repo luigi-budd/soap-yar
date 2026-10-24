@@ -158,18 +158,18 @@ local function exploderadius(mo, exradius)
 				end
 				
 				SoapZ_Effect.Give(foundmobj, "energy_drink", {
-					normalspeed_multiplier = 8*FRACUNIT/7,
-					damage_multiplier = 2*FRACUNIT,
-					knockback_multiplier = 5*FRACUNIT,
+					normalspeed_multiplier = 8*FU/7,
+					out_damage_multiplier = 2*FU,
+					out_knockback_multiplier = 5*FU,
 				}, 2*TR + 14, true)
 			end
 		else -- enemy
 			P_DamageMobj(foundmobj, mo, mo.target, mo.forcedamage)
 			SoapZ_Effect.Give(foundmobj, "volt_electric", {
 				normalspeed_multiplier = FU*2/5,
-				knockback_multiplier = FU*18/10,
+				in_knockback_multiplier = FU*18/10,
 				actionspd_multiplier = FU/2,
-				damage_multiplier = 2*FU,
+				out_damage_multiplier = 2*FU,
 			}, 2*TR, true)
 			if foundmobj.player and foundmobj.player.valid
 				S_StartSound(nil, sfx_sp_de1, foundmobj.player)
