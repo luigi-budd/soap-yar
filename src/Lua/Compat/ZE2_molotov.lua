@@ -517,14 +517,20 @@ xSlinger.registerItem("molotov", {
 	
 	color = SKINCOLOR_GREEN;
 	missile = "MOLOTOV";
-    firerate = 16*TR + TR/2;
+    firerate = 28*TR;
 	damage = 30;
 	droppable = true;
 
+	skin_override = {
+		[TAKIS_SKIN] = {
+			firerate = 16*TR;
+		}
+	}l
+	
 	sounds = {};
 	usefunc = function(self, me)
 		S_StartSound(me,sfx_kc5b)
 		S_StartSound(me,sfx_s3k51)
 	end;
 })
-ZE2.Shop.listItem("molotov", 645)
+ZE2.Shop.listItem("molotov", 600)

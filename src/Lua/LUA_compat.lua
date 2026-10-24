@@ -314,26 +314,28 @@ local function SetCompat()
 	if ZE2 and (ZE2.AddSurvivor ~= nil)
 	and not compat.ze2config
 		ZE2.AddSurvivor(SOAP_SKIN, {
-            weight = 7,
+            weight = 9,
 			description = {
-				"Kick some zombie ass!",
-				"Hefty and reliable!",
+				"Hefty, but slow.",
+				"Slow down zombies with a strong \x82Splash Ring\x80!"
 			};
 			items = {
 				"red_ring",
 				"splash_ring",
 			};
+			health_penalty = 18;
 		})
 		ZE2.AddSurvivor(TAKIS_SKIN, {
             weight = 1,
 			description = {
-				"Ready to blast!",
-				"On the lighter side.",
+				"Super weak and risky, but can dish out a beating.",
+				"Equipped with a \x82Molotov\x80 that slows down zombies in an area.",
 			};
 			items = {
 				"bounce_ring",
 				"molotov"
 			};
+			health_penalty = 20;
 		})
 		
 		Takis_Hook.addHook("Char_VFX",function(p)
@@ -376,7 +378,7 @@ local function SetCompat()
 				local s = P_SpawnMobjFromMobj(me,
 					Soap_RandomFixedRange(-rad, rad),
 					Soap_RandomFixedRange(-rad, rad),
-					Soap_RandomFixedRange(0, hei) + 256*FU,
+					Soap_RandomFixedRange(0, hei) + 226*FU,
 					MT_PARTICLE
 				)
 				s.state = S_SOAP_IMPACT_LINE2
@@ -408,18 +410,20 @@ local function SetCompat()
 				maxammo = 7,
 				ammo = 7,
 				reload_time = TR * 38/10,
+				damage = 90,
 			}
 		}
 		
 		xSlinger.registered_items["bounce_ring"].skin_override = {
 			[TAKIS_SKIN] = {
-				knockback = 12*FU;
-				knockback_time = TR;
-				damage = 10;
-				ammo = 26;
-				maxammo = 26;
-				firerate = 6;
-				fuse = 3*TR;
+				knockback = 15*FU;
+				knockback_time = TR*18/10;
+				damage = 19;
+				ammo = 28;
+				maxammo = 28;
+				firerate = 7;
+				fuse = 2*TR;
+				reload_time = 3*TR + TR/2;
 			}
 		}
 		dofile("Compat/ZE2_molotov.lua")
