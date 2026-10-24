@@ -517,7 +517,7 @@ xSlinger.registerItem("molotov", {
 	
 	color = SKINCOLOR_GREEN;
 	missile = "MOLOTOV";
-    firerate = 15*TR;
+    firerate = 16*TR + TR/2;
 	damage = 30;
 	droppable = true;
 
