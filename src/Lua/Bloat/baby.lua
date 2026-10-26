@@ -242,7 +242,7 @@ local function Baby_Init(baby)
 		baby.spriteyscale = baby.spritexscale
 	end
 	
-	baby.touchlist = {}
+	--baby.touchlist = {}
 	baby.enraged = false
 	baby.rangecount = 0
 	baby.problem = false
@@ -410,7 +410,7 @@ local function TraceRay(lstart,lend)
 			MT_THOK
 		)
 		t.scale = $ / 6
-		t.fuse = 12
+		t.fuse = 2
 		t.tics = t.fuse
 		t.blendmode = AST_ADD
 		t.flags = $|MF_NOBLOCKMAP
@@ -419,9 +419,10 @@ end
 
 local function Baby_Raycast(baby, start,dest)
 	if R_PointTo3DDist(start.x,start.y,start.z, dest.x,dest.y,dest.z) <= 0 then return end
-	local fudge = 4*baby.scale
+	local fudge = 4 * min(FU, baby.scale)
 	local radius = baby.radius + fudge
 	local height = baby.height + fudge
+	local hit = false
 	
 	for p in players.iterate
 		if not (p.mo and p.mo.valid and p.mo.health) then continue end
@@ -437,8 +438,10 @@ local function Baby_Raycast(baby, start,dest)
 			baby.flags = $|MF_SPECIAL
 			P_TouchSpecialThing(baby, p.mo)
 			baby.flags = $ &~MF_SPECIAL
+			hit = true
 		end
 	end
+	return hit
 end
 
 local function Baby_DoLunge(baby, angle,aim, dist, tics)
@@ -462,14 +465,13 @@ local function Baby_DoLunge(baby, angle,aim, dist, tics)
 		baby.start_y = baby.y
 		baby.start_z = baby.z
 		
+		dist = FixedMul($, baby.scale)
 		baby.end_x = baby.x + FixedMul(dist, vec.x)
 		baby.end_y = baby.y + FixedMul(dist, vec.y)
 		baby.end_z = baby.z + FixedMul(dist, vec.z)
 		
 		--baby.flags = $|MF_SPECIAL
-		while (baby.touchlist[1] ~= nil)
-			table.remove(baby.touchlist, 1)
-		end
+		baby.touchlist = {}
 	end
 	
 	local easetype = easefuncs[baby.type]
@@ -537,11 +539,13 @@ local function Baby_DoLunge(baby, angle,aim, dist, tics)
 		end
 	end
 	
-	Baby_Raycast(baby, Vec3.New(start.x,start.y,start.z), Vec3.New(eased.x,eased.y,eased.z))
-	Baby_Raycast(baby, Vec3.New(start.x,start.y,start.z + baby.height/2), Vec3.New(eased.x,eased.y,eased.z + baby.height/2))
+	Baby_Raycast(baby, Vec3.New(baby.x,baby.y,baby.z), Vec3.New(eased.x,eased.y,eased.z))
+	Baby_Raycast(baby, Vec3.New(baby.x,baby.y,baby.z + baby.height/2), Vec3.New(eased.x,eased.y,eased.z + baby.height/2))
+	--Baby_Raycast(baby, Vec3.New(start.x,start.y,start.z), Vec3.New(eased.x,eased.y,eased.z))
+	--Baby_Raycast(baby, Vec3.New(start.x,start.y,start.z + baby.height/2), Vec3.New(eased.x,eased.y,eased.z + baby.height/2))
 	--Baby_Raycast(baby, Vec3.New(baby.start_x,baby.start_y,baby.start_z), Vec3.New(baby.end_x,baby.end_y,baby.end_z))
 	
-	local inproblem = false --baby.state == Baby_State(baby, "PROBLEM")
+	local inproblem = baby.state == Baby_State(baby, "PROBLEM") and (baby.type ~= MT_NSVBBABY)
 	for i = 0, lunge_steps
 		local frac = P_Lerp(lunge_frac*i, 0, FU)
 		P_MoveOrigin(baby,
@@ -786,6 +790,7 @@ local function Baby_Collide(f, mo)
 	if not (mo and mo.valid) then return false; end
 	--if not (mo.health) then return end
 	if (mo == f.tracer and mo.fuckimmunity) then return unfuck(f,mo); end
+	if not (f.touchlist) then return unfuck(f,mo); end
 	if (f.touchlist[mo] ~= nil) then return unfuck(f,mo); end
 	if not (f and f.valid) then return false; end
 	--if (mo.hitlag or mo.orbitbonk) then return end
