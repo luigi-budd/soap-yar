@@ -1193,6 +1193,53 @@ CMDConstructor("knockback", {prefix = SOAP_DEVPREFIX, func = function(p,...)
 	end	
 end, unsafe = true})
 
+CMDConstructor("removemobj", {prefix = SOAP_DEVPREFIX, func = function(p,...)
+	local args = {...}
+	local type = args[1]
+	
+	if type == nil
+		prn(p,"sd_removemobj <type>")
+		return
+	end
+	
+	local mobjtype = nil
+	
+	if tonumber(type) ~= nil
+		mobjtype = abs(tonumber(type))
+		if (mobjinfo[mobjtype] == nil)
+			mobjtype = nil
+		end
+	else
+		if tostring(type) ~= nil
+			local tstring = string.upper(tostring(type))
+			if (string.sub(tstring,1,3) ~= "MT_")
+				tstring = "MT_"..$
+			end
+			if constants[tstring] ~= nil
+				mobjtype = _G[tstring]
+			end
+		end
+	end
+	
+	if mobjtype == nil
+		prn(p,"Type does not exist")
+		return
+	end
+	
+	local removed = 0
+	for mobj in mobjs.iterate()
+		if not (mobj and mobj.valid) then continue end
+		if mobj.type ~= mobjtype then continue end
+		if mobj.type == MT_PLAYER
+			P_KillMobj(mobj)
+		else
+			P_RemoveMobj(mobj)
+		end
+	end
+	
+	prn(p, ("Removed %d mobj%s."):format(removed, removed == 1 and "" or "s"))
+end, unsafe = true})
+
 /*
 CMDConstructor("togglehook", {prefix = SOAP_DEVPREFIX, func = function(p,...)
 	local args = {...}

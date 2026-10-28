@@ -9,8 +9,12 @@ states[S_NSTFRAG_WALK] = {
 	tics = (TR * 64/100),
 	nextstate = S_NSTFRAG_WALK
 }
+-- telegraph
 sfxinfo[SafeFreeslot("sfx_ntf_0")].caption = "/"
+-- walking
 sfxinfo[SafeFreeslot("sfx_ntf_1")].caption = "/"
+-- teleport
+sfxinfo[SafeFreeslot("sfx_ntf_2")].caption = "/"
 
 SafeFreeslot("MT_NSTELEFRAGGER")
 mobjinfo[MT_NSTELEFRAGGER] = {
@@ -113,7 +117,7 @@ addHook("MobjThinker",function(mo)
 	mo.angle = ha
 	
 	if (mo.extravalue1)
-		if mo.extravalue1 == TR + 1
+		if mo.extravalue1 == 30 + 1
 			if not mo.extravalue2
 				local prevtarg = mo.target
 				if not TFrag_SearchForPlayers(mo)
@@ -121,7 +125,7 @@ addHook("MobjThinker",function(mo)
 				end
 			end
 			
-			S_StartSoundAtVolume(me, sfx_ntf_0, 255 * 3/4)
+			S_StartSoundAtVolume(me, sfx_ntf_0, 255)
 		elseif mo.extravalue1 == 1
 			local dist = 400 * me.scale
 			P_SetOrigin(mo,
@@ -144,6 +148,7 @@ addHook("MobjThinker",function(mo)
 			if mo.extravalue2
 				mo.extravalue2 = $ - 1
 			end
+			S_StartSoundAtVolume(mo, sfx_ntf_2, 255)
 		end
 		if mo.extravalue1 <= TR + 1
 			for i = 0,1

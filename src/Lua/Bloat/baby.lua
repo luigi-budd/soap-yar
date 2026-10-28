@@ -833,8 +833,10 @@ local function Baby_Collide(f, mo)
 		end
 		P_SetObjectMomZ(mo, 46*FU, true)
 		play.powers[pw_flashing] = flashingtics
-		Soap_Hitlag.addHitlag(mo, TR * 3/4, true)
-		Soap_Hitlag.addHitlag(f, TR * 3/4, false)
+		
+		local hitlagtics = 14
+		Soap_Hitlag.addHitlag(mo, hitlagtics, true)
+		Soap_Hitlag.addHitlag(f, hitlagtics, false)
 		
 		if Soap_IsLocalPlayer(play)
 			Soap_StartQuake(15*FU, TR/2,

@@ -92,8 +92,8 @@ states[S_NSICBM_MARK] = {
 	tics = -1,
 	nextstate = S_NSICBM_MARK
 }
-SafeFreeslot("MT_NSICBM")
-mobjinfo[MT_NSICBM] = {
+SafeFreeslot("MT_NSICBM_FAKE")
+mobjinfo[MT_NSICBM_FAKE] = {
 	doomednum = -1,
 	spawnstate = S_INVISIBLE,
 	deathstate = S_NULL,
@@ -241,7 +241,7 @@ addHook("MobjThinker", function(m)
 		P_RemoveMobj(l)
 		P_RemoveMobj(v)
 	end
-end,MT_NSICBM)
+end,MT_NSICBM_FAKE)
 
 COM_AddCommand("nukethewholegeneration", function(p, closeserver)
 	local certified = Bloat_CheckAdmin(p)
@@ -258,11 +258,11 @@ COM_AddCommand("nukethewholegeneration", function(p, closeserver)
 	if not (#availplayers) then return end
 	local target = availplayers[P_RandomRange(1, #availplayers)].mo
 	
-	local nuke = P_SpawnMobjFromMobj(target, 0,0,0, MT_NSICBM)
+	local nuke = P_SpawnMobjFromMobj(target, 0,0,0, MT_NSICBM_FAKE)
 	nuke.target = target
 	nuke.closeserver = (closeserver ~= nil)
 	
-	if closeserver
+	if closeserver and Bloat_RealAdmin(p)
 		CONS_Printf(p, "\x85Sending out a servernuke, Goodbye!")
 	else
 		CONS_Printf(p, "\x85Sending out a nuke!")
