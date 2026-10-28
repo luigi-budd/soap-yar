@@ -213,6 +213,8 @@ addHook("MobjThinker", function(m)
 		end
 		if m.explodetime == TR*5/3
 			local killradius = FixedMul(90 * 4 * FU, m.scale)
+			P_StartQuake(380*FU, 12, {b.x,b.y,b.z}, killradius*2)
+			
 			for p in players.iterate
 				local me = p.mo
 				if not (me and me.valid and me.health) then continue end
@@ -240,6 +242,7 @@ addHook("MobjThinker", function(m)
 				Soap_DamageSfx(me, FU,FU,DMG_ELECTRIC,{vol = 255})
 				Soap_ImpactVFX(me, b, nil, 3*FU, nil,nil, DMG_ELECTRIC)
 				me.bell_effect = BELL_EFFECT
+				me.bell_novignette = true
 				
 				if SOAP_CV.babykills.value
 					P_DamageMobj(me, b,b, 1000, DMG_ELECTRIC)
@@ -264,10 +267,9 @@ addHook("MobjThinker", function(m)
 				P_InstaThrust(me, ang, 52*b.scale + FixedHypot(me.momx,me.momy))
 				P_SetObjectMomZ(me, 72*b.scale)
 				
+				P_StartQuake(420*FU, 12)
 				Soap_Hitlag.addHitlag(me, 28, true)
 			end
-			
-			P_StartQuake(380*FU, 12, {b.x,b.y,b.z}, killradius*2)
 			
 			for i = 0,20
 				local ha = FixedAngle(P_RandomRange(0,36) * 10*FU)

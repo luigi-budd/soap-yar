@@ -320,6 +320,8 @@ addHook("PlayerThink",function(p)
 			camera.momz = FixedMul($, cfrac)
 		end
 		p.viewrollangle = FixedAngle(ang)
+	else
+		me.bell_novignette = nil
 	end
 	
 	if me.bell_deathanim
@@ -348,7 +350,7 @@ addHook("HUD",function(v,p)
 	if not (me and me.valid) then return end
 	
 	if (me.bell_overtuned)
-	or (me.bell_effect and (BELL_EFFECT - me.bell_effect < 12))
+	or (me.bell_effect and (BELL_EFFECT - me.bell_effect < 12) and not me.bell_novignette)
 		local vignetteFlags = V_MODULATE|V_80TRANS
 		
 		local scale = FU
