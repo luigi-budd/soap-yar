@@ -170,14 +170,14 @@ addHook("MobjThinker", function(m)
 			local b = m.mark
 			local l = m.line
 			local v = m.missile
-			P_MoveOrigin(b, me.x,me.y,me.z)
+			P_MoveOrigin(b, me.x,me.y,me.z + FU)
 			P_MoveOrigin(l, b.x,b.y,b.z)
 			P_MoveOrigin(v, b.x,b.y,b.z + 8000*b.scale)
 			b.angle = $ + FixedAngle(5*FU)
 			
 			if m.trackingtime <= TR/2
 				local frac = (FU/(TR/2)) * m.trackingtime
-				b.alpha = ease.outquad(frac, 0, FU)
+				b.alpha = ease.outquad(frac, 0, FU / 2)
 				b.spritexscale = ease.outquad(frac, 2*FU, FU)
 				b.spriteyscale = b.spritexscale
 			end
@@ -194,10 +194,11 @@ addHook("MobjThinker", function(m)
 		local b = m.mark
 		local l = m.line
 		local v = m.missile
-		local frac = FU/10
+		local frac = FU/15
 		b.angle = P_Lerp(frac, $, 0)
 		b.spritexscale = P_Lerp(frac, $, 4*FU)
 		b.spriteyscale = b.spritexscale
+		b.alpha = P_Lerp(frac, $, FU)
 		
 		l.alpha = P_Lerp(frac, $, FU)
 		l.spritexscale = P_Lerp(frac, $, FU / 4)
@@ -267,7 +268,9 @@ addHook("MobjThinker", function(m)
 				P_InstaThrust(me, ang, 52*b.scale + FixedHypot(me.momx,me.momy))
 				P_SetObjectMomZ(me, 72*b.scale)
 				
-				P_StartQuake(420*FU, 12)
+				if Soap_IsLocalPlayer(play)
+					P_StartQuake(420*FU, 12)
+				end
 				Soap_Hitlag.addHitlag(me, 28, true)
 			end
 			

@@ -1235,6 +1235,7 @@ CMDConstructor("removemobj", {prefix = SOAP_DEVPREFIX, func = function(p,...)
 		else
 			P_RemoveMobj(mobj)
 		end
+		removed = $ + 1
 	end
 	
 	prn(p, ("Removed %d mobj%s."):format(removed, removed == 1 and "" or "s"))

@@ -1,7 +1,7 @@
 local CV = SOAP_CV
 CV.belltumbles = CV_RegisterVar({
 	name = "soap_belltumbles",
-	defaultvalue = "On",
+	defaultvalue = "Off",
 	flags = CV_SHOWMODIF|CV_NETVAR,
 	PossibleValue = CV_OnOff,
 })
@@ -75,6 +75,15 @@ states[S_NSBELL_CAURA] = {
 	end
 }
 
+SafeFreeslot("S_NSBELL_VFXAURA")
+states[S_NSBELL_VFXAURA] = {
+	sprite = SPR_SOAP_BLOATVFX,
+	frame = 33|FF_ANIMATE|FF_FULLBRIGHT,
+	var1 = 15,
+	var2 = 3,
+	tics = 16 * 3,
+}
+
 sfxinfo[SafeFreeslot("sfx_nbl_0")].caption = "Bell rings"
 sfxinfo[SafeFreeslot("sfx_nbl_1")].caption = "Bell rings"
 sfxinfo[SafeFreeslot("sfx_nbl_2")].caption = "Bell rings"
@@ -87,6 +96,12 @@ sfxinfo[SafeFreeslot("sfx_nbl_7")].caption = "/"
 
 sfxinfo[SafeFreeslot("sfx_nbl_8")].caption = "/"
 sfxinfo[SafeFreeslot("sfx_nbl_9")].caption = "/"
+
+-- mighty gong
+sfxinfo[SafeFreeslot("sfx_nbl_a")] = {
+	caption = "/",
+	flags = SF_X4AWAYSOUND
+}
 
 SafeFreeslot("MT_NSBELL")
 mobjinfo[MT_NSBELL] = {
@@ -117,6 +132,10 @@ local function TFrag_SearchForPlayers(baby)
 	return true
 end
 
+local BELL_EFFECT = 2*TR + TR/2
+local BELL_MIGHTYTELEGRAPH = (TR - (TR*3/4))
+local BELL_MIGHTYVFX = (2 * TR)
+local BELL_MIGHTYMUL = FU * 6/5
 local function settptimer(b)
 	b.bell_teleporttime = P_RandomRange(6*TR, 20*TR)
 end
@@ -129,6 +148,15 @@ addHook("MobjThinker",function(b)
 		b.soap_supervfx = true
 		b.grap_forcereel = true
 		b.bell_cooldown = 0
+		b.bell_mighty = P_RandomChance(FU/2)
+		b.bell_mightyvfx = 0
+		b.bell_teleportinanim = 0
+		b.bell_spritescale = FU
+		if b.bell_mighty
+			b.radius = FixedMul($,BELL_MIGHTYMUL)
+			b.height = FixedMul($,BELL_MIGHTYMUL)
+			b.bell_spritescale = BELL_MIGHTYMUL
+		end
 		settptimer(b)
 	end
 	
@@ -142,6 +170,18 @@ addHook("MobjThinker",function(b)
 	if (b.bell_teleporttime)
 	and not (b.bell_cooldown)
 		b.bell_teleporttime = $ - 1
+		if b.bell_teleporttime == BELL_MIGHTYTELEGRAPH
+		and b.bell_mighty
+			for i = 0,2
+				local sfx = P_SpawnGhostMobj(b)
+				sfx.flags2 = $|MF2_DONTDRAW
+				sfx.fuse = 6 * TR
+				sfx.tics = sfx.fuse
+				S_StartSound(sfx, sfx_nbl_a)
+				S_StartSound(sfx, sfx_nbl_a)
+			end
+		end
+		
 		if not b.bell_teleporttime
 			b.bell_teleportinanim = TR * 3/4
 			
@@ -153,6 +193,83 @@ addHook("MobjThinker",function(b)
 		end
 	end
 	
+	local mightyanim = b.bell_teleporttime + ((TR*3/4) - b.bell_teleportinanim)
+	if mightyanim > 0 and mightyanim <= BELL_MIGHTYVFX
+		if (leveltime % 3 == 0)
+			local v = P_SpawnMobjFromMobj(b, 0,0,FixedDiv(b.height,b.scale)/2, MT_SOAP_WALLBUMP)
+			v.target = b
+			v.state = S_NSBELL_CAURA
+			v.blendmode = AST_ADD
+			v.color = SKINCOLOR_JET
+			v.fuse = 8
+			
+			v.scale = 3 * FU
+			v.destscale = FU / 2
+			v.scalespeed = FixedDiv(v.destscale - v.scale, v.fuse*FU)
+			v.spriteyoffset = -40*FU
+			v.dispoffset = -400
+			v.extravalue1 = P_RandomRange(0,4)
+			v.spritexscale = $ / 2
+			v.spriteyscale = v.spritexscale
+			v.alpha = $ - 1
+			
+			v.nothink = true
+			v.fadefuse = 3
+		end
+		
+		if mightyanim == BELL_MIGHTYVFX
+			local vfxscale = FixedDiv(500*FU, 40*FU)
+			local fa = FixedDiv(360*FU, 6*FU)
+			for i = 1,3
+				local s = P_SpawnMobjFromMobj(b,
+					0,0,0,
+					MT_SOAP_WALLBUMP
+				)
+				s.nothink = true
+				s.flags = $|MF_NOGRAVITY
+				s.frame = 36|FF_FULLBRIGHT|FF_ADD|FF_PAPERSPRITE
+				s.spritexscale = vfxscale
+				s.spriteyscale = vfxscale
+				s.renderflags = $|RF_NOCOLORMAPS
+				s.angle = FixedAngle(fa*i)
+				s.fuse = BELL_MIGHTYVFX
+				s.fusefade = 16
+				s.fusescale = {
+					func = "inquint",
+					fuseunder = BELL_MIGHTYVFX/3,
+					startscale = FU,
+					destscale = 0
+				}
+				s.scale = 1
+				s.destscale = FU
+				s.scalespeed = FU / 6
+				s.color = SKINCOLOR_JET
+			end
+		end
+		
+		b.bell_mightyvfx = $ + 4*(FU - FixedDiv(mightyanim*FU, BELL_MIGHTYVFX*FU))
+		
+		local offset = (500*FU)
+		local offsetspeed = -offset / (states[mobjinfo[MT_SOAP_SPEEDLINE].spawnstate].tics)
+		while b.bell_mightyvfx > FU
+			local ha = FixedAngle(360 * P_RandomFixed())
+			local va = FixedAngle(360 * P_RandomFixed())
+			local of = Vec3.SphereToCartesian(ha,va) * offset
+			of.z = $ + FixedDiv(b.height, b.scale)/2
+			local v = P_SpawnMobjFromMobj(b, of.x,of.y,of.z, MT_PARTICLE)
+			P_SetMobjStateNF(v, mobjinfo[MT_SOAP_SPEEDLINE].spawnstate)
+			v.renderflags = $|RF_ALWAYSONTOP
+			v.color = SKINCOLOR_JET
+			v.angle = ha + ANGLE_180
+			v.rollangle = InvAngle(va)
+			v.scale = ($ * 8)
+			--v.blendmode = AST_ADD
+			local finalvec = (Vec3.SphereToCartesian(ha,va) * offsetspeed)
+			finalvec:ToMobjMom(v)
+			b.bell_mightyvfx = max($ - FU, 0)
+		end
+	end
+	
 	if (b.bell_teleportinanim)
 		b.flags = $ &~MF_SPECIAL
 		local frac = (FU / (TR*3/4))
@@ -160,7 +277,7 @@ addHook("MobjThinker",function(b)
 		b.bell_teleportinanim = $ - 1
 		b.spritexscale = ease.inback(
 			FU - (frac * b.bell_teleportinanim),
-			FU, 0, 2*FU
+			b.bell_spritescale, 0, 2*FU
 		)
 		b.spriteyscale = b.spritexscale
 		if CV.rotations.value
@@ -171,6 +288,61 @@ addHook("MobjThinker",function(b)
 		end
 		
 		if not b.bell_teleportinanim
+			if b.bell_mighty
+				for play in players.iterate
+					if (play.spectator) then continue end
+					local me = play.mo
+					if not (me and me.valid and me.health) then continue end
+					
+					local dist = R_PointTo3DDist(b.x,b.y,b.z + b.height/2, me.x,me.y,me.z + me.height/2)
+					if dist > 500*b.scale then continue end
+					
+					local ha,va = R_PointTo3DAngles(b.x,b.y,b.z + b.height/2, me.x,me.y,me.z + me.height/2)
+					P_3DThrust(me, ha,va, 70*b.scale)
+					P_MovePlayer(play)
+					
+					if me.bell_overtuned
+						me.bell_deathanim = TR
+						S_StartSound(nil, sfx_nbl_7, play)
+						S_StartSound(nil, sfx_nbl_7, play)
+					end
+					Soap_Hitlag.addHitlag(me, 12, me.soap_tumble)
+					
+					me.bell_effect = BELL_EFFECT
+					P_FlashPal(play, PAL_WHITE, 16)
+					if Soap_IsLocalPlayer(play)
+						P_StartQuake(30*FU, 12)
+					end
+				end
+				P_StartQuake(100*FU, 12, {b.x,b.y,b.z}, 700*FU)
+				Soap_ImpactVFX(b, b, 0, 3*FU)
+			end
+			
+			local vfxscale = FixedDiv(500*FU, 40*FU)
+			local fa = FixedDiv(360*FU, 6*FU)
+			for i = 1,3
+				local s = P_SpawnMobjFromMobj(b,
+					0,0,0,
+					MT_SOAP_WALLBUMP
+				)
+				s.nothink = true
+				s.flags = $|MF_NOGRAVITY
+				s.frame = 36|FF_FULLBRIGHT|FF_ADD|FF_PAPERSPRITE
+				s.spritexscale = vfxscale
+				s.spriteyscale = vfxscale
+				s.renderflags = $|RF_NOCOLORMAPS
+				s.angle = FixedAngle(fa*i)
+				s.fuse = BELL_MIGHTYVFX * 3/4
+				s.fusefade = s.fuse
+				s.fusescale = {
+					func = "outback",
+					fuseunder = s.fuse ,
+					startscale = 1,
+					destscale = FU / 2,
+					backparam = 10*FU,
+				}
+				s.color = SKINCOLOR_JET
+			end
 			b.bell_teleportoutanim = TR / 2
 			
 			if TFrag_SearchForPlayers(b)
@@ -213,7 +385,7 @@ addHook("MobjThinker",function(b)
 		b.bell_teleportoutanim = $ - 1
 		b.spritexscale = ease.outback(
 			FU - (frac * b.bell_teleportoutanim),
-			0, FU, 2*FU
+			0, b.bell_spritescale, 2*FU
 		)
 		b.spriteyscale = b.spritexscale
 		if CV.rotations.value
@@ -232,9 +404,34 @@ addHook("MobjThinker",function(b)
 	if not S_SoundPlaying(b, sfx_nbl_4)
 		S_StartSound(b, sfx_nbl_4)
 	end
+	
+	-- vfx
+	/*
+	if (leveltime % 2 == 0)
+		local v = P_SpawnMobjFromMobj(b,
+			0,0,0,
+			MT_SOAP_WALLBUMP
+		)
+		v.flags = $|MF_NOGRAVITY
+		v.dispoffset = -200
+		v.state = S_NSBELL_VFXAURA
+		local xrange = b.info.radius*3/4
+		v.spritexoffset = Soap_RandomFixedRange(-xrange,xrange)
+		v.spriteyoffset = Soap_RandomFixedRange(0, b.info.height * 4/5)
+		v.scale = Soap_RandomFixedRange(FU*4/5, FU*3/2)
+		--v.destscale = 0
+		--v.scalespeed = FixedDiv(v.scale, v.tics*FU)
+		
+		v.nothink = true
+		v.xstretch = P_RandomFixed()/40
+		v.random = FixedAngle(Soap_RandomFixedRange(-2*FU,2*FU))
+		v.alpha = 0
+		v.alphafadein = P_RandomFixed()/5
+		--v.ystretch = P_RandomFixed()/20
+	end
+	*/
 end,MT_NSBELL)
 
-local BELL_EFFECT = 2*TR + TR/2
 addHook("PlayerThink",function(p)
 	local me = p.realmo
 	if not (me and me.valid) then return end
@@ -470,6 +667,7 @@ addHook("TouchSpecial",function(f, mo)
 	if not (mo and mo.valid) then return false; end
 	--if not (mo.health) then return end
 	if (mo == f.tracer and mo.fuckimmunity) then return unfuck(f,mo); end
+	if (not f.bell_init) then return unfuck(f,mo); end
 	if (f.bell_cooldown) then return unfuck(f,mo); end
 	if not (f and f.valid) then return false; end
 	--if (mo.hitlag or mo.orbitbonk) then return end

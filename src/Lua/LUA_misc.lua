@@ -91,8 +91,8 @@ addHook("MobjThinker",function(bump)
 		local s = bump.fusescale
 		if bump.fuse < s.fuseunder
 			local frac = FU/s.fuseunder
-			local scalefrac = ease[s.func](FU - (frac*bump.fuse), s.startscale, s.destscale)
-			P_SetScale(bump, scalefrac, false)
+			local scalefrac = ease[s.func](FU - (frac*bump.fuse), s.startscale, s.destscale, s.backparam)
+			P_SetScale(bump, abs(scalefrac), false)
 		end
 	end
 	if (bump.followthis and bump.followthis.valid)
