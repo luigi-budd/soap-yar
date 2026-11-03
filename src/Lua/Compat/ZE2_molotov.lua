@@ -46,6 +46,16 @@ mobjinfo[MT_SOAPZE2_MOLOTOVHELPER] = {
 	flags = MF_NOSECTOR|MF_NOCLIP|MF_NOCLIPTHING
 }
 
+local function MISSILE_PhysThink(mo)
+	mo.extravalue1 = $ + 1
+	if mo.extravalue1 > 12
+	or abs(mo.momz) <= 12 * mo.scale
+		local fric = FU * 97/100
+		mo.momx = FixedMul($, fric)
+		mo.momy = FixedMul($, fric)
+		mo.momz = $ + P_GetMobjGravity(mo) * 3/4
+	end
+end
 states[S_MOLOTOV] = {
 	sprite = SPR_SOAP_GFX,
 	frame = 64|FF_SEMIBRIGHT,
@@ -57,14 +67,7 @@ states[S_MOLOTOV] = {
 		mo.spritexscale = FU * 3/2
 		mo.spriteyscale = mo.spritexscale
 		
-		mo.extravalue1 = $ + 1
-		if mo.extravalue1 > 12
-		or abs(mo.momz) <= 12 * mo.scale
-			local fric = FU * 97/100
-			mo.momx = FixedMul($, fric)
-			mo.momy = FixedMul($, fric)
-			mo.momz = $ + P_GetMobjGravity(mo) * 3/4
-		end
+		MISSILE_PhysThink(mo)
 		mo.rollangle = $ + FixedAngle(R_PointTo3DDist(0,0,0, mo.momx,mo.momy,mo.momz) / 2)
 		
 		if leveltime % 2 == 0
@@ -491,6 +494,8 @@ local xsmissile_molotov = xSlinger.registerMissile("MOLOTOV", {
 		return true
 	end
 })
+-- see ZE2_clusterbomb.lua for explanation
+local xsmissile_molotov_guide = ZE2.registerCrosshairGuide(xsmissile_molotov.id)
 
 xSlinger.registerItem("molotov", {
 	-- HUD
@@ -528,9 +533,54 @@ xSlinger.registerItem("molotov", {
 	};
 	
 	sounds = {};
+	holdfunc = function(self, me)
+		local me = me.player
+	end;
 	usefunc = function(self, me)
 		S_StartSound(me,sfx_kc5b)
 		S_StartSound(me,sfx_s3k51)
 	end;
 })
 ZE2.Shop.listItem("molotov", 600)
+
+Takis_Hook.addHook("PostThinkFrame", function(p)
+	local me = p.mo
+	if not (me and me.valid) then return end
+	
+	if not p["xSlinger[]"] then return end
+	
+	local xS = p.xSlinger
+	if not xS:inv_get() then return end
+
+	local hand = xS:hand()
+	local selection = xS.slot
+	local iteminfo = xS:slot_get(selection)
+	if not iteminfo then return end
+	if iteminfo.id ~= "molotov" then return end
+
+	ZE2.drawCrosshairGuide(me, xsmissile_molotov_guide.id, 0, 
+		function(pmo, missile) -- thinker
+			if not P_IsObjectOnGround(missile)
+				MISSILE_PhysThink(missile)
+			end
+			local step = missile.extravalue1
+			if ((step - (leveltime/4)) % 3 == 0)
+				local t = P_SpawnMobjFromMobj(missile, 0,0,0, MT_PARTICLE)
+				t.fuse = 1
+				t.tics = t.fuse
+				t.resetinterp = true
+				P_SetOrigin(t, missile.x,missile.y,missile.z + missile.height/2)
+				
+				t.sprite = SPR_THOK
+				t.scale = ($ / 6) + (step * 480)
+				t.color = me.color
+				t.blendmode = AST_ADD
+				t.renderflags = $|RF_FULLBRIGHT
+				t.drawonlyforplayer = p
+				if step < 10
+					t.alpha = (FU / 10) * step
+				end
+			end
+		end
+	)
+end, nil, "SoapZE2_MolotovGuide")
