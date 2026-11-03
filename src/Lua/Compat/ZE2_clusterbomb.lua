@@ -428,7 +428,22 @@ local xsmissile_cluster = xSlinger.registerMissile("CLUSTERBOMB", {
 		return true
 	end
 })
---local xsmissile_cluster_guide = ZE2.registerCrosshairGuide(xsmissile_cluster.id)
+-- we cant use ZE2.registerCrosshairGuide directly because it
+-- removes MF_NOGRAVITY, which isnt what we want
+local xsmissile_cluster_guide
+do
+	-- so we just copy ZE2.registerCrosshairGuide but we just dont
+	-- remove MF_NOGRAVITY lol
+	local ref = xSlinger.registered_missiles[xsmissile_cluster.id]
+	xsmissile_cluster_guide = xSlinger.registerMissile(xsmissile_cluster.id.."_GUIDE", {
+		state = S_INVISIBLE,
+		speed = ref.speed,
+		displayname = ref.displayname,
+		radius = ref.radius,
+		height = ref.height,
+		addflags = MF_NOCLIPTHING,
+	})
+end
 
 local CHARGE_TIME = 2*TR
 local CHARGE_MOVECHANGE = 7
@@ -456,6 +471,7 @@ xSlinger.registerItem("clusterbomb", {
 			z = -FU/3;
 		};
 	};
+	velocity_precision = 0;
 	
 	color = SKINCOLOR_JADE;
 	missile = "CLUSTERBOMB";
@@ -485,20 +501,6 @@ xSlinger.registerItem("clusterbomb", {
 		local xS = p.xSlinger
 		local hand = xS:hand()
 		local skin = me.skin
-		
-		/*
-		ZE2.drawCrosshairGuide(me, xsmissile_cluster_guide.id, FU/8, 
-			function(pmo, missile) -- thinker
-				MISSILE_PhysThink(missile)
-			end,
-			function(pmo, missile) -- init
-				missile.airdrag = MISSILE_AIRDRAG
-				missile.gravmul = MISSILE_GRAVMUL
-				missile.crosshair = true
-				missile.lifetime = 0
-			end
-		)
-		*/
 		
 		if soap.fire == 1
 		and not hand:get("firerate_left",skin)
@@ -671,11 +673,11 @@ xSlinger.registerItem("clusterbomb", {
 					end
 				end
 				xS.viewmobj_animation = hand:get("animation_time", skin)
-				xS.viewmobj.rollangle = 0
-				xS.viewmobj.spritexoffset = 0
-				xS.viewmobj.colorized = false
 				hand:set("firerate_left", hand:get("firerate",skin), skin)
 			end
+			xS.viewmobj.rollangle = 0
+			xS.viewmobj.spritexoffset = 0
+			xS.viewmobj.colorized = false
 			
 			hand:set("chargetime", 0, skin)
 			hand:set("chargeincwait", 0, skin)
@@ -693,6 +695,54 @@ xSlinger.registerItem("clusterbomb", {
 	end;
 })
 ZE2.Shop.listItem("clusterbomb", 98)
+
+Takis_Hook.addHook("PostThinkFrame", function(p)
+	local me = p.mo
+	if not (me and me.valid) then return end
+	
+	if not p["xSlinger[]"] then return end
+	
+	local xS = p.xSlinger
+	if not xS:inv_get() then return end
+
+	local hand = xS:hand()
+	local selection = xS.slot
+	local iteminfo = xS:slot_get(selection)
+	if not iteminfo then return end
+	if iteminfo.id ~= "clusterbomb" then return end
+
+	ZE2.drawCrosshairGuide(me, xsmissile_cluster_guide.id, 0, 
+		function(pmo, missile) -- thinker
+			if not P_IsObjectOnGround(missile)
+				MISSILE_PhysThink(missile)
+			end
+			local step = missile.lifetime
+			if ((step - (leveltime/4)) % 3 == 0)
+				local t = P_SpawnMobjFromMobj(missile, 0,0,0, MT_PARTICLE)
+				t.fuse = 1
+				t.tics = t.fuse
+				t.resetinterp = true
+				P_SetOrigin(t, missile.x,missile.y,missile.z + missile.height/2)
+				
+				t.sprite = SPR_THOK
+				t.scale = ($ / 6) + (step * 480)
+				t.color = me.color
+				t.blendmode = AST_ADD
+				t.renderflags = $|RF_FULLBRIGHT
+				t.drawonlyforplayer = p
+				if step < 10
+					t.alpha = (FU / 10) * step
+				end
+			end
+		end,
+		function(pmo, missile) -- init
+			missile.airdrag = MISSILE_AIRDRAG
+			missile.gravmul = MISSILE_GRAVMUL
+			missile.crosshair = true
+			missile.lifetime = 0
+		end
+	)
+end, nil, "SoapZE2_ClusterGuide")
 
 local blinktime = 0
 local oldtimetic = 0
