@@ -35,6 +35,16 @@ sfxinfo[sfx_sp_tac] = {
 	flags = SF_X2AWAYSOUND|SF_NOMULTIPLESOUND,
 	caption = "\x89".."Taco Jam\x80"
 }
+SafeFreeslot("sfx_sp_hk2")
+sfxinfo[sfx_sp_hk2] = {
+	flags = SF_X2AWAYSOUND|SF_NOMULTIPLESOUND,
+	caption = "\x89".."Husk Rave\x80"
+}
+SafeFreeslot("sfx_sp_mac")
+sfxinfo[sfx_sp_mac] = {
+	flags = SF_X2AWAYSOUND|SF_NOMULTIPLESOUND,
+	caption = "\x89".."Macarena Jam\x80"
+}
 
 local S_CLIPPING_DIST = (1536*FU)
 local set_musvol = false
@@ -122,6 +132,7 @@ local tacojam_captions = {
 	[56*TR + (TR*9/10)] = {"Shell", "Meat", "Cheese Cheese Cheese Cheese Cheese"},
 }
 local caramelljam_bpm = 160*FU
+local macarenajam_bpm = 104*FU + (312*FU/1000) -- this ones oddly specific honestly
 
 --should be fine if we dont synch this
 -- credits = {"song name", "artist"}
@@ -135,6 +146,8 @@ rawset(_G, "SOAP_BOOMBOXJAMS", {
 	[7] = {sfx = sfx_sp_hsk, bpm = huskjam_bpm, fadeto = 0, credits = {"Husk", "NULLSCAPE"}},
 	[8] = {sfx = sfx_sp_tac, bpm = tacojam_bpm, fadeto = 0, credits = {"Raining Tacos", "Parry Gripp & BooneBum"}, captions = tacojam_captions},
 	[9] = {sfx = sfx_sp_em4, bpm = caramelljam_bpm, fadeto = 0, credits = {"Caramelldansen", "NULLSCAPE, @digital_dsc"}},
+	[10] = {sfx = sfx_sp_hk2, bpm = huskjam_bpm, fadeto = 0, credits = {"Husk Rave", "NULLSCAPE"}},
+	[11] = {sfx = sfx_sp_mac, bpm = macarenajam_bpm, fadeto = 0, credits = {"Macarena", "NULLSCAPE"}},
 })
 rawset(_G, "Soap_MakeJamCrochet",function(fixed_bpm)
 	return FixedDiv(60*TR*FU, fixed_bpm)
