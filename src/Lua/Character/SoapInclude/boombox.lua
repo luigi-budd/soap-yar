@@ -40,8 +40,8 @@ sfxinfo[sfx_sp_hk2] = {
 	flags = SF_X2AWAYSOUND|SF_NOMULTIPLESOUND,
 	caption = "\x89".."Husk Rave\x80"
 }
-SafeFreeslot("sfx_sp_mac")
-sfxinfo[sfx_sp_mac] = {
+SafeFreeslot("sfx_sp_mcj")
+sfxinfo[sfx_sp_mcj] = {
 	flags = SF_X2AWAYSOUND|SF_NOMULTIPLESOUND,
 	caption = "\x89".."Macarena Jam\x80"
 }
@@ -147,7 +147,7 @@ rawset(_G, "SOAP_BOOMBOXJAMS", {
 	[8] = {sfx = sfx_sp_tac, bpm = tacojam_bpm, fadeto = 0, credits = {"Raining Tacos", "Parry Gripp & BooneBum"}, captions = tacojam_captions},
 	[9] = {sfx = sfx_sp_em4, bpm = caramelljam_bpm, fadeto = 0, credits = {"Caramelldansen", "NULLSCAPE, @digital_dsc"}},
 	[10] = {sfx = sfx_sp_hk2, bpm = huskjam_bpm, fadeto = 0, credits = {"Husk Rave", "NULLSCAPE"}},
-	[11] = {sfx = sfx_sp_mac, bpm = macarenajam_bpm, fadeto = 0, credits = {"Macarena", "NULLSCAPE"}},
+	[11] = {sfx = sfx_sp_mcj, bpm = macarenajam_bpm, fadeto = 0, credits = {"Macarena", "NULLSCAPE"}},
 })
 rawset(_G, "Soap_MakeJamCrochet",function(fixed_bpm)
 	return FixedDiv(60*TR*FU, fixed_bpm)
