@@ -1302,15 +1302,14 @@ rawset(_G, "Soap_WindLines", function(me,rmomz,color,forceang,forceside)
 	if not me.health then return end
 	local p = me.player
 	
-	-- Lol!
-	local soap = p.soaptable
-	if (me.skin == SOAP_SKIN and soap.nowindvfx)
-		return
-	end
-	
 	if (p and p.valid)
-	and (p.powers[pw_carry] == CR_ROLLOUT or p.powers[pw_carry] == CR_PLAYER)
-		Soap_WindLines(me.tracer,p.soaptable.rmomz,color,forceang)
+		-- Lol!
+		if (me.skin == SOAP_SKIN and p.soaptable.nowindvfx)
+			return
+		end
+		if (p.powers[pw_carry] == CR_ROLLOUT or p.powers[pw_carry] == CR_PLAYER)
+			Soap_WindLines(me.tracer,p.soaptable.rmomz,color,forceang)
+		end
 	end
 	
 	local momz = rmomz
