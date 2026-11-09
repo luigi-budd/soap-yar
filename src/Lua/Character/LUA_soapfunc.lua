@@ -4299,7 +4299,8 @@ rawset(_G, "Soap_Combat", function(p)
 				ease_time = 6,
 				x = -FU * 1/5,
 				y = -FU/4,
-				singular = true
+				singular = true,
+				name = "soap_combatpunch"
 			})
 			me.soap_spiketics = 7
 			S_StartSound(me, sfx_sp_bsl)
