@@ -1739,7 +1739,7 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 			end
 			
 			-- higher speed = higher thrust
-			local speedfrac = clamp(0, FixedDiv(soap.accspeed, 60*FU), FU)
+			local speedfrac = clamp(0, FixedDiv(soap.accspeed - 20*FU, 60*FU), FU)
 			thrust = $ + ease.insine(speedfrac, 0, bonus)
 			
 			Soap_SquashMacro(p, {ease_func = "outsine", ease_time = 12 + (thrust/FU)/8, x = -FU*7/10, y = -FU*3/10})

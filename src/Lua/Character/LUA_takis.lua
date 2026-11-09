@@ -112,6 +112,7 @@ local function generic_slingshot(p,me,takis, stop_ang)
 		takis.clutch.misfire = CLUTCH_MISFIRE
 		takis.frictionfreeze = $ + TR/2
 		takis.clutch.slinglag = true
+		takis.dived = false
 		
 		Soap_SquashMacro(p, {
 			ease_func = "inexpo",
@@ -858,11 +859,11 @@ Takis_Hook.addHook("Takis_Thinker",function(p)
 			P_InstaThrust(me,ang,FixedMul(speed,me.scale))
 			
 			local momz = FixedDiv(me.momz,me.scale)*soap.gravflip
-			local thrust = min((momz/2)+7*FU,18*FU)
+			local thrust = min((momz * 3/5) + 8*FU, 20*FU)
 			if (me.momz*soap.gravflip < 0)
 				me.momz = -($ / 2)
 			end
-			Soap_ZLaunch(me,thrust)
+			Soap_ZLaunch(me,thrust * 3/2)
 			
 			p.drawangle = ang
 			local vertang = R_PointToAngle2(0, 0, FixedHypot(me.momx, me.momy), me.momz)
@@ -912,13 +913,11 @@ Takis_Hook.addHook("Takis_Thinker",function(p)
 			soap.sprung = false
 			soap.noability = $|NOABIL_SLIDE
 			soap.onGround = false
-			
 			soap.noairdrag = min($ + TR / 2, TR)
 			
 			-- for ninja belt
 			p.rmomx = me.momx - p.cmomx
 			p.rmomy = me.momy - p.cmomy
-			--takis.thokked = true
 			
 			me.state = S_PLAY_GLIDE
 		end
@@ -1294,6 +1293,7 @@ Takis_Hook.addHook("Takis_Thinker",function(p)
 			ninjabelt_vfx(p,me,soap, NINJA_RING)
 		end
 		soap.setrolltrol = true
+		me.momz = $ + P_GetMobjGravity(me) * 8/10
 		
 		-- jump out of a dive / cancel a dive
 		if (soap.jump == 1 or soap.c1 == 1)
