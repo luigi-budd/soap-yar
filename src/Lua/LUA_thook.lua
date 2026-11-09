@@ -155,7 +155,7 @@ mobjinfo[MT_FANG].stunstate = S_PLAY_PAIN
 --mobjinfo[MT_METALSONIC_BATTLE].stunstate = S_METALSONIC_PAIN
 
 --EASYYYYYYYYY
-mobjinfo[MT_ROLLOUTROCK].speed = 60*FU
+mobjinfo[MT_ROLLOUTROCK].speed = 48*FU
 
 -- also make things stuff
 local MOBJ_LIST = {

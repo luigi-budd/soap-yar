@@ -349,12 +349,12 @@ local function SetCompat()
 			local shortcircuit = {}
 			
 			if settings.fall_damage
-			and p.ze2.fall_height ~= nil -- lol
+			and p.ze2.fall_speed ~= nil -- lol
 				-- no landing effect when fall damage is coming up
-				if ((me.soap_oldfalldist or 0) > ZE2.MIN_FALL_DISTANCE)
+				if ((me.soap_oldfallspeed or 0) > ZE2.MIN_FALL_SPEED)
 					shortcircuit.landdust = true
 				end
-				me.soap_oldfalldist = (p.ze2.fall_height - me.z)
+				me.soap_oldfallspeed = abs(p.ze2.fall_speed)
 			end
 			
 			if game.state == ZE2.GS_PREGAME
@@ -429,6 +429,7 @@ local function SetCompat()
 		dofile("Compat/ZE2_molotov.lua")
 		dofile("Compat/ZE2_finger.lua")
 		dofile("Compat/ZE2_clusterbomb.lua")
+		dofile("Compat/ZE2_soappunch.lua")
 		table.insert(ZE2.RandomItemPool, "molotov")
 		table.insert(ZE2.RandomItemPool, "clusterbomb")
 		

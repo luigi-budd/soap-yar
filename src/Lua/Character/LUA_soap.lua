@@ -480,12 +480,10 @@ local function soap_poundonland(p,me,soap)
 			end
 		end
 		
-		--You need to be holding jump to activate the shield abilities
 		local noquake = false
-		if (soap.jump)
+		--You need to be holding jump to activate the shield abilities
+		if (soap.jump) and not Soap_IsCompGamemode()
 			if (shield == SH_BUBBLEWRAP or shield == SH_ELEMENTAL)
-			--dont bother if endlag's gonna kill our speed
-			and not Soap_IsCompGamemode()
 				P_DoBubbleBounce(p)
 				p.pflags = $|PF_JUMPED &~PF_THOKKED
 				
@@ -505,6 +503,11 @@ local function soap_poundonland(p,me,soap)
 			and not soap.inBattle
 			and (poundtime >= 10)
 				P_BlackOw(p)
+			elseif soap.rdashing
+				me.state = S_PLAY_SOAP_SLIP
+				Soap_DoLunge(p)
+				P_SetObjectMomZ(me, 8*FU)
+				soap.noability = $|SNOABIL_CROUCH
 			end
 		end
 		
@@ -1013,9 +1016,11 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 	local soap = p.soaptable
 	
 	soap.afterimage = false
+	-- TODO: use this
 	local cos_height = 6
 	--for reset state
 	local setstate = false
+	local was_uppercutting = soap.uppercutted
 	
 	if skins[p.skin].flags & SF_SUPER
 		if p.rings >= 25
@@ -1703,10 +1708,12 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 			soap.uppercut_spin = soap_baseuppercutturn
 			soap.lunge.lockout = 0
 			
+			local bonus = 7*FU
 			local thrust = soap.nerfed and 10*FU or 13*FU
 			local shield = p.powers[pw_shield] & SH_NOSTACK
 			if (shield == SH_WHIRLWIND)
 				thrust = $ + 4*FU
+				bonus = $ - 4*FU
 				S_StartSound(me, sfx_wdjump)
 				
 				Soap_DustRing(me,
@@ -1731,7 +1738,12 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 				thrust = $ + 5*FU
 			end
 			
-			Soap_SquashMacro(p, {ease_func = "outsine", ease_time = 12, x = -FU*7/10, y = -FU*3/10})
+			-- higher speed = higher thrust
+			local speedfrac = clamp(0, FixedDiv(soap.accspeed, 60*FU), FU)
+			thrust = $ + ease.insine(speedfrac, 0, bonus)
+			
+			Soap_SquashMacro(p, {ease_func = "outsine", ease_time = 12 + (thrust/FU)/8, x = -FU*7/10, y = -FU*3/10})
+			thrust = $ * 3/2
 			Soap_ZLaunch(me, thrust)
 			p.pflags = $|PF_JUMPED &~(PF_STARTJUMP|PF_SPINNING)
 			me.state = S_PLAY_MELEE
@@ -1744,7 +1756,7 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 			soap.airdashed = false
 			soap.just_uppercut = 3
 			soap.onGround = false
-			
+			soap.nowindvfx = TR / 2
 			soap.sprung = false
 			
 			local sound = true
@@ -1765,7 +1777,7 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 			end
 			soap.uppercutted = true
 			if sound
-				S_StartSoundAtVolume(me,sfx_sp_upr, 255 * 8/10)
+				S_StartSound(me,sfx_sp_upr)
 			end
 			
 			if (Event_CharOnMove.numhooks)
@@ -1857,15 +1869,16 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 					ease_time = 6,
 					x = -FU * 1/5,
 					y = -FU/4,
-					singular = true
+					singular = true,
+					name = "soap_ramsquish"
 				})
 				Soap_ZLaunch(me, 7*FU + FU/2)
-				Soap_DamageSfx(me, FU*3/4,FU,nil, {volume = 255/2})
+				Soap_DamageSfx(me, FU/2,FU,nil, {volume = 255/2})
 				Soap_StartQuake(20*FU, 19,
 					{me.x,me.y,me.z},
 					512*me.scale
 				)
-				Soap_Hitlag.addHitlag(me, 14, false)
+				Soap_Hitlag.addHitlag(me, 7, false)
 			end
 			
 			p.powers[pw_strong] = $|STR_SPIKE|STR_ANIM
@@ -1892,11 +1905,11 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 		end
 	end
 	
+	-- stuff to do while uppercutting
 	if soap.uppercutted
 	and me.health and not (soap.inPain or me.state == S_PLAY_GASP)
 	and not (soap.noability & (SNOABIL_UPPERCUT|SNOABIL_COMBAT))
 		if (me.momz*soap.gravflip >= 0)
-			
 			--replenish on badnik bounces
 			if soap.last.momz*soap.gravflip < 0
 			and not soap.just_uppercut
@@ -1917,7 +1930,6 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 			--shitty
 			or me.sprite2 == SPR2_MLEE)
 			and not soap.pounding
-				
 				if not (soap.fx.uppercut_aura and soap.fx.uppercut_aura.valid)
 					local follow = P_SpawnMobjFromMobj(me,0,0,0,MT_SOAP_FREEZEGFX)
 					follow.tics = -1
@@ -1952,11 +1964,36 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 					{me.x,me.y,me.z},
 					512*me.scale
 				)
-				Soap_Hitlag.addHitlag(me, 14, false)
+				Soap_Hitlag.addHitlag(me, 7, false)
 				uppercutrefresh_vfx(p,me,soap)
 				soap.canuppercut = true
 				P_SetObjectMomZ(me, 5*FU,true)
 				soap.uppercut_spin = $ - ANGLE_90
+			end
+			
+			-- VFX!
+			if (leveltime % 4 == 0)
+				local v = P_SpawnMobjFromMobj(me, 0,0,FixedDiv(me.height,me.scale), MT_SOAP_WALLBUMP)
+				v.nothink = true
+				v.renderflags = $|RF_FULLBRIGHT|RF_FLOORSPRITE|RF_NOSPLATBILLBOARD
+				v.angle = FixedAngle(40 * (leveltime / 4)*FU)
+				v.blendmode = AST_ADD
+				v.color = ColorOpposite(me.color)	
+				v.anglechange = FixedAngle(10*FU + abs(FixedDiv(me.momz, me.scale)/2))
+				v.fuse = 9
+				v.fusefade = v.fuse / 2
+				v.frame = 40|FF_ADD
+				v.momx = me.momx
+				v.momy = me.momy
+				v.momz = me.momz
+				P_SetObjectMomZ(v, -10*FU, true)
+				v.fusescale = {
+					func = "outquad",
+					fuseunder = v.fuse,
+					startscale = v.scale / 2,
+					destscale = v.scale
+				}
+				v.scale = v.fusescale.startscale
 			end
 		else
 			if (me.state == S_PLAY_MELEE
@@ -1970,6 +2007,10 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 				destroy_uppercut_aura(p,me,soap)
 			end
 		end
+		
+		-- higher gravity!
+		local grav = P_GetMobjGravity(me) * 9/10
+		me.momz = $ + grav
 	else
 		if (soap.fx.uppercut_aura and soap.fx.uppercut_aura.valid)
 			destroy_uppercut_aura(p,me,soap)
@@ -1981,7 +2022,8 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 			me.state = (me.momz * soap.gravflip > 0) and S_PLAY_SPRING or S_PLAY_FALL
 		end
 	end
-	soap.just_uppercut = max($-1,0)
+	soap.just_uppercut = max($ - 1,0)
+	soap.nowindvfx = max($ - 1, 0)
 	
 	--cancel r-dash when
 	if not me.health
@@ -2169,7 +2211,8 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 						ease_time = 6,
 						x = -FU * 1/5,
 						y = -FU/4,
-						singular = true
+						singular = true,
+						name = "soap_ramsquish"
 					})
 					Soap_DamageSfx(me, FU*3/4,FU,nil, {volume = 255/2})
 					Soap_StartQuake(20*FU, 19,
@@ -2975,6 +3018,7 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 	
 	Soap_VFX(p,me,soap, {
 		was_pounding = was_pounding,
+		was_uppercutting = was_uppercutting,
 		squishme = squishme,
 	})
 	
@@ -3434,7 +3478,7 @@ local function try_damage_cases(me,thing, p,soap,DealDamage,damagetype)
 		
 		local damage = 1
 		local power = 5*FU + FixedDiv(abs(me.momz),me.scale*3)
-		local hitlag_tics = 10 + ((power/FU) / 5)
+		local hitlag_tics = 8 + ((power/FU) / 5)
 		Soap_ImpactVFX(thing, me, nil,FixedDiv(power,35*FU),nil,nil,vfxdmgt)
 		Soap_DamageSfx(thing, power, 35*FU, damagetype)
 		
@@ -3512,7 +3556,7 @@ local function try_damage_cases(me,thing, p,soap,DealDamage,damagetype)
 		soap.uppercut_spin = soap_baseuppercutturn
 		soap.canuppercut = true
 		
-		local power = 5*FU + FixedDiv(FixedHypot(FixedHypot(me.momx,me.momy)*3/4, me.momz), me.scale)
+		local power = 5*FU + FixedDiv(FixedHypot(FixedHypot(me.momx,me.momy), me.momz)*3/4, me.scale)
 		Soap_ImpactVFX(thing,me, nil,FixedDiv(power,35*FU),nil,nil,vfxdmgt)
 		Soap_DamageSfx(thing, power, 35*FU, damagetype)
 		
@@ -3587,7 +3631,8 @@ local function try_damage_cases(me,thing, p,soap,DealDamage,damagetype)
 				ease_time = 6,
 				x = -FU * 1/5,
 				y = -FU/4,
-				singular = true
+				singular = true,
+				name = "soap_ramsquish"
 			})
 			Soap_ZLaunch(me, 7*FU + FU/2)
 			hitlag_tics = $ * 3/2
@@ -3612,7 +3657,8 @@ local function try_damage_cases(me,thing, p,soap,DealDamage,damagetype)
 				ease_time = 6,
 				x = FU * 1/5,
 				y = FU/4,
-				singular = true
+				singular = true,
+				name = "soap_ramsquish"
 			})
 		end
 		

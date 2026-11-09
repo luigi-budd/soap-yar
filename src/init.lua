@@ -1,10 +1,4 @@
 local mbrelease = dofile("Vars/mbrelease.lua")
---who even is this guy anyways
-local not_in_mb = {
-	--["character/LUA_takisinit.lua"] = true,
-	--["character/LUA_takisfunc.lua"] = true,
-	--["character/LUA_takis.lua"] = true,
-}
 
 rawset(_G,"MENULIB_ROOT","Libs/Menulib/")
 dofile(MENULIB_ROOT .. "exec.lua")
@@ -57,9 +51,6 @@ end
 
 local filesrangood = true
 for k,file in ipairs(filetree)
-	if mbrelease and not_in_mb[file] ~= nil
-		continue
-	end
 	local status,result = pcall(strapper,file)
 	if not status
 		filesrangood = false
@@ -98,10 +89,3 @@ print("\x89Made with love - EpixGamer21")
 COM_AddCommand("soap_compdata",function(p)
 	Soap_PrintCompInfo(p)
 end)
-
-/*
-	CREDITS:
-	
-	- CoolThok (@tetract_) : Giving me their funny death sound lul ("sfx_sp_kco")
-	- Paper Peelout : Peelout sprites
-*/

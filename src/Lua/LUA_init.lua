@@ -2,6 +2,8 @@
 	Credits:
 	- GLideKS : let me use all the effects in the 'NWF_Winds/' folder lol
 	- SuperColors Revamp: "Toxin" skincolor lifted from here
+	- CoolThok (@tetract_) : Giving me their funny death sound lul ("sfx_sp_kco")
+	- Paper Peelout : Peelout sprites
 */
 /*
 	Collaborators:
@@ -25,7 +27,7 @@ rawset(_G,"Soap_EnumFlags",function(prefix,enums)
 	end
 end)
 
-rawset(_G, "ORIG_FRICTION", (232 << (FRACBITS-8))) --this should really be exposed...
+rawset(_G, "ORIG_FRICTION", (232 << (FRACBITS-8)))
 
 --srb2 edit flags
 rawset(_G, "MFE_NOPITCHROLLEASING", MFE_NOPITCHROLLEASING or (1<<14))
@@ -173,6 +175,7 @@ rawset(_G, "Soap_InitTable", function(p)
 		canuppercut = false,
 		uppercutted = false,
 		uppercut_tc = false,
+		nowindvfx = 0,
 		
 		--spinning top
 		toptics = 0,
@@ -363,6 +366,9 @@ rawset(_G, "Soap_InitTable", function(p)
 		canceltime = 0,
 		lastbumper = 0, -- for nights clutches
 		nadotime = 0,
+		-- honestly this should be in the clutch table since
+		-- its for clutch skidding
+		skidframe = 0,
 	}
 	
 	CONS_Printf(p,"\x82Soap_InitTable(): Success!")

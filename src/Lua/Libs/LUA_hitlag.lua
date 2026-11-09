@@ -20,8 +20,7 @@ hl.stunned = {}
 local hlt_pv = {MIN = 0, /*off*/ MAX = 9001} --its over 9
 hl.cv_hitlagtics = CV_RegisterVar({
 	name = "soap_maxhitlagtics",
-	--too early to use TR i guess
-	defaultvalue = tostring(TICRATE),
+	defaultvalue = "24",
 	flags = CV_NETVAR|CV_SHOWMODIF,
 	PossibleValue = hlt_pv
 })

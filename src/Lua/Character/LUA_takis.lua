@@ -118,7 +118,8 @@ local function generic_slingshot(p,me,takis, stop_ang)
 			ease_time = 6,
 			x = -FU * 3/5,
 			y = -FU/3,
-			singular = true
+			singular = true,
+			name = "soap_ramsquish"
 		})
 		
 		if not (takis.fx.dash_aura and takis.fx.dash_aura.valid)
@@ -794,7 +795,6 @@ Takis_Hook.addHook("Takis_Thinker",function(p)
 				ease_time = 10,
 				x = -FU * 1/5,
 				y = -FU/4,
-				singular = true
 			})
 			--P_SetObjectMomZ(me,-9*FU)
 		end
@@ -2157,7 +2157,7 @@ local function try_pvp_collide(me,thing)
 				soap.clutch.misfire = CLUTCH_MISFIRE
 			end
 		end
-		Soap_ImpactVFX(thing,me, nil,FixedDiv(power,60*FU),nil,nil, (shield == SH_ARMAGEDDON) and DMG_NUKE or damagetype)
+		Soap_ImpactVFX(thing,me, nil,FixedDiv(power,100*FU),nil,nil, (shield == SH_ARMAGEDDON) and DMG_NUKE or damagetype)
 		
 		if (thing and thing.valid and thing.type == MT_ROLLOUTROCK)
 			hitlag_tics = $ / 2

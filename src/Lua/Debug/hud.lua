@@ -372,10 +372,28 @@ addHook("HUD",function(v,p)
 				tinyrad/FU, 28|flags
 			)
 		end
+		local ang = 0
+		rad = $ - 2*FU
+		
+		ang = InvAngle(FixedAngle(180*FU + 180*FixedDiv(p.normalspeed, speedcap)))
+		drawLine(v, 
+			x+FixedMul((rad - tinyrad), cos(ang)),
+			y-FixedMul((rad - tinyrad), sin(ang)),
+			2, ang,
+			3, 73|flags
+		)
+		ang = InvAngle(FixedAngle(180*FU + 180*FixedDiv(p.runspeed, speedcap)))
+		drawLine(v, 
+			x+FixedMul((rad - tinyrad), cos(ang)),
+			y-FixedMul((rad - tinyrad), sin(ang)),
+			2, ang,
+			3, 66|flags
+		)
+		
 		v.drawString(x+FU,y - (rad + 10*FU), "100", flags, "thin-fixed-center")
 		v.drawString(x+FU+rad+3*FU,y - 3*FU, "200", flags, "thin-fixed")
 		
-		local ang = InvAngle(FixedAngle(180*FU + 180*FixedDiv(speed, speedcap)))
+		ang = InvAngle(FixedAngle(180*FU + 180*FixedDiv(speed, speedcap)))
 		drawLine(v, x, y, 3, ang,
 			rad/FU, 26|flags
 		)

@@ -1076,13 +1076,13 @@ CMDConstructor("hitlag", {prefix = SOAP_DEVPREFIX, func = function(p,...)
 	local args = {...}
 	local node = args[1]
 	if node == nil
-		prn(p, "hitlag <name/node> <tics> <damaged> <allowdamage>: Gives someone hitlag for a certain amount of tics.")
+		prn(p, "hitlag <name/node> <tics> <bool damaged> <bool allowdamage>: Gives someone hitlag for a certain amount of tics.")
 		return
 	end
 	
 	local tics = abs( tonumber(args[2] or "") or 0 )
-	local fromdamage = args[3]
-	local allowdamage = args[4]
+	local fromdamage = args[3] or ""
+	local allowdamage = args[4] or ""
 	local p2 = GetPlayer(p,node)
 	if p2
 		local mo = p2.realmo
@@ -1091,7 +1091,7 @@ CMDConstructor("hitlag", {prefix = SOAP_DEVPREFIX, func = function(p,...)
 			return
 		end
 		
-		Soap_Hitlag.addHitlag(mo, tics, fromdamage, allowdamage)
+		Soap_Hitlag.addHitlag(mo, tics, fromdamage:sub(1,1) == "t", allowdamage:sub(1,1) == "t")
 	end	
 end, unsafe = true})
 
