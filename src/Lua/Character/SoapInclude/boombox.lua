@@ -237,9 +237,12 @@ states[S_SOAP_BOOMBOX] = {
 		mo.lifetime = $ + 1
 		
 		do
+			if P_IsObjectOnGround(me)
+				mo.extravalue1 = P_Lerp(FU/3, $, me.player.drawangle)
+			end
 			local mypos = Vec3.MobjPosToVec(mo)
 			local destpos = Vec3.Sub(
-				Vec3.MobjPosToVec(me), Vec3.Mul(Vec3.SphereToCartesian(me.player.drawangle + ANGLE_45, 0), (60*me.scale))
+				Vec3.MobjPosToVec(me), Vec3.Mul(Vec3.SphereToCartesian(mo.extravalue1 + ANGLE_45, 0), (60*me.scale))
 			)
 			
 			local displacement = Vec3.Sub(destpos, mypos)
@@ -328,7 +331,7 @@ mobjinfo[MT_SOAP_BOOMBOX] = {
 	height = 28*FRACUNIT,
 	radius = 14*FRACUNIT,
 	flags = MF_NOCLIPTHING|MF_SLIDEME,
-	painchance = FU, --FU / 6 -- special tune chance
+	painchance = FU / 6 -- special tune chance
 }
 addHook("ShouldDamage",function(mo,_,_,_,dmgt)
 	if dmgt == DMG_DEATHPIT
@@ -336,6 +339,7 @@ addHook("ShouldDamage",function(mo,_,_,_,dmgt)
 	end
 end,MT_SOAP_BOOMBOX)
 
+-- maybe this attenuation system could be reused for taunt audios?
 local voleasing = 15
 addHook("ThinkFrame",do
 	if not (displayplayer and displayplayer.valid) then return end

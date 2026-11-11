@@ -1105,6 +1105,7 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 			boom.color = p.skincolor
 			boom.tracer = me
 			boom.lifetime = 0
+			boom.extravalue1 = p.drawangle
 			S_StartSoundAtVolume(me,sfx_sp_jm2, 255 * 8/10)
 			boom.songid = 1
 			if P_RandomChance(boom.info.painchance)
