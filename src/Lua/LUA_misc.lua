@@ -105,6 +105,45 @@ addHook("MobjThinker",function(bump)
 			bump.eflags = $ &~MFE_VERTICALFLIP
 		end
 	end
+	if (bump.gravitymul ~= nil)
+		local frac = bump.gravitymul - FU
+		bump.momz = $ + FixedMul(P_GetMobjGravity(bump), frac)
+	end
+	if (bump.squishme)
+		local xscale = bump.basexscale or FU
+		local yscale = bump.baseyscale or FU
+		local momz = bump.momz
+		
+		if abs(momz) >= FixedMul(bump.squishstart, bump.scale)
+			local mom = FixedDiv(abs(momz), bump.scale) - bump.squishstart
+			mom = $ / 50
+			mom = -min($, FU*4/5)
+			xscale = $ + mom
+			yscale = $ - (mom*9/10)
+		end
+		bump.spritexscale = xscale
+		bump.spriteyscale = yscale
+	end
+	if (bump.bounceme)
+		if P_IsObjectOnGround(bump) and bump.lastmomz ~= nil
+			bump.momz = -FixedMul(bump.lastmomz, bump.bouncemul or FU * 3/4)
+		end
+		
+		bump.lastmomz = bump.momz
+	end
+	if (bump.fusespritescale ~= nil)
+		local data = bump.fusespritescale
+		local x = data.x
+		local y = data.y
+		if x ~= nil and bump.fuse < x.fuseunder
+			local frac = FU / x.fuseunder
+			bump.spritexscale = ease[x.func](FU - (frac*bump.fuse), x.startscale, x.destscale)
+		end
+		if y ~= nil and bump.fuse < y.fuseunder
+			local frac = FU / y.fuseunder
+			bump.spriteyscale = ease[y.func](FU - (frac*bump.fuse), y.startscale, y.destscale)
+		end
+	end
 	
 	-- lol
 	if CV.rotations.value

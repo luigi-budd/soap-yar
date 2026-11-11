@@ -1077,7 +1077,12 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 		if incre_frame
 			soap.breakdance = $ + 1
 		end
-		soap.true_breakdance = $ + 1
+		
+		if ((soap.weaponnext and soap.weaponprev) or (soap.taunt.num == 4))
+			soap.true_breakdance = $ + 1
+		else
+			soap.true_breakdance = 0
+		end
 		
 		if soap.true_breakdance == TR * 3/2
 		and not p.exiting
