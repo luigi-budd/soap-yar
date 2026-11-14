@@ -3480,23 +3480,31 @@ local function try_damage_cases(me,thing, p,soap,DealDamage,damagetype)
 			return false
 		end
 		
-		if DealDamage(thing, me,me, damage, damagetype) == false and checkforundamage then return false; end
-		
 		local damage = 1
 		local power = 5*FU + FixedDiv(abs(me.momz),me.scale*3)
+		local canspike = (FixedDiv(power, 35*FU) >= FU/2)
+		if canspike
+			local work = FixedDiv(power, 35*FU) - FU/2
+			-- I KNOWWWW IM DOING THIS TWICE
+			repeat
+				damage = $ + 2
+				work = $ - FU/4
+			until (work <= 0)
+		end
+		if DealDamage(thing, me,me, damage, damagetype) == false and checkforundamage then return false; end
+		
 		local hitlag_tics = 8 + ((power/FU) / 5)
 		Soap_ImpactVFX(thing, me, nil,FixedDiv(power,35*FU),nil,nil,vfxdmgt)
 		Soap_DamageSfx(thing, power, 35*FU, damagetype)
 		
 		-- spike!
 		local halftic = hitlag_tics/2
-		if (FixedDiv(power, 35*FU) >= FU/2)
+		if canspike
 			S_StartSound(me,sfx_sp_dm4)
 			local work = FixedDiv(power, 35*FU) - FU/2
 			repeat
 				Soap_ImpactVFX(thing,me, FU + work*7, FU + work/2,nil,nil,vfxdmgt)
 				work = $ - FU/4
-				damage = $ + 2
 			until (work <= 0)
 			
 			local rad = FixedDiv(me.radius, me.scale)

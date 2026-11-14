@@ -50,6 +50,8 @@ rawset(_G,"SafeFreeslot",function(...)
 			else
 				freeslot(item)
 			end
+		elseif single
+			returning = rawget(_G, item)
 		end
 	end
 	return returning
