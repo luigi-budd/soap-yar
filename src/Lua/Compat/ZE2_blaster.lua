@@ -581,7 +581,7 @@ local function P_ClosestPointOnLine3D(p, lstart, lend)
 	local c = Vec3.Sub(p, lstart)
 	
 	d = R_PointTo3DDist(lstart.x,lstart.y,lstart.z, lend.x,lend.y,lend.z)
-	if d <= 0 then return lstart end
+	if d <= 0 then return lstart, 0, 0; end
 	
 	local n = Vec3.Div(Vec3.New(V.x, V.y, V.z), d)
 	t = Vec3.Dot(n, c)
