@@ -1714,7 +1714,7 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 			soap.uppercut_spin = soap_baseuppercutturn
 			soap.lunge.lockout = 0
 			
-			local bonus = 7*FU
+			local bonus = 9*FU + FU/2
 			local thrust = soap.nerfed and 10*FU or 13*FU
 			local shield = p.powers[pw_shield] & SH_NOSTACK
 			if (shield == SH_WHIRLWIND)
