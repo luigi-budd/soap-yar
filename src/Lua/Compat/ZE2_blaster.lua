@@ -837,6 +837,7 @@ local crosshairwasdisabled = false
 addHook("HUD",function(v,p,cam)
 	if crosshairwasdisabled
 		hud.enable("crosshair")
+		crosshairwasdisabled = false
 	end
 	
 	local inze2 = (gametype == GT_ZE2 or (ZE2 and ZE2.isGametype()))
@@ -852,7 +853,7 @@ addHook("HUD",function(v,p,cam)
 	end
 	
 	local me = p.realmo
-	if not (me and me.valid) then return end
+	if not (me and me.valid and me.health) then return end
 	local skin = me.skin
 	local hand = xS:hand()
 	local selection = xS.slot
