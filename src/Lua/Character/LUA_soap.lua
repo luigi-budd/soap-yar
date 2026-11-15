@@ -1629,6 +1629,9 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 				end
 			end
 			
+			Soap_SquashMacro(p, {ease_func = "outsine", ease_time = 12, x = FU*7/10, y = FU*3/10})
+			Soap_RemoveSquash(p, "jumpeffect")
+			
 			if soap.airdashcharge == 0
 				S_StartSound(me,sfx_sp_dss)
 			else
