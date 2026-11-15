@@ -561,9 +561,7 @@ Takis_Hook.addHook("Takis_Thinker",function(p)
 	local wasafterimaging = soap.afterimage
 	soap.afterimage = false
 	p.powers[pw_strong] = $ &~(STR_SPIKE)
-	if (me.soap_supervfx)
-		me.soap_supervfx = nil
-	end
+	me.soap_supervfx = soap.doSuperBuffs
 	
 	--TODO: move this skid block somewhere else?
 	if (p.skidtime)
