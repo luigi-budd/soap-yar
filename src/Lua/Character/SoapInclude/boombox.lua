@@ -237,6 +237,8 @@ states[S_SOAP_BOOMBOX] = {
 		mo.lifetime = $ + 1
 		
 		do
+			-- TODO: boomboxes can lose track of you
+			--		 if you like teleport or something
 			if P_IsObjectOnGround(me)
 				mo.extravalue1 = P_Lerp(FU/3, $, me.player.drawangle)
 			end

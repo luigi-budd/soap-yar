@@ -48,6 +48,7 @@ addHook("MobjThinker",function(wind)
 	end
 end,MT_SOAP_SPEEDLINE)
 
+local BLANKOFFSET = {x = 0, y = 0, z = 0}
 addHook("MobjThinker",function(bump)
 	if not (bump and bump.valid) then return end
 	local me = bump.target
@@ -91,13 +92,21 @@ addHook("MobjThinker",function(bump)
 		local s = bump.fusescale
 		if bump.fuse < s.fuseunder
 			local frac = FU/s.fuseunder
-			local scalefrac = ease[s.func](FU - (frac*bump.fuse), s.startscale, s.destscale)
+			local scalefrac = ease[s.func](FU - (frac*bump.fuse), s.startscale, s.destscale, s.backparam)
 			P_SetScale(bump, scalefrac, false)
 		end
 	end
 	if (bump.followthis and bump.followthis.valid)
 		local me = bump.followthis
-		P_MoveOrigin(bump, me.x,me.y,me.z)
+		local offset = bump.offsets or BLANKOFFSET
+		if bump.followrelative and not (bump.reloffsets)
+			bump.reloffsets = {x = bump.x - me.x, y = bump.y - me.y, z = bump.z - me.z}
+		end
+		local reloff = bump.reloffsets or BLANKOFFSET
+		
+		P_MoveOrigin(bump,
+			me.x + offset.x + reloff.x, me.y + offset.y + reloff.y, me.z + offset.z + reloff.z
+		)
 		if (P_MobjFlip(me) == -1)
 			bump.z = me.z + me.height - bump.height
 			bump.eflags = $|MFE_VERTICALFLIP
@@ -137,11 +146,11 @@ addHook("MobjThinker",function(bump)
 		local y = data.y
 		if x ~= nil and bump.fuse < x.fuseunder
 			local frac = FU / x.fuseunder
-			bump.spritexscale = ease[x.func](FU - (frac*bump.fuse), x.startscale, x.destscale)
+			bump.spritexscale = ease[x.func](FU - (frac*bump.fuse), x.startscale, x.destscale, x.backparam)
 		end
 		if y ~= nil and bump.fuse < y.fuseunder
 			local frac = FU / y.fuseunder
-			bump.spriteyscale = ease[y.func](FU - (frac*bump.fuse), y.startscale, y.destscale)
+			bump.spriteyscale = ease[y.func](FU - (frac*bump.fuse), y.startscale, y.destscale, y.backparam)
 		end
 	end
 	
