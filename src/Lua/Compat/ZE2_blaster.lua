@@ -440,11 +440,11 @@ xSlinger.registerItem("blaster", {
 	
 	alt_shot_radius = 28*FU,
 	
-	alt_inner_radius = FixedMul(tofixed("2.175"), Paint.DU2FU),
-	alt_inner_knockback = 90*FU,
+	alt_inner_radius = FixedMul(tofixed("3.175"), Paint.DU2FU),
+	alt_inner_knockback = 110*FU,
 	alt_inner_damage = 70,
 	alt_outer_radius = FixedMul(tofixed("4.287"), Paint.DU2FU),
-	alt_outer_knockback = 48*FU,
+	alt_outer_knockback = 58*FU,
 	alt_outer_damage = 50,
 	
 	alternate = false,
@@ -485,6 +485,7 @@ xSlinger.registerItem("blaster", {
 		
 		local grow = self:get("grow", skin)
 		local ammo = min(self:get("ammo", skin), 3)
+		if (xS.reload) then ammo = 0; end
 		view.spritexscale = $ + (grow * FU/28)
 		view.spriteyscale = view.spritexscale
 		view.extravalue1 = (3 - ammo)
@@ -494,6 +495,8 @@ xSlinger.registerItem("blaster", {
 		end
 	end;
 	usefunc = function(self, me)
+		if (me.player.ze2.crouching and P_IsObjectOnGround(me)) then return true end
+		
 		local skin = me.skin
 		local alt = self:get("alternate", skin)
 		S_StartSound(me, alt and sfx_p_s3_5 or sfx_p_s3_2)
@@ -564,6 +567,8 @@ xSlinger.registerItem("blaster", {
 		shot.radius = radius
 		shot.height = radius * 2
 		
+		P_TryMove(shot, shot.x + me.momx, shot.y + me.momy, true)
+		shot.z = clamp(shot.floorz, $ + me.momz, shot.ceilingz - shot.height)
 		shot.forceknockback = self:get(prefix.."knockback", skin)
 		shot.isMissile = true
 	end;
@@ -866,8 +871,9 @@ addHook("HUD",function(v,p,cam)
 	local color = v.getColormap(TC_DEFAULT, p.skincolor)
 	local scale = FU/4
 	scale = P_Lerp(altfrac, $, $ * 2)
-	local opaque = (xS.reload) and V_50TRANS or 0
-	local transparent = (xS.reload) and V_80TRANS or V_10TRANS
+	local crouching = (p.ze2.crouching and P_IsObjectOnGround(me))
+	local opaque = (xS.reload or crouching) and V_50TRANS or 0
+	local transparent = (xS.reload or crouching) and V_80TRANS or V_20TRANS
 	
 	v.dointerp(true)
 	v.drawScaled(r.x, r.y, scale, v.cachePatch("PAINT_CR_BASE"), transparent)
