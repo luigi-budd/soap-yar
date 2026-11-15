@@ -45,6 +45,7 @@ end, MT_FANG)
 
 -- bruh...
 Takis_Hook.addHook("CanFlingThing",function(mo, p)
+	if (mo.movedir >= 3) then return end -- not in cage
 	if not mo.reactiontime then return false; end
 end, MT_EGGMOBILE4)
 
