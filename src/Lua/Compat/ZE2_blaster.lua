@@ -401,7 +401,7 @@ xSlinger.registerItem("blaster", {
 	};
     animation_time = TR * 4/3;
 	
-	knockback = 60*FU;
+	knockback = 75*FU;
 	alt_knockback = 116*FRACUNIT;
 	knockback_time = 40;
 	
