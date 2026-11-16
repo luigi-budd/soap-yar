@@ -27,5 +27,5 @@ dsaltow4 = dsslip
 dsaltdi4 = dshlds
 dsaltdi3 = dssp_di2
 
-normalspeed = 25
+normalspeed = 23
 runspeed = 45

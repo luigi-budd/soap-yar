@@ -59,7 +59,8 @@ tauntinfo.think = function(p, me, soap, taunt)
 			dontplay = (p ~= consoleplayer)
 		-- on
 		elseif (displayplayer and displayplayer.valid)
-			local imtaunting = displayplayer.soaptable.taunt.num == 7 and (skins[displayplayer.skin].name == SOAP_SKIN)
+			local thisnum = (skins[displayplayer.skin].name == SOAP_SKIN) and 7 or 6
+			local imtaunting = displayplayer.soaptable.taunt.num == thisnum
 			-- if everyones taunt audio is on for us,
 			-- make other taunt volumes a little quieter
 			-- if we're also using the same taunt

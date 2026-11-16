@@ -138,7 +138,7 @@ states[S_MOLOTOV_DEATH] = {SPR_NULL, A, 1, function(mo) -- Explode within a radi
 	-- this is a bit of hacky hack,
 	-- we set forcedamage here as a workaround for xslinger, making sure
 	-- the blast damage will do 30 instead of the item's config damage
-	mo.forcedamage = 50
+	mo.forcedamage = mo.explodedamage
 	
 	searchBlockmap("objects", function(mo, foundmobj)
 		if not (foundmobj.health) then return end
@@ -274,6 +274,8 @@ states[S_MOLOTOV_DEATH] = {SPR_NULL, A, 1, function(mo) -- Explode within a radi
 	end
 end, 0, 0, S_NULL}
 
+-- not fire_time!
+local burning_additive = 10
 local burning_info = {
 	normalspeed_multiplier = FU*3/10,
 	actionspd_multiplier = 3*FU/2,
@@ -289,14 +291,19 @@ local function Helper_FireSearch(m, found)
 	if (dist > fire_radius + found.radius) then return end
 	if not ZE2.ZCollide(m, found) then return end
 	
-	local foundeffect = SoapZ_Effect.Find(found, "burning")
-	if #foundeffect then return end
+	local effects = SoapZ_Effect.Find(found, "burning")
+	local numeffects = #effects
+	local curduration = 0
+	for i = 1, numeffects
+		local effect = effects[i]
+		curduration = $ + effect.fuse
+	end
 	
-	if found.player
+	if found.player and curduration <= 0
 		S_StartSound(found, sfx_zm_fs, found.player)
 	end
-	-- Soap_ImpactVFX(found, m, FU*3/2, FU / 2, false, false, DMG_FIRE)
-	SoapZ_Effect.Give(found, "burning", burning_info, fire_time, false)
+	
+	SoapZ_Effect.Give(found, "burning", burning_info, burning_additive, true)
 	found.flameringtarget = m.target -- seems like a hacky fix but alright!
 end
 
@@ -524,11 +531,14 @@ xSlinger.registerItem("molotov", {
 	missile = "MOLOTOV";
     firerate = 28*TR;
 	damage = 30;
+	explodedamage = 50;
 	droppable = true;
 
 	skin_override = {
 		[TAKIS_SKIN] = {
 			firerate = 16*TR;
+			damage = 45;
+			explodedamage = 60;
 		}
 	};
 	
@@ -540,12 +550,15 @@ xSlinger.registerItem("molotov", {
 		S_StartSound(me,sfx_kc5b)
 		S_StartSound(me,sfx_s3k51)
 	end;
+	missile_spawn = function(self, me, missile)
+		missile.explodedamage = self:get("explodedamage", me.skin)
+	end;
 })
 ZE2.Shop.listItem("molotov", 600)
 
 Takis_Hook.addHook("PostThinkFrame", function(p)
 	local me = p.mo
-	if not (me and me.valid) then return end
+	if not (me and me.valid and me.health) then return end
 	
 	if not p["xSlinger[]"] then return end
 	

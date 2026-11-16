@@ -20,8 +20,7 @@ hl.stunned = {}
 local hlt_pv = {MIN = 0, /*off*/ MAX = 9001} --its over 9
 hl.cv_hitlagtics = CV_RegisterVar({
 	name = "soap_maxhitlagtics",
-	--too early to use TR i guess
-	defaultvalue = tostring(TICRATE),
+	defaultvalue = "24",
 	flags = CV_NETVAR|CV_SHOWMODIF,
 	PossibleValue = hlt_pv
 })
@@ -133,6 +132,7 @@ hl.iterateHitlagged = function()
 			mo.spritexoffset = 0
 			mo.spriteyoffset = 0
 			mo.renderflags = $ &~RF_ALWAYSONTOP
+			mo.dispoffset = v[13]
 			mo.hitlagfromdmg = false
 			mo.translation = mo.hldata_hl_lasttransl and mo.hldata_hl_lasttransl.tr or nil
 			mo.hldata_hl_lastflags = nil
@@ -390,11 +390,13 @@ hl.iterateHitlaggedPostThink = function()
 			mo.spritexoffset = xoffset
 			mo.spriteyoffset = yoffset
 			mo.translation = hl.hitlagTranslation
+			mo.dispoffset = v[13]
 			
 			if (mo.player and mo.player.valid)
 			and (displayplayer and displayplayer.valid)
 			and (mo.player == displayplayer)
 				mo.renderflags = $|RF_ALWAYSONTOP
+				mo.dispoffset = 200
 			else
 				mo.renderflags = $ &~RF_ALWAYSONTOP
 			end
@@ -491,6 +493,7 @@ hl.addHitlag = function(
 		mo.state, mo.sprite, mo.frame, mo.sprite2, mo.momx,mo.momy, -- indexes 9 and 10 are saved for old momx/y
 		(mo.player and mo.player.valid) and (mo.player.pflags & PF_SPINNING) or 0, --save PF_SPINNING
 		(mo.player and mo.player.valid) and P_PlayerInPain(mo.player),
+		mo.dispoffset
 	})
 	hl.numhitlagged = $ + 1
 end

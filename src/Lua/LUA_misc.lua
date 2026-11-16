@@ -48,6 +48,7 @@ addHook("MobjThinker",function(wind)
 	end
 end,MT_SOAP_SPEEDLINE)
 
+local BLANKOFFSET = {x = 0, y = 0, z = 0}
 addHook("MobjThinker",function(bump)
 	if not (bump and bump.valid) then return end
 	local me = bump.target
@@ -97,12 +98,59 @@ addHook("MobjThinker",function(bump)
 	end
 	if (bump.followthis and bump.followthis.valid)
 		local me = bump.followthis
-		P_MoveOrigin(bump, me.x,me.y,me.z)
+		local offset = bump.offsets or BLANKOFFSET
+		if bump.followrelative and not (bump.reloffsets)
+			bump.reloffsets = {x = bump.x - me.x, y = bump.y - me.y, z = bump.z - me.z}
+		end
+		local reloff = bump.reloffsets or BLANKOFFSET
+		
+		P_MoveOrigin(bump,
+			me.x + offset.x + reloff.x, me.y + offset.y + reloff.y, me.z + offset.z + reloff.z
+		)
 		if (P_MobjFlip(me) == -1)
 			bump.z = me.z + me.height - bump.height
 			bump.eflags = $|MFE_VERTICALFLIP
 		else
 			bump.eflags = $ &~MFE_VERTICALFLIP
+		end
+	end
+	if (bump.gravitymul ~= nil)
+		local frac = bump.gravitymul - FU
+		bump.momz = $ + FixedMul(P_GetMobjGravity(bump), frac)
+	end
+	if (bump.squishme)
+		local xscale = bump.basexscale or FU
+		local yscale = bump.baseyscale or FU
+		local momz = bump.momz
+		
+		if abs(momz) >= FixedMul(bump.squishstart, bump.scale)
+			local mom = FixedDiv(abs(momz), bump.scale) - bump.squishstart
+			mom = $ / 50
+			mom = -min($, FU*4/5)
+			xscale = $ + mom
+			yscale = $ - (mom*9/10)
+		end
+		bump.spritexscale = xscale
+		bump.spriteyscale = yscale
+	end
+	if (bump.bounceme)
+		if P_IsObjectOnGround(bump) and bump.lastmomz ~= nil
+			bump.momz = -FixedMul(bump.lastmomz, bump.bouncemul or FU * 3/4)
+		end
+		
+		bump.lastmomz = bump.momz
+	end
+	if (bump.fusespritescale ~= nil)
+		local data = bump.fusespritescale
+		local x = data.x
+		local y = data.y
+		if x ~= nil and bump.fuse < x.fuseunder
+			local frac = FU / x.fuseunder
+			bump.spritexscale = ease[x.func](FU - (frac*bump.fuse), x.startscale, x.destscale, x.backparam)
+		end
+		if y ~= nil and bump.fuse < y.fuseunder
+			local frac = FU / y.fuseunder
+			bump.spriteyscale = ease[y.func](FU - (frac*bump.fuse), y.startscale, y.destscale, y.backparam)
 		end
 	end
 	

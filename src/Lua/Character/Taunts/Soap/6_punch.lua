@@ -110,8 +110,8 @@ tauntinfo.think = function(p, me, soap, taunt)
 					Soap_SpawnBumpSparks(found, me, nil,false, found.scale * 3/2, true)
 					Soap_DamageSfx(found, 25*FU, 30*me.scale)
 					P_DamageMobj(found,me,me, damage)
-					Soap_Hitlag.addHitlag(found, 12, true)
-					Soap_Hitlag.addHitlag(me, 12, false)
+					Soap_Hitlag.addHitlag(found, 7, true)
+					Soap_Hitlag.addHitlag(me, 7, false)
 					Soap_StartQuake(10*FU, 12, {me.x, me.y, me.z}, 512*me.scale)
 					
 					enemyhit = true

@@ -407,7 +407,8 @@ local function WrestlePhase(p,me,soap,taunt,arms)
 			ease_time = 2,
 			x = FU/13,
 			y = FU/15,
-			singular = true
+			singular = true,
+			name = "soap_armwrestlesquish"
 		})
 		
 		if arms.progress < arms2.progress

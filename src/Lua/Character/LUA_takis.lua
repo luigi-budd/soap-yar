@@ -112,13 +112,15 @@ local function generic_slingshot(p,me,takis, stop_ang)
 		takis.clutch.misfire = CLUTCH_MISFIRE
 		takis.frictionfreeze = $ + TR/2
 		takis.clutch.slinglag = true
+		takis.dived = false
 		
 		Soap_SquashMacro(p, {
 			ease_func = "inexpo",
 			ease_time = 6,
 			x = -FU * 3/5,
 			y = -FU/3,
-			singular = true
+			singular = true,
+			name = "soap_ramsquish"
 		})
 		
 		if not (takis.fx.dash_aura and takis.fx.dash_aura.valid)
@@ -559,9 +561,7 @@ Takis_Hook.addHook("Takis_Thinker",function(p)
 	local wasafterimaging = soap.afterimage
 	soap.afterimage = false
 	p.powers[pw_strong] = $ &~(STR_SPIKE)
-	if (me.soap_supervfx)
-		me.soap_supervfx = nil
-	end
+	me.soap_supervfx = soap.doSuperBuffs
 	
 	--TODO: move this skid block somewhere else?
 	if (p.skidtime)
@@ -794,7 +794,6 @@ Takis_Hook.addHook("Takis_Thinker",function(p)
 				ease_time = 10,
 				x = -FU * 1/5,
 				y = -FU/4,
-				singular = true
 			})
 			--P_SetObjectMomZ(me,-9*FU)
 		end
@@ -858,11 +857,11 @@ Takis_Hook.addHook("Takis_Thinker",function(p)
 			P_InstaThrust(me,ang,FixedMul(speed,me.scale))
 			
 			local momz = FixedDiv(me.momz,me.scale)*soap.gravflip
-			local thrust = min((momz/2)+7*FU,18*FU)
+			local thrust = min((momz * 3/5) + 8*FU, 20*FU)
 			if (me.momz*soap.gravflip < 0)
 				me.momz = -($ / 2)
 			end
-			Soap_ZLaunch(me,thrust)
+			Soap_ZLaunch(me,thrust * 3/2)
 			
 			p.drawangle = ang
 			local vertang = R_PointToAngle2(0, 0, FixedHypot(me.momx, me.momy), me.momz)
@@ -1387,6 +1386,7 @@ Takis_Hook.addHook("Takis_Thinker",function(p)
 			ninjabelt_vfx(p,me,soap, NINJA_RING)
 		end
 		soap.setrolltrol = true
+		me.momz = $ + P_GetMobjGravity(me) * 8/10
 		
 		-- jump out of a dive / cancel a dive
 		if (soap.jump == 1 or soap.c1 == 1)
@@ -2251,7 +2251,7 @@ local function try_pvp_collide(me,thing)
 				soap.clutch.misfire = CLUTCH_MISFIRE
 			end
 		end
-		Soap_ImpactVFX(thing,me, nil,FixedDiv(power,60*FU),nil,nil, (shield == SH_ARMAGEDDON) and DMG_NUKE or damagetype)
+		Soap_ImpactVFX(thing,me, nil,FixedDiv(power,100*FU),nil,nil, (shield == SH_ARMAGEDDON) and DMG_NUKE or damagetype)
 		
 		if (thing and thing.valid and thing.type == MT_ROLLOUTROCK)
 			hitlag_tics = $ / 2

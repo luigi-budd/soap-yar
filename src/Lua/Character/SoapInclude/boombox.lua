@@ -47,6 +47,22 @@ sfxinfo[sfx_sp_mcj] = {
 }
 
 local S_CLIPPING_DIST = (1536*FU)
+local function GetClipperMul(sfxnum)
+	local frac = FU
+	local my_sfx_t = sfxinfo[sfxnum]
+	
+	if (my_sfx_t.flags & SF_X8AWAYSOUND)
+		frac = FixedDiv($, 8*FU)
+	end
+	if (my_sfx_t.flags & SF_X4AWAYSOUND)
+		frac = FixedDiv($, 4*FU)
+	end
+	if (my_sfx_t.flags & SF_X2AWAYSOUND)
+		frac = FixedDiv($, 2*FU)
+	end
+	return frac
+end
+
 local set_musvol = false
 local this_musvol = 100
 local listening_boombox, prev_listbox
@@ -156,7 +172,32 @@ for k,v in ipairs(SOAP_BOOMBOXJAMS)
 	v.crochet = Soap_MakeJamCrochet(v.bpm)
 end
 
-local damping = 6
+local function Vec3_SafePos(v, mo, absolute)
+	local destx = v.x
+	local desty = v.y
+	local destz = v.z
+	if not absolute then
+		destx = $ + mo.x
+		desty = $ + mo.y
+		destz = $ + mo.z
+	end
+	
+	local oldmz = mo.momz
+	mo.momz = destz - mo.z
+	P_ZMovement(mo)
+	mo.momz = oldmz
+	
+	if not P_TryMove(mo, destx, desty, true)
+		return false
+	end
+	
+	return true
+end
+
+local stiffness = FU * 63/100
+local damping = FU * 121/100
+local dragmul = FU * 58/100
+
 SafeFreeslot("SPR_SOAP_BOOMBOX")
 SafeFreeslot("S_SOAP_BOOMBOX")
 SafeFreeslot("MT_SOAP_BOOMBOX")
@@ -174,13 +215,44 @@ states[S_SOAP_BOOMBOX] = {
 			local note = P_SpawnMobjFromMobj(mo,
 				P_RandomRange(-48,48)*FU,
 				P_RandomRange(-48,48)*FU,
-				0, MT_THOK
+				0, MT_SOAP_WALLBUMP
 			)
-			note.sprite = SPR_SOAP_BOOMBOX
-			note.frame = P_RandomRange(1,7)
+			note.nothink = true
+			note.gravitymul = 2*FU
+			note.squishme = true
+			note.basexscale = FU
+			note.baseyscale = FU
+			note.squishstart = FU / 8
+			note.bounceme = true
+			note.bouncemul = FU / 3
+			note.movefactor = FU * 96/100
+			
 			note.fuse = TR * 3/2
 			note.tics = note.fuse
-			P_SetObjectMomZ(note, Soap_RandomFixedRange(2*FU,4*FU))
+			note.fusefade = 10
+			note.fusespritescale = {
+				x = {
+					func = "linear",
+					fuseunder = note.fusefade,
+					startscale = note.basexscale,
+					destscale = note.basexscale / 10
+				},
+				y = {
+					func = "linear",
+					fuseunder = note.fusefade,
+					startscale = note.baseyscale,
+					destscale = note.baseyscale * 4
+				},
+			}
+			
+			note.flags = $ &~MF_NOCLIPHEIGHT
+			note.sprite = SPR_SOAP_BOOMBOX
+			note.frame = P_RandomRange(1,7)
+			P_Thrust(note,
+				R_PointToAngle2(mo.x,mo.y, note.x,note.y),
+				Soap_RandomFixedRange(mo.scale, 4 * mo.scale)
+			)
+			P_SetObjectMomZ(note, Soap_RandomFixedRange(6*FU, 12*FU))
 		end
 		mo.momz = $ + P_GetMobjGravity(mo)
 		
@@ -201,6 +273,7 @@ states[S_SOAP_BOOMBOX] = {
 					mo.markedfordeath = nil
 					mo.flags2 = $ &~MF2_DONTDRAW
 				else
+					-- yeah...
 					if mo.markedfordeath == nil
 						mo.markedfordeath = 45 * TR
 					elseif mo.markedfordeath
@@ -225,25 +298,7 @@ states[S_SOAP_BOOMBOX] = {
 		
 		if not (me and me.valid and me.skin == SOAP_SKIN and me.health)
 		or killCond
-			local speed = 15*mo.scale
-			local range = 15*FU
-			for i = 0,P_RandomRange(20,29)
-				local poof = P_SpawnMobjFromMobj(mo,
-					Soap_RandomFixedRange(-range, range),
-					Soap_RandomFixedRange(-range, range),
-					FixedDiv(mo.height,mo.scale)/2 + Soap_RandomFixedRange(-range, range),
-					MT_SOAP_DUST
-				)
-				--poof.state = mobjinfo[MT_SPINDUST].spawnstate
-				local hang,vang = R_PointTo3DAngles(
-					poof.x,poof.y,poof.z,
-					mo.x,mo.y,mo.z + mo.height/2
-				)
-				P_3DThrust(poof, hang,vang, speed)
-				
-				poof.spritexscale = $ + Soap_RandomFixedRange(0,2*FU)/3
-				poof.spriteyscale = poof.spritexscale
-			end
+			Soap_ImpactVFX(mo,mo, 0, FU*3/4)
 			
 			P_SpawnMobjFromMobj(mo,0,0,0,MT_THOK).state = S_XPLD1
 			local sfx = P_SpawnGhostMobj(mo)
@@ -258,32 +313,26 @@ states[S_SOAP_BOOMBOX] = {
 		mo.color = me.player.skincolor
 		mo.lifetime = $ + 1
 		
-		local disttome = R_PointTo3DDist(mo.x,mo.y,mo.z, me.x,me.y,me.z)
-		if not me.hitlag
-			if mo.wasinhitlag
-				mo.momx,mo.momy,mo.momz = unpack(mo.hitlagmom)
-				mo.wasinhitlag = nil
-				mo.hitlagmom = nil
+		do
+			-- TODO: boomboxes can lose track of you
+			--		 if you like teleport or something
+			if P_IsObjectOnGround(me)
+				mo.extravalue1 = P_Lerp(FU/3, $, me.player.drawangle)
 			end
+			local mypos = Vec3.MobjPosToVec(mo)
+			local destpos = Vec3.Sub(
+				Vec3.MobjPosToVec(me), Vec3.Mul(Vec3.SphereToCartesian(mo.extravalue1 + ANGLE_45, 0), (60*me.scale))
+			)
 			
-			if disttome > 128 * me.scale
-				mo.momx = (me.x - mo.x) / damping
-				mo.momy = (me.y - mo.y) / damping
-				mo.momz = (me.z - mo.z) / damping
-				mo.flags = $|MF_NOGRAVITY|MF_NOCLIP|MF_NOCLIPHEIGHT
-			else
-				mo.flags = $ &~MF_NOCLIPHEIGHT
-				if P_CheckPosition(mo, mo.x,mo.y,mo.z)
-				and R_PointToDist2(0,0, mo.momx,mo.momy) <= 3 * mo.scale
-					mo.flags = $ &~(MF_NOGRAVITY|MF_NOCLIP)
-				end
-			end
-		else
-			if not mo.wasinhitlag
-				mo.hitlagmom = {mo.momx,mo.momy,mo.momz}
-				mo.wasinhitlag = true
-			end
-			mo.momx,mo.momy,mo.momz = 0,0,0
+			local displacement = Vec3.Sub(destpos, mypos)
+			local springforce = Vec3.Mul(displacement, stiffness)
+			local dampedmom = Vec3.Mul(Vec3.MobjMomToVec(mo), damping)
+			
+			local newforce = Vec3.Add(springforce, dampedmom)
+			local newmom = Vec3.Mul(newforce, dragmul)
+			newmom.z = ($ * 3/4) + P_GetMobjGravity(me)*2
+			
+			newmom:ToMobjMom(mo, true)
 		end
 		
 		if not S_SoundPlaying(mo,my_jam)
@@ -324,17 +373,7 @@ states[S_SOAP_BOOMBOX] = {
 			local dmo = dis.realmo
 			
 			local sounddist = R_PointTo3DDist(mo.x,mo.y,mo.z, dmo.x,dmo.y,dmo.z)
-			local my_sfx_t = sfxinfo[my_jam]
-			
-			if (my_sfx_t.flags & SF_X8AWAYSOUND)
-				sounddist = FixedDiv($, 8*FU)
-			end
-			if (my_sfx_t.flags & SF_X4AWAYSOUND)
-				sounddist = FixedDiv($, 4*FU)
-			end
-			if (my_sfx_t.flags & SF_X2AWAYSOUND)
-				sounddist = FixedDiv($, 2*FU)
-			end
+			sounddist = FixedMul($, GetClipperMul(my_jam))
 			if sounddist > S_CLIPPING_DIST then return end
 			
 			if (prev_listbox and prev_listbox.valid)
@@ -370,8 +409,8 @@ mobjinfo[MT_SOAP_BOOMBOX] = {
 	spawnhealth = 1,
 	height = 28*FRACUNIT,
 	radius = 14*FRACUNIT,
-	flags = MF_NOCLIPTHING,
-	painchance = FU, --FU / 6 -- special tune chance
+	flags = MF_NOCLIPTHING|MF_SLIDEME,
+	painchance = FU * 9/10, --FU / 6 -- special tune chance
 }
 addHook("ShouldDamage",function(mo,_,_,_,dmgt)
 	if dmgt == DMG_DEATHPIT
@@ -379,24 +418,32 @@ addHook("ShouldDamage",function(mo,_,_,_,dmgt)
 	end
 end,MT_SOAP_BOOMBOX)
 
+-- maybe this attenuation system could be reused for taunt audios?
 local voleasing = 15
 addHook("ThinkFrame",do
 	if not (displayplayer and displayplayer.valid) then return end
+	local dme = displayplayer.realmo
+	if not (dme and dme.valid) then return end
 	
 	local dest_fade = 100
 	if listening_boombox and listening_boombox.valid
 		local jam_t = SOAP_BOOMBOXJAMS[listening_boombox.songid or 1]
+		local clipdist = FixedMul(S_CLIPPING_DIST, GetClipperMul(jam_t.sfx))
+		local sounddist = R_PointTo3DDist(dme.x,dme.y,dme.z, listening_boombox.x,listening_boombox.y,listening_boombox.z)
+		-- 0 = closest, 100 = farthest
+		local newvol = ease.incubic(
+			clamp(0, FU - FixedDiv(sounddist - 128*listening_boombox.scale, clipdist), FU),
+			100*FU, (jam_t.fadeto or 0)*FU
+		)
 		
-		dest_fade = min($, (jam_t.fadeto or 0))
+		dest_fade = min($, newvol/FU)
 		
 		set_musvol = true
 	elseif set_musvol
 		if this_musvol == 100 then set_musvol = false; end
 		
 		this_musvol = $ + ((100 - $) / voleasing)
-		if P_IsLocalPlayer(displayplayer)
-			S_SetInternalMusicVolume(this_musvol, displayplayer)
-		end
+		S_SetInternalMusicVolume(this_musvol, displayplayer)
 		
 		if 100 - abs(this_musvol) < voleasing
 			this_musvol = 100
@@ -405,9 +452,8 @@ addHook("ThinkFrame",do
 	--this is done after so we can get the lowest volume to ease to
 	if listening_boombox and listening_boombox.valid
 		this_musvol = $ + ((dest_fade - $) / voleasing)
-		if P_IsLocalPlayer(displayplayer)
-			S_SetInternalMusicVolume(this_musvol, displayplayer)
-		end
+		S_SetInternalMusicVolume(this_musvol, displayplayer)
+		
 		if this_musvol - dest_fade < voleasing
 			this_musvol = dest_fade
 		end

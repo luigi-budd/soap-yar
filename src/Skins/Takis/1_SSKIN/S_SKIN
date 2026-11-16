@@ -13,7 +13,7 @@ ability = CA_DOUBLEJUMP
 ability2 = 100
 
 actionspd = 45
-normalspeed = 25
+normalspeed = 23
 runspeed = 44
 thrustfactor = 5
 accelstart = 96

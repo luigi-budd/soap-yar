@@ -4,10 +4,12 @@ end)
 
 local MAPBLOCKSHIFT = FRACBITS + 7
 rawset(_G,"visualizeBlockmap",function(mo, fuse, x1,x2, y1,y2)
+	/*
 	local x1 = (x1 >> MAPBLOCKSHIFT) * 128*FU
 	local x2 = (x2 >> MAPBLOCKSHIFT) * 128*FU
 	local y1 = (y1 >> MAPBLOCKSHIFT) * 128*FU
 	local y2 = (y2 >> MAPBLOCKSHIFT) * 128*FU
+	*/
 	local pos = {x1,x2, y1,y2}
 	
 	for i = 1, 2

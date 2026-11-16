@@ -698,7 +698,7 @@ ZE2.Shop.listItem("clusterbomb", 98)
 
 Takis_Hook.addHook("PostThinkFrame", function(p)
 	local me = p.mo
-	if not (me and me.valid) then return end
+	if not (me and me.valid and me.health) then return end
 	
 	if not p["xSlinger[]"] then return end
 	

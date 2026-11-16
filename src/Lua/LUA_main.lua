@@ -6,6 +6,8 @@ local Soap_Booleans = Soap_Booleans
 
 local PreThinkFrame = Takis_Hook.events["PreThinkFrame"]
 addHook("PreThinkFrame",function()
+	local numhooks = PreThinkFrame.numhooks
+	local events = PreThinkFrame.events
 	for p in players.iterate
 		if not (p and p.valid) then continue end
 		
@@ -30,9 +32,8 @@ addHook("PreThinkFrame",function()
 		end
 		
 		soap.noability = 0
-		if (PreThinkFrame.numhooks)
-			local events = PreThinkFrame.events
-			for i = 1, PreThinkFrame.numhooks
+		if (numhooks)
+			for i = 1, numhooks
 				Takis_Hook.tryRunHook("PreThinkFrame", events[i], p)
 			end
 		end
@@ -99,7 +100,6 @@ addHook("PlayerThink",function(p)
 			end
 		end
 		if me.skin == TAKIS_SKIN
-		and not mbrelease
 		and (Takis_Thinker.numhooks)
 			local events = Takis_Thinker.events
 			for i = 1, Takis_Thinker.numhooks
@@ -107,7 +107,7 @@ addHook("PlayerThink",function(p)
 			end
 		end
 		
-		if not (me.skin == SOAP_SKIN or (me.skin == TAKIS_SKIN and not mbrelease))
+		if not (me.skin == SOAP_SKIN or me.skin == TAKIS_SKIN)
 			Soap_FXDestruct(p)
 		end
 		
@@ -169,16 +169,14 @@ addHook("PostThinkFrame",function()
 		end
 		-- This is placed after the hookcalls so any squahes
 		-- added can immediately take effect
-		if (me.skin == SOAP_SKIN
-		or (me.skin == TAKIS_SKIN and not mbrelease))
+		if (me.skin == SOAP_SKIN or me.skin == TAKIS_SKIN)
 		and not (me.pizza_in or me.pizza_out) --Bruh!
 			Soap_TickSquashes(p,me,soap, me.hitlag)
 		end
 		
 		me.oldhitlag = me.hitlag
 		
-		if not (me.skin == SOAP_SKIN
-		or (me.skin == TAKIS_SKIN and not mbrelease))
+		if not (me.skin == SOAP_SKIN or me.skin == TAKIS_SKIN)
 		and not me.soap_overridesquash
 			if soap.last.squash_head
 			or (soap.spritexscale ~= FU

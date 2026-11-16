@@ -489,7 +489,7 @@ rawset(_G,"Takis_HandleNoAbils", function(p)
 			p.charability2 = skins[p.skin].ability2
 		end
 		if inze2
-			if ZE2.game_ended or ZE2.round_active == false
+			if ZE2.Game.state == ZE2.GS_FINISH
 				na = 0
 				-- lulll
 				p.charability = skins[p.skin].ability
@@ -985,10 +985,10 @@ rawset(_G,"Takis_DoHammerBlastLand",function(p,domoves)
 			if p.powers[pw_shield] == SH_WHIRLWIND
 				time = $*3/2
 			end
-			local basemomz = 13*FU
+			local basemomz = 15*FU
 			if p.powers[pw_shield] == SH_BUBBLEWRAP
 			or p.powers[pw_shield] == SH_ELEMENTAL
-				basemomz = 18*FU
+				basemomz = 21*FU
 			end
 			
 			hammer.jumped = 1

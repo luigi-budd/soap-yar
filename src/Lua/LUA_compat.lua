@@ -332,10 +332,10 @@ local function SetCompat()
 				"Equipped with a \x82Molotov\x80 that slows down zombies in an area.",
 			};
 			items = {
-				"bounce_ring",
+				"blaster",
 				"molotov"
 			};
-			health_penalty = 20;
+			health_penalty = 10;
 		})
 		
 		Takis_Hook.addHook("Char_VFX",function(p)
@@ -349,12 +349,12 @@ local function SetCompat()
 			local shortcircuit = {}
 			
 			if settings.fall_damage
-			and p.ze2.fall_height ~= nil -- lol
+			and p.ze2.fall_speed ~= nil -- lol
 				-- no landing effect when fall damage is coming up
-				if ((me.soap_oldfalldist or 0) > ZE2.MIN_FALL_DISTANCE)
+				if ((me.soap_oldfallspeed or 0) > ZE2.MIN_FALL_SPEED)
 					shortcircuit.landdust = true
 				end
-				me.soap_oldfalldist = (p.ze2.fall_height - me.z)
+				me.soap_oldfallspeed = abs(p.ze2.fall_speed)
 			end
 			
 			if game.state == ZE2.GS_PREGAME
@@ -416,21 +416,22 @@ local function SetCompat()
 		
 		xSlinger.registered_items["bounce_ring"].skin_override = {
 			[TAKIS_SKIN] = {
-				knockback = 15*FU;
+				knockback = 20*FU;
 				knockback_time = TR*18/10;
-				damage = 19;
+				damage = 21;
 				ammo = 28;
 				maxammo = 28;
-				firerate = 7;
-				fuse = 2*TR;
-				reload_time = 3*TR + TR/2;
+				fuse = 3*TR + TR*3/4;
+				firerate = 5;
 			}
 		}
 		dofile("Compat/ZE2_molotov.lua")
 		dofile("Compat/ZE2_finger.lua")
 		dofile("Compat/ZE2_clusterbomb.lua")
+		dofile("Compat/ZE2_blaster.lua")
 		table.insert(ZE2.RandomItemPool, "molotov")
 		table.insert(ZE2.RandomItemPool, "clusterbomb")
+		table.insert(ZE2.RandomItemPool, "blaster")
 		
 		mobjinfo[MT_TNTBARREL].forcedamage = 500
 		mobjinfo[MT_TNTBARREL].relativeknockback = true
@@ -446,7 +447,7 @@ local function SetCompat()
 			end
 		else
 			SoapZ_Effect.Give = function(mo, id, info, tics, additive)
-				return mo:give_effect(mo, id, info, tics, additive)
+				return mo:give_effect(id, info, tics, additive)
 			end
 			SoapZ_Effect.Find = function(mo, id)
 				return mo:search_effect(id)
