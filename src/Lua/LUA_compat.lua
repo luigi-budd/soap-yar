@@ -8,6 +8,7 @@ local compat = {
 	orbitcompat = false,
 	rsr = false,
 	manhunt = false,
+	pso = false,
 }
 local compat_names = {
 	["takiskart"]	= "TakisKart        ",
@@ -19,6 +20,7 @@ local compat_names = {
 	["orbitcompat"] = "Orbit Compat.    ",
 	["rsr"]			= "RingSlinger Rev. ",
 	["manhunt"]		= "Saxa's Manhunt   ",
+	--["pso"]			= "SRB2 Infinity    ",
 }
 
 local function dust_type(me)
@@ -599,6 +601,16 @@ local function SetCompat()
 		compat.manhunt = true
 		printnotice("Added Manhunt stuff.")
 	end
+	
+	/*
+	if PSO and not compat.PSO
+		PSO.lib.addHook("playerDamaged", function(p, inf, damage, skipchain, crit)
+			local me = p.mo
+			Soap_ImpactVFX(me, inf, 0, nil, nil,nil, nil)
+			print(damage)
+		end)
+	end
+	*/
 end
 SetCompat()
 
