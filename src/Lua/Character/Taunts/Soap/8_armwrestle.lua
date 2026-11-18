@@ -52,7 +52,7 @@ local PHASE_WRESTLE = 2
 local MAXGOTIME = TR*3/5 + 4
 local gotime = 0
 
-local MAXREADYTIME = TR * 3/2
+local MAXREADYTIME = TR * 2
 local readytime = 0
 
 local SETFOV = false
@@ -780,8 +780,8 @@ addHook("HUD",function(v,p, cam)
 	
 	if readytime > 0
 		local alpha = 0
-		local mystr = "Ready..?"
-		local strlen = 8
+		local mystr = "Ready....?"
+		local strlen = mystr:len()
 		local ticker = (MAXREADYTIME - readytime) / 2
 		local newstr = string.sub(mystr, 1, min(ticker, strlen))
 		
@@ -793,6 +793,10 @@ addHook("HUD",function(v,p, cam)
 			80, newstr, V_ALLOWLOWERCASE|alpha, "left"
 		)
 		v.drawString(160, 90,
+			"\x86!! Spam \x82[JUMP]\x86 to wrestle !!", V_ALLOWLOWERCASE|alpha, "thin-center"
+		)
+		
+		v.drawString(160, 120,
 			"Hold C1 to tap out", V_ALLOWLOWERCASE|V_GRAYMAP|alpha, "thin-center"
 		)
 		
