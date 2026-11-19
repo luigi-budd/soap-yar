@@ -650,9 +650,9 @@ addHook("AddonLoaded",SetCompat)
 addHook("MapChange",SetCompat)
 
 COM_AddCommand("soap_compatinfo",function(p)
-	CONS_printnotice(p, "Current Soap compatibles added:")
+	CONS_Printf(p, "Current Soap compatibles added:")
 	for k,v in pairs(compat)
 		local name = compat_names[k]
-		CONS_printnotice(p,"\t\x82"..name.."\x80 : " .. (v and "\x83".."Added" or "\x86Not added"))
+		CONS_Printf(p,"\t\x82"..name.."\x80 : " .. (v and "\x83".."Added" or "\x86Not added"))
 	end
 end)
