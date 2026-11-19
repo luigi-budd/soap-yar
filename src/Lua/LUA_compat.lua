@@ -20,7 +20,7 @@ local compat_names = {
 	["orbitcompat"] = "Orbit Compat.    ",
 	["rsr"]			= "RingSlinger Rev. ",
 	["manhunt"]		= "Saxa's Manhunt   ",
-	--["pso"]			= "SRB2 Infinity    ",
+	["pso"]			= "SRB2 Infinity    ",
 }
 
 local function dust_type(me)
@@ -602,15 +602,47 @@ local function SetCompat()
 		printnotice("Added Manhunt stuff.")
 	end
 	
-	/*
 	if PSO and not compat.PSO
 		PSO.lib.addHook("playerDamaged", function(p, inf, damage, skipchain, crit)
 			local me = p.mo
-			Soap_ImpactVFX(me, inf, 0, nil, nil,nil, nil)
-			print(damage)
+			-- idk why the mod calls this hook (and other similar hooks) multiple
+			-- times in a tic. this hook especially since players can only get damaged
+			-- once per tic :thinking:
+			if (me.pso_lashittic == leveltime) then return end
+			me.pso_lashittic = leveltime
+			
+			if not (me.skin == SOAP_SKIN or me.skin == TAKIS_SKIN) then return end
+			
+			local dmgt = nil
+			if (inf and inf.valid)
+				if (inf.type == MT_PSO_HURTBOX)
+					inf = inf.target
+				end
+				-- um if we could we can set the dmgt here
+			else
+				inf = nil
+			end
+			
+			if (crit)
+				dmgt = DMG_ELECTRIC
+				damage = $ * 6/5
+			end
+			Soap_ImpactVFX(me, inf, 0, FixedDiv(damage, p.pso.maxhp) * 2, nil,nil, dmgt)
+		end)
+		
+		Takis_Hook.addHook("Char_VFX", function(p)
+			local me = p.realmo
+			local ps = p.pso
+			local soap = p.soaptable
+			
+			local shortcircuit = {}
+			if (ps.jumppad) and (me.momz * soap.gravflip > 0)
+				shortcircuit.jumpdust = true
+			end
+			
+			return shortcircuit
 		end)
 	end
-	*/
 end
 SetCompat()
 
