@@ -637,7 +637,14 @@ local function SetCompat()
 			
 			local shortcircuit = {}
 			if (ps.jumppad) and (me.momz * soap.gravflip > 0)
-				shortcircuit.jumpdust = true
+				shortcircuit.landdust = true
+			end
+			
+			if (ps.dodgeroll)
+				-- below 10 sooo the vfx function
+				-- doesnt do its lag compensation
+				-- i know, its shite!
+				soap.lunge = 9
 			end
 			
 			return shortcircuit
