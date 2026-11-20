@@ -619,6 +619,7 @@ end)
 local this_raycast
 local altfrac = 0
 addHook("PostThinkFrame", do
+	if isdedicatedserver then return end
 	if not SOAP_CV.FindVar("showhud").value then return end
 	
 	local p = displayplayer
