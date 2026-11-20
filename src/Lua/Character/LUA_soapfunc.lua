@@ -4352,5 +4352,5 @@ rawset(_G, "Soap_Combat", function(p)
 end)
 
 rawset(_G, "Soap_CheckSRB2Edit", function()
-	return (takis_custombuild or edit_custombuild)
+	return (edit_custombuild or takis_custombuild)
 end)
