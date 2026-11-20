@@ -58,7 +58,7 @@ rawset(_G, "K_GetScreenCoords",function(vid,p,cam, point, props)
 		return {x=0,y=0,onscreen=onscreen}
 	end
 	
-	if (takis_custombuild and interpmobj)
+	if ((edit_custombuild or takis_custombuild) and interpmobj)
 		targx,targy,targz = vid.interpolateMobj(point)
 	else
 		targx = point.x
