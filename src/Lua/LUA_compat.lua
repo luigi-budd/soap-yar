@@ -603,6 +603,34 @@ local function SetCompat()
 	end
 	
 	if PSO and not compat.PSO
+		-- for hitting stuff
+		PSO.lib.addHook("playerDamage", function(p, targ, inf, damage, skipchain, crit)
+			local me = p.mo
+			if not (me.skin == SOAP_SKIN or me.skin == TAKIS_SKIN) then return end
+			
+			-- Whatev
+			if (targ.pso_lashittic == leveltime) then return end
+			targ.pso_lashittic = leveltime
+			
+			local sizecap = FU * 3/2
+			local dmgt = nil
+			if (crit)
+				dmgt = DMG_ELECTRIC
+				damage = $ * 3
+				sizecap = 2*FU + FU/2
+				if damage >= targ.pso.maxhp / 3
+					inf.soap_supervfx = true
+					-- i actually wanna see as well
+					sizecap = FU
+				end
+			end
+			
+			local size = min(FixedDiv(damage, targ.pso.maxhp) * 3, sizecap)
+			Soap_ImpactVFX(targ, inf or me, nil, size, nil, not inf.soap_supervfx, dmgt)
+			inf.soap_supervfx = nil
+		end)
+		
+		-- for getting hit by stuff
 		PSO.lib.addHook("playerDamaged", function(p, inf, damage, skipchain, crit)
 			local me = p.mo
 			-- idk why the mod calls this hook (and other similar hooks) multiple
@@ -624,10 +652,13 @@ local function SetCompat()
 			end
 			
 			if (crit)
-				dmgt = DMG_ELECTRIC
-				damage = $ * 6/5
+				damage = $ * 2
 			end
-			Soap_ImpactVFX(me, inf, 0, FixedDiv(damage, p.pso.maxhp) * 2, nil,nil, dmgt)
+			
+			-- we divide by our current hp and not our maxhp
+			-- to make repeating attacks look more potent
+			local size = min(FixedDiv(damage, p.pso.hp) * 7, 2*FU + FU/2)
+			Soap_ImpactVFX(me, inf, 0, size, nil,true, DMG_FIRE)
 		end)
 		
 		Takis_Hook.addHook("Char_VFX", function(p)
@@ -644,9 +675,17 @@ local function SetCompat()
 				-- below 10 sooo the vfx function
 				-- doesnt do its lag compensation
 				-- i know, its shite!
-				soap.lunge.effect = 9
+				soap.lunge.effect = 6
 			end
 			
+			-- um. Yeah sure lets do this here as well lol
+			if me.pso_lasthp ~= nil
+			and ((ps.hp < ps.maxhp/2) and (me.pso_lasthp >= ps.maxhp/2)
+			or (ps.hp < ps.maxhp/4) and (me.pso_lasthp >= ps.maxhp/4))
+				soap.hud.painsurge = 6
+			end
+			
+			me.pso_lasthp = ps.hp
 			return shortcircuit
 		end)
 	end
