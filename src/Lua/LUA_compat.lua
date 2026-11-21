@@ -644,7 +644,7 @@ local function SetCompat()
 				-- below 10 sooo the vfx function
 				-- doesnt do its lag compensation
 				-- i know, its shite!
-				soap.lunge = 9
+				soap.lunge.effect = 9
 			end
 			
 			return shortcircuit
