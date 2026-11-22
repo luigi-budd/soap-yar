@@ -694,6 +694,9 @@ rawset(_G,"Takis_HammerBlastHitbox",function(p)
 			
 			P_KillMobj(found,me,me)
 			didit = true
+		-- this doesnt include rolloutrocks, which i guess is fine cause
+		-- i imagine it would be annoying trying to actually get on one
+		-- only for the hammer to move it away
 		elseif Soap_CanDamageEnemy(p, found,MF_ENEMY|MF_BOSS|MF_MONITOR|MF_SHOOTABLE)
 			if P_DamageMobj(found,me,me, damage)
 				Soap_ImpactVFX(found, me, nil,nil, true, nil,vfxdamagetype)

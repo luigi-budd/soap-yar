@@ -3473,6 +3473,7 @@ local function try_damage_cases(me,thing, p,soap,DealDamage,damagetype)
 	end
 	local checkforundamage = true
 	if (p.powers[pw_super] or p.powers[pw_invulnerability]) then checkforundamage = false; end
+	if (thing.type == MT_ROLLOUTROCK) then checkforundamage = false; end
 	
 	--hit by pound
 	if ((soap.pounding)
