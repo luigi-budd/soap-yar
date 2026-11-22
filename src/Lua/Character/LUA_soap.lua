@@ -3342,7 +3342,7 @@ Takis_Hook.addHook("MoveBlocked",function(me,thing,line, goingup)
 	if goingup then return end
 	
 	if not (me.health)
-	or (me.state == S_PLAY_SOAP_KNOCKOUTDOLL)
+	or (me.state == S_PLAY_SOAP_KNOCKOUTDOLL and not PSO)
 	and not (p.spectator or p.playerstate == PST_REBORN)
 		Soap_Bump(me,thing,line)
 		return
