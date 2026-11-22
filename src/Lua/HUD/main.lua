@@ -2,21 +2,37 @@
 local CV = SOAP_CV
 
 local amp_levels = {
-	[0] = V_GRAYMAP,
-	[1] = 0,
-	[2] = V_AQUAMAP,
-	[3] = V_SKYMAP,
-	[4] = V_PERIDOTMAP,
-	[5] = V_GREENMAP,
+	[0] = V_INVERTMAP,
+	[1] = V_GRAYMAP,
+	[2] = 0,
+	[3] = V_AZUREMAP,
+	[4] = V_SKYMAP,
+	[5] = V_PURPLEMAP,
+	[6] = V_BLUEMAP,
+	[7] = V_AQUAMAP,
+	[8] = V_PERIDOTMAP,
+	[9] = V_GREENMAP,
+	[10] = V_MAGENTAMAP,
+	[11] = V_REDMAP,
+	[12] = V_ORANGEMAP,
+	[13] = V_YELLOWMAP,
 }
 local amp_combo = {
-	[0] = "Okay",
-	[1] = "Better",
-	[2] = "Good!",
-	[3] = "Cool!",
-	[4] = "Sick!!",
-	[5] = "Amazing!!",
-	[6] = "AWESOME!!!",
+	[0] = "Bad...",
+	[1] = "Okay..",
+	[2] = "Fine",
+	[3] = "Passable",
+	[4] = "Good",
+	[5] = "Cool!",
+	[6] = "Sick!!",
+	[7] = "Amazing!!",
+	[8] = "Amazing!!",
+	[9] = "Incredible!!",
+	[10] = "Incredible!!",
+	[11] = "Outstanding!!!",
+	[12] = "Outstanding!!!",
+	[13] = "Outstanding!!!",
+	[14] = "AWESOME !!!!",
 }
 local rainbow_clr = {
 	[0] = V_REDMAP,
@@ -202,12 +218,13 @@ addHook("HUD",function(v,p, cam)
 			v.drawString(x + off*sign,y-8*FU,  "transform!", V_ALLOWLOWERCASE|flags, "thin-fixed"..align)
 		end
 		if me.soap_totalamps
-			local clr = amp_levels[me.soap_amplevel or 0]
+			local clr = amp_levels[me.soap_amplevel]
 			if clr == nil
 				clr = rainbow_clr[(leveltime/2) % 9]
 			end
 			v.dointerp(15431)
 			v.drawString(x,y, "x"..(me.soap_totalamps / 5).." COMBO", V_ALLOWLOWERCASE|clr, "thin-fixed"..align)
+			-- debug v.drawString(x,y + 8*FU, (me.soap_amplevel), V_ALLOWLOWERCASE|clr, "thin-fixed"..align)
 		end
 		if (me.soap_amppayouttime)
 		and (leveltime < me.soap_amppayouttime)

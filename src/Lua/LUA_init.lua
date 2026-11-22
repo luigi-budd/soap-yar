@@ -7,7 +7,7 @@
 */
 /*
 	Collaborators:
-	- `Green`/greenbulb : useless dumb shit
+	- `Green`/greenbulb : useless dumb shit / minor bug fixes
 	- romoney5 : Helped with mod compatibility with Orbit
 */
 
