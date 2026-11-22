@@ -2,16 +2,32 @@ rawset(_G, "SOAP_CV",{})
 local CV = SOAP_CV
 CV.PossibleValues = {}
 
+local CV_Null = {value = 0, string = "", name = "nil"}
 local CV_Lookup = {}
 setmetatable(CV_Lookup, {
 	__mode = "kv"
 })
+local CV_Errors = {}
 
 CV.FindVar = function(cv_name)
 	if CV_Lookup[cv_name]
 		return CV_Lookup[cv_name]
 	end
 	local cvar = CV_FindVar(cv_name)
+	if cvar == nil
+		-- ummm lets just set this to a fake
+		-- cvar so stuff like dedicated doesnt break
+		if not CV_Errors[cv_name]
+			S_StartSound(nil, sfx_lose)
+			print(string.format(
+				"\x83SOAP\x80: SOAP_CV.FindVar(): cvar '%s' does not exist, returning dummy cvar...",
+				cv_name
+			))
+			CV_Errors[cv_name] = true
+		end
+		cvar = CV_Null
+	end
+	
 	CV_Lookup[cv_name] = cvar
 	return cvar
 end

@@ -1,5 +1,8 @@
 local cv_fov
 local cv_glshearing
+-- we divide coordinates by this when getting angles
+-- because otherwise the w2s will "jump" at large distances
+local HUGEFACTOR = 4
 
 local LocalAngles = {
 	[0] = { -- consoleplayer
@@ -9,8 +12,6 @@ local LocalAngles = {
 		angle = 0, aiming = 0
 	}
 }
-local LOCAL_ANGLETURN = 0
-local LOCAL_AIMING = 0
 addHook("PlayerCmd",function(p,cmd)
 	local angset = (p == consoleplayer) and LocalAngles[0] or LocalAngles[1]
 	angset.angle = cmd.angleturn << 16
@@ -28,7 +29,6 @@ rawset(_G, "K_GetScreenCoords",function(vid,p,cam, point, props)
 	props = $ or {}
 	local hofs = props.hofs or 0
 	local dontclip = props.dontclip or false -- Dont make `result.offscreen = false` when the result goes off screen dimensions
-	local interpmobj = props.interpmobj or false -- (SRB2-edit only) (WIP) Interpolates mobj state for "uncapped game" HUDs
 	local noscalestart = props.noscalestart or false -- Returns positions for patches with V_NOSCALESTART
 	local anglecliponly = props.anglecliponly or false -- Only clips the result if angle checks fail. Does not clip to screen dimensions.
 	local centered = props.centered or false -- Centers to the object's middle (mo.z + mo.height/2)
@@ -58,13 +58,9 @@ rawset(_G, "K_GetScreenCoords",function(vid,p,cam, point, props)
 		return {x=0,y=0,onscreen=onscreen}
 	end
 	
-	if (takis_custombuild and interpmobj)
-		targx,targy,targz = vid.interpolateMobj(point)
-	else
-		targx = point.x
-		targy = point.y
-		targz = point.z
-	end
+	targx = point.x
+	targy = point.y
+	targz = point.z
 	
 	local isMobj = type(point) == "userdata" and userdataType(point) == "mobj_t"
 	if isMobj and centered
@@ -120,7 +116,13 @@ rawset(_G, "K_GetScreenCoords",function(vid,p,cam, point, props)
 		end
 	end
 	
-	x = camAngle - R_PointToAngle2(camPos.x,camPos.y, targx,targy)
+	local angdiff = camAngle - R_PointToAngle2(camPos.x / HUGEFACTOR,camPos.y / HUGEFACTOR, targx / HUGEFACTOR,targy / HUGEFACTOR)
+	
+	-- (Jisk): Clean up illegal angle!
+	if (angdiff == INT32_MIN) then
+		angdiff = INT32_MAX
+	end
+	x = angdiff
 	
 	distfact = cos(x)
 	if distfact == 0 then distfact = 1; end
@@ -209,10 +211,16 @@ rawset(_G, "K_GetScreenCoords",function(vid,p,cam, point, props)
 	x = $ + xres
 	
 	/*
+	-- this does rotate the position of the w2s, but it
+	-- isnt "perspective correct", as it rotates the w2s
+	-- in screenspace, rather than getting what the position
+	-- of the target in world space would be when the view is rotated
 	if viewroll
+		viewroll = InvAngle($) / 8
 		local tempx = x
-		x = FixedMul(cos(viewroll), tempx) - FixedMul(sin(viewroll), y)
-		y = FixedMul(sin(viewroll), tempx) + FixedMul(cos(viewroll), y)
+		local tempy = y
+		x = FixedMul(cos(viewroll), tempx) - FixedMul(sin(viewroll), tempy)
+		y = FixedMul(sin(viewroll), tempx) + FixedMul(cos(viewroll), tempy)
 	end
 	*/
 	
@@ -239,6 +247,9 @@ rawset(_G, "K_GetScreenCoords",function(vid,p,cam, point, props)
 			onscreen = false
 		end
 	elseif anglecliponly
+		-- TODO: on non green res, there'll be a region on the
+		--		 left of the screen where the w2s will be clipped
+		--		 when it shouldnt be
 		if abs(camAngle - R_PointToAngle2(camPos.x,camPos.y, targx,targy)) > FixedAngle(my_fov)
 			onscreen = false
 		end

@@ -8,6 +8,7 @@ local compat = {
 	orbitcompat = false,
 	rsr = false,
 	manhunt = false,
+	pso = false,
 }
 local compat_names = {
 	["takiskart"]	= "TakisKart        ",
@@ -19,6 +20,7 @@ local compat_names = {
 	["orbitcompat"] = "Orbit Compat.    ",
 	["rsr"]			= "RingSlinger Rev. ",
 	["manhunt"]		= "Saxa's Manhunt   ",
+	["pso"]			= "SRB2 Infinity    ",
 }
 
 local function dust_type(me)
@@ -599,6 +601,138 @@ local function SetCompat()
 		compat.manhunt = true
 		printnotice("Added Manhunt stuff.")
 	end
+	
+	if PSO and not compat.PSO
+		-- for hitting stuff
+		PSO.lib.addHook("playerDamage", function(p, targ, inf, damage, skipchain, crit)
+			local me = p.mo
+			if not (me.skin == SOAP_SKIN or me.skin == TAKIS_SKIN) then return end
+			
+			-- Whatev
+			if (targ.pso_lashittic == leveltime) then return end
+			targ.pso_lashittic = leveltime
+			
+			local sizecap = FU * 3/2
+			local dmgt = nil
+			if (crit)
+				dmgt = DMG_ELECTRIC
+				damage = $ * 3
+				sizecap = 2*FU + FU/2
+				if damage >= targ.pso.maxhp / 3
+					inf.soap_supervfx = true
+					-- i actually wanna see as well
+					sizecap = FU
+				end
+			end
+			
+			local size = min(FixedDiv(damage, targ.pso.maxhp) * 3, sizecap)
+			Soap_ImpactVFX(targ, inf or me, nil, size, nil, not inf.soap_supervfx, dmgt)
+			inf.soap_supervfx = nil
+		end)
+		
+		-- for getting hit by stuff
+		PSO.lib.addHook("playerPostDamaged", function(p, inf, damage, skipchain, crit)
+			local me = p.mo
+			-- idk why the mod calls this hook (and other similar hooks) multiple
+			-- times in a tic. this hook especially since players can only get damaged
+			-- once per tic :thinking:
+			if (me.pso_lashittic == leveltime) then return end
+			me.pso_lashittic = leveltime
+			
+			if not (me.skin == SOAP_SKIN or me.skin == TAKIS_SKIN) then return end
+			if not (damage) then return end -- ur fine quit ur bitching
+			
+			local dmgt = nil
+			if (inf and inf.valid)
+				if (inf.type == MT_PSO_HURTBOX)
+					inf = inf.target
+				end
+				-- um if we could we can set the dmgt here
+			else
+				inf = nil
+			end
+			
+			if (crit)
+				damage = $ * 2
+			end
+			
+			-- we divide by our current hp and not our maxhp
+			-- to make repeating attacks look more potent
+			local size = FU
+			if (p.pso.hp)
+				size = FixedDiv(damage, p.pso.hp) * 7
+			-- lol why can u even get hit while youre dead
+			-- else
+			end
+			size = min($, 2*FU + FU/2)
+			Soap_ImpactVFX(me, inf, 0, size, nil,true, DMG_FIRE)
+			
+			me.soap_inf = inf
+		end)
+		
+		Takis_Hook.addHook("Char_VFX", function(p)
+			local me = p.realmo
+			local ps = p.pso
+			local soap = p.soaptable
+			if not ps then return end
+			
+			local shortcircuit = {}
+			if (ps.jumppad) and (me.momz * soap.gravflip > 0)
+				shortcircuit.landdust = true
+			end
+			
+			if (ps.dodgeroll) and not (ps.deadtimer)
+				-- below 10 sooo the vfx function
+				-- doesnt do its lag compensation
+				-- i know, its shite!
+				soap.lunge.effect = 6
+			end
+			
+			return shortcircuit
+		end)
+		
+		-- postthink to change states n stuff
+		Takis_Hook.addHook("PostThinkFrame", function(p)
+			local me = p.realmo
+			local ps = p.pso
+			local soap = p.soaptable
+			if not ps then return end
+			if not (me.skin == SOAP_SKIN or me.skin == TAKIS_SKIN) then return end
+			
+			if me.pso_lasthp ~= nil
+			and ((ps.hp < ps.maxhp/2) and (me.pso_lasthp >= ps.maxhp/2)
+			or (ps.hp < ps.maxhp/4) and (me.pso_lasthp >= ps.maxhp/4))
+				soap.hud.painsurge = 6
+			end
+			
+			-- and these too. Lol
+			if ps.deadtimer
+				if soap.onGround
+					me.state = S_PLAY_SOAP_KNOCKOUT
+				else
+					me.state = S_PLAY_SOAP_KNOCKOUTDOLL
+				end
+			end
+			-- tumble is funny so it stays
+			-- but not this
+			me.soap_kickme = false
+			
+			if ps.blowdown
+				-- i think doing this actually disables
+				-- the control-loss, so readd it
+				soap.stasistic = max($, 2)
+				me.state = S_PLAY_SOAP_KNOCKOUTDOLL
+				if me.skin == SOAP_SKIN
+					me.rollangle = 0
+				else
+					-- taykeeees
+					me.rollangle = ($ * 9)/10
+				end
+			end
+			
+			me.pso_lasthp = ps.hp
+		end)
+	end
 end
 SetCompat()
 
@@ -606,9 +740,9 @@ addHook("AddonLoaded",SetCompat)
 addHook("MapChange",SetCompat)
 
 COM_AddCommand("soap_compatinfo",function(p)
-	CONS_printnotice(p, "Current Soap compatibles added:")
+	CONS_Printf(p, "Current Soap compatibles added:")
 	for k,v in pairs(compat)
 		local name = compat_names[k]
-		CONS_printnotice(p,"\t\x82"..name.."\x80 : " .. (v and "\x83".."Added" or "\x86Not added"))
+		CONS_Printf(p,"\t\x82"..name.."\x80 : " .. (v and "\x83".."Added" or "\x86Not added"))
 	end
 end)

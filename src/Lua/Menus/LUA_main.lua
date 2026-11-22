@@ -2,7 +2,8 @@ rawset(_G, "SOAP_MENUS",{})
 
 local path = "menus/items/LUA_"
 local tree = {
-	"options"
+	"options",
+	"debug"
 }
 
 for k,name in ipairs(tree)

@@ -618,13 +618,20 @@ end)
 
 local this_raycast
 local altfrac = 0
+-- regular post think!!! not Takis_Hook!!!!
 addHook("PostThinkFrame", do
+	if isdedicatedserver then return end
 	if not SOAP_CV.FindVar("showhud").value then return end
 	
 	local p = displayplayer
 	if not (p and p.valid) then return end
 	local me = p.mo
 	if not (me and me.valid) then return end
+	
+	if (p ~= consoleplayer)
+		local_angle = p.cmd.angleturn << 16
+		local_aiming = p.cmd.aiming << 16
+	end
 	
 	if not p["xSlinger[]"] then return end
 	

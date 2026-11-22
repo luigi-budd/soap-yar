@@ -2214,7 +2214,7 @@ rawset(_G,"Soap_DeathThinker",function(p,me,soap)
 		end
 		
 		local speed = R_PointTo3DDist(0,0,0, me.momx,me.momy,me.momz)
-		if (me.skin == TAKIS_SKIN)
+		if (me.skin == TAKIS_SKIN) and not PSO
 			p.drawangle = $ + FixedAngle(speed / 2)
 			me.rollangle = $ + FixedAngle(speed / 2)
 			me.soap_wasinknockout = true
@@ -4421,5 +4421,5 @@ rawset(_G, "Soap_Combat", function(p)
 end)
 
 rawset(_G, "Soap_CheckSRB2Edit", function()
-	return (takis_custombuild or edit_custombuild)
+	return (edit_custombuild or takis_custombuild)
 end)

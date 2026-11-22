@@ -286,7 +286,28 @@ local function TryVFXStars(v)
 	v.sentstars = true
 
 	local colorlist = (v.soap_supervfx) and super_damagecolors or damagecolors
-	for i = 0, (v.extrastars) and 10 or 5
+	local recievervalid = false
+	local originalamps
+	if (v.origin and v.origin.valid and v.origin.player and (v.origin.skin == SOAP_SKIN or v.origin.skin == TAKIS_SKIN))
+	and (v.origin ~= v.target)
+		recievervalid = true
+	end
+	if recievervalid
+		originalamps = v.origin.soap_totalamps or 0
+		if v.origin.soap_amps == nil
+			v.origin.soap_amps = 0
+			v.origin.soap_totalamps = 0
+			v.origin.soap_amplevel = 0
+		end
+	end
+	
+	/*
+	if (recievervalid and originalamps > 0 and originalamps % 10 == 0)
+		v.origin.soap_amplevel = min($ + 1, 6)
+	end
+	*/
+	
+	for i = 1, (v.extrastars) and 10 or 5
 		local star = P_SpawnMobjFromMobj(v,
 			Soap_RandomFixedRange(-RED_STAROFFSET, RED_STAROFFSET),
 			Soap_RandomFixedRange(-RED_STAROFFSET, RED_STAROFFSET),
@@ -306,16 +327,10 @@ local function TryVFXStars(v)
 		star.momx = $ + v.vfx_mom[1]
 		star.momy = $ + v.vfx_mom[2]
 		star.momz = $ + v.vfx_mom[3] * 3/4
-		if (v.origin and v.origin.valid and v.origin.player and (v.origin.skin == SOAP_SKIN or v.origin.skin == TAKIS_SKIN))
-		and (v.origin ~= v.target)
+		if recievervalid
 			star.type = MT_SOAP_AMP
 			
 			star.tracer = v.origin
-			if star.tracer.soap_amps == nil
-				star.tracer.soap_amps = 0
-				star.tracer.soap_totalamps = 0
-				star.tracer.soap_amplevel = 0
-			end
 			if not star.tracer.soap_amps
 				star.tracer.soap_startingamps = star.tracer.soap_lifetimeamps or 0
 			end
@@ -323,7 +338,7 @@ local function TryVFXStars(v)
 			star.tracer.soap_amps = $ + 1
 			star.tracer.soap_totalamps = $ + 1
 			if star.tracer.soap_totalamps % 10 == 0
-				star.tracer.soap_amplevel = min($ + 1, 6)
+				star.tracer.soap_amplevel = min($ + 1, 14)
 			end
 			
 			star.ticker = 0
@@ -337,6 +352,7 @@ local function TryVFXStars(v)
 		end
 		star.renderflags = $|RF_FULLBRIGHT|RF_NOCOLORMAPS
 	end
+	
 	local wave = P_SpawnMobjFromMobj(v,0,0,0,MT_PARTICLE)
 	wave.spritexscale = v.spritexscale * 3/4
 	wave.spriteyscale = wave.spritexscale
@@ -670,6 +686,7 @@ addHook("MobjThinker",function(amp)
 		amp.starty = amp.y
 		amp.startz = amp.z
 		amp.startscale = amp.spritexscale
+		amp.startmobjscale = amp.scale
 		amp.soap_newvfx = false
 		amp.tics = -1
 		amp.fuse = -1
@@ -681,7 +698,7 @@ addHook("MobjThinker",function(amp)
 		amp.momx = $ * 2
 		amp.momy = $ * 2
 		amp.momz = $ * 2
-		amp.blendmode = AST_ADD
+		--amp.blendmode = AST_ADD
 	end
 	amp.ticker = $ + 1
 	
@@ -763,6 +780,7 @@ addHook("MobjThinker",function(amp)
 	if CV.rotations.value
 		amp.rollangle = $ + FixedAngle(ease_inexpo(frac, 0, 60*FU))
 	end
+	amp.scale = ease_inexpo(frac, amp.startmobjscale, me.scale)
 	amp.spritexscale = ease_inexpo(frac, amp.startscale, me.scale / 20)
 	amp.spriteyscale = amp.spritexscale
 	
@@ -781,9 +799,19 @@ addHook("MobjThinker",function(amp)
 		S_StartSound(me, sfx_sp_amp, p)
 		me.soap_amps = $ - 1
 		if me.soap_amps == 0
+			me.soap_amplevel = max($, 0)
+			local reallevel = me.soap_amplevel
+			
+			-- 14 is maximum combo count
+			-- we only have 5 extra sounds
+			me.soap_amplevel = min($ * 35/100, 4)
+			if (reallevel >= 14)
+				me.soap_amplevel = 5
+			end
+			
 			S_StartSound(me, sfx_sp_ap0 + me.soap_amplevel, p)
 			
-			me.soap_amppayoutlevel = me.soap_amplevel
+			me.soap_amppayoutlevel = reallevel
 			me.soap_amppayoutringmode = amp.awardrings
 			me.soap_amppayout = ((me.soap_lifetimeamps - me.soap_startingamps) / 4)
 			me.soap_amppayouttime = leveltime + TR * 3/2

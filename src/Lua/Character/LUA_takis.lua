@@ -1936,7 +1936,7 @@ Takis_Hook.addHook("MoveBlocked",function(me,thing,line, goingup)
 	if me.soap_tumble then return end
 	
 	if not (me.health)
-	or (me.state == S_PLAY_SOAP_KNOCKOUTDOLL)
+	or (me.state == S_PLAY_SOAP_KNOCKOUTDOLL and not PSO)
 	and not (p.spectator or p.playerstate == PST_REBORN)
 		Soap_Bump(me,thing,line)
 		return
@@ -2150,6 +2150,7 @@ local function try_pvp_collide(me,thing)
 	
 	local checkforundamage = true
 	if (p.powers[pw_super] or p.powers[pw_invulnerability]) then checkforundamage = false; end
+	if (thing.type == MT_ROLLOUTROCK) then checkforundamage = false; end
 	
 	--if the thing we're killing ISNT a player, then theyre probably an enemy
 	local candamagemobj = false
