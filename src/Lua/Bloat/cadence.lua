@@ -106,7 +106,8 @@ sfxinfo[SafeFreeslot("sfx_nca_5a")] = {flags = SF_X8AWAYSOUND, caption = "Instru
 
 sfxinfo[SafeFreeslot("sfx_nca_6")] = {flags = SF_X8AWAYSOUND, caption = "/"}
 
-local RAGE_STAGE = 4*TR -- (4 * 4)*TR
+--local RAGE_STAGE = 4*TR -- (4 * 4)*TR
+local RAGE_STAGE = (4 * 4)*TR
 local RAGE_MAX = RAGE_STAGE * 4
 local ACCEL_MAX = FU / 37
 
@@ -121,7 +122,8 @@ end
 
 local function Cad_GetInstTimer(c)
 	local numinst = #c.instruments
-	return 3*TR --(numinst >= 2) and 30*TR or 25*TR
+	return (numinst >= 2) and 30*TR or 25*TR
+	--return 3*TR --(numinst >= 2) and 30*TR or 25*TR
 end
 
 local function Cad_Init(c)
@@ -135,9 +137,13 @@ local function Cad_Init(c)
 	c.instanim = 0
 	c.rage = RAGE_MAX
 	c.acceleration = 0
+	c.touchwait = 0
 end
 
 local function Cad_InstThinker(c)
+	if c.state ~= MT_NSCADENCE
+		c.state = MT_NSCADENCE
+	end
 	c.acceleration = 0
 	c.flags = $ &~MF_SPECIAL
 	
@@ -292,6 +298,7 @@ addHook("MobjThinker",function(c)
 	end
 	
 	c.lifetime = $ + 1
+	if c.touchwait then c.touchwait = $ - 1; end
 end,MT_NSCADENCE)
 
 local function unfuck(f, mo)
@@ -307,12 +314,13 @@ local function dotumble(p)
 	me.soap_tumble_markedfordeath = true
 end
 local function Baby_Collide(f, mo)
-	if not (f and f.valid) then return false; end
-	if not (mo and mo.valid) then return false; end
+	if not (f and f.valid) then return unfuck(f,mo); end
+	if not (mo and mo.valid) then return unfuck(f,mo); end
 	if not (mo.health) then return end
-	if not (f and f.valid) then return false; end
+	if not (f and f.valid) then return unfuck(f,mo); end
 	--if (mo.hitlag or mo.orbitbonk) then return end
-	if not Soap_ZCollide(f,mo, true) then return false; end
+	if not Soap_ZCollide(f,mo, true) then return unfuck(f,mo); end
+	if f.touchwait then return unfuck(f,mo); end
 	
 	local play = mo.player
 	if (play and play.valid)
@@ -362,6 +370,7 @@ local function Baby_Collide(f, mo)
 			)
 		end
 		S_StartSound(mo, sfx_sp_em1)
+		f.touchwait = 3
 		return unfuck(f,mo)
 	end
 	if Soap_CanDamageEnemy(nil, mo)
