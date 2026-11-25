@@ -2054,7 +2054,7 @@ local function try_pvp_collide(me,thing)
 	
 	local checkforundamage = true
 	if (p.powers[pw_super] or p.powers[pw_invulnerability]) then checkforundamage = false; end
-	if (thing.type == MT_ROLLOUTROCK) then checkforundamage = false; end
+	if (thing.type == MT_ROLLOUTROCK and me.tracer ~= thing) then checkforundamage = false; end
 	
 	--if the thing we're killing ISNT a player, then theyre probably an enemy
 	local candamagemobj = false
