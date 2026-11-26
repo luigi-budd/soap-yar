@@ -870,11 +870,10 @@ addHook("HUD",function(v,p)
 				"fixed-center"
 			)
 			if taunt.joystick
-			v.drawString(x,
-				100*FU - 4*FU + wheel_pagebut_hei,
-				(i == -1) and "LB" or "RB", 0, "thin-fixed-center"
-			)
-			
+				v.drawString(x,
+					100*FU - 4*FU + wheel_pagebut_hei,
+					(i == -1) and "LB" or "RB", 0, "thin-fixed-center"
+				)
 			end
 		end
 	end
