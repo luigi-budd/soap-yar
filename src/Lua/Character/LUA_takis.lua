@@ -1190,6 +1190,13 @@ Takis_Hook.addHook("Takis_Thinker",function(p)
 	elseif (p.powers[pw_carry] == CR_ROLLOUT)
 		local rock = me.tracer
 		
+		-- fix this weird bug
+		if (p.pflags & PF_JUMPED) or (me.state == S_PLAY_DASH)
+			p.pflags = $ &~PF_THOKKED
+			me.state = S_PLAY_WALK
+			P_MovePlayer(p)
+		end
+		
 		if (rock and rock.valid)
 			if me.state == S_PLAY_FALL
 			or me.state == S_PLAY_MELEE

@@ -2859,7 +2859,8 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 		end
 	elseif (p.powers[pw_carry] == CR_ROLLOUT)
 		-- fix this weird bug
-		if (p.pflags & PF_JUMPED)
+		if (p.pflags & PF_JUMPED) or (me.state == S_PLAY_DASH)
+			p.pflags = $ &~PF_THOKKED
 			me.state = S_PLAY_WALK
 			P_MovePlayer(p)
 		end

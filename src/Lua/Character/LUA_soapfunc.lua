@@ -411,6 +411,51 @@ rawset(_G,"Soap_CreateAfterimage", function(p,me)
 			end
 		end
 	end
+	if (p.powers[pw_carry] == CR_ROLLOUT and me.tracer and me.tracer.valid)
+		local ghostalpha = ghost.alpha
+		local aistyle = ghost.translation
+		local cvstyle = SOAP_CV.ai_style.value == 3
+		local rock = me.tracer
+		local ghost2 = P_SpawnMobjFromMobj(rock, of[1],of[2],of[3], MT_SOAP_AFTERIMAGE)
+		ghost2.target = me
+		ghost2.flags2 = $|MF2_DONTDRAW
+		
+		ghost2.scale = me.scale
+		
+		ghost2.sprite = rock.sprite
+		
+		ghost2.frame = rock.frame
+		ghost2.takis_frame = rock.frame
+		ghost2.tics = -1
+		ghost2.fuse = 4
+		ghost2.renderflags = $|rflags
+		ghost2.blendmode = blendmode
+		if cvstyle
+			ghost2.translation = aistyle
+		else
+			ghost2.alpha = ghostalpha
+		end
+		ghost2.angle = rock.angle
+		
+		--dont copy color
+		ghost2.color = rainbow
+		ghost2.colorized = true
+		ghost2.spritexscale,ghost2.spriteyscale = rock.spritexscale, rock.spriteyscale
+		ghost2.spritexoffset,ghost2.spriteyoffset = rock.spritexoffset, rock.spriteyoffset
+		
+		ghost2.rollangle = rock.rollangle
+		--ghost2.destscale = 0
+		--ghost2.scalespeed = FixedDiv(me.scale - ghost2.destscale, ghost2.fuse*FU)
+		
+		--Dont draw right ontop of our takis
+		ghost2.dontdrawforviewmobj = me
+		ghost2.dispoffset = me.dispoffset - 1
+		
+		P_SetOrigin(ghost2,
+			ghost2.x, ghost2.y, ghost2.z
+		)
+	end
+	
 	soap.aiswap = leveltime/2 & 1
 	return ghost
 end)
