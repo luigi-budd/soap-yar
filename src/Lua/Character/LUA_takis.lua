@@ -1191,8 +1191,8 @@ Takis_Hook.addHook("Takis_Thinker",function(p)
 		local rock = me.tracer
 		
 		-- fix this weird bug
-		if (p.pflags & PF_JUMPED) or (me.state == S_PLAY_DASH)
-			p.pflags = $ &~PF_THOKKED
+		if (p.pflags & PF_JUMPED)
+			p.pflags = $ &~(PF_THOKKED|PF_JUMPED)
 			me.state = S_PLAY_WALK
 			P_MovePlayer(p)
 		end

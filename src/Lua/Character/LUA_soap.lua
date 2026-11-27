@@ -2860,7 +2860,7 @@ Takis_Hook.addHook("Soap_Thinker",function(p)
 	elseif (p.powers[pw_carry] == CR_ROLLOUT)
 		-- fix this weird bug
 		if (p.pflags & PF_JUMPED) or (me.state == S_PLAY_DASH)
-			p.pflags = $ &~PF_THOKKED
+			p.pflags = $ &~(PF_THOKKED|PF_JUMPED)
 			me.state = S_PLAY_WALK
 			P_MovePlayer(p)
 		end
@@ -3632,6 +3632,8 @@ local function try_damage_cases(me,thing, p,soap,DealDamage,damagetype)
 		or (me.state == S_PLAY_SOAP_PUNCH1 or me.state == S_PLAY_SOAP_PUNCH2)
 			soap.extraairdash = true
 			soap.canuppercut = true
+			p.pflags = $|PF_JUMPED &~PF_THOKKED
+			P_SetObjectMomZ(me, 2*FU)
 			
 			me.state = S_PLAY_SOAP_PUNCH1
 			local follow = P_SpawnMobjFromMobj(me,0,0,0,MT_SOAP_FREEZEGFX)
